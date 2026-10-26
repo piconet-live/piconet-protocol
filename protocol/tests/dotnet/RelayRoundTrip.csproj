@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- The round trip of the generated C# codec (../../generated/RelayPackets.g.cs) over the vectors file
+       (../vectors/relay.tsv: relay version 3 as 0.4.0's games and relays speak it): each datagram decodes to the
+       packet recorded, or to none, and a packet encodes back to the same bytes. Run by protocol/check.sh. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../generated/RelayPackets.g.cs" Link="Generated/RelayPackets.g.cs" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- The generated C# reader of the replay file (../../generated/ReplayFile.g.cs) over the shared samples
+       (../vectors/replays: a real recording of every version 2 to 7): every part agrees with the line replays.tsv
+       holds for it, the line the game's core test (port/core/tests/test_replay_vectors.cpp) holds its reader to.
+       Run by protocol/check.sh. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../generated/ReplayFile.g.cs" Link="Generated/ReplayFile.g.cs" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,52 @@
+# The server's always-blocked words: slurs and hate terms. A chat line with one is not delivered, and a name with one
+# is refused. Matched as whole words however written (Online.Protocol/Chat/WordList.cs: case, accents, look-alike
+# letters, digits for letters, repeated letters, punctuation or spaces between letters); a term a line.
+# Picked by hand from dsojevic/profanity-list (en.json, commit c279243; MIT, Copyright (c) 2021 David
+# Sojevic: LICENSE-profanity-list.txt beside this file), from its racial, lgbtq and religious entries: the
+# unambiguous slurs only. Terms marked "ours" are not from that list. The live server's list is changed from the
+# operator's dashboard or admin.sh (chat-word add|remove), which keeps this file as the default.
+
+# racial and ethnic slurs
+beaner
+camel jockey
+ching chong
+chink
+coon
+curry muncher
+darkie
+darky
+darkey
+gook
+golliwog
+gollywog
+jigaboo
+jungle bunny
+kike
+nigger
+nigga
+nig nog
+paki
+pikey
+porch monkey   # ours
+rag head
+slant eye
+spear chucker
+spic
+towel head
+wetback
+zipper head
+
+# sexual orientation and gender identity
+fag
+faggot
+fagot
+tranny
+trannie
+shemale
+batty boy
+chi chi man
+
+# hate
+white power
+sieg heil      # ours
+heil hitler    # ours

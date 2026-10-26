@@ -1,0 +1,239 @@
+# The status board: the channel between the launcher and one running game, a small file mapped into both processes'
+# memory (never a localhost socket, never a pipe). generate.py writes the C# view the launcher
+# reads and writes it through and the C++ header the runner does (README.md; the layout in prose:
+# protocol/formats.md section 8).
+#
+# The launcher makes the file (its size, zeros) in its own data folder, writes the header's first four words, and
+# names the file in the game's launch file ("board"). The game maps it at its start, checks the header, and from
+# then on writes its blocks; it never waits on the launcher and the launcher never waits on it.
+#
+# Every number little-endian (the byte order of every PC and phone either side runs on), at its natural alignment;
+# a field that would not be aligned is a schema error (put a padding field before it). Every block starts on a
+# 64-byte line, so the two writers never share one.
+#
+# Field types: u8, u16, u32, u64, i32, f32; "bytes" (`size` bytes, a multiple of 4, read and written a 32-bit word
+# at a time); a record's name with `count` (an array of records). A block's `kind`:
+#   plain    words that each stand alone: read and written as single atomic words (no torn word is possible)
+#   seqlock  a group read as one: a sequence word first (generated, `Seq`), odd while its writer writes; a reader
+#            that saw it odd, or saw it change during its read, reads again (as iRacing's and Assetto Corsa's
+#            shared memory do). One writer a block.
+#   ring     `slots` records of `record`, each a seqlock of its own whose word says which event it holds, and
+#            `Head` (generated: events written so far). Overwrite-oldest: a writer never waits; a reader that fell
+#            more than `slots` behind counts what it lost.
+# `writer`: who writes the block (game, launcher, both: the header's two halves). `frozen = true`: the block's
+# layout never changes from one version to the next (the header: so that a mismatched pair can say so).
+
+[board]
+name = "status board"
+magic = "FZSB"          # the file's first four bytes
+version = 1             # a new layout is a new version: a game and a launcher of different versions refuse each other
+endian = "little"
+block_align = 64
+
+[codec.csharp]
+namespace = "Launcher.Core.Board"
+class = "BoardLayout"
+prefix = "Board"                   # every generated type's name begins with it
+
+[codec.cxx]
+namespace = "fzgx::board"
+
+[[enum]]
+name = "Phase"
+type = "u32"
+doc = "Where the game is. Set by the game; the launcher reads it to judge a heartbeat that stands."
+values = [
+    { name = "None", value = 0, doc = "the game has not taken the board (yet)" },
+    { name = "Starting", value = 1, doc = "the game took the board; no picture yet" },
+    { name = "Offline", value = 2, doc = "a plain start: the game's own title, menus and races" },
+    { name = "Loading", value = 3, doc = "a race's or replay's course loads" },
+    { name = "Joining", value = 4, doc = "asking the relay for the seat" },
+    { name = "Gate", value = 5, doc = "at the start gate until the relay's go: no game frame begins here, by design" },
+    { name = "Countdown", value = 6, doc = "the race's countdown (lockstep)" },
+    { name = "Racing", value = 7, doc = "the race runs and this game's racer races" },
+    { name = "Finished", value = 8, doc = "this game's racer is over the line or out; the race and its results go on" },
+    { name = "Playback", value = 9, doc = "a replay plays" },
+    { name = "Left", value = 10, doc = "the game left its race (no inputs in time, a refused stat pack, a race already over)" },
+    { name = "Stopping", value = 11, doc = "a stop was asked for; the game shuts down" },
+]
+
+[[enum]]
+name = "StopReason"
+type = "u32"
+doc = "What asked the game to stop, first ask only (protocol/formats.md section 7 has the log's words for each)."
+values = [
+    { name = "None", value = 0, doc = "no stop asked" },
+    { name = "StripClose", value = 1, doc = "the close button of the game window's strip" },
+    { name = "AltF4", value = 2, doc = "Alt+F4" },
+    { name = "SystemClose", value = 3, doc = "the system's close command (the window's menu, the taskbar)" },
+    { name = "OutsideClose", value = 4, doc = "a close message from outside the window" },
+    { name = "Escape", value = 5, doc = "Escape in the game's window" },
+    { name = "Game", value = 6, doc = "the game itself (the results left, a desync, a replay's end, ...)" },
+    { name = "Launcher", value = 7, doc = "the launcher, through the mailbox" },
+    { name = "Unasked", value = 8, doc = "the emulator stopped with none of the above" },
+]
+
+[[enum]]
+name = "EventKind"
+type = "u32"
+doc = "What an event of the ring says. A and B are each kind's own."
+values = [
+    { name = "None", value = 0, doc = "an empty slot" },
+    { name = "Phase", value = 1, doc = "the phase changed: A the new one, B the one before" },
+    { name = "Stop", value = 2, doc = "a stop was asked for: A its StopReason" },
+    { name = "Stands", value = 3, doc = "the game's own freeze watch reports a freeze: A milliseconds stood, B the report's number" },
+    { name = "Moves", value = 4, doc = "the game moves again after a reported freeze: A milliseconds it stood" },
+    { name = "Notice", value = 5, doc = "the game took a notice from the mailbox: A its serial" },
+    { name = "Desync", value = 6, doc = "a step's checksum differed from the relay's: A the step" },
+]
+
+[[enum]]
+name = "RacerState"
+type = "u8"
+doc = "A racer at the snapshot's moment."
+values = [
+    { name = "Racing", value = 0, doc = "racing" },
+    { name = "Finished", value = 1, doc = "over the line" },
+    { name = "Out", value = 2, doc = "knocked out or retired, by the game's own test" },
+]
+
+[[flags]]
+name = "StatusFlags"
+type = "u32"
+doc = "The status block's Flags."
+values = [
+    { name = "WaitsForRelay", value = 1, doc = "the core holds the frame for the relay's official inputs (a wait, no freeze: it gives up after 15 s)" },
+    { name = "Practice", value = 2, doc = "a solo practice (no relay)" },
+    { name = "Watching", value = 4, doc = "a spectator's start (the launcher's Watch)" },
+    { name = "Rejoin", value = 8, doc = "a game started again into its running race" },
+]
+
+[[flags]]
+name = "RacerFlags"
+type = "u8"
+doc = "A racer record's Flags."
+values = [{ name = "HasBestLap", value = 1, doc = "BestLapMs holds a lap (none before the first lap is done)" }]
+
+[[record]]
+name = "Racer"
+doc = """One racer at the snapshot's moment, as the launcher's race page shows it (Online.Protocol RacerLive): from \
+the racer's block and progress record. Times in milliseconds, speeds km/h, the \
+position in the course's units."""
+fields = [
+    { name = "Seat", type = "u8" },
+    { name = "State", type = "u8", enum = "RacerState" },
+    { name = "Rank", type = "u8", doc = "the game's ranking byte (progress +0x115), not the race position" },
+    { name = "Flags", type = "u8", flags = "RacerFlags" },
+    { name = "Lap", type = "u16", doc = "laps completed" },
+    { name = "Kos", type = "u16", doc = "machines this racer knocked out" },
+    { name = "MaxEnergy", type = "u16" },
+    { name = "Pad", type = "u16" },
+    { name = "LapMs", type = "u32", doc = "the current lap's time" },
+    { name = "TotalMs", type = "u32", doc = "the race time so far; the finish time once finished" },
+    { name = "BestLapMs", type = "u32", doc = "the best lap, when Flags has HasBestLap" },
+    { name = "Speed", type = "f32" },
+    { name = "Energy", type = "f32" },
+    { name = "TopSpeed", type = "f32" },
+    { name = "X", type = "f32" },
+    { name = "Y", type = "f32" },
+    { name = "Z", type = "f32" },
+    { name = "Distance", type = "f32", doc = "distance covered over all laps (progress +0xF8): what orders the racers still racing" },
+]
+
+[[record]]
+name = "Event"
+doc = "One event of the ring. Seq is 2 * (its number + 1) once written, odd while it is written."
+fields = [
+    { name = "Seq", type = "u32" },
+    { name = "Kind", type = "u32", enum = "EventKind" },
+    { name = "Beat", type = "u32", doc = "the heartbeat (low 32 bits) when it was written" },
+    { name = "Step", type = "u32", doc = "the race's step then, or 0" },
+    { name = "A", type = "u32" },
+    { name = "B", type = "u32" },
+    { name = "Ms", type = "u32", doc = "milliseconds since the game took the board" },
+    { name = "Pad", type = "u32" },
+]
+
+[[block]]
+name = "Header"
+kind = "plain"
+writer = "both"
+frozen = true
+doc = """Who made the board and who took it. The launcher writes Magic, Version, Size and LauncherPid before the game \
+starts; the game writes RunnerVersion, RunnerSize and RunnerPid when it takes it, also when it refuses it (another \
+version, too small a file), and then nothing else. Never changes from one version to the next."""
+fields = [
+    { name = "Magic", type = "u32", doc = "FZSB" },
+    { name = "Version", type = "u32", doc = "the launcher's layout version" },
+    { name = "Size", type = "u32", doc = "the file's size, as the launcher made it" },
+    { name = "LauncherPid", type = "u32" },
+    { name = "RunnerVersion", type = "u32", doc = "the game's layout version; 0: not taken yet" },
+    { name = "RunnerSize", type = "u32", doc = "the size the game's layout needs" },
+    { name = "RunnerPid", type = "u32" },
+    { name = "Pad", type = "u32" },
+]
+
+[[block]]
+name = "Pulse"
+kind = "plain"
+writer = "game"
+doc = """The heartbeat and the stop: single words, each written alone. Heartbeat: one more for every game frame \
+begun in a race's or replay's start (the frame tick), for every picture in a plain start; it stands at the start \
+gate, by design. WatchBeat: one more four times a second from the game's own watching thread, which runs while \
+the game's thread stands (a whole process that stands stops both)."""
+fields = [
+    { name = "Heartbeat", type = "u64" },
+    { name = "WatchBeat", type = "u32" },
+    { name = "StopReason", type = "u32", enum = "StopReason", doc = "the first stop asked for, once asked" },
+]
+
+[[block]]
+name = "Status"
+kind = "seqlock"
+writer = "game"
+doc = "Where the game is, written when it changes."
+fields = [
+    { name = "Phase", type = "u32", enum = "Phase" },
+    { name = "Flags", type = "u32", flags = "StatusFlags" },
+    { name = "Step", type = "u32", doc = "the race's step at the last displayed frame" },
+    { name = "StopSeen", type = "u32", doc = "the mailbox's StopSerial the game has acted on" },
+    { name = "NoticeSeen", type = "u32", doc = "the mailbox's NoticeSerial the game has taken" },
+]
+
+[[block]]
+name = "Snapshot"
+kind = "seqlock"
+writer = "game"
+doc = """The race as this game simulates it, every displayed frame of a race (not a replay): the launcher's race \
+page and the lobby's watchers. Rollback can correct the other racers' numbers a moment later. Picture only: \
+nothing of the race reads it."""
+fields = [
+    { name = "Serial", type = "u32", doc = "snapshots written so far (0: none yet)" },
+    { name = "Frame", type = "u32", doc = "the race's step" },
+    { name = "LocalSeat", type = "u32" },
+    { name = "Count", type = "u32", doc = "racers that follow (at most 30)" },
+    { name = "Racers", type = "Racer", count = 30 },
+]
+
+[[block]]
+name = "Events"
+kind = "ring"
+writer = "game"
+record = "Event"
+slots = 64
+doc = "Events that must not be lost between two looks (a phase passed through quickly, a stop, a freeze's report)."
+
+[[block]]
+name = "Mailbox"
+kind = "seqlock"
+writer = "launcher"
+doc = """The launcher's words to the game, which it reads once a frame. StopSerial: one more asks for a graceful \
+stop (the game stops as when its window closes, says so in its log, and ends with exit code 0). NoticeSerial: one \
+more is a new notice, NoticeText's first NoticeLength bytes (UTF-8): the game writes it to its log (showing it in \
+the game is for later)."""
+fields = [
+    { name = "StopSerial", type = "u32" },
+    { name = "NoticeSerial", type = "u32" },
+    { name = "NoticeLength", type = "u32" },
+    { name = "NoticeText", type = "bytes", size = 128 },
+]

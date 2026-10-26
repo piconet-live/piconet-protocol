@@ -1,0 +1,11 @@
+{
+  "about": "Piconet Launcher: a replay\u0027s playback",
+  "bundle": "b",
+  "widescreen": true,
+  "trueWidescreen": true,
+  "lanes": 0,
+  "replay": {
+    "file": "C:/data/replays/r.fzrp",
+    "otherSounds": "quieter"
+  }
+}

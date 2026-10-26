@@ -1,0 +1,2209 @@
+block	offset	bits	verdict	what
+6	0x04	00000000	refuse	Weight of a machine: the bits of 0
+6	0x04	80000000	refuse	Weight of a machine: -0
+6	0x04	00000001	refuse	Weight of a machine: the smallest denormal
+6	0x04	007FFFFF	refuse	Weight of a machine: the largest denormal
+6	0x04	80000001	refuse	Weight of a machine: a negative denormal
+6	0x04	00800000	refuse	Weight of a machine: the smallest normal number
+6	0x04	7F800000	refuse	Weight of a machine: infinity
+6	0x04	FF800000	refuse	Weight of a machine: minus infinity
+6	0x04	7FC00000	refuse	Weight of a machine: a NaN
+6	0x04	7F7FFFFF	refuse	Weight of a machine: the largest number
+6	0x04	FF7FFFFF	refuse	Weight of a machine: the largest negative number
+6	0x04	3F7FFFFF	refuse	Weight of a machine: the next number nearer 0 than the least
+6	0x04	3F800000	take	Weight of a machine: at the least
+6	0x04	3F800001	take	Weight of a machine: the next number farther from 0 than the least
+6	0x04	46C34FFF	take	Weight of a machine: the next number nearer 0 than the most
+6	0x04	46C35000	take	Weight of a machine: at the most
+6	0x04	46C35001	refuse	Weight of a machine: the next number farther from 0 than the most
+6	0x04	C6C34FFF	refuse	Weight of a machine: the next number nearer 0 than minus the most
+6	0x04	C6C35000	refuse	Weight of a machine: at minus the most
+6	0x04	C6C35001	refuse	Weight of a machine: the next number farther from 0 than minus the most
+6	0x04	46435200	take	Weight of a machine: inside
+6	0x04	C6435200	refuse	Weight of a machine: inside, negative
+41	0x04	00000000	take	Weight of a body: the bits of 0
+41	0x04	80000000	refuse	Weight of a body: -0
+41	0x04	00000001	refuse	Weight of a body: the smallest denormal
+41	0x04	007FFFFF	refuse	Weight of a body: the largest denormal
+41	0x04	80000001	refuse	Weight of a body: a negative denormal
+41	0x04	00800000	take	Weight of a body: the smallest normal number
+41	0x04	7F800000	refuse	Weight of a body: infinity
+41	0x04	FF800000	refuse	Weight of a body: minus infinity
+41	0x04	7FC00000	refuse	Weight of a body: a NaN
+41	0x04	7F7FFFFF	refuse	Weight of a body: the largest number
+41	0x04	FF7FFFFF	refuse	Weight of a body: the largest negative number
+41	0x04	3F7FFFFF	take	Weight of a body: the next number nearer 0 than the least
+41	0x04	3F800000	take	Weight of a body: at the least
+41	0x04	3F800001	take	Weight of a body: the next number farther from 0 than the least
+41	0x04	46C34FFF	take	Weight of a body: the next number nearer 0 than the most
+41	0x04	46C35000	take	Weight of a body: at the most
+41	0x04	46C35001	refuse	Weight of a body: the next number farther from 0 than the most
+41	0x04	C6C34FFF	take	Weight of a body: the next number nearer 0 than minus the most
+41	0x04	C6C35000	take	Weight of a body: at minus the most
+41	0x04	C6C35001	refuse	Weight of a body: the next number farther from 0 than minus the most
+41	0x04	46435200	take	Weight of a body: inside
+41	0x04	C6435200	take	Weight of a body: inside, negative
+66	0x04	00000000	take	Weight of a cockpit: the bits of 0
+66	0x04	80000000	refuse	Weight of a cockpit: -0
+66	0x04	00000001	refuse	Weight of a cockpit: the smallest denormal
+66	0x04	007FFFFF	refuse	Weight of a cockpit: the largest denormal
+66	0x04	80000001	refuse	Weight of a cockpit: a negative denormal
+66	0x04	00800000	take	Weight of a cockpit: the smallest normal number
+66	0x04	7F800000	refuse	Weight of a cockpit: infinity
+66	0x04	FF800000	refuse	Weight of a cockpit: minus infinity
+66	0x04	7FC00000	refuse	Weight of a cockpit: a NaN
+66	0x04	7F7FFFFF	refuse	Weight of a cockpit: the largest number
+66	0x04	FF7FFFFF	refuse	Weight of a cockpit: the largest negative number
+66	0x04	3F7FFFFF	take	Weight of a cockpit: the next number nearer 0 than the least
+66	0x04	3F800000	take	Weight of a cockpit: at the least
+66	0x04	3F800001	take	Weight of a cockpit: the next number farther from 0 than the least
+66	0x04	46C34FFF	take	Weight of a cockpit: the next number nearer 0 than the most
+66	0x04	46C35000	take	Weight of a cockpit: at the most
+66	0x04	46C35001	refuse	Weight of a cockpit: the next number farther from 0 than the most
+66	0x04	C6C34FFF	take	Weight of a cockpit: the next number nearer 0 than minus the most
+66	0x04	C6C35000	take	Weight of a cockpit: at minus the most
+66	0x04	C6C35001	refuse	Weight of a cockpit: the next number farther from 0 than minus the most
+66	0x04	46435200	take	Weight of a cockpit: inside
+66	0x04	C6435200	take	Weight of a cockpit: inside, negative
+91	0x04	00000000	take	Weight of a booster: the bits of 0
+91	0x04	80000000	refuse	Weight of a booster: -0
+91	0x04	00000001	refuse	Weight of a booster: the smallest denormal
+91	0x04	007FFFFF	refuse	Weight of a booster: the largest denormal
+91	0x04	80000001	refuse	Weight of a booster: a negative denormal
+91	0x04	00800000	take	Weight of a booster: the smallest normal number
+91	0x04	7F800000	refuse	Weight of a booster: infinity
+91	0x04	FF800000	refuse	Weight of a booster: minus infinity
+91	0x04	7FC00000	refuse	Weight of a booster: a NaN
+91	0x04	7F7FFFFF	refuse	Weight of a booster: the largest number
+91	0x04	FF7FFFFF	refuse	Weight of a booster: the largest negative number
+91	0x04	3F7FFFFF	take	Weight of a booster: the next number nearer 0 than the least
+91	0x04	3F800000	take	Weight of a booster: at the least
+91	0x04	3F800001	take	Weight of a booster: the next number farther from 0 than the least
+91	0x04	46C34FFF	take	Weight of a booster: the next number nearer 0 than the most
+91	0x04	46C35000	take	Weight of a booster: at the most
+91	0x04	46C35001	refuse	Weight of a booster: the next number farther from 0 than the most
+91	0x04	C6C34FFF	take	Weight of a booster: the next number nearer 0 than minus the most
+91	0x04	C6C35000	take	Weight of a booster: at minus the most
+91	0x04	C6C35001	refuse	Weight of a booster: the next number farther from 0 than minus the most
+91	0x04	46435200	take	Weight of a booster: inside
+91	0x04	C6435200	take	Weight of a booster: inside, negative
+6	0x08	00000000	take	Acceleration of a machine: the bits of 0
+6	0x08	80000000	refuse	Acceleration of a machine: -0
+6	0x08	00000001	refuse	Acceleration of a machine: the smallest denormal
+6	0x08	007FFFFF	refuse	Acceleration of a machine: the largest denormal
+6	0x08	80000001	refuse	Acceleration of a machine: a negative denormal
+6	0x08	00800000	take	Acceleration of a machine: the smallest normal number
+6	0x08	7F800000	refuse	Acceleration of a machine: infinity
+6	0x08	FF800000	refuse	Acceleration of a machine: minus infinity
+6	0x08	7FC00000	refuse	Acceleration of a machine: a NaN
+6	0x08	7F7FFFFF	refuse	Acceleration of a machine: the largest number
+6	0x08	FF7FFFFF	refuse	Acceleration of a machine: the largest negative number
+6	0x08	C0DFFFFF	take	Acceleration of a machine: the next number nearer 0 than the least
+6	0x08	C0E00000	take	Acceleration of a machine: at the least
+6	0x08	C0E00001	refuse	Acceleration of a machine: the next number farther from 0 than the least
+6	0x08	40DFFFFF	take	Acceleration of a machine: the next number nearer 0 than the most
+6	0x08	40E00000	take	Acceleration of a machine: at the most
+6	0x08	40E00001	refuse	Acceleration of a machine: the next number farther from 0 than the most
+6	0x08	C0DFFFFF	take	Acceleration of a machine: the next number nearer 0 than minus the most
+6	0x08	C0E00000	take	Acceleration of a machine: at minus the most
+6	0x08	C0E00001	refuse	Acceleration of a machine: the next number farther from 0 than minus the most
+6	0x08	40600000	take	Acceleration of a machine: inside
+6	0x08	C0600000	take	Acceleration of a machine: inside, negative
+41	0x08	00000000	take	Acceleration of a body: the bits of 0
+41	0x08	80000000	refuse	Acceleration of a body: -0
+41	0x08	00000001	refuse	Acceleration of a body: the smallest denormal
+41	0x08	007FFFFF	refuse	Acceleration of a body: the largest denormal
+41	0x08	80000001	refuse	Acceleration of a body: a negative denormal
+41	0x08	00800000	take	Acceleration of a body: the smallest normal number
+41	0x08	7F800000	refuse	Acceleration of a body: infinity
+41	0x08	FF800000	refuse	Acceleration of a body: minus infinity
+41	0x08	7FC00000	refuse	Acceleration of a body: a NaN
+41	0x08	7F7FFFFF	refuse	Acceleration of a body: the largest number
+41	0x08	FF7FFFFF	refuse	Acceleration of a body: the largest negative number
+41	0x08	C0DFFFFF	take	Acceleration of a body: the next number nearer 0 than the least
+41	0x08	C0E00000	take	Acceleration of a body: at the least
+41	0x08	C0E00001	refuse	Acceleration of a body: the next number farther from 0 than the least
+41	0x08	40DFFFFF	take	Acceleration of a body: the next number nearer 0 than the most
+41	0x08	40E00000	take	Acceleration of a body: at the most
+41	0x08	40E00001	refuse	Acceleration of a body: the next number farther from 0 than the most
+41	0x08	C0DFFFFF	take	Acceleration of a body: the next number nearer 0 than minus the most
+41	0x08	C0E00000	take	Acceleration of a body: at minus the most
+41	0x08	C0E00001	refuse	Acceleration of a body: the next number farther from 0 than minus the most
+41	0x08	40600000	take	Acceleration of a body: inside
+41	0x08	C0600000	take	Acceleration of a body: inside, negative
+66	0x08	00000000	take	Acceleration of a cockpit: the bits of 0
+66	0x08	80000000	refuse	Acceleration of a cockpit: -0
+66	0x08	00000001	refuse	Acceleration of a cockpit: the smallest denormal
+66	0x08	007FFFFF	refuse	Acceleration of a cockpit: the largest denormal
+66	0x08	80000001	refuse	Acceleration of a cockpit: a negative denormal
+66	0x08	00800000	take	Acceleration of a cockpit: the smallest normal number
+66	0x08	7F800000	refuse	Acceleration of a cockpit: infinity
+66	0x08	FF800000	refuse	Acceleration of a cockpit: minus infinity
+66	0x08	7FC00000	refuse	Acceleration of a cockpit: a NaN
+66	0x08	7F7FFFFF	refuse	Acceleration of a cockpit: the largest number
+66	0x08	FF7FFFFF	refuse	Acceleration of a cockpit: the largest negative number
+66	0x08	C0DFFFFF	take	Acceleration of a cockpit: the next number nearer 0 than the least
+66	0x08	C0E00000	take	Acceleration of a cockpit: at the least
+66	0x08	C0E00001	refuse	Acceleration of a cockpit: the next number farther from 0 than the least
+66	0x08	40DFFFFF	take	Acceleration of a cockpit: the next number nearer 0 than the most
+66	0x08	40E00000	take	Acceleration of a cockpit: at the most
+66	0x08	40E00001	refuse	Acceleration of a cockpit: the next number farther from 0 than the most
+66	0x08	C0DFFFFF	take	Acceleration of a cockpit: the next number nearer 0 than minus the most
+66	0x08	C0E00000	take	Acceleration of a cockpit: at minus the most
+66	0x08	C0E00001	refuse	Acceleration of a cockpit: the next number farther from 0 than minus the most
+66	0x08	40600000	take	Acceleration of a cockpit: inside
+66	0x08	C0600000	take	Acceleration of a cockpit: inside, negative
+91	0x08	00000000	take	Acceleration of a booster: the bits of 0
+91	0x08	80000000	refuse	Acceleration of a booster: -0
+91	0x08	00000001	refuse	Acceleration of a booster: the smallest denormal
+91	0x08	007FFFFF	refuse	Acceleration of a booster: the largest denormal
+91	0x08	80000001	refuse	Acceleration of a booster: a negative denormal
+91	0x08	00800000	take	Acceleration of a booster: the smallest normal number
+91	0x08	7F800000	refuse	Acceleration of a booster: infinity
+91	0x08	FF800000	refuse	Acceleration of a booster: minus infinity
+91	0x08	7FC00000	refuse	Acceleration of a booster: a NaN
+91	0x08	7F7FFFFF	refuse	Acceleration of a booster: the largest number
+91	0x08	FF7FFFFF	refuse	Acceleration of a booster: the largest negative number
+91	0x08	C0DFFFFF	take	Acceleration of a booster: the next number nearer 0 than the least
+91	0x08	C0E00000	take	Acceleration of a booster: at the least
+91	0x08	C0E00001	refuse	Acceleration of a booster: the next number farther from 0 than the least
+91	0x08	40DFFFFF	take	Acceleration of a booster: the next number nearer 0 than the most
+91	0x08	40E00000	take	Acceleration of a booster: at the most
+91	0x08	40E00001	refuse	Acceleration of a booster: the next number farther from 0 than the most
+91	0x08	C0DFFFFF	take	Acceleration of a booster: the next number nearer 0 than minus the most
+91	0x08	C0E00000	take	Acceleration of a booster: at minus the most
+91	0x08	C0E00001	refuse	Acceleration of a booster: the next number farther from 0 than minus the most
+91	0x08	40600000	take	Acceleration of a booster: inside
+91	0x08	C0600000	take	Acceleration of a booster: inside, negative
+6	0x0C	00000000	take	MaxSpeed of a machine: the bits of 0
+6	0x0C	80000000	refuse	MaxSpeed of a machine: -0
+6	0x0C	00000001	refuse	MaxSpeed of a machine: the smallest denormal
+6	0x0C	007FFFFF	refuse	MaxSpeed of a machine: the largest denormal
+6	0x0C	80000001	refuse	MaxSpeed of a machine: a negative denormal
+6	0x0C	00800000	take	MaxSpeed of a machine: the smallest normal number
+6	0x0C	7F800000	refuse	MaxSpeed of a machine: infinity
+6	0x0C	FF800000	refuse	MaxSpeed of a machine: minus infinity
+6	0x0C	7FC00000	refuse	MaxSpeed of a machine: a NaN
+6	0x0C	7F7FFFFF	refuse	MaxSpeed of a machine: the largest number
+6	0x0C	FF7FFFFF	refuse	MaxSpeed of a machine: the largest negative number
+6	0x0C	00000000	take	MaxSpeed of a machine: at the least
+6	0x0C	407FFFFF	take	MaxSpeed of a machine: the next number nearer 0 than the most
+6	0x0C	40800000	take	MaxSpeed of a machine: at the most
+6	0x0C	40800001	refuse	MaxSpeed of a machine: the next number farther from 0 than the most
+6	0x0C	C07FFFFF	refuse	MaxSpeed of a machine: the next number nearer 0 than minus the most
+6	0x0C	C0800000	refuse	MaxSpeed of a machine: at minus the most
+6	0x0C	C0800001	refuse	MaxSpeed of a machine: the next number farther from 0 than minus the most
+6	0x0C	40000000	take	MaxSpeed of a machine: inside
+6	0x0C	C0000000	refuse	MaxSpeed of a machine: inside, negative
+41	0x0C	00000000	take	MaxSpeed of a body: the bits of 0
+41	0x0C	80000000	refuse	MaxSpeed of a body: -0
+41	0x0C	00000001	refuse	MaxSpeed of a body: the smallest denormal
+41	0x0C	007FFFFF	refuse	MaxSpeed of a body: the largest denormal
+41	0x0C	80000001	refuse	MaxSpeed of a body: a negative denormal
+41	0x0C	00800000	take	MaxSpeed of a body: the smallest normal number
+41	0x0C	7F800000	refuse	MaxSpeed of a body: infinity
+41	0x0C	FF800000	refuse	MaxSpeed of a body: minus infinity
+41	0x0C	7FC00000	refuse	MaxSpeed of a body: a NaN
+41	0x0C	7F7FFFFF	refuse	MaxSpeed of a body: the largest number
+41	0x0C	FF7FFFFF	refuse	MaxSpeed of a body: the largest negative number
+41	0x0C	00000000	take	MaxSpeed of a body: at the least
+41	0x0C	407FFFFF	take	MaxSpeed of a body: the next number nearer 0 than the most
+41	0x0C	40800000	take	MaxSpeed of a body: at the most
+41	0x0C	40800001	refuse	MaxSpeed of a body: the next number farther from 0 than the most
+41	0x0C	C07FFFFF	take	MaxSpeed of a body: the next number nearer 0 than minus the most
+41	0x0C	C0800000	take	MaxSpeed of a body: at minus the most
+41	0x0C	C0800001	refuse	MaxSpeed of a body: the next number farther from 0 than minus the most
+41	0x0C	40000000	take	MaxSpeed of a body: inside
+41	0x0C	C0000000	take	MaxSpeed of a body: inside, negative
+66	0x0C	00000000	take	MaxSpeed of a cockpit: the bits of 0
+66	0x0C	80000000	refuse	MaxSpeed of a cockpit: -0
+66	0x0C	00000001	refuse	MaxSpeed of a cockpit: the smallest denormal
+66	0x0C	007FFFFF	refuse	MaxSpeed of a cockpit: the largest denormal
+66	0x0C	80000001	refuse	MaxSpeed of a cockpit: a negative denormal
+66	0x0C	00800000	take	MaxSpeed of a cockpit: the smallest normal number
+66	0x0C	7F800000	refuse	MaxSpeed of a cockpit: infinity
+66	0x0C	FF800000	refuse	MaxSpeed of a cockpit: minus infinity
+66	0x0C	7FC00000	refuse	MaxSpeed of a cockpit: a NaN
+66	0x0C	7F7FFFFF	refuse	MaxSpeed of a cockpit: the largest number
+66	0x0C	FF7FFFFF	refuse	MaxSpeed of a cockpit: the largest negative number
+66	0x0C	00000000	take	MaxSpeed of a cockpit: at the least
+66	0x0C	407FFFFF	take	MaxSpeed of a cockpit: the next number nearer 0 than the most
+66	0x0C	40800000	take	MaxSpeed of a cockpit: at the most
+66	0x0C	40800001	refuse	MaxSpeed of a cockpit: the next number farther from 0 than the most
+66	0x0C	C07FFFFF	take	MaxSpeed of a cockpit: the next number nearer 0 than minus the most
+66	0x0C	C0800000	take	MaxSpeed of a cockpit: at minus the most
+66	0x0C	C0800001	refuse	MaxSpeed of a cockpit: the next number farther from 0 than minus the most
+66	0x0C	40000000	take	MaxSpeed of a cockpit: inside
+66	0x0C	C0000000	take	MaxSpeed of a cockpit: inside, negative
+91	0x0C	00000000	take	MaxSpeed of a booster: the bits of 0
+91	0x0C	80000000	refuse	MaxSpeed of a booster: -0
+91	0x0C	00000001	refuse	MaxSpeed of a booster: the smallest denormal
+91	0x0C	007FFFFF	refuse	MaxSpeed of a booster: the largest denormal
+91	0x0C	80000001	refuse	MaxSpeed of a booster: a negative denormal
+91	0x0C	00800000	take	MaxSpeed of a booster: the smallest normal number
+91	0x0C	7F800000	refuse	MaxSpeed of a booster: infinity
+91	0x0C	FF800000	refuse	MaxSpeed of a booster: minus infinity
+91	0x0C	7FC00000	refuse	MaxSpeed of a booster: a NaN
+91	0x0C	7F7FFFFF	refuse	MaxSpeed of a booster: the largest number
+91	0x0C	FF7FFFFF	refuse	MaxSpeed of a booster: the largest negative number
+91	0x0C	00000000	take	MaxSpeed of a booster: at the least
+91	0x0C	407FFFFF	take	MaxSpeed of a booster: the next number nearer 0 than the most
+91	0x0C	40800000	take	MaxSpeed of a booster: at the most
+91	0x0C	40800001	refuse	MaxSpeed of a booster: the next number farther from 0 than the most
+91	0x0C	C07FFFFF	take	MaxSpeed of a booster: the next number nearer 0 than minus the most
+91	0x0C	C0800000	take	MaxSpeed of a booster: at minus the most
+91	0x0C	C0800001	refuse	MaxSpeed of a booster: the next number farther from 0 than minus the most
+91	0x0C	40000000	take	MaxSpeed of a booster: inside
+91	0x0C	C0000000	take	MaxSpeed of a booster: inside, negative
+6	0x10	00000000	take	Grip1 of a machine: the bits of 0
+6	0x10	80000000	refuse	Grip1 of a machine: -0
+6	0x10	00000001	refuse	Grip1 of a machine: the smallest denormal
+6	0x10	007FFFFF	refuse	Grip1 of a machine: the largest denormal
+6	0x10	80000001	refuse	Grip1 of a machine: a negative denormal
+6	0x10	00800000	take	Grip1 of a machine: the smallest normal number
+6	0x10	7F800000	refuse	Grip1 of a machine: infinity
+6	0x10	FF800000	refuse	Grip1 of a machine: minus infinity
+6	0x10	7FC00000	refuse	Grip1 of a machine: a NaN
+6	0x10	7F7FFFFF	refuse	Grip1 of a machine: the largest number
+6	0x10	FF7FFFFF	refuse	Grip1 of a machine: the largest negative number
+6	0x10	C233FFFF	take	Grip1 of a machine: the next number nearer 0 than the least
+6	0x10	C2340000	take	Grip1 of a machine: at the least
+6	0x10	C2340001	refuse	Grip1 of a machine: the next number farther from 0 than the least
+6	0x10	4233FFFF	take	Grip1 of a machine: the next number nearer 0 than the most
+6	0x10	42340000	take	Grip1 of a machine: at the most
+6	0x10	42340001	refuse	Grip1 of a machine: the next number farther from 0 than the most
+6	0x10	C233FFFF	take	Grip1 of a machine: the next number nearer 0 than minus the most
+6	0x10	C2340000	take	Grip1 of a machine: at minus the most
+6	0x10	C2340001	refuse	Grip1 of a machine: the next number farther from 0 than minus the most
+6	0x10	41B40000	take	Grip1 of a machine: inside
+6	0x10	C1B40000	take	Grip1 of a machine: inside, negative
+41	0x10	00000000	take	Grip1 of a body: the bits of 0
+41	0x10	80000000	refuse	Grip1 of a body: -0
+41	0x10	00000001	refuse	Grip1 of a body: the smallest denormal
+41	0x10	007FFFFF	refuse	Grip1 of a body: the largest denormal
+41	0x10	80000001	refuse	Grip1 of a body: a negative denormal
+41	0x10	00800000	take	Grip1 of a body: the smallest normal number
+41	0x10	7F800000	refuse	Grip1 of a body: infinity
+41	0x10	FF800000	refuse	Grip1 of a body: minus infinity
+41	0x10	7FC00000	refuse	Grip1 of a body: a NaN
+41	0x10	7F7FFFFF	refuse	Grip1 of a body: the largest number
+41	0x10	FF7FFFFF	refuse	Grip1 of a body: the largest negative number
+41	0x10	C233FFFF	take	Grip1 of a body: the next number nearer 0 than the least
+41	0x10	C2340000	take	Grip1 of a body: at the least
+41	0x10	C2340001	refuse	Grip1 of a body: the next number farther from 0 than the least
+41	0x10	4233FFFF	take	Grip1 of a body: the next number nearer 0 than the most
+41	0x10	42340000	take	Grip1 of a body: at the most
+41	0x10	42340001	refuse	Grip1 of a body: the next number farther from 0 than the most
+41	0x10	C233FFFF	take	Grip1 of a body: the next number nearer 0 than minus the most
+41	0x10	C2340000	take	Grip1 of a body: at minus the most
+41	0x10	C2340001	refuse	Grip1 of a body: the next number farther from 0 than minus the most
+41	0x10	41B40000	take	Grip1 of a body: inside
+41	0x10	C1B40000	take	Grip1 of a body: inside, negative
+66	0x10	00000000	take	Grip1 of a cockpit: the bits of 0
+66	0x10	80000000	refuse	Grip1 of a cockpit: -0
+66	0x10	00000001	refuse	Grip1 of a cockpit: the smallest denormal
+66	0x10	007FFFFF	refuse	Grip1 of a cockpit: the largest denormal
+66	0x10	80000001	refuse	Grip1 of a cockpit: a negative denormal
+66	0x10	00800000	take	Grip1 of a cockpit: the smallest normal number
+66	0x10	7F800000	refuse	Grip1 of a cockpit: infinity
+66	0x10	FF800000	refuse	Grip1 of a cockpit: minus infinity
+66	0x10	7FC00000	refuse	Grip1 of a cockpit: a NaN
+66	0x10	7F7FFFFF	refuse	Grip1 of a cockpit: the largest number
+66	0x10	FF7FFFFF	refuse	Grip1 of a cockpit: the largest negative number
+66	0x10	C233FFFF	take	Grip1 of a cockpit: the next number nearer 0 than the least
+66	0x10	C2340000	take	Grip1 of a cockpit: at the least
+66	0x10	C2340001	refuse	Grip1 of a cockpit: the next number farther from 0 than the least
+66	0x10	4233FFFF	take	Grip1 of a cockpit: the next number nearer 0 than the most
+66	0x10	42340000	take	Grip1 of a cockpit: at the most
+66	0x10	42340001	refuse	Grip1 of a cockpit: the next number farther from 0 than the most
+66	0x10	C233FFFF	take	Grip1 of a cockpit: the next number nearer 0 than minus the most
+66	0x10	C2340000	take	Grip1 of a cockpit: at minus the most
+66	0x10	C2340001	refuse	Grip1 of a cockpit: the next number farther from 0 than minus the most
+66	0x10	41B40000	take	Grip1 of a cockpit: inside
+66	0x10	C1B40000	take	Grip1 of a cockpit: inside, negative
+91	0x10	00000000	take	Grip1 of a booster: the bits of 0
+91	0x10	80000000	refuse	Grip1 of a booster: -0
+91	0x10	00000001	refuse	Grip1 of a booster: the smallest denormal
+91	0x10	007FFFFF	refuse	Grip1 of a booster: the largest denormal
+91	0x10	80000001	refuse	Grip1 of a booster: a negative denormal
+91	0x10	00800000	take	Grip1 of a booster: the smallest normal number
+91	0x10	7F800000	refuse	Grip1 of a booster: infinity
+91	0x10	FF800000	refuse	Grip1 of a booster: minus infinity
+91	0x10	7FC00000	refuse	Grip1 of a booster: a NaN
+91	0x10	7F7FFFFF	refuse	Grip1 of a booster: the largest number
+91	0x10	FF7FFFFF	refuse	Grip1 of a booster: the largest negative number
+91	0x10	C233FFFF	take	Grip1 of a booster: the next number nearer 0 than the least
+91	0x10	C2340000	take	Grip1 of a booster: at the least
+91	0x10	C2340001	refuse	Grip1 of a booster: the next number farther from 0 than the least
+91	0x10	4233FFFF	take	Grip1 of a booster: the next number nearer 0 than the most
+91	0x10	42340000	take	Grip1 of a booster: at the most
+91	0x10	42340001	refuse	Grip1 of a booster: the next number farther from 0 than the most
+91	0x10	C233FFFF	take	Grip1 of a booster: the next number nearer 0 than minus the most
+91	0x10	C2340000	take	Grip1 of a booster: at minus the most
+91	0x10	C2340001	refuse	Grip1 of a booster: the next number farther from 0 than minus the most
+91	0x10	41B40000	take	Grip1 of a booster: inside
+91	0x10	C1B40000	take	Grip1 of a booster: inside, negative
+6	0x14	00000000	take	Grip3 of a machine: the bits of 0
+6	0x14	80000000	refuse	Grip3 of a machine: -0
+6	0x14	00000001	refuse	Grip3 of a machine: the smallest denormal
+6	0x14	007FFFFF	refuse	Grip3 of a machine: the largest denormal
+6	0x14	80000001	refuse	Grip3 of a machine: a negative denormal
+6	0x14	00800000	take	Grip3 of a machine: the smallest normal number
+6	0x14	7F800000	refuse	Grip3 of a machine: infinity
+6	0x14	FF800000	refuse	Grip3 of a machine: minus infinity
+6	0x14	7FC00000	refuse	Grip3 of a machine: a NaN
+6	0x14	7F7FFFFF	refuse	Grip3 of a machine: the largest number
+6	0x14	FF7FFFFF	refuse	Grip3 of a machine: the largest negative number
+6	0x14	C05FFFFF	take	Grip3 of a machine: the next number nearer 0 than the least
+6	0x14	C0600000	take	Grip3 of a machine: at the least
+6	0x14	C0600001	refuse	Grip3 of a machine: the next number farther from 0 than the least
+6	0x14	405FFFFF	take	Grip3 of a machine: the next number nearer 0 than the most
+6	0x14	40600000	take	Grip3 of a machine: at the most
+6	0x14	40600001	refuse	Grip3 of a machine: the next number farther from 0 than the most
+6	0x14	C05FFFFF	take	Grip3 of a machine: the next number nearer 0 than minus the most
+6	0x14	C0600000	take	Grip3 of a machine: at minus the most
+6	0x14	C0600001	refuse	Grip3 of a machine: the next number farther from 0 than minus the most
+6	0x14	3FE00000	take	Grip3 of a machine: inside
+6	0x14	BFE00000	take	Grip3 of a machine: inside, negative
+41	0x14	00000000	take	Grip3 of a body: the bits of 0
+41	0x14	80000000	refuse	Grip3 of a body: -0
+41	0x14	00000001	refuse	Grip3 of a body: the smallest denormal
+41	0x14	007FFFFF	refuse	Grip3 of a body: the largest denormal
+41	0x14	80000001	refuse	Grip3 of a body: a negative denormal
+41	0x14	00800000	take	Grip3 of a body: the smallest normal number
+41	0x14	7F800000	refuse	Grip3 of a body: infinity
+41	0x14	FF800000	refuse	Grip3 of a body: minus infinity
+41	0x14	7FC00000	refuse	Grip3 of a body: a NaN
+41	0x14	7F7FFFFF	refuse	Grip3 of a body: the largest number
+41	0x14	FF7FFFFF	refuse	Grip3 of a body: the largest negative number
+41	0x14	C05FFFFF	take	Grip3 of a body: the next number nearer 0 than the least
+41	0x14	C0600000	take	Grip3 of a body: at the least
+41	0x14	C0600001	refuse	Grip3 of a body: the next number farther from 0 than the least
+41	0x14	405FFFFF	take	Grip3 of a body: the next number nearer 0 than the most
+41	0x14	40600000	take	Grip3 of a body: at the most
+41	0x14	40600001	refuse	Grip3 of a body: the next number farther from 0 than the most
+41	0x14	C05FFFFF	take	Grip3 of a body: the next number nearer 0 than minus the most
+41	0x14	C0600000	take	Grip3 of a body: at minus the most
+41	0x14	C0600001	refuse	Grip3 of a body: the next number farther from 0 than minus the most
+41	0x14	3FE00000	take	Grip3 of a body: inside
+41	0x14	BFE00000	take	Grip3 of a body: inside, negative
+66	0x14	00000000	take	Grip3 of a cockpit: the bits of 0
+66	0x14	80000000	refuse	Grip3 of a cockpit: -0
+66	0x14	00000001	refuse	Grip3 of a cockpit: the smallest denormal
+66	0x14	007FFFFF	refuse	Grip3 of a cockpit: the largest denormal
+66	0x14	80000001	refuse	Grip3 of a cockpit: a negative denormal
+66	0x14	00800000	take	Grip3 of a cockpit: the smallest normal number
+66	0x14	7F800000	refuse	Grip3 of a cockpit: infinity
+66	0x14	FF800000	refuse	Grip3 of a cockpit: minus infinity
+66	0x14	7FC00000	refuse	Grip3 of a cockpit: a NaN
+66	0x14	7F7FFFFF	refuse	Grip3 of a cockpit: the largest number
+66	0x14	FF7FFFFF	refuse	Grip3 of a cockpit: the largest negative number
+66	0x14	C05FFFFF	take	Grip3 of a cockpit: the next number nearer 0 than the least
+66	0x14	C0600000	take	Grip3 of a cockpit: at the least
+66	0x14	C0600001	refuse	Grip3 of a cockpit: the next number farther from 0 than the least
+66	0x14	405FFFFF	take	Grip3 of a cockpit: the next number nearer 0 than the most
+66	0x14	40600000	take	Grip3 of a cockpit: at the most
+66	0x14	40600001	refuse	Grip3 of a cockpit: the next number farther from 0 than the most
+66	0x14	C05FFFFF	take	Grip3 of a cockpit: the next number nearer 0 than minus the most
+66	0x14	C0600000	take	Grip3 of a cockpit: at minus the most
+66	0x14	C0600001	refuse	Grip3 of a cockpit: the next number farther from 0 than minus the most
+66	0x14	3FE00000	take	Grip3 of a cockpit: inside
+66	0x14	BFE00000	take	Grip3 of a cockpit: inside, negative
+91	0x14	00000000	take	Grip3 of a booster: the bits of 0
+91	0x14	80000000	refuse	Grip3 of a booster: -0
+91	0x14	00000001	refuse	Grip3 of a booster: the smallest denormal
+91	0x14	007FFFFF	refuse	Grip3 of a booster: the largest denormal
+91	0x14	80000001	refuse	Grip3 of a booster: a negative denormal
+91	0x14	00800000	take	Grip3 of a booster: the smallest normal number
+91	0x14	7F800000	refuse	Grip3 of a booster: infinity
+91	0x14	FF800000	refuse	Grip3 of a booster: minus infinity
+91	0x14	7FC00000	refuse	Grip3 of a booster: a NaN
+91	0x14	7F7FFFFF	refuse	Grip3 of a booster: the largest number
+91	0x14	FF7FFFFF	refuse	Grip3 of a booster: the largest negative number
+91	0x14	C05FFFFF	take	Grip3 of a booster: the next number nearer 0 than the least
+91	0x14	C0600000	take	Grip3 of a booster: at the least
+91	0x14	C0600001	refuse	Grip3 of a booster: the next number farther from 0 than the least
+91	0x14	405FFFFF	take	Grip3 of a booster: the next number nearer 0 than the most
+91	0x14	40600000	take	Grip3 of a booster: at the most
+91	0x14	40600001	refuse	Grip3 of a booster: the next number farther from 0 than the most
+91	0x14	C05FFFFF	take	Grip3 of a booster: the next number nearer 0 than minus the most
+91	0x14	C0600000	take	Grip3 of a booster: at minus the most
+91	0x14	C0600001	refuse	Grip3 of a booster: the next number farther from 0 than minus the most
+91	0x14	3FE00000	take	Grip3 of a booster: inside
+91	0x14	BFE00000	take	Grip3 of a booster: inside, negative
+6	0x18	00000000	take	TurnTension of a machine: the bits of 0
+6	0x18	80000000	refuse	TurnTension of a machine: -0
+6	0x18	00000001	refuse	TurnTension of a machine: the smallest denormal
+6	0x18	007FFFFF	refuse	TurnTension of a machine: the largest denormal
+6	0x18	80000001	refuse	TurnTension of a machine: a negative denormal
+6	0x18	00800000	take	TurnTension of a machine: the smallest normal number
+6	0x18	7F800000	refuse	TurnTension of a machine: infinity
+6	0x18	FF800000	refuse	TurnTension of a machine: minus infinity
+6	0x18	7FC00000	refuse	TurnTension of a machine: a NaN
+6	0x18	7F7FFFFF	refuse	TurnTension of a machine: the largest number
+6	0x18	FF7FFFFF	refuse	TurnTension of a machine: the largest negative number
+6	0x18	C00CCCCC	take	TurnTension of a machine: the next number nearer 0 than the least
+6	0x18	C00CCCCD	take	TurnTension of a machine: at the least
+6	0x18	C00CCCCE	refuse	TurnTension of a machine: the next number farther from 0 than the least
+6	0x18	400CCCCC	take	TurnTension of a machine: the next number nearer 0 than the most
+6	0x18	400CCCCD	take	TurnTension of a machine: at the most
+6	0x18	400CCCCE	refuse	TurnTension of a machine: the next number farther from 0 than the most
+6	0x18	C00CCCCC	take	TurnTension of a machine: the next number nearer 0 than minus the most
+6	0x18	C00CCCCD	take	TurnTension of a machine: at minus the most
+6	0x18	C00CCCCE	refuse	TurnTension of a machine: the next number farther from 0 than minus the most
+6	0x18	3F8CCCCD	take	TurnTension of a machine: inside
+6	0x18	BF8CCCCD	take	TurnTension of a machine: inside, negative
+41	0x18	00000000	take	TurnTension of a body: the bits of 0
+41	0x18	80000000	refuse	TurnTension of a body: -0
+41	0x18	00000001	refuse	TurnTension of a body: the smallest denormal
+41	0x18	007FFFFF	refuse	TurnTension of a body: the largest denormal
+41	0x18	80000001	refuse	TurnTension of a body: a negative denormal
+41	0x18	00800000	take	TurnTension of a body: the smallest normal number
+41	0x18	7F800000	refuse	TurnTension of a body: infinity
+41	0x18	FF800000	refuse	TurnTension of a body: minus infinity
+41	0x18	7FC00000	refuse	TurnTension of a body: a NaN
+41	0x18	7F7FFFFF	refuse	TurnTension of a body: the largest number
+41	0x18	FF7FFFFF	refuse	TurnTension of a body: the largest negative number
+41	0x18	C00CCCCC	take	TurnTension of a body: the next number nearer 0 than the least
+41	0x18	C00CCCCD	take	TurnTension of a body: at the least
+41	0x18	C00CCCCE	refuse	TurnTension of a body: the next number farther from 0 than the least
+41	0x18	400CCCCC	take	TurnTension of a body: the next number nearer 0 than the most
+41	0x18	400CCCCD	take	TurnTension of a body: at the most
+41	0x18	400CCCCE	refuse	TurnTension of a body: the next number farther from 0 than the most
+41	0x18	C00CCCCC	take	TurnTension of a body: the next number nearer 0 than minus the most
+41	0x18	C00CCCCD	take	TurnTension of a body: at minus the most
+41	0x18	C00CCCCE	refuse	TurnTension of a body: the next number farther from 0 than minus the most
+41	0x18	3F8CCCCD	take	TurnTension of a body: inside
+41	0x18	BF8CCCCD	take	TurnTension of a body: inside, negative
+66	0x18	00000000	take	TurnTension of a cockpit: the bits of 0
+66	0x18	80000000	refuse	TurnTension of a cockpit: -0
+66	0x18	00000001	refuse	TurnTension of a cockpit: the smallest denormal
+66	0x18	007FFFFF	refuse	TurnTension of a cockpit: the largest denormal
+66	0x18	80000001	refuse	TurnTension of a cockpit: a negative denormal
+66	0x18	00800000	take	TurnTension of a cockpit: the smallest normal number
+66	0x18	7F800000	refuse	TurnTension of a cockpit: infinity
+66	0x18	FF800000	refuse	TurnTension of a cockpit: minus infinity
+66	0x18	7FC00000	refuse	TurnTension of a cockpit: a NaN
+66	0x18	7F7FFFFF	refuse	TurnTension of a cockpit: the largest number
+66	0x18	FF7FFFFF	refuse	TurnTension of a cockpit: the largest negative number
+66	0x18	C00CCCCC	take	TurnTension of a cockpit: the next number nearer 0 than the least
+66	0x18	C00CCCCD	take	TurnTension of a cockpit: at the least
+66	0x18	C00CCCCE	refuse	TurnTension of a cockpit: the next number farther from 0 than the least
+66	0x18	400CCCCC	take	TurnTension of a cockpit: the next number nearer 0 than the most
+66	0x18	400CCCCD	take	TurnTension of a cockpit: at the most
+66	0x18	400CCCCE	refuse	TurnTension of a cockpit: the next number farther from 0 than the most
+66	0x18	C00CCCCC	take	TurnTension of a cockpit: the next number nearer 0 than minus the most
+66	0x18	C00CCCCD	take	TurnTension of a cockpit: at minus the most
+66	0x18	C00CCCCE	refuse	TurnTension of a cockpit: the next number farther from 0 than minus the most
+66	0x18	3F8CCCCD	take	TurnTension of a cockpit: inside
+66	0x18	BF8CCCCD	take	TurnTension of a cockpit: inside, negative
+91	0x18	00000000	take	TurnTension of a booster: the bits of 0
+91	0x18	80000000	refuse	TurnTension of a booster: -0
+91	0x18	00000001	refuse	TurnTension of a booster: the smallest denormal
+91	0x18	007FFFFF	refuse	TurnTension of a booster: the largest denormal
+91	0x18	80000001	refuse	TurnTension of a booster: a negative denormal
+91	0x18	00800000	take	TurnTension of a booster: the smallest normal number
+91	0x18	7F800000	refuse	TurnTension of a booster: infinity
+91	0x18	FF800000	refuse	TurnTension of a booster: minus infinity
+91	0x18	7FC00000	refuse	TurnTension of a booster: a NaN
+91	0x18	7F7FFFFF	refuse	TurnTension of a booster: the largest number
+91	0x18	FF7FFFFF	refuse	TurnTension of a booster: the largest negative number
+91	0x18	C00CCCCC	take	TurnTension of a booster: the next number nearer 0 than the least
+91	0x18	C00CCCCD	take	TurnTension of a booster: at the least
+91	0x18	C00CCCCE	refuse	TurnTension of a booster: the next number farther from 0 than the least
+91	0x18	400CCCCC	take	TurnTension of a booster: the next number nearer 0 than the most
+91	0x18	400CCCCD	take	TurnTension of a booster: at the most
+91	0x18	400CCCCE	refuse	TurnTension of a booster: the next number farther from 0 than the most
+91	0x18	C00CCCCC	take	TurnTension of a booster: the next number nearer 0 than minus the most
+91	0x18	C00CCCCD	take	TurnTension of a booster: at minus the most
+91	0x18	C00CCCCE	refuse	TurnTension of a booster: the next number farther from 0 than minus the most
+91	0x18	3F8CCCCD	take	TurnTension of a booster: inside
+91	0x18	BF8CCCCD	take	TurnTension of a booster: inside, negative
+6	0x1C	00000000	take	DriftAcceleration of a machine: the bits of 0
+6	0x1C	80000000	refuse	DriftAcceleration of a machine: -0
+6	0x1C	00000001	refuse	DriftAcceleration of a machine: the smallest denormal
+6	0x1C	007FFFFF	refuse	DriftAcceleration of a machine: the largest denormal
+6	0x1C	80000001	refuse	DriftAcceleration of a machine: a negative denormal
+6	0x1C	00800000	take	DriftAcceleration of a machine: the smallest normal number
+6	0x1C	7F800000	refuse	DriftAcceleration of a machine: infinity
+6	0x1C	FF800000	refuse	DriftAcceleration of a machine: minus infinity
+6	0x1C	7FC00000	refuse	DriftAcceleration of a machine: a NaN
+6	0x1C	7F7FFFFF	refuse	DriftAcceleration of a machine: the largest number
+6	0x1C	FF7FFFFF	refuse	DriftAcceleration of a machine: the largest negative number
+6	0x1C	C197FFFF	take	DriftAcceleration of a machine: the next number nearer 0 than the least
+6	0x1C	C1980000	take	DriftAcceleration of a machine: at the least
+6	0x1C	C1980001	refuse	DriftAcceleration of a machine: the next number farther from 0 than the least
+6	0x1C	4197FFFF	take	DriftAcceleration of a machine: the next number nearer 0 than the most
+6	0x1C	41980000	take	DriftAcceleration of a machine: at the most
+6	0x1C	41980001	refuse	DriftAcceleration of a machine: the next number farther from 0 than the most
+6	0x1C	C197FFFF	take	DriftAcceleration of a machine: the next number nearer 0 than minus the most
+6	0x1C	C1980000	take	DriftAcceleration of a machine: at minus the most
+6	0x1C	C1980001	refuse	DriftAcceleration of a machine: the next number farther from 0 than minus the most
+6	0x1C	41180000	take	DriftAcceleration of a machine: inside
+6	0x1C	C1180000	take	DriftAcceleration of a machine: inside, negative
+41	0x1C	00000000	take	DriftAcceleration of a body: the bits of 0
+41	0x1C	80000000	refuse	DriftAcceleration of a body: -0
+41	0x1C	00000001	refuse	DriftAcceleration of a body: the smallest denormal
+41	0x1C	007FFFFF	refuse	DriftAcceleration of a body: the largest denormal
+41	0x1C	80000001	refuse	DriftAcceleration of a body: a negative denormal
+41	0x1C	00800000	take	DriftAcceleration of a body: the smallest normal number
+41	0x1C	7F800000	refuse	DriftAcceleration of a body: infinity
+41	0x1C	FF800000	refuse	DriftAcceleration of a body: minus infinity
+41	0x1C	7FC00000	refuse	DriftAcceleration of a body: a NaN
+41	0x1C	7F7FFFFF	refuse	DriftAcceleration of a body: the largest number
+41	0x1C	FF7FFFFF	refuse	DriftAcceleration of a body: the largest negative number
+41	0x1C	C197FFFF	take	DriftAcceleration of a body: the next number nearer 0 than the least
+41	0x1C	C1980000	take	DriftAcceleration of a body: at the least
+41	0x1C	C1980001	refuse	DriftAcceleration of a body: the next number farther from 0 than the least
+41	0x1C	4197FFFF	take	DriftAcceleration of a body: the next number nearer 0 than the most
+41	0x1C	41980000	take	DriftAcceleration of a body: at the most
+41	0x1C	41980001	refuse	DriftAcceleration of a body: the next number farther from 0 than the most
+41	0x1C	C197FFFF	take	DriftAcceleration of a body: the next number nearer 0 than minus the most
+41	0x1C	C1980000	take	DriftAcceleration of a body: at minus the most
+41	0x1C	C1980001	refuse	DriftAcceleration of a body: the next number farther from 0 than minus the most
+41	0x1C	41180000	take	DriftAcceleration of a body: inside
+41	0x1C	C1180000	take	DriftAcceleration of a body: inside, negative
+66	0x1C	00000000	take	DriftAcceleration of a cockpit: the bits of 0
+66	0x1C	80000000	refuse	DriftAcceleration of a cockpit: -0
+66	0x1C	00000001	refuse	DriftAcceleration of a cockpit: the smallest denormal
+66	0x1C	007FFFFF	refuse	DriftAcceleration of a cockpit: the largest denormal
+66	0x1C	80000001	refuse	DriftAcceleration of a cockpit: a negative denormal
+66	0x1C	00800000	take	DriftAcceleration of a cockpit: the smallest normal number
+66	0x1C	7F800000	refuse	DriftAcceleration of a cockpit: infinity
+66	0x1C	FF800000	refuse	DriftAcceleration of a cockpit: minus infinity
+66	0x1C	7FC00000	refuse	DriftAcceleration of a cockpit: a NaN
+66	0x1C	7F7FFFFF	refuse	DriftAcceleration of a cockpit: the largest number
+66	0x1C	FF7FFFFF	refuse	DriftAcceleration of a cockpit: the largest negative number
+66	0x1C	C197FFFF	take	DriftAcceleration of a cockpit: the next number nearer 0 than the least
+66	0x1C	C1980000	take	DriftAcceleration of a cockpit: at the least
+66	0x1C	C1980001	refuse	DriftAcceleration of a cockpit: the next number farther from 0 than the least
+66	0x1C	4197FFFF	take	DriftAcceleration of a cockpit: the next number nearer 0 than the most
+66	0x1C	41980000	take	DriftAcceleration of a cockpit: at the most
+66	0x1C	41980001	refuse	DriftAcceleration of a cockpit: the next number farther from 0 than the most
+66	0x1C	C197FFFF	take	DriftAcceleration of a cockpit: the next number nearer 0 than minus the most
+66	0x1C	C1980000	take	DriftAcceleration of a cockpit: at minus the most
+66	0x1C	C1980001	refuse	DriftAcceleration of a cockpit: the next number farther from 0 than minus the most
+66	0x1C	41180000	take	DriftAcceleration of a cockpit: inside
+66	0x1C	C1180000	take	DriftAcceleration of a cockpit: inside, negative
+91	0x1C	00000000	take	DriftAcceleration of a booster: the bits of 0
+91	0x1C	80000000	refuse	DriftAcceleration of a booster: -0
+91	0x1C	00000001	refuse	DriftAcceleration of a booster: the smallest denormal
+91	0x1C	007FFFFF	refuse	DriftAcceleration of a booster: the largest denormal
+91	0x1C	80000001	refuse	DriftAcceleration of a booster: a negative denormal
+91	0x1C	00800000	take	DriftAcceleration of a booster: the smallest normal number
+91	0x1C	7F800000	refuse	DriftAcceleration of a booster: infinity
+91	0x1C	FF800000	refuse	DriftAcceleration of a booster: minus infinity
+91	0x1C	7FC00000	refuse	DriftAcceleration of a booster: a NaN
+91	0x1C	7F7FFFFF	refuse	DriftAcceleration of a booster: the largest number
+91	0x1C	FF7FFFFF	refuse	DriftAcceleration of a booster: the largest negative number
+91	0x1C	C197FFFF	take	DriftAcceleration of a booster: the next number nearer 0 than the least
+91	0x1C	C1980000	take	DriftAcceleration of a booster: at the least
+91	0x1C	C1980001	refuse	DriftAcceleration of a booster: the next number farther from 0 than the least
+91	0x1C	4197FFFF	take	DriftAcceleration of a booster: the next number nearer 0 than the most
+91	0x1C	41980000	take	DriftAcceleration of a booster: at the most
+91	0x1C	41980001	refuse	DriftAcceleration of a booster: the next number farther from 0 than the most
+91	0x1C	C197FFFF	take	DriftAcceleration of a booster: the next number nearer 0 than minus the most
+91	0x1C	C1980000	take	DriftAcceleration of a booster: at minus the most
+91	0x1C	C1980001	refuse	DriftAcceleration of a booster: the next number farther from 0 than minus the most
+91	0x1C	41180000	take	DriftAcceleration of a booster: inside
+91	0x1C	C1180000	take	DriftAcceleration of a booster: inside, negative
+6	0x20	00000000	take	TurnMovement of a machine: the bits of 0
+6	0x20	80000000	refuse	TurnMovement of a machine: -0
+6	0x20	00000001	refuse	TurnMovement of a machine: the smallest denormal
+6	0x20	007FFFFF	refuse	TurnMovement of a machine: the largest denormal
+6	0x20	80000001	refuse	TurnMovement of a machine: a negative denormal
+6	0x20	00800000	take	TurnMovement of a machine: the smallest normal number
+6	0x20	7F800000	refuse	TurnMovement of a machine: infinity
+6	0x20	FF800000	refuse	TurnMovement of a machine: minus infinity
+6	0x20	7FC00000	refuse	TurnMovement of a machine: a NaN
+6	0x20	7F7FFFFF	refuse	TurnMovement of a machine: the largest number
+6	0x20	FF7FFFFF	refuse	TurnMovement of a machine: the largest negative number
+6	0x20	C4F9FFFF	take	TurnMovement of a machine: the next number nearer 0 than the least
+6	0x20	C4FA0000	take	TurnMovement of a machine: at the least
+6	0x20	C4FA0001	refuse	TurnMovement of a machine: the next number farther from 0 than the least
+6	0x20	44F9FFFF	take	TurnMovement of a machine: the next number nearer 0 than the most
+6	0x20	44FA0000	take	TurnMovement of a machine: at the most
+6	0x20	44FA0001	refuse	TurnMovement of a machine: the next number farther from 0 than the most
+6	0x20	C4F9FFFF	take	TurnMovement of a machine: the next number nearer 0 than minus the most
+6	0x20	C4FA0000	take	TurnMovement of a machine: at minus the most
+6	0x20	C4FA0001	refuse	TurnMovement of a machine: the next number farther from 0 than minus the most
+6	0x20	447A0000	take	TurnMovement of a machine: inside
+6	0x20	C47A0000	take	TurnMovement of a machine: inside, negative
+41	0x20	00000000	take	TurnMovement of a body: the bits of 0
+41	0x20	80000000	refuse	TurnMovement of a body: -0
+41	0x20	00000001	refuse	TurnMovement of a body: the smallest denormal
+41	0x20	007FFFFF	refuse	TurnMovement of a body: the largest denormal
+41	0x20	80000001	refuse	TurnMovement of a body: a negative denormal
+41	0x20	00800000	take	TurnMovement of a body: the smallest normal number
+41	0x20	7F800000	refuse	TurnMovement of a body: infinity
+41	0x20	FF800000	refuse	TurnMovement of a body: minus infinity
+41	0x20	7FC00000	refuse	TurnMovement of a body: a NaN
+41	0x20	7F7FFFFF	refuse	TurnMovement of a body: the largest number
+41	0x20	FF7FFFFF	refuse	TurnMovement of a body: the largest negative number
+41	0x20	C4F9FFFF	take	TurnMovement of a body: the next number nearer 0 than the least
+41	0x20	C4FA0000	take	TurnMovement of a body: at the least
+41	0x20	C4FA0001	refuse	TurnMovement of a body: the next number farther from 0 than the least
+41	0x20	44F9FFFF	take	TurnMovement of a body: the next number nearer 0 than the most
+41	0x20	44FA0000	take	TurnMovement of a body: at the most
+41	0x20	44FA0001	refuse	TurnMovement of a body: the next number farther from 0 than the most
+41	0x20	C4F9FFFF	take	TurnMovement of a body: the next number nearer 0 than minus the most
+41	0x20	C4FA0000	take	TurnMovement of a body: at minus the most
+41	0x20	C4FA0001	refuse	TurnMovement of a body: the next number farther from 0 than minus the most
+41	0x20	447A0000	take	TurnMovement of a body: inside
+41	0x20	C47A0000	take	TurnMovement of a body: inside, negative
+66	0x20	00000000	take	TurnMovement of a cockpit: the bits of 0
+66	0x20	80000000	refuse	TurnMovement of a cockpit: -0
+66	0x20	00000001	refuse	TurnMovement of a cockpit: the smallest denormal
+66	0x20	007FFFFF	refuse	TurnMovement of a cockpit: the largest denormal
+66	0x20	80000001	refuse	TurnMovement of a cockpit: a negative denormal
+66	0x20	00800000	take	TurnMovement of a cockpit: the smallest normal number
+66	0x20	7F800000	refuse	TurnMovement of a cockpit: infinity
+66	0x20	FF800000	refuse	TurnMovement of a cockpit: minus infinity
+66	0x20	7FC00000	refuse	TurnMovement of a cockpit: a NaN
+66	0x20	7F7FFFFF	refuse	TurnMovement of a cockpit: the largest number
+66	0x20	FF7FFFFF	refuse	TurnMovement of a cockpit: the largest negative number
+66	0x20	C4F9FFFF	take	TurnMovement of a cockpit: the next number nearer 0 than the least
+66	0x20	C4FA0000	take	TurnMovement of a cockpit: at the least
+66	0x20	C4FA0001	refuse	TurnMovement of a cockpit: the next number farther from 0 than the least
+66	0x20	44F9FFFF	take	TurnMovement of a cockpit: the next number nearer 0 than the most
+66	0x20	44FA0000	take	TurnMovement of a cockpit: at the most
+66	0x20	44FA0001	refuse	TurnMovement of a cockpit: the next number farther from 0 than the most
+66	0x20	C4F9FFFF	take	TurnMovement of a cockpit: the next number nearer 0 than minus the most
+66	0x20	C4FA0000	take	TurnMovement of a cockpit: at minus the most
+66	0x20	C4FA0001	refuse	TurnMovement of a cockpit: the next number farther from 0 than minus the most
+66	0x20	447A0000	take	TurnMovement of a cockpit: inside
+66	0x20	C47A0000	take	TurnMovement of a cockpit: inside, negative
+91	0x20	00000000	take	TurnMovement of a booster: the bits of 0
+91	0x20	80000000	refuse	TurnMovement of a booster: -0
+91	0x20	00000001	refuse	TurnMovement of a booster: the smallest denormal
+91	0x20	007FFFFF	refuse	TurnMovement of a booster: the largest denormal
+91	0x20	80000001	refuse	TurnMovement of a booster: a negative denormal
+91	0x20	00800000	take	TurnMovement of a booster: the smallest normal number
+91	0x20	7F800000	refuse	TurnMovement of a booster: infinity
+91	0x20	FF800000	refuse	TurnMovement of a booster: minus infinity
+91	0x20	7FC00000	refuse	TurnMovement of a booster: a NaN
+91	0x20	7F7FFFFF	refuse	TurnMovement of a booster: the largest number
+91	0x20	FF7FFFFF	refuse	TurnMovement of a booster: the largest negative number
+91	0x20	C4F9FFFF	take	TurnMovement of a booster: the next number nearer 0 than the least
+91	0x20	C4FA0000	take	TurnMovement of a booster: at the least
+91	0x20	C4FA0001	refuse	TurnMovement of a booster: the next number farther from 0 than the least
+91	0x20	44F9FFFF	take	TurnMovement of a booster: the next number nearer 0 than the most
+91	0x20	44FA0000	take	TurnMovement of a booster: at the most
+91	0x20	44FA0001	refuse	TurnMovement of a booster: the next number farther from 0 than the most
+91	0x20	C4F9FFFF	take	TurnMovement of a booster: the next number nearer 0 than minus the most
+91	0x20	C4FA0000	take	TurnMovement of a booster: at minus the most
+91	0x20	C4FA0001	refuse	TurnMovement of a booster: the next number farther from 0 than minus the most
+91	0x20	447A0000	take	TurnMovement of a booster: inside
+91	0x20	C47A0000	take	TurnMovement of a booster: inside, negative
+6	0x24	00000000	take	StrafeTurn of a machine: the bits of 0
+6	0x24	80000000	refuse	StrafeTurn of a machine: -0
+6	0x24	00000001	refuse	StrafeTurn of a machine: the smallest denormal
+6	0x24	007FFFFF	refuse	StrafeTurn of a machine: the largest denormal
+6	0x24	80000001	refuse	StrafeTurn of a machine: a negative denormal
+6	0x24	00800000	take	StrafeTurn of a machine: the smallest normal number
+6	0x24	7F800000	refuse	StrafeTurn of a machine: infinity
+6	0x24	FF800000	refuse	StrafeTurn of a machine: minus infinity
+6	0x24	7FC00000	refuse	StrafeTurn of a machine: a NaN
+6	0x24	7F7FFFFF	refuse	StrafeTurn of a machine: the largest number
+6	0x24	FF7FFFFF	refuse	StrafeTurn of a machine: the largest negative number
+6	0x24	C479FFFF	take	StrafeTurn of a machine: the next number nearer 0 than the least
+6	0x24	C47A0000	take	StrafeTurn of a machine: at the least
+6	0x24	C47A0001	refuse	StrafeTurn of a machine: the next number farther from 0 than the least
+6	0x24	4479FFFF	take	StrafeTurn of a machine: the next number nearer 0 than the most
+6	0x24	447A0000	take	StrafeTurn of a machine: at the most
+6	0x24	447A0001	refuse	StrafeTurn of a machine: the next number farther from 0 than the most
+6	0x24	C479FFFF	take	StrafeTurn of a machine: the next number nearer 0 than minus the most
+6	0x24	C47A0000	take	StrafeTurn of a machine: at minus the most
+6	0x24	C47A0001	refuse	StrafeTurn of a machine: the next number farther from 0 than minus the most
+6	0x24	43FA0000	take	StrafeTurn of a machine: inside
+6	0x24	C3FA0000	take	StrafeTurn of a machine: inside, negative
+41	0x24	00000000	take	StrafeTurn of a body: the bits of 0
+41	0x24	80000000	refuse	StrafeTurn of a body: -0
+41	0x24	00000001	refuse	StrafeTurn of a body: the smallest denormal
+41	0x24	007FFFFF	refuse	StrafeTurn of a body: the largest denormal
+41	0x24	80000001	refuse	StrafeTurn of a body: a negative denormal
+41	0x24	00800000	take	StrafeTurn of a body: the smallest normal number
+41	0x24	7F800000	refuse	StrafeTurn of a body: infinity
+41	0x24	FF800000	refuse	StrafeTurn of a body: minus infinity
+41	0x24	7FC00000	refuse	StrafeTurn of a body: a NaN
+41	0x24	7F7FFFFF	refuse	StrafeTurn of a body: the largest number
+41	0x24	FF7FFFFF	refuse	StrafeTurn of a body: the largest negative number
+41	0x24	C479FFFF	take	StrafeTurn of a body: the next number nearer 0 than the least
+41	0x24	C47A0000	take	StrafeTurn of a body: at the least
+41	0x24	C47A0001	refuse	StrafeTurn of a body: the next number farther from 0 than the least
+41	0x24	4479FFFF	take	StrafeTurn of a body: the next number nearer 0 than the most
+41	0x24	447A0000	take	StrafeTurn of a body: at the most
+41	0x24	447A0001	refuse	StrafeTurn of a body: the next number farther from 0 than the most
+41	0x24	C479FFFF	take	StrafeTurn of a body: the next number nearer 0 than minus the most
+41	0x24	C47A0000	take	StrafeTurn of a body: at minus the most
+41	0x24	C47A0001	refuse	StrafeTurn of a body: the next number farther from 0 than minus the most
+41	0x24	43FA0000	take	StrafeTurn of a body: inside
+41	0x24	C3FA0000	take	StrafeTurn of a body: inside, negative
+66	0x24	00000000	take	StrafeTurn of a cockpit: the bits of 0
+66	0x24	80000000	refuse	StrafeTurn of a cockpit: -0
+66	0x24	00000001	refuse	StrafeTurn of a cockpit: the smallest denormal
+66	0x24	007FFFFF	refuse	StrafeTurn of a cockpit: the largest denormal
+66	0x24	80000001	refuse	StrafeTurn of a cockpit: a negative denormal
+66	0x24	00800000	take	StrafeTurn of a cockpit: the smallest normal number
+66	0x24	7F800000	refuse	StrafeTurn of a cockpit: infinity
+66	0x24	FF800000	refuse	StrafeTurn of a cockpit: minus infinity
+66	0x24	7FC00000	refuse	StrafeTurn of a cockpit: a NaN
+66	0x24	7F7FFFFF	refuse	StrafeTurn of a cockpit: the largest number
+66	0x24	FF7FFFFF	refuse	StrafeTurn of a cockpit: the largest negative number
+66	0x24	C479FFFF	take	StrafeTurn of a cockpit: the next number nearer 0 than the least
+66	0x24	C47A0000	take	StrafeTurn of a cockpit: at the least
+66	0x24	C47A0001	refuse	StrafeTurn of a cockpit: the next number farther from 0 than the least
+66	0x24	4479FFFF	take	StrafeTurn of a cockpit: the next number nearer 0 than the most
+66	0x24	447A0000	take	StrafeTurn of a cockpit: at the most
+66	0x24	447A0001	refuse	StrafeTurn of a cockpit: the next number farther from 0 than the most
+66	0x24	C479FFFF	take	StrafeTurn of a cockpit: the next number nearer 0 than minus the most
+66	0x24	C47A0000	take	StrafeTurn of a cockpit: at minus the most
+66	0x24	C47A0001	refuse	StrafeTurn of a cockpit: the next number farther from 0 than minus the most
+66	0x24	43FA0000	take	StrafeTurn of a cockpit: inside
+66	0x24	C3FA0000	take	StrafeTurn of a cockpit: inside, negative
+91	0x24	00000000	take	StrafeTurn of a booster: the bits of 0
+91	0x24	80000000	refuse	StrafeTurn of a booster: -0
+91	0x24	00000001	refuse	StrafeTurn of a booster: the smallest denormal
+91	0x24	007FFFFF	refuse	StrafeTurn of a booster: the largest denormal
+91	0x24	80000001	refuse	StrafeTurn of a booster: a negative denormal
+91	0x24	00800000	take	StrafeTurn of a booster: the smallest normal number
+91	0x24	7F800000	refuse	StrafeTurn of a booster: infinity
+91	0x24	FF800000	refuse	StrafeTurn of a booster: minus infinity
+91	0x24	7FC00000	refuse	StrafeTurn of a booster: a NaN
+91	0x24	7F7FFFFF	refuse	StrafeTurn of a booster: the largest number
+91	0x24	FF7FFFFF	refuse	StrafeTurn of a booster: the largest negative number
+91	0x24	C479FFFF	take	StrafeTurn of a booster: the next number nearer 0 than the least
+91	0x24	C47A0000	take	StrafeTurn of a booster: at the least
+91	0x24	C47A0001	refuse	StrafeTurn of a booster: the next number farther from 0 than the least
+91	0x24	4479FFFF	take	StrafeTurn of a booster: the next number nearer 0 than the most
+91	0x24	447A0000	take	StrafeTurn of a booster: at the most
+91	0x24	447A0001	refuse	StrafeTurn of a booster: the next number farther from 0 than the most
+91	0x24	C479FFFF	take	StrafeTurn of a booster: the next number nearer 0 than minus the most
+91	0x24	C47A0000	take	StrafeTurn of a booster: at minus the most
+91	0x24	C47A0001	refuse	StrafeTurn of a booster: the next number farther from 0 than minus the most
+91	0x24	43FA0000	take	StrafeTurn of a booster: inside
+91	0x24	C3FA0000	take	StrafeTurn of a booster: inside, negative
+6	0x28	00000000	take	Strafe of a machine: the bits of 0
+6	0x28	80000000	refuse	Strafe of a machine: -0
+6	0x28	00000001	refuse	Strafe of a machine: the smallest denormal
+6	0x28	007FFFFF	refuse	Strafe of a machine: the largest denormal
+6	0x28	80000001	refuse	Strafe of a machine: a negative denormal
+6	0x28	00800000	take	Strafe of a machine: the smallest normal number
+6	0x28	7F800000	refuse	Strafe of a machine: infinity
+6	0x28	FF800000	refuse	Strafe of a machine: minus infinity
+6	0x28	7FC00000	refuse	Strafe of a machine: a NaN
+6	0x28	7F7FFFFF	refuse	Strafe of a machine: the largest number
+6	0x28	FF7FFFFF	refuse	Strafe of a machine: the largest negative number
+6	0x28	C3F9FFFF	take	Strafe of a machine: the next number nearer 0 than the least
+6	0x28	C3FA0000	take	Strafe of a machine: at the least
+6	0x28	C3FA0001	refuse	Strafe of a machine: the next number farther from 0 than the least
+6	0x28	43F9FFFF	take	Strafe of a machine: the next number nearer 0 than the most
+6	0x28	43FA0000	take	Strafe of a machine: at the most
+6	0x28	43FA0001	refuse	Strafe of a machine: the next number farther from 0 than the most
+6	0x28	C3F9FFFF	take	Strafe of a machine: the next number nearer 0 than minus the most
+6	0x28	C3FA0000	take	Strafe of a machine: at minus the most
+6	0x28	C3FA0001	refuse	Strafe of a machine: the next number farther from 0 than minus the most
+6	0x28	437A0000	take	Strafe of a machine: inside
+6	0x28	C37A0000	take	Strafe of a machine: inside, negative
+41	0x28	00000000	take	Strafe of a body: the bits of 0
+41	0x28	80000000	refuse	Strafe of a body: -0
+41	0x28	00000001	refuse	Strafe of a body: the smallest denormal
+41	0x28	007FFFFF	refuse	Strafe of a body: the largest denormal
+41	0x28	80000001	refuse	Strafe of a body: a negative denormal
+41	0x28	00800000	take	Strafe of a body: the smallest normal number
+41	0x28	7F800000	refuse	Strafe of a body: infinity
+41	0x28	FF800000	refuse	Strafe of a body: minus infinity
+41	0x28	7FC00000	refuse	Strafe of a body: a NaN
+41	0x28	7F7FFFFF	refuse	Strafe of a body: the largest number
+41	0x28	FF7FFFFF	refuse	Strafe of a body: the largest negative number
+41	0x28	C3F9FFFF	take	Strafe of a body: the next number nearer 0 than the least
+41	0x28	C3FA0000	take	Strafe of a body: at the least
+41	0x28	C3FA0001	refuse	Strafe of a body: the next number farther from 0 than the least
+41	0x28	43F9FFFF	take	Strafe of a body: the next number nearer 0 than the most
+41	0x28	43FA0000	take	Strafe of a body: at the most
+41	0x28	43FA0001	refuse	Strafe of a body: the next number farther from 0 than the most
+41	0x28	C3F9FFFF	take	Strafe of a body: the next number nearer 0 than minus the most
+41	0x28	C3FA0000	take	Strafe of a body: at minus the most
+41	0x28	C3FA0001	refuse	Strafe of a body: the next number farther from 0 than minus the most
+41	0x28	437A0000	take	Strafe of a body: inside
+41	0x28	C37A0000	take	Strafe of a body: inside, negative
+66	0x28	00000000	take	Strafe of a cockpit: the bits of 0
+66	0x28	80000000	refuse	Strafe of a cockpit: -0
+66	0x28	00000001	refuse	Strafe of a cockpit: the smallest denormal
+66	0x28	007FFFFF	refuse	Strafe of a cockpit: the largest denormal
+66	0x28	80000001	refuse	Strafe of a cockpit: a negative denormal
+66	0x28	00800000	take	Strafe of a cockpit: the smallest normal number
+66	0x28	7F800000	refuse	Strafe of a cockpit: infinity
+66	0x28	FF800000	refuse	Strafe of a cockpit: minus infinity
+66	0x28	7FC00000	refuse	Strafe of a cockpit: a NaN
+66	0x28	7F7FFFFF	refuse	Strafe of a cockpit: the largest number
+66	0x28	FF7FFFFF	refuse	Strafe of a cockpit: the largest negative number
+66	0x28	C3F9FFFF	take	Strafe of a cockpit: the next number nearer 0 than the least
+66	0x28	C3FA0000	take	Strafe of a cockpit: at the least
+66	0x28	C3FA0001	refuse	Strafe of a cockpit: the next number farther from 0 than the least
+66	0x28	43F9FFFF	take	Strafe of a cockpit: the next number nearer 0 than the most
+66	0x28	43FA0000	take	Strafe of a cockpit: at the most
+66	0x28	43FA0001	refuse	Strafe of a cockpit: the next number farther from 0 than the most
+66	0x28	C3F9FFFF	take	Strafe of a cockpit: the next number nearer 0 than minus the most
+66	0x28	C3FA0000	take	Strafe of a cockpit: at minus the most
+66	0x28	C3FA0001	refuse	Strafe of a cockpit: the next number farther from 0 than minus the most
+66	0x28	437A0000	take	Strafe of a cockpit: inside
+66	0x28	C37A0000	take	Strafe of a cockpit: inside, negative
+91	0x28	00000000	take	Strafe of a booster: the bits of 0
+91	0x28	80000000	refuse	Strafe of a booster: -0
+91	0x28	00000001	refuse	Strafe of a booster: the smallest denormal
+91	0x28	007FFFFF	refuse	Strafe of a booster: the largest denormal
+91	0x28	80000001	refuse	Strafe of a booster: a negative denormal
+91	0x28	00800000	take	Strafe of a booster: the smallest normal number
+91	0x28	7F800000	refuse	Strafe of a booster: infinity
+91	0x28	FF800000	refuse	Strafe of a booster: minus infinity
+91	0x28	7FC00000	refuse	Strafe of a booster: a NaN
+91	0x28	7F7FFFFF	refuse	Strafe of a booster: the largest number
+91	0x28	FF7FFFFF	refuse	Strafe of a booster: the largest negative number
+91	0x28	C3F9FFFF	take	Strafe of a booster: the next number nearer 0 than the least
+91	0x28	C3FA0000	take	Strafe of a booster: at the least
+91	0x28	C3FA0001	refuse	Strafe of a booster: the next number farther from 0 than the least
+91	0x28	43F9FFFF	take	Strafe of a booster: the next number nearer 0 than the most
+91	0x28	43FA0000	take	Strafe of a booster: at the most
+91	0x28	43FA0001	refuse	Strafe of a booster: the next number farther from 0 than the most
+91	0x28	C3F9FFFF	take	Strafe of a booster: the next number nearer 0 than minus the most
+91	0x28	C3FA0000	take	Strafe of a booster: at minus the most
+91	0x28	C3FA0001	refuse	Strafe of a booster: the next number farther from 0 than minus the most
+91	0x28	437A0000	take	Strafe of a booster: inside
+91	0x28	C37A0000	take	Strafe of a booster: inside, negative
+6	0x2C	00000000	take	TurnReaction of a machine: the bits of 0
+6	0x2C	80000000	refuse	TurnReaction of a machine: -0
+6	0x2C	00000001	refuse	TurnReaction of a machine: the smallest denormal
+6	0x2C	007FFFFF	refuse	TurnReaction of a machine: the largest denormal
+6	0x2C	80000001	refuse	TurnReaction of a machine: a negative denormal
+6	0x2C	00800000	take	TurnReaction of a machine: the smallest normal number
+6	0x2C	7F800000	refuse	TurnReaction of a machine: infinity
+6	0x2C	FF800000	refuse	TurnReaction of a machine: minus infinity
+6	0x2C	7FC00000	refuse	TurnReaction of a machine: a NaN
+6	0x2C	7F7FFFFF	refuse	TurnReaction of a machine: the largest number
+6	0x2C	FF7FFFFF	refuse	TurnReaction of a machine: the largest negative number
+6	0x2C	C395FFFF	take	TurnReaction of a machine: the next number nearer 0 than the least
+6	0x2C	C3960000	take	TurnReaction of a machine: at the least
+6	0x2C	C3960001	refuse	TurnReaction of a machine: the next number farther from 0 than the least
+6	0x2C	4395FFFF	take	TurnReaction of a machine: the next number nearer 0 than the most
+6	0x2C	43960000	take	TurnReaction of a machine: at the most
+6	0x2C	43960001	refuse	TurnReaction of a machine: the next number farther from 0 than the most
+6	0x2C	C395FFFF	take	TurnReaction of a machine: the next number nearer 0 than minus the most
+6	0x2C	C3960000	take	TurnReaction of a machine: at minus the most
+6	0x2C	C3960001	refuse	TurnReaction of a machine: the next number farther from 0 than minus the most
+6	0x2C	43160000	take	TurnReaction of a machine: inside
+6	0x2C	C3160000	take	TurnReaction of a machine: inside, negative
+41	0x2C	00000000	take	TurnReaction of a body: the bits of 0
+41	0x2C	80000000	refuse	TurnReaction of a body: -0
+41	0x2C	00000001	refuse	TurnReaction of a body: the smallest denormal
+41	0x2C	007FFFFF	refuse	TurnReaction of a body: the largest denormal
+41	0x2C	80000001	refuse	TurnReaction of a body: a negative denormal
+41	0x2C	00800000	take	TurnReaction of a body: the smallest normal number
+41	0x2C	7F800000	refuse	TurnReaction of a body: infinity
+41	0x2C	FF800000	refuse	TurnReaction of a body: minus infinity
+41	0x2C	7FC00000	refuse	TurnReaction of a body: a NaN
+41	0x2C	7F7FFFFF	refuse	TurnReaction of a body: the largest number
+41	0x2C	FF7FFFFF	refuse	TurnReaction of a body: the largest negative number
+41	0x2C	C395FFFF	take	TurnReaction of a body: the next number nearer 0 than the least
+41	0x2C	C3960000	take	TurnReaction of a body: at the least
+41	0x2C	C3960001	refuse	TurnReaction of a body: the next number farther from 0 than the least
+41	0x2C	4395FFFF	take	TurnReaction of a body: the next number nearer 0 than the most
+41	0x2C	43960000	take	TurnReaction of a body: at the most
+41	0x2C	43960001	refuse	TurnReaction of a body: the next number farther from 0 than the most
+41	0x2C	C395FFFF	take	TurnReaction of a body: the next number nearer 0 than minus the most
+41	0x2C	C3960000	take	TurnReaction of a body: at minus the most
+41	0x2C	C3960001	refuse	TurnReaction of a body: the next number farther from 0 than minus the most
+41	0x2C	43160000	take	TurnReaction of a body: inside
+41	0x2C	C3160000	take	TurnReaction of a body: inside, negative
+66	0x2C	00000000	take	TurnReaction of a cockpit: the bits of 0
+66	0x2C	80000000	refuse	TurnReaction of a cockpit: -0
+66	0x2C	00000001	refuse	TurnReaction of a cockpit: the smallest denormal
+66	0x2C	007FFFFF	refuse	TurnReaction of a cockpit: the largest denormal
+66	0x2C	80000001	refuse	TurnReaction of a cockpit: a negative denormal
+66	0x2C	00800000	take	TurnReaction of a cockpit: the smallest normal number
+66	0x2C	7F800000	refuse	TurnReaction of a cockpit: infinity
+66	0x2C	FF800000	refuse	TurnReaction of a cockpit: minus infinity
+66	0x2C	7FC00000	refuse	TurnReaction of a cockpit: a NaN
+66	0x2C	7F7FFFFF	refuse	TurnReaction of a cockpit: the largest number
+66	0x2C	FF7FFFFF	refuse	TurnReaction of a cockpit: the largest negative number
+66	0x2C	C395FFFF	take	TurnReaction of a cockpit: the next number nearer 0 than the least
+66	0x2C	C3960000	take	TurnReaction of a cockpit: at the least
+66	0x2C	C3960001	refuse	TurnReaction of a cockpit: the next number farther from 0 than the least
+66	0x2C	4395FFFF	take	TurnReaction of a cockpit: the next number nearer 0 than the most
+66	0x2C	43960000	take	TurnReaction of a cockpit: at the most
+66	0x2C	43960001	refuse	TurnReaction of a cockpit: the next number farther from 0 than the most
+66	0x2C	C395FFFF	take	TurnReaction of a cockpit: the next number nearer 0 than minus the most
+66	0x2C	C3960000	take	TurnReaction of a cockpit: at minus the most
+66	0x2C	C3960001	refuse	TurnReaction of a cockpit: the next number farther from 0 than minus the most
+66	0x2C	43160000	take	TurnReaction of a cockpit: inside
+66	0x2C	C3160000	take	TurnReaction of a cockpit: inside, negative
+91	0x2C	00000000	take	TurnReaction of a booster: the bits of 0
+91	0x2C	80000000	refuse	TurnReaction of a booster: -0
+91	0x2C	00000001	refuse	TurnReaction of a booster: the smallest denormal
+91	0x2C	007FFFFF	refuse	TurnReaction of a booster: the largest denormal
+91	0x2C	80000001	refuse	TurnReaction of a booster: a negative denormal
+91	0x2C	00800000	take	TurnReaction of a booster: the smallest normal number
+91	0x2C	7F800000	refuse	TurnReaction of a booster: infinity
+91	0x2C	FF800000	refuse	TurnReaction of a booster: minus infinity
+91	0x2C	7FC00000	refuse	TurnReaction of a booster: a NaN
+91	0x2C	7F7FFFFF	refuse	TurnReaction of a booster: the largest number
+91	0x2C	FF7FFFFF	refuse	TurnReaction of a booster: the largest negative number
+91	0x2C	C395FFFF	take	TurnReaction of a booster: the next number nearer 0 than the least
+91	0x2C	C3960000	take	TurnReaction of a booster: at the least
+91	0x2C	C3960001	refuse	TurnReaction of a booster: the next number farther from 0 than the least
+91	0x2C	4395FFFF	take	TurnReaction of a booster: the next number nearer 0 than the most
+91	0x2C	43960000	take	TurnReaction of a booster: at the most
+91	0x2C	43960001	refuse	TurnReaction of a booster: the next number farther from 0 than the most
+91	0x2C	C395FFFF	take	TurnReaction of a booster: the next number nearer 0 than minus the most
+91	0x2C	C3960000	take	TurnReaction of a booster: at minus the most
+91	0x2C	C3960001	refuse	TurnReaction of a booster: the next number farther from 0 than minus the most
+91	0x2C	43160000	take	TurnReaction of a booster: inside
+91	0x2C	C3160000	take	TurnReaction of a booster: inside, negative
+6	0x30	00000000	take	Grip2 of a machine: the bits of 0
+6	0x30	80000000	refuse	Grip2 of a machine: -0
+6	0x30	00000001	refuse	Grip2 of a machine: the smallest denormal
+6	0x30	007FFFFF	refuse	Grip2 of a machine: the largest denormal
+6	0x30	80000001	refuse	Grip2 of a machine: a negative denormal
+6	0x30	00800000	take	Grip2 of a machine: the smallest normal number
+6	0x30	7F800000	refuse	Grip2 of a machine: infinity
+6	0x30	FF800000	refuse	Grip2 of a machine: minus infinity
+6	0x30	7FC00000	refuse	Grip2 of a machine: a NaN
+6	0x30	7F7FFFFF	refuse	Grip2 of a machine: the largest number
+6	0x30	FF7FFFFF	refuse	Grip2 of a machine: the largest negative number
+6	0x30	C11FFFFF	take	Grip2 of a machine: the next number nearer 0 than the least
+6	0x30	C1200000	take	Grip2 of a machine: at the least
+6	0x30	C1200001	refuse	Grip2 of a machine: the next number farther from 0 than the least
+6	0x30	411FFFFF	take	Grip2 of a machine: the next number nearer 0 than the most
+6	0x30	41200000	take	Grip2 of a machine: at the most
+6	0x30	41200001	refuse	Grip2 of a machine: the next number farther from 0 than the most
+6	0x30	C11FFFFF	take	Grip2 of a machine: the next number nearer 0 than minus the most
+6	0x30	C1200000	take	Grip2 of a machine: at minus the most
+6	0x30	C1200001	refuse	Grip2 of a machine: the next number farther from 0 than minus the most
+6	0x30	40A00000	take	Grip2 of a machine: inside
+6	0x30	C0A00000	take	Grip2 of a machine: inside, negative
+41	0x30	00000000	take	Grip2 of a body: the bits of 0
+41	0x30	80000000	refuse	Grip2 of a body: -0
+41	0x30	00000001	refuse	Grip2 of a body: the smallest denormal
+41	0x30	007FFFFF	refuse	Grip2 of a body: the largest denormal
+41	0x30	80000001	refuse	Grip2 of a body: a negative denormal
+41	0x30	00800000	take	Grip2 of a body: the smallest normal number
+41	0x30	7F800000	refuse	Grip2 of a body: infinity
+41	0x30	FF800000	refuse	Grip2 of a body: minus infinity
+41	0x30	7FC00000	refuse	Grip2 of a body: a NaN
+41	0x30	7F7FFFFF	refuse	Grip2 of a body: the largest number
+41	0x30	FF7FFFFF	refuse	Grip2 of a body: the largest negative number
+41	0x30	C11FFFFF	take	Grip2 of a body: the next number nearer 0 than the least
+41	0x30	C1200000	take	Grip2 of a body: at the least
+41	0x30	C1200001	refuse	Grip2 of a body: the next number farther from 0 than the least
+41	0x30	411FFFFF	take	Grip2 of a body: the next number nearer 0 than the most
+41	0x30	41200000	take	Grip2 of a body: at the most
+41	0x30	41200001	refuse	Grip2 of a body: the next number farther from 0 than the most
+41	0x30	C11FFFFF	take	Grip2 of a body: the next number nearer 0 than minus the most
+41	0x30	C1200000	take	Grip2 of a body: at minus the most
+41	0x30	C1200001	refuse	Grip2 of a body: the next number farther from 0 than minus the most
+41	0x30	40A00000	take	Grip2 of a body: inside
+41	0x30	C0A00000	take	Grip2 of a body: inside, negative
+66	0x30	00000000	take	Grip2 of a cockpit: the bits of 0
+66	0x30	80000000	refuse	Grip2 of a cockpit: -0
+66	0x30	00000001	refuse	Grip2 of a cockpit: the smallest denormal
+66	0x30	007FFFFF	refuse	Grip2 of a cockpit: the largest denormal
+66	0x30	80000001	refuse	Grip2 of a cockpit: a negative denormal
+66	0x30	00800000	take	Grip2 of a cockpit: the smallest normal number
+66	0x30	7F800000	refuse	Grip2 of a cockpit: infinity
+66	0x30	FF800000	refuse	Grip2 of a cockpit: minus infinity
+66	0x30	7FC00000	refuse	Grip2 of a cockpit: a NaN
+66	0x30	7F7FFFFF	refuse	Grip2 of a cockpit: the largest number
+66	0x30	FF7FFFFF	refuse	Grip2 of a cockpit: the largest negative number
+66	0x30	C11FFFFF	take	Grip2 of a cockpit: the next number nearer 0 than the least
+66	0x30	C1200000	take	Grip2 of a cockpit: at the least
+66	0x30	C1200001	refuse	Grip2 of a cockpit: the next number farther from 0 than the least
+66	0x30	411FFFFF	take	Grip2 of a cockpit: the next number nearer 0 than the most
+66	0x30	41200000	take	Grip2 of a cockpit: at the most
+66	0x30	41200001	refuse	Grip2 of a cockpit: the next number farther from 0 than the most
+66	0x30	C11FFFFF	take	Grip2 of a cockpit: the next number nearer 0 than minus the most
+66	0x30	C1200000	take	Grip2 of a cockpit: at minus the most
+66	0x30	C1200001	refuse	Grip2 of a cockpit: the next number farther from 0 than minus the most
+66	0x30	40A00000	take	Grip2 of a cockpit: inside
+66	0x30	C0A00000	take	Grip2 of a cockpit: inside, negative
+91	0x30	00000000	take	Grip2 of a booster: the bits of 0
+91	0x30	80000000	refuse	Grip2 of a booster: -0
+91	0x30	00000001	refuse	Grip2 of a booster: the smallest denormal
+91	0x30	007FFFFF	refuse	Grip2 of a booster: the largest denormal
+91	0x30	80000001	refuse	Grip2 of a booster: a negative denormal
+91	0x30	00800000	take	Grip2 of a booster: the smallest normal number
+91	0x30	7F800000	refuse	Grip2 of a booster: infinity
+91	0x30	FF800000	refuse	Grip2 of a booster: minus infinity
+91	0x30	7FC00000	refuse	Grip2 of a booster: a NaN
+91	0x30	7F7FFFFF	refuse	Grip2 of a booster: the largest number
+91	0x30	FF7FFFFF	refuse	Grip2 of a booster: the largest negative number
+91	0x30	C11FFFFF	take	Grip2 of a booster: the next number nearer 0 than the least
+91	0x30	C1200000	take	Grip2 of a booster: at the least
+91	0x30	C1200001	refuse	Grip2 of a booster: the next number farther from 0 than the least
+91	0x30	411FFFFF	take	Grip2 of a booster: the next number nearer 0 than the most
+91	0x30	41200000	take	Grip2 of a booster: at the most
+91	0x30	41200001	refuse	Grip2 of a booster: the next number farther from 0 than the most
+91	0x30	C11FFFFF	take	Grip2 of a booster: the next number nearer 0 than minus the most
+91	0x30	C1200000	take	Grip2 of a booster: at minus the most
+91	0x30	C1200001	refuse	Grip2 of a booster: the next number farther from 0 than minus the most
+91	0x30	40A00000	take	Grip2 of a booster: inside
+91	0x30	C0A00000	take	Grip2 of a booster: inside, negative
+6	0x34	00000000	refuse	BoostStrength of a machine: the bits of 0
+6	0x34	80000000	refuse	BoostStrength of a machine: -0
+6	0x34	00000001	refuse	BoostStrength of a machine: the smallest denormal
+6	0x34	007FFFFF	refuse	BoostStrength of a machine: the largest denormal
+6	0x34	80000001	refuse	BoostStrength of a machine: a negative denormal
+6	0x34	00800000	refuse	BoostStrength of a machine: the smallest normal number
+6	0x34	7F800000	refuse	BoostStrength of a machine: infinity
+6	0x34	FF800000	refuse	BoostStrength of a machine: minus infinity
+6	0x34	7FC00000	refuse	BoostStrength of a machine: a NaN
+6	0x34	7F7FFFFF	refuse	BoostStrength of a machine: the largest number
+6	0x34	FF7FFFFF	refuse	BoostStrength of a machine: the largest negative number
+6	0x34	3DCCCCCC	refuse	BoostStrength of a machine: the next number nearer 0 than the least
+6	0x34	3DCCCCCD	take	BoostStrength of a machine: at the least
+6	0x34	3DCCCCCE	take	BoostStrength of a machine: the next number farther from 0 than the least
+6	0x34	435BFFFF	take	BoostStrength of a machine: the next number nearer 0 than the most
+6	0x34	435C0000	take	BoostStrength of a machine: at the most
+6	0x34	435C0001	refuse	BoostStrength of a machine: the next number farther from 0 than the most
+6	0x34	C35BFFFF	refuse	BoostStrength of a machine: the next number nearer 0 than minus the most
+6	0x34	C35C0000	refuse	BoostStrength of a machine: at minus the most
+6	0x34	C35C0001	refuse	BoostStrength of a machine: the next number farther from 0 than minus the most
+6	0x34	42DC199A	take	BoostStrength of a machine: inside
+6	0x34	C2DC199A	refuse	BoostStrength of a machine: inside, negative
+41	0x34	00000000	take	BoostStrength of a body: the bits of 0
+41	0x34	80000000	refuse	BoostStrength of a body: -0
+41	0x34	00000001	refuse	BoostStrength of a body: the smallest denormal
+41	0x34	007FFFFF	refuse	BoostStrength of a body: the largest denormal
+41	0x34	80000001	refuse	BoostStrength of a body: a negative denormal
+41	0x34	00800000	take	BoostStrength of a body: the smallest normal number
+41	0x34	7F800000	refuse	BoostStrength of a body: infinity
+41	0x34	FF800000	refuse	BoostStrength of a body: minus infinity
+41	0x34	7FC00000	refuse	BoostStrength of a body: a NaN
+41	0x34	7F7FFFFF	refuse	BoostStrength of a body: the largest number
+41	0x34	FF7FFFFF	refuse	BoostStrength of a body: the largest negative number
+41	0x34	3DCCCCCC	take	BoostStrength of a body: the next number nearer 0 than the least
+41	0x34	3DCCCCCD	take	BoostStrength of a body: at the least
+41	0x34	3DCCCCCE	take	BoostStrength of a body: the next number farther from 0 than the least
+41	0x34	435BFFFF	take	BoostStrength of a body: the next number nearer 0 than the most
+41	0x34	435C0000	take	BoostStrength of a body: at the most
+41	0x34	435C0001	refuse	BoostStrength of a body: the next number farther from 0 than the most
+41	0x34	C35BFFFF	take	BoostStrength of a body: the next number nearer 0 than minus the most
+41	0x34	C35C0000	take	BoostStrength of a body: at minus the most
+41	0x34	C35C0001	refuse	BoostStrength of a body: the next number farther from 0 than minus the most
+41	0x34	42DC199A	take	BoostStrength of a body: inside
+41	0x34	C2DC199A	take	BoostStrength of a body: inside, negative
+66	0x34	00000000	take	BoostStrength of a cockpit: the bits of 0
+66	0x34	80000000	refuse	BoostStrength of a cockpit: -0
+66	0x34	00000001	refuse	BoostStrength of a cockpit: the smallest denormal
+66	0x34	007FFFFF	refuse	BoostStrength of a cockpit: the largest denormal
+66	0x34	80000001	refuse	BoostStrength of a cockpit: a negative denormal
+66	0x34	00800000	take	BoostStrength of a cockpit: the smallest normal number
+66	0x34	7F800000	refuse	BoostStrength of a cockpit: infinity
+66	0x34	FF800000	refuse	BoostStrength of a cockpit: minus infinity
+66	0x34	7FC00000	refuse	BoostStrength of a cockpit: a NaN
+66	0x34	7F7FFFFF	refuse	BoostStrength of a cockpit: the largest number
+66	0x34	FF7FFFFF	refuse	BoostStrength of a cockpit: the largest negative number
+66	0x34	3DCCCCCC	take	BoostStrength of a cockpit: the next number nearer 0 than the least
+66	0x34	3DCCCCCD	take	BoostStrength of a cockpit: at the least
+66	0x34	3DCCCCCE	take	BoostStrength of a cockpit: the next number farther from 0 than the least
+66	0x34	435BFFFF	take	BoostStrength of a cockpit: the next number nearer 0 than the most
+66	0x34	435C0000	take	BoostStrength of a cockpit: at the most
+66	0x34	435C0001	refuse	BoostStrength of a cockpit: the next number farther from 0 than the most
+66	0x34	C35BFFFF	take	BoostStrength of a cockpit: the next number nearer 0 than minus the most
+66	0x34	C35C0000	take	BoostStrength of a cockpit: at minus the most
+66	0x34	C35C0001	refuse	BoostStrength of a cockpit: the next number farther from 0 than minus the most
+66	0x34	42DC199A	take	BoostStrength of a cockpit: inside
+66	0x34	C2DC199A	take	BoostStrength of a cockpit: inside, negative
+91	0x34	00000000	take	BoostStrength of a booster: the bits of 0
+91	0x34	80000000	refuse	BoostStrength of a booster: -0
+91	0x34	00000001	refuse	BoostStrength of a booster: the smallest denormal
+91	0x34	007FFFFF	refuse	BoostStrength of a booster: the largest denormal
+91	0x34	80000001	refuse	BoostStrength of a booster: a negative denormal
+91	0x34	00800000	take	BoostStrength of a booster: the smallest normal number
+91	0x34	7F800000	refuse	BoostStrength of a booster: infinity
+91	0x34	FF800000	refuse	BoostStrength of a booster: minus infinity
+91	0x34	7FC00000	refuse	BoostStrength of a booster: a NaN
+91	0x34	7F7FFFFF	refuse	BoostStrength of a booster: the largest number
+91	0x34	FF7FFFFF	refuse	BoostStrength of a booster: the largest negative number
+91	0x34	3DCCCCCC	take	BoostStrength of a booster: the next number nearer 0 than the least
+91	0x34	3DCCCCCD	take	BoostStrength of a booster: at the least
+91	0x34	3DCCCCCE	take	BoostStrength of a booster: the next number farther from 0 than the least
+91	0x34	435BFFFF	take	BoostStrength of a booster: the next number nearer 0 than the most
+91	0x34	435C0000	take	BoostStrength of a booster: at the most
+91	0x34	435C0001	refuse	BoostStrength of a booster: the next number farther from 0 than the most
+91	0x34	C35BFFFF	take	BoostStrength of a booster: the next number nearer 0 than minus the most
+91	0x34	C35C0000	take	BoostStrength of a booster: at minus the most
+91	0x34	C35C0001	refuse	BoostStrength of a booster: the next number farther from 0 than minus the most
+91	0x34	42DC199A	take	BoostStrength of a booster: inside
+91	0x34	C2DC199A	take	BoostStrength of a booster: inside, negative
+6	0x38	00000000	take	BoostDuration of a machine: the bits of 0
+6	0x38	80000000	refuse	BoostDuration of a machine: -0
+6	0x38	00000001	refuse	BoostDuration of a machine: the smallest denormal
+6	0x38	007FFFFF	refuse	BoostDuration of a machine: the largest denormal
+6	0x38	80000001	refuse	BoostDuration of a machine: a negative denormal
+6	0x38	00800000	take	BoostDuration of a machine: the smallest normal number
+6	0x38	7F800000	refuse	BoostDuration of a machine: infinity
+6	0x38	FF800000	refuse	BoostDuration of a machine: minus infinity
+6	0x38	7FC00000	refuse	BoostDuration of a machine: a NaN
+6	0x38	7F7FFFFF	refuse	BoostDuration of a machine: the largest number
+6	0x38	FF7FFFFF	refuse	BoostDuration of a machine: the largest negative number
+6	0x38	00000000	take	BoostDuration of a machine: at the least
+6	0x38	408851EB	take	BoostDuration of a machine: the next number nearer 0 than the most
+6	0x38	408851EC	refuse	BoostDuration of a machine: at the most
+6	0x38	408851ED	refuse	BoostDuration of a machine: the next number farther from 0 than the most
+6	0x38	C08851EB	refuse	BoostDuration of a machine: the next number nearer 0 than minus the most
+6	0x38	C08851EC	refuse	BoostDuration of a machine: at minus the most
+6	0x38	C08851ED	refuse	BoostDuration of a machine: the next number farther from 0 than minus the most
+6	0x38	400851EC	take	BoostDuration of a machine: inside
+6	0x38	C00851EC	refuse	BoostDuration of a machine: inside, negative
+41	0x38	00000000	take	BoostDuration of a body: the bits of 0
+41	0x38	80000000	refuse	BoostDuration of a body: -0
+41	0x38	00000001	refuse	BoostDuration of a body: the smallest denormal
+41	0x38	007FFFFF	refuse	BoostDuration of a body: the largest denormal
+41	0x38	80000001	refuse	BoostDuration of a body: a negative denormal
+41	0x38	00800000	take	BoostDuration of a body: the smallest normal number
+41	0x38	7F800000	refuse	BoostDuration of a body: infinity
+41	0x38	FF800000	refuse	BoostDuration of a body: minus infinity
+41	0x38	7FC00000	refuse	BoostDuration of a body: a NaN
+41	0x38	7F7FFFFF	refuse	BoostDuration of a body: the largest number
+41	0x38	FF7FFFFF	refuse	BoostDuration of a body: the largest negative number
+41	0x38	00000000	take	BoostDuration of a body: at the least
+41	0x38	408851EB	take	BoostDuration of a body: the next number nearer 0 than the most
+41	0x38	408851EC	refuse	BoostDuration of a body: at the most
+41	0x38	408851ED	refuse	BoostDuration of a body: the next number farther from 0 than the most
+41	0x38	C08851EB	take	BoostDuration of a body: the next number nearer 0 than minus the most
+41	0x38	C08851EC	refuse	BoostDuration of a body: at minus the most
+41	0x38	C08851ED	refuse	BoostDuration of a body: the next number farther from 0 than minus the most
+41	0x38	400851EC	take	BoostDuration of a body: inside
+41	0x38	C00851EC	take	BoostDuration of a body: inside, negative
+66	0x38	00000000	take	BoostDuration of a cockpit: the bits of 0
+66	0x38	80000000	refuse	BoostDuration of a cockpit: -0
+66	0x38	00000001	refuse	BoostDuration of a cockpit: the smallest denormal
+66	0x38	007FFFFF	refuse	BoostDuration of a cockpit: the largest denormal
+66	0x38	80000001	refuse	BoostDuration of a cockpit: a negative denormal
+66	0x38	00800000	take	BoostDuration of a cockpit: the smallest normal number
+66	0x38	7F800000	refuse	BoostDuration of a cockpit: infinity
+66	0x38	FF800000	refuse	BoostDuration of a cockpit: minus infinity
+66	0x38	7FC00000	refuse	BoostDuration of a cockpit: a NaN
+66	0x38	7F7FFFFF	refuse	BoostDuration of a cockpit: the largest number
+66	0x38	FF7FFFFF	refuse	BoostDuration of a cockpit: the largest negative number
+66	0x38	00000000	take	BoostDuration of a cockpit: at the least
+66	0x38	408851EB	take	BoostDuration of a cockpit: the next number nearer 0 than the most
+66	0x38	408851EC	refuse	BoostDuration of a cockpit: at the most
+66	0x38	408851ED	refuse	BoostDuration of a cockpit: the next number farther from 0 than the most
+66	0x38	C08851EB	take	BoostDuration of a cockpit: the next number nearer 0 than minus the most
+66	0x38	C08851EC	refuse	BoostDuration of a cockpit: at minus the most
+66	0x38	C08851ED	refuse	BoostDuration of a cockpit: the next number farther from 0 than minus the most
+66	0x38	400851EC	take	BoostDuration of a cockpit: inside
+66	0x38	C00851EC	take	BoostDuration of a cockpit: inside, negative
+91	0x38	00000000	take	BoostDuration of a booster: the bits of 0
+91	0x38	80000000	refuse	BoostDuration of a booster: -0
+91	0x38	00000001	refuse	BoostDuration of a booster: the smallest denormal
+91	0x38	007FFFFF	refuse	BoostDuration of a booster: the largest denormal
+91	0x38	80000001	refuse	BoostDuration of a booster: a negative denormal
+91	0x38	00800000	take	BoostDuration of a booster: the smallest normal number
+91	0x38	7F800000	refuse	BoostDuration of a booster: infinity
+91	0x38	FF800000	refuse	BoostDuration of a booster: minus infinity
+91	0x38	7FC00000	refuse	BoostDuration of a booster: a NaN
+91	0x38	7F7FFFFF	refuse	BoostDuration of a booster: the largest number
+91	0x38	FF7FFFFF	refuse	BoostDuration of a booster: the largest negative number
+91	0x38	00000000	take	BoostDuration of a booster: at the least
+91	0x38	408851EB	take	BoostDuration of a booster: the next number nearer 0 than the most
+91	0x38	408851EC	refuse	BoostDuration of a booster: at the most
+91	0x38	408851ED	refuse	BoostDuration of a booster: the next number farther from 0 than the most
+91	0x38	C08851EB	take	BoostDuration of a booster: the next number nearer 0 than minus the most
+91	0x38	C08851EC	refuse	BoostDuration of a booster: at minus the most
+91	0x38	C08851ED	refuse	BoostDuration of a booster: the next number farther from 0 than minus the most
+91	0x38	400851EC	take	BoostDuration of a booster: inside
+91	0x38	C00851EC	take	BoostDuration of a booster: inside, negative
+6	0x3C	00000000	take	TurnDeceleration of a machine: the bits of 0
+6	0x3C	80000000	refuse	TurnDeceleration of a machine: -0
+6	0x3C	00000001	refuse	TurnDeceleration of a machine: the smallest denormal
+6	0x3C	007FFFFF	refuse	TurnDeceleration of a machine: the largest denormal
+6	0x3C	80000001	refuse	TurnDeceleration of a machine: a negative denormal
+6	0x3C	00800000	take	TurnDeceleration of a machine: the smallest normal number
+6	0x3C	7F800000	refuse	TurnDeceleration of a machine: infinity
+6	0x3C	FF800000	refuse	TurnDeceleration of a machine: minus infinity
+6	0x3C	7FC00000	refuse	TurnDeceleration of a machine: a NaN
+6	0x3C	7F7FFFFF	refuse	TurnDeceleration of a machine: the largest number
+6	0x3C	FF7FFFFF	refuse	TurnDeceleration of a machine: the largest negative number
+6	0x3C	BF333332	take	TurnDeceleration of a machine: the next number nearer 0 than the least
+6	0x3C	BF333333	take	TurnDeceleration of a machine: at the least
+6	0x3C	BF333334	refuse	TurnDeceleration of a machine: the next number farther from 0 than the least
+6	0x3C	3F333332	take	TurnDeceleration of a machine: the next number nearer 0 than the most
+6	0x3C	3F333333	take	TurnDeceleration of a machine: at the most
+6	0x3C	3F333334	refuse	TurnDeceleration of a machine: the next number farther from 0 than the most
+6	0x3C	BF333332	take	TurnDeceleration of a machine: the next number nearer 0 than minus the most
+6	0x3C	BF333333	take	TurnDeceleration of a machine: at minus the most
+6	0x3C	BF333334	refuse	TurnDeceleration of a machine: the next number farther from 0 than minus the most
+6	0x3C	3EB33333	take	TurnDeceleration of a machine: inside
+6	0x3C	BEB33333	take	TurnDeceleration of a machine: inside, negative
+41	0x3C	00000000	take	TurnDeceleration of a body: the bits of 0
+41	0x3C	80000000	refuse	TurnDeceleration of a body: -0
+41	0x3C	00000001	refuse	TurnDeceleration of a body: the smallest denormal
+41	0x3C	007FFFFF	refuse	TurnDeceleration of a body: the largest denormal
+41	0x3C	80000001	refuse	TurnDeceleration of a body: a negative denormal
+41	0x3C	00800000	take	TurnDeceleration of a body: the smallest normal number
+41	0x3C	7F800000	refuse	TurnDeceleration of a body: infinity
+41	0x3C	FF800000	refuse	TurnDeceleration of a body: minus infinity
+41	0x3C	7FC00000	refuse	TurnDeceleration of a body: a NaN
+41	0x3C	7F7FFFFF	refuse	TurnDeceleration of a body: the largest number
+41	0x3C	FF7FFFFF	refuse	TurnDeceleration of a body: the largest negative number
+41	0x3C	BF333332	take	TurnDeceleration of a body: the next number nearer 0 than the least
+41	0x3C	BF333333	take	TurnDeceleration of a body: at the least
+41	0x3C	BF333334	refuse	TurnDeceleration of a body: the next number farther from 0 than the least
+41	0x3C	3F333332	take	TurnDeceleration of a body: the next number nearer 0 than the most
+41	0x3C	3F333333	take	TurnDeceleration of a body: at the most
+41	0x3C	3F333334	refuse	TurnDeceleration of a body: the next number farther from 0 than the most
+41	0x3C	BF333332	take	TurnDeceleration of a body: the next number nearer 0 than minus the most
+41	0x3C	BF333333	take	TurnDeceleration of a body: at minus the most
+41	0x3C	BF333334	refuse	TurnDeceleration of a body: the next number farther from 0 than minus the most
+41	0x3C	3EB33333	take	TurnDeceleration of a body: inside
+41	0x3C	BEB33333	take	TurnDeceleration of a body: inside, negative
+66	0x3C	00000000	take	TurnDeceleration of a cockpit: the bits of 0
+66	0x3C	80000000	refuse	TurnDeceleration of a cockpit: -0
+66	0x3C	00000001	refuse	TurnDeceleration of a cockpit: the smallest denormal
+66	0x3C	007FFFFF	refuse	TurnDeceleration of a cockpit: the largest denormal
+66	0x3C	80000001	refuse	TurnDeceleration of a cockpit: a negative denormal
+66	0x3C	00800000	take	TurnDeceleration of a cockpit: the smallest normal number
+66	0x3C	7F800000	refuse	TurnDeceleration of a cockpit: infinity
+66	0x3C	FF800000	refuse	TurnDeceleration of a cockpit: minus infinity
+66	0x3C	7FC00000	refuse	TurnDeceleration of a cockpit: a NaN
+66	0x3C	7F7FFFFF	refuse	TurnDeceleration of a cockpit: the largest number
+66	0x3C	FF7FFFFF	refuse	TurnDeceleration of a cockpit: the largest negative number
+66	0x3C	BF333332	take	TurnDeceleration of a cockpit: the next number nearer 0 than the least
+66	0x3C	BF333333	take	TurnDeceleration of a cockpit: at the least
+66	0x3C	BF333334	refuse	TurnDeceleration of a cockpit: the next number farther from 0 than the least
+66	0x3C	3F333332	take	TurnDeceleration of a cockpit: the next number nearer 0 than the most
+66	0x3C	3F333333	take	TurnDeceleration of a cockpit: at the most
+66	0x3C	3F333334	refuse	TurnDeceleration of a cockpit: the next number farther from 0 than the most
+66	0x3C	BF333332	take	TurnDeceleration of a cockpit: the next number nearer 0 than minus the most
+66	0x3C	BF333333	take	TurnDeceleration of a cockpit: at minus the most
+66	0x3C	BF333334	refuse	TurnDeceleration of a cockpit: the next number farther from 0 than minus the most
+66	0x3C	3EB33333	take	TurnDeceleration of a cockpit: inside
+66	0x3C	BEB33333	take	TurnDeceleration of a cockpit: inside, negative
+91	0x3C	00000000	take	TurnDeceleration of a booster: the bits of 0
+91	0x3C	80000000	refuse	TurnDeceleration of a booster: -0
+91	0x3C	00000001	refuse	TurnDeceleration of a booster: the smallest denormal
+91	0x3C	007FFFFF	refuse	TurnDeceleration of a booster: the largest denormal
+91	0x3C	80000001	refuse	TurnDeceleration of a booster: a negative denormal
+91	0x3C	00800000	take	TurnDeceleration of a booster: the smallest normal number
+91	0x3C	7F800000	refuse	TurnDeceleration of a booster: infinity
+91	0x3C	FF800000	refuse	TurnDeceleration of a booster: minus infinity
+91	0x3C	7FC00000	refuse	TurnDeceleration of a booster: a NaN
+91	0x3C	7F7FFFFF	refuse	TurnDeceleration of a booster: the largest number
+91	0x3C	FF7FFFFF	refuse	TurnDeceleration of a booster: the largest negative number
+91	0x3C	BF333332	take	TurnDeceleration of a booster: the next number nearer 0 than the least
+91	0x3C	BF333333	take	TurnDeceleration of a booster: at the least
+91	0x3C	BF333334	refuse	TurnDeceleration of a booster: the next number farther from 0 than the least
+91	0x3C	3F333332	take	TurnDeceleration of a booster: the next number nearer 0 than the most
+91	0x3C	3F333333	take	TurnDeceleration of a booster: at the most
+91	0x3C	3F333334	refuse	TurnDeceleration of a booster: the next number farther from 0 than the most
+91	0x3C	BF333332	take	TurnDeceleration of a booster: the next number nearer 0 than minus the most
+91	0x3C	BF333333	take	TurnDeceleration of a booster: at minus the most
+91	0x3C	BF333334	refuse	TurnDeceleration of a booster: the next number farther from 0 than minus the most
+91	0x3C	3EB33333	take	TurnDeceleration of a booster: inside
+91	0x3C	BEB33333	take	TurnDeceleration of a booster: inside, negative
+6	0x40	00000000	take	Drag of a machine: the bits of 0
+6	0x40	80000000	refuse	Drag of a machine: -0
+6	0x40	00000001	refuse	Drag of a machine: the smallest denormal
+6	0x40	007FFFFF	refuse	Drag of a machine: the largest denormal
+6	0x40	80000001	refuse	Drag of a machine: a negative denormal
+6	0x40	00800000	take	Drag of a machine: the smallest normal number
+6	0x40	7F800000	refuse	Drag of a machine: infinity
+6	0x40	FF800000	refuse	Drag of a machine: minus infinity
+6	0x40	7FC00000	refuse	Drag of a machine: a NaN
+6	0x40	7F7FFFFF	refuse	Drag of a machine: the largest number
+6	0x40	FF7FFFFF	refuse	Drag of a machine: the largest negative number
+6	0x40	BE199999	take	Drag of a machine: the next number nearer 0 than the least
+6	0x40	BE19999A	take	Drag of a machine: at the least
+6	0x40	BE19999B	refuse	Drag of a machine: the next number farther from 0 than the least
+6	0x40	3E199999	take	Drag of a machine: the next number nearer 0 than the most
+6	0x40	3E19999A	take	Drag of a machine: at the most
+6	0x40	3E19999B	refuse	Drag of a machine: the next number farther from 0 than the most
+6	0x40	BE199999	take	Drag of a machine: the next number nearer 0 than minus the most
+6	0x40	BE19999A	take	Drag of a machine: at minus the most
+6	0x40	BE19999B	refuse	Drag of a machine: the next number farther from 0 than minus the most
+6	0x40	3D99999A	take	Drag of a machine: inside
+6	0x40	BD99999A	take	Drag of a machine: inside, negative
+41	0x40	00000000	take	Drag of a body: the bits of 0
+41	0x40	80000000	refuse	Drag of a body: -0
+41	0x40	00000001	refuse	Drag of a body: the smallest denormal
+41	0x40	007FFFFF	refuse	Drag of a body: the largest denormal
+41	0x40	80000001	refuse	Drag of a body: a negative denormal
+41	0x40	00800000	take	Drag of a body: the smallest normal number
+41	0x40	7F800000	refuse	Drag of a body: infinity
+41	0x40	FF800000	refuse	Drag of a body: minus infinity
+41	0x40	7FC00000	refuse	Drag of a body: a NaN
+41	0x40	7F7FFFFF	refuse	Drag of a body: the largest number
+41	0x40	FF7FFFFF	refuse	Drag of a body: the largest negative number
+41	0x40	BE199999	take	Drag of a body: the next number nearer 0 than the least
+41	0x40	BE19999A	take	Drag of a body: at the least
+41	0x40	BE19999B	refuse	Drag of a body: the next number farther from 0 than the least
+41	0x40	3E199999	take	Drag of a body: the next number nearer 0 than the most
+41	0x40	3E19999A	take	Drag of a body: at the most
+41	0x40	3E19999B	refuse	Drag of a body: the next number farther from 0 than the most
+41	0x40	BE199999	take	Drag of a body: the next number nearer 0 than minus the most
+41	0x40	BE19999A	take	Drag of a body: at minus the most
+41	0x40	BE19999B	refuse	Drag of a body: the next number farther from 0 than minus the most
+41	0x40	3D99999A	take	Drag of a body: inside
+41	0x40	BD99999A	take	Drag of a body: inside, negative
+66	0x40	00000000	take	Drag of a cockpit: the bits of 0
+66	0x40	80000000	refuse	Drag of a cockpit: -0
+66	0x40	00000001	refuse	Drag of a cockpit: the smallest denormal
+66	0x40	007FFFFF	refuse	Drag of a cockpit: the largest denormal
+66	0x40	80000001	refuse	Drag of a cockpit: a negative denormal
+66	0x40	00800000	take	Drag of a cockpit: the smallest normal number
+66	0x40	7F800000	refuse	Drag of a cockpit: infinity
+66	0x40	FF800000	refuse	Drag of a cockpit: minus infinity
+66	0x40	7FC00000	refuse	Drag of a cockpit: a NaN
+66	0x40	7F7FFFFF	refuse	Drag of a cockpit: the largest number
+66	0x40	FF7FFFFF	refuse	Drag of a cockpit: the largest negative number
+66	0x40	BE199999	take	Drag of a cockpit: the next number nearer 0 than the least
+66	0x40	BE19999A	take	Drag of a cockpit: at the least
+66	0x40	BE19999B	refuse	Drag of a cockpit: the next number farther from 0 than the least
+66	0x40	3E199999	take	Drag of a cockpit: the next number nearer 0 than the most
+66	0x40	3E19999A	take	Drag of a cockpit: at the most
+66	0x40	3E19999B	refuse	Drag of a cockpit: the next number farther from 0 than the most
+66	0x40	BE199999	take	Drag of a cockpit: the next number nearer 0 than minus the most
+66	0x40	BE19999A	take	Drag of a cockpit: at minus the most
+66	0x40	BE19999B	refuse	Drag of a cockpit: the next number farther from 0 than minus the most
+66	0x40	3D99999A	take	Drag of a cockpit: inside
+66	0x40	BD99999A	take	Drag of a cockpit: inside, negative
+91	0x40	00000000	take	Drag of a booster: the bits of 0
+91	0x40	80000000	refuse	Drag of a booster: -0
+91	0x40	00000001	refuse	Drag of a booster: the smallest denormal
+91	0x40	007FFFFF	refuse	Drag of a booster: the largest denormal
+91	0x40	80000001	refuse	Drag of a booster: a negative denormal
+91	0x40	00800000	take	Drag of a booster: the smallest normal number
+91	0x40	7F800000	refuse	Drag of a booster: infinity
+91	0x40	FF800000	refuse	Drag of a booster: minus infinity
+91	0x40	7FC00000	refuse	Drag of a booster: a NaN
+91	0x40	7F7FFFFF	refuse	Drag of a booster: the largest number
+91	0x40	FF7FFFFF	refuse	Drag of a booster: the largest negative number
+91	0x40	BE199999	take	Drag of a booster: the next number nearer 0 than the least
+91	0x40	BE19999A	take	Drag of a booster: at the least
+91	0x40	BE19999B	refuse	Drag of a booster: the next number farther from 0 than the least
+91	0x40	3E199999	take	Drag of a booster: the next number nearer 0 than the most
+91	0x40	3E19999A	take	Drag of a booster: at the most
+91	0x40	3E19999B	refuse	Drag of a booster: the next number farther from 0 than the most
+91	0x40	BE199999	take	Drag of a booster: the next number nearer 0 than minus the most
+91	0x40	BE19999A	take	Drag of a booster: at minus the most
+91	0x40	BE19999B	refuse	Drag of a booster: the next number farther from 0 than minus the most
+91	0x40	3D99999A	take	Drag of a booster: inside
+91	0x40	BD99999A	take	Drag of a booster: inside, negative
+6	0x44	00000000	take	Body of a machine: the bits of 0
+6	0x44	80000000	refuse	Body of a machine: -0
+6	0x44	00000001	refuse	Body of a machine: the smallest denormal
+6	0x44	007FFFFF	refuse	Body of a machine: the largest denormal
+6	0x44	80000001	refuse	Body of a machine: a negative denormal
+6	0x44	00800000	take	Body of a machine: the smallest normal number
+6	0x44	7F800000	refuse	Body of a machine: infinity
+6	0x44	FF800000	refuse	Body of a machine: minus infinity
+6	0x44	7FC00000	refuse	Body of a machine: a NaN
+6	0x44	7F7FFFFF	refuse	Body of a machine: the largest number
+6	0x44	FF7FFFFF	refuse	Body of a machine: the largest negative number
+6	0x44	C14FFFFF	take	Body of a machine: the next number nearer 0 than the least
+6	0x44	C1500000	take	Body of a machine: at the least
+6	0x44	C1500001	refuse	Body of a machine: the next number farther from 0 than the least
+6	0x44	414FFFFF	take	Body of a machine: the next number nearer 0 than the most
+6	0x44	41500000	take	Body of a machine: at the most
+6	0x44	41500001	refuse	Body of a machine: the next number farther from 0 than the most
+6	0x44	C14FFFFF	take	Body of a machine: the next number nearer 0 than minus the most
+6	0x44	C1500000	take	Body of a machine: at minus the most
+6	0x44	C1500001	refuse	Body of a machine: the next number farther from 0 than minus the most
+6	0x44	40D00000	take	Body of a machine: inside
+6	0x44	C0D00000	take	Body of a machine: inside, negative
+41	0x44	00000000	take	Body of a body: the bits of 0
+41	0x44	80000000	refuse	Body of a body: -0
+41	0x44	00000001	refuse	Body of a body: the smallest denormal
+41	0x44	007FFFFF	refuse	Body of a body: the largest denormal
+41	0x44	80000001	refuse	Body of a body: a negative denormal
+41	0x44	00800000	take	Body of a body: the smallest normal number
+41	0x44	7F800000	refuse	Body of a body: infinity
+41	0x44	FF800000	refuse	Body of a body: minus infinity
+41	0x44	7FC00000	refuse	Body of a body: a NaN
+41	0x44	7F7FFFFF	refuse	Body of a body: the largest number
+41	0x44	FF7FFFFF	refuse	Body of a body: the largest negative number
+41	0x44	C14FFFFF	take	Body of a body: the next number nearer 0 than the least
+41	0x44	C1500000	take	Body of a body: at the least
+41	0x44	C1500001	refuse	Body of a body: the next number farther from 0 than the least
+41	0x44	414FFFFF	take	Body of a body: the next number nearer 0 than the most
+41	0x44	41500000	take	Body of a body: at the most
+41	0x44	41500001	refuse	Body of a body: the next number farther from 0 than the most
+41	0x44	C14FFFFF	take	Body of a body: the next number nearer 0 than minus the most
+41	0x44	C1500000	take	Body of a body: at minus the most
+41	0x44	C1500001	refuse	Body of a body: the next number farther from 0 than minus the most
+41	0x44	40D00000	take	Body of a body: inside
+41	0x44	C0D00000	take	Body of a body: inside, negative
+66	0x44	00000000	take	Body of a cockpit: the bits of 0
+66	0x44	80000000	refuse	Body of a cockpit: -0
+66	0x44	00000001	refuse	Body of a cockpit: the smallest denormal
+66	0x44	007FFFFF	refuse	Body of a cockpit: the largest denormal
+66	0x44	80000001	refuse	Body of a cockpit: a negative denormal
+66	0x44	00800000	take	Body of a cockpit: the smallest normal number
+66	0x44	7F800000	refuse	Body of a cockpit: infinity
+66	0x44	FF800000	refuse	Body of a cockpit: minus infinity
+66	0x44	7FC00000	refuse	Body of a cockpit: a NaN
+66	0x44	7F7FFFFF	refuse	Body of a cockpit: the largest number
+66	0x44	FF7FFFFF	refuse	Body of a cockpit: the largest negative number
+66	0x44	C14FFFFF	take	Body of a cockpit: the next number nearer 0 than the least
+66	0x44	C1500000	take	Body of a cockpit: at the least
+66	0x44	C1500001	refuse	Body of a cockpit: the next number farther from 0 than the least
+66	0x44	414FFFFF	take	Body of a cockpit: the next number nearer 0 than the most
+66	0x44	41500000	take	Body of a cockpit: at the most
+66	0x44	41500001	refuse	Body of a cockpit: the next number farther from 0 than the most
+66	0x44	C14FFFFF	take	Body of a cockpit: the next number nearer 0 than minus the most
+66	0x44	C1500000	take	Body of a cockpit: at minus the most
+66	0x44	C1500001	refuse	Body of a cockpit: the next number farther from 0 than minus the most
+66	0x44	40D00000	take	Body of a cockpit: inside
+66	0x44	C0D00000	take	Body of a cockpit: inside, negative
+91	0x44	00000000	take	Body of a booster: the bits of 0
+91	0x44	80000000	refuse	Body of a booster: -0
+91	0x44	00000001	refuse	Body of a booster: the smallest denormal
+91	0x44	007FFFFF	refuse	Body of a booster: the largest denormal
+91	0x44	80000001	refuse	Body of a booster: a negative denormal
+91	0x44	00800000	take	Body of a booster: the smallest normal number
+91	0x44	7F800000	refuse	Body of a booster: infinity
+91	0x44	FF800000	refuse	Body of a booster: minus infinity
+91	0x44	7FC00000	refuse	Body of a booster: a NaN
+91	0x44	7F7FFFFF	refuse	Body of a booster: the largest number
+91	0x44	FF7FFFFF	refuse	Body of a booster: the largest negative number
+91	0x44	C14FFFFF	take	Body of a booster: the next number nearer 0 than the least
+91	0x44	C1500000	take	Body of a booster: at the least
+91	0x44	C1500001	refuse	Body of a booster: the next number farther from 0 than the least
+91	0x44	414FFFFF	take	Body of a booster: the next number nearer 0 than the most
+91	0x44	41500000	take	Body of a booster: at the most
+91	0x44	41500001	refuse	Body of a booster: the next number farther from 0 than the most
+91	0x44	C14FFFFF	take	Body of a booster: the next number nearer 0 than minus the most
+91	0x44	C1500000	take	Body of a booster: at minus the most
+91	0x44	C1500001	refuse	Body of a booster: the next number farther from 0 than minus the most
+91	0x44	40D00000	take	Body of a booster: inside
+91	0x44	C0D00000	take	Body of a booster: inside, negative
+6	0x48	00000000	take	Bytes48 of a machine: both bytes 0
+6	0x48	FF030000	take	Bytes48 of a machine: the most of each byte
+6	0x48	FF040000	refuse	Bytes48 of a machine: the second byte one too many
+6	0x48	03010001	refuse	Bytes48 of a machine: the last byte not 0
+6	0x48	03010100	refuse	Bytes48 of a machine: the third byte not 0
+6	0x48	FFFFFFFF	refuse	Bytes48 of a machine: every bit
+41	0x48	00000000	take	Bytes48 of a body: both bytes 0
+41	0x48	FF030000	take	Bytes48 of a body: the most of each byte
+41	0x48	FF040000	refuse	Bytes48 of a body: the second byte one too many
+41	0x48	03010001	refuse	Bytes48 of a body: the last byte not 0
+41	0x48	03010100	refuse	Bytes48 of a body: the third byte not 0
+41	0x48	FFFFFFFF	refuse	Bytes48 of a body: every bit
+66	0x48	00000000	take	Bytes48 of a cockpit: both bytes 0
+66	0x48	FF030000	take	Bytes48 of a cockpit: the most of each byte
+66	0x48	FF040000	refuse	Bytes48 of a cockpit: the second byte one too many
+66	0x48	03010001	refuse	Bytes48 of a cockpit: the last byte not 0
+66	0x48	03010100	refuse	Bytes48 of a cockpit: the third byte not 0
+66	0x48	FFFFFFFF	refuse	Bytes48 of a cockpit: every bit
+91	0x48	00000000	take	Bytes48 of a booster: both bytes 0
+91	0x48	FF030000	take	Bytes48 of a booster: the most of each byte
+91	0x48	FF040000	refuse	Bytes48 of a booster: the second byte one too many
+91	0x48	03010001	refuse	Bytes48 of a booster: the last byte not 0
+91	0x48	03010100	refuse	Bytes48 of a booster: the third byte not 0
+91	0x48	FFFFFFFF	refuse	Bytes48 of a booster: every bit
+6	0x4C	00000000	take	CameraReorienting of a machine: the bits of 0
+6	0x4C	80000000	refuse	CameraReorienting of a machine: -0
+6	0x4C	00000001	refuse	CameraReorienting of a machine: the smallest denormal
+6	0x4C	007FFFFF	refuse	CameraReorienting of a machine: the largest denormal
+6	0x4C	80000001	refuse	CameraReorienting of a machine: a negative denormal
+6	0x4C	00800000	take	CameraReorienting of a machine: the smallest normal number
+6	0x4C	7F800000	refuse	CameraReorienting of a machine: infinity
+6	0x4C	FF800000	refuse	CameraReorienting of a machine: minus infinity
+6	0x4C	7FC00000	refuse	CameraReorienting of a machine: a NaN
+6	0x4C	7F7FFFFF	refuse	CameraReorienting of a machine: the largest number
+6	0x4C	FF7FFFFF	refuse	CameraReorienting of a machine: the largest negative number
+6	0x4C	C197FFFF	take	CameraReorienting of a machine: the next number nearer 0 than the least
+6	0x4C	C1980000	take	CameraReorienting of a machine: at the least
+6	0x4C	C1980001	refuse	CameraReorienting of a machine: the next number farther from 0 than the least
+6	0x4C	4197FFFF	take	CameraReorienting of a machine: the next number nearer 0 than the most
+6	0x4C	41980000	take	CameraReorienting of a machine: at the most
+6	0x4C	41980001	refuse	CameraReorienting of a machine: the next number farther from 0 than the most
+6	0x4C	C197FFFF	take	CameraReorienting of a machine: the next number nearer 0 than minus the most
+6	0x4C	C1980000	take	CameraReorienting of a machine: at minus the most
+6	0x4C	C1980001	refuse	CameraReorienting of a machine: the next number farther from 0 than minus the most
+6	0x4C	41180000	take	CameraReorienting of a machine: inside
+6	0x4C	C1180000	take	CameraReorienting of a machine: inside, negative
+41	0x4C	00000000	take	CameraReorienting of a body: the bits of 0
+41	0x4C	80000000	refuse	CameraReorienting of a body: -0
+41	0x4C	00000001	refuse	CameraReorienting of a body: the smallest denormal
+41	0x4C	007FFFFF	refuse	CameraReorienting of a body: the largest denormal
+41	0x4C	80000001	refuse	CameraReorienting of a body: a negative denormal
+41	0x4C	00800000	take	CameraReorienting of a body: the smallest normal number
+41	0x4C	7F800000	refuse	CameraReorienting of a body: infinity
+41	0x4C	FF800000	refuse	CameraReorienting of a body: minus infinity
+41	0x4C	7FC00000	refuse	CameraReorienting of a body: a NaN
+41	0x4C	7F7FFFFF	refuse	CameraReorienting of a body: the largest number
+41	0x4C	FF7FFFFF	refuse	CameraReorienting of a body: the largest negative number
+41	0x4C	C197FFFF	take	CameraReorienting of a body: the next number nearer 0 than the least
+41	0x4C	C1980000	take	CameraReorienting of a body: at the least
+41	0x4C	C1980001	refuse	CameraReorienting of a body: the next number farther from 0 than the least
+41	0x4C	4197FFFF	take	CameraReorienting of a body: the next number nearer 0 than the most
+41	0x4C	41980000	take	CameraReorienting of a body: at the most
+41	0x4C	41980001	refuse	CameraReorienting of a body: the next number farther from 0 than the most
+41	0x4C	C197FFFF	take	CameraReorienting of a body: the next number nearer 0 than minus the most
+41	0x4C	C1980000	take	CameraReorienting of a body: at minus the most
+41	0x4C	C1980001	refuse	CameraReorienting of a body: the next number farther from 0 than minus the most
+41	0x4C	41180000	take	CameraReorienting of a body: inside
+41	0x4C	C1180000	take	CameraReorienting of a body: inside, negative
+66	0x4C	00000000	take	CameraReorienting of a cockpit: the bits of 0
+66	0x4C	80000000	refuse	CameraReorienting of a cockpit: -0
+66	0x4C	00000001	refuse	CameraReorienting of a cockpit: the smallest denormal
+66	0x4C	007FFFFF	refuse	CameraReorienting of a cockpit: the largest denormal
+66	0x4C	80000001	refuse	CameraReorienting of a cockpit: a negative denormal
+66	0x4C	00800000	take	CameraReorienting of a cockpit: the smallest normal number
+66	0x4C	7F800000	refuse	CameraReorienting of a cockpit: infinity
+66	0x4C	FF800000	refuse	CameraReorienting of a cockpit: minus infinity
+66	0x4C	7FC00000	refuse	CameraReorienting of a cockpit: a NaN
+66	0x4C	7F7FFFFF	refuse	CameraReorienting of a cockpit: the largest number
+66	0x4C	FF7FFFFF	refuse	CameraReorienting of a cockpit: the largest negative number
+66	0x4C	C197FFFF	take	CameraReorienting of a cockpit: the next number nearer 0 than the least
+66	0x4C	C1980000	take	CameraReorienting of a cockpit: at the least
+66	0x4C	C1980001	refuse	CameraReorienting of a cockpit: the next number farther from 0 than the least
+66	0x4C	4197FFFF	take	CameraReorienting of a cockpit: the next number nearer 0 than the most
+66	0x4C	41980000	take	CameraReorienting of a cockpit: at the most
+66	0x4C	41980001	refuse	CameraReorienting of a cockpit: the next number farther from 0 than the most
+66	0x4C	C197FFFF	take	CameraReorienting of a cockpit: the next number nearer 0 than minus the most
+66	0x4C	C1980000	take	CameraReorienting of a cockpit: at minus the most
+66	0x4C	C1980001	refuse	CameraReorienting of a cockpit: the next number farther from 0 than minus the most
+66	0x4C	41180000	take	CameraReorienting of a cockpit: inside
+66	0x4C	C1180000	take	CameraReorienting of a cockpit: inside, negative
+91	0x4C	00000000	take	CameraReorienting of a booster: the bits of 0
+91	0x4C	80000000	refuse	CameraReorienting of a booster: -0
+91	0x4C	00000001	refuse	CameraReorienting of a booster: the smallest denormal
+91	0x4C	007FFFFF	refuse	CameraReorienting of a booster: the largest denormal
+91	0x4C	80000001	refuse	CameraReorienting of a booster: a negative denormal
+91	0x4C	00800000	take	CameraReorienting of a booster: the smallest normal number
+91	0x4C	7F800000	refuse	CameraReorienting of a booster: infinity
+91	0x4C	FF800000	refuse	CameraReorienting of a booster: minus infinity
+91	0x4C	7FC00000	refuse	CameraReorienting of a booster: a NaN
+91	0x4C	7F7FFFFF	refuse	CameraReorienting of a booster: the largest number
+91	0x4C	FF7FFFFF	refuse	CameraReorienting of a booster: the largest negative number
+91	0x4C	C197FFFF	take	CameraReorienting of a booster: the next number nearer 0 than the least
+91	0x4C	C1980000	take	CameraReorienting of a booster: at the least
+91	0x4C	C1980001	refuse	CameraReorienting of a booster: the next number farther from 0 than the least
+91	0x4C	4197FFFF	take	CameraReorienting of a booster: the next number nearer 0 than the most
+91	0x4C	41980000	take	CameraReorienting of a booster: at the most
+91	0x4C	41980001	refuse	CameraReorienting of a booster: the next number farther from 0 than the most
+91	0x4C	C197FFFF	take	CameraReorienting of a booster: the next number nearer 0 than minus the most
+91	0x4C	C1980000	take	CameraReorienting of a booster: at minus the most
+91	0x4C	C1980001	refuse	CameraReorienting of a booster: the next number farther from 0 than minus the most
+91	0x4C	41180000	take	CameraReorienting of a booster: inside
+91	0x4C	C1180000	take	CameraReorienting of a booster: inside, negative
+6	0x50	00000000	take	CameraRepositioning of a machine: the bits of 0
+6	0x50	80000000	refuse	CameraRepositioning of a machine: -0
+6	0x50	00000001	refuse	CameraRepositioning of a machine: the smallest denormal
+6	0x50	007FFFFF	refuse	CameraRepositioning of a machine: the largest denormal
+6	0x50	80000001	refuse	CameraRepositioning of a machine: a negative denormal
+6	0x50	00800000	take	CameraRepositioning of a machine: the smallest normal number
+6	0x50	7F800000	refuse	CameraRepositioning of a machine: infinity
+6	0x50	FF800000	refuse	CameraRepositioning of a machine: minus infinity
+6	0x50	7FC00000	refuse	CameraRepositioning of a machine: a NaN
+6	0x50	7F7FFFFF	refuse	CameraRepositioning of a machine: the largest number
+6	0x50	FF7FFFFF	refuse	CameraRepositioning of a machine: the largest negative number
+6	0x50	C16FFFFF	take	CameraRepositioning of a machine: the next number nearer 0 than the least
+6	0x50	C1700000	take	CameraRepositioning of a machine: at the least
+6	0x50	C1700001	refuse	CameraRepositioning of a machine: the next number farther from 0 than the least
+6	0x50	416FFFFF	take	CameraRepositioning of a machine: the next number nearer 0 than the most
+6	0x50	41700000	take	CameraRepositioning of a machine: at the most
+6	0x50	41700001	refuse	CameraRepositioning of a machine: the next number farther from 0 than the most
+6	0x50	C16FFFFF	take	CameraRepositioning of a machine: the next number nearer 0 than minus the most
+6	0x50	C1700000	take	CameraRepositioning of a machine: at minus the most
+6	0x50	C1700001	refuse	CameraRepositioning of a machine: the next number farther from 0 than minus the most
+6	0x50	40F00000	take	CameraRepositioning of a machine: inside
+6	0x50	C0F00000	take	CameraRepositioning of a machine: inside, negative
+41	0x50	00000000	take	CameraRepositioning of a body: the bits of 0
+41	0x50	80000000	refuse	CameraRepositioning of a body: -0
+41	0x50	00000001	refuse	CameraRepositioning of a body: the smallest denormal
+41	0x50	007FFFFF	refuse	CameraRepositioning of a body: the largest denormal
+41	0x50	80000001	refuse	CameraRepositioning of a body: a negative denormal
+41	0x50	00800000	take	CameraRepositioning of a body: the smallest normal number
+41	0x50	7F800000	refuse	CameraRepositioning of a body: infinity
+41	0x50	FF800000	refuse	CameraRepositioning of a body: minus infinity
+41	0x50	7FC00000	refuse	CameraRepositioning of a body: a NaN
+41	0x50	7F7FFFFF	refuse	CameraRepositioning of a body: the largest number
+41	0x50	FF7FFFFF	refuse	CameraRepositioning of a body: the largest negative number
+41	0x50	C16FFFFF	take	CameraRepositioning of a body: the next number nearer 0 than the least
+41	0x50	C1700000	take	CameraRepositioning of a body: at the least
+41	0x50	C1700001	refuse	CameraRepositioning of a body: the next number farther from 0 than the least
+41	0x50	416FFFFF	take	CameraRepositioning of a body: the next number nearer 0 than the most
+41	0x50	41700000	take	CameraRepositioning of a body: at the most
+41	0x50	41700001	refuse	CameraRepositioning of a body: the next number farther from 0 than the most
+41	0x50	C16FFFFF	take	CameraRepositioning of a body: the next number nearer 0 than minus the most
+41	0x50	C1700000	take	CameraRepositioning of a body: at minus the most
+41	0x50	C1700001	refuse	CameraRepositioning of a body: the next number farther from 0 than minus the most
+41	0x50	40F00000	take	CameraRepositioning of a body: inside
+41	0x50	C0F00000	take	CameraRepositioning of a body: inside, negative
+66	0x50	00000000	take	CameraRepositioning of a cockpit: the bits of 0
+66	0x50	80000000	refuse	CameraRepositioning of a cockpit: -0
+66	0x50	00000001	refuse	CameraRepositioning of a cockpit: the smallest denormal
+66	0x50	007FFFFF	refuse	CameraRepositioning of a cockpit: the largest denormal
+66	0x50	80000001	refuse	CameraRepositioning of a cockpit: a negative denormal
+66	0x50	00800000	take	CameraRepositioning of a cockpit: the smallest normal number
+66	0x50	7F800000	refuse	CameraRepositioning of a cockpit: infinity
+66	0x50	FF800000	refuse	CameraRepositioning of a cockpit: minus infinity
+66	0x50	7FC00000	refuse	CameraRepositioning of a cockpit: a NaN
+66	0x50	7F7FFFFF	refuse	CameraRepositioning of a cockpit: the largest number
+66	0x50	FF7FFFFF	refuse	CameraRepositioning of a cockpit: the largest negative number
+66	0x50	C16FFFFF	take	CameraRepositioning of a cockpit: the next number nearer 0 than the least
+66	0x50	C1700000	take	CameraRepositioning of a cockpit: at the least
+66	0x50	C1700001	refuse	CameraRepositioning of a cockpit: the next number farther from 0 than the least
+66	0x50	416FFFFF	take	CameraRepositioning of a cockpit: the next number nearer 0 than the most
+66	0x50	41700000	take	CameraRepositioning of a cockpit: at the most
+66	0x50	41700001	refuse	CameraRepositioning of a cockpit: the next number farther from 0 than the most
+66	0x50	C16FFFFF	take	CameraRepositioning of a cockpit: the next number nearer 0 than minus the most
+66	0x50	C1700000	take	CameraRepositioning of a cockpit: at minus the most
+66	0x50	C1700001	refuse	CameraRepositioning of a cockpit: the next number farther from 0 than minus the most
+66	0x50	40F00000	take	CameraRepositioning of a cockpit: inside
+66	0x50	C0F00000	take	CameraRepositioning of a cockpit: inside, negative
+91	0x50	00000000	take	CameraRepositioning of a booster: the bits of 0
+91	0x50	80000000	refuse	CameraRepositioning of a booster: -0
+91	0x50	00000001	refuse	CameraRepositioning of a booster: the smallest denormal
+91	0x50	007FFFFF	refuse	CameraRepositioning of a booster: the largest denormal
+91	0x50	80000001	refuse	CameraRepositioning of a booster: a negative denormal
+91	0x50	00800000	take	CameraRepositioning of a booster: the smallest normal number
+91	0x50	7F800000	refuse	CameraRepositioning of a booster: infinity
+91	0x50	FF800000	refuse	CameraRepositioning of a booster: minus infinity
+91	0x50	7FC00000	refuse	CameraRepositioning of a booster: a NaN
+91	0x50	7F7FFFFF	refuse	CameraRepositioning of a booster: the largest number
+91	0x50	FF7FFFFF	refuse	CameraRepositioning of a booster: the largest negative number
+91	0x50	C16FFFFF	take	CameraRepositioning of a booster: the next number nearer 0 than the least
+91	0x50	C1700000	take	CameraRepositioning of a booster: at the least
+91	0x50	C1700001	refuse	CameraRepositioning of a booster: the next number farther from 0 than the least
+91	0x50	416FFFFF	take	CameraRepositioning of a booster: the next number nearer 0 than the most
+91	0x50	41700000	take	CameraRepositioning of a booster: at the most
+91	0x50	41700001	refuse	CameraRepositioning of a booster: the next number farther from 0 than the most
+91	0x50	C16FFFFF	take	CameraRepositioning of a booster: the next number nearer 0 than minus the most
+91	0x50	C1700000	take	CameraRepositioning of a booster: at minus the most
+91	0x50	C1700001	refuse	CameraRepositioning of a booster: the next number farther from 0 than minus the most
+91	0x50	40F00000	take	CameraRepositioning of a booster: inside
+91	0x50	C0F00000	take	CameraRepositioning of a booster: inside, negative
+6	0x54	00000000	take	Hover0X of a machine: the bits of 0
+6	0x54	80000000	refuse	Hover0X of a machine: -0
+6	0x54	00000001	refuse	Hover0X of a machine: the smallest denormal
+6	0x54	007FFFFF	refuse	Hover0X of a machine: the largest denormal
+6	0x54	80000001	refuse	Hover0X of a machine: a negative denormal
+6	0x54	00800000	take	Hover0X of a machine: the smallest normal number
+6	0x54	7F800000	refuse	Hover0X of a machine: infinity
+6	0x54	FF800000	refuse	Hover0X of a machine: minus infinity
+6	0x54	7FC00000	refuse	Hover0X of a machine: a NaN
+6	0x54	7F7FFFFF	refuse	Hover0X of a machine: the largest number
+6	0x54	FF7FFFFF	refuse	Hover0X of a machine: the largest negative number
+6	0x54	C1C7FFFF	take	Hover0X of a machine: the next number nearer 0 than the least
+6	0x54	C1C80000	take	Hover0X of a machine: at the least
+6	0x54	C1C80001	refuse	Hover0X of a machine: the next number farther from 0 than the least
+6	0x54	41C7FFFF	take	Hover0X of a machine: the next number nearer 0 than the most
+6	0x54	41C80000	take	Hover0X of a machine: at the most
+6	0x54	41C80001	refuse	Hover0X of a machine: the next number farther from 0 than the most
+6	0x54	41480000	take	Hover0X of a machine: inside
+6	0x54	C1480000	take	Hover0X of a machine: inside, negative
+6	0x54	3C23D709	take	Hover0X of a machine: the next number nearer 0 than the least Z above 0
+6	0x54	3C23D70A	take	Hover0X of a machine: at the least Z above 0
+6	0x54	3C23D70B	take	Hover0X of a machine: the next number farther from 0 than the least Z above 0
+6	0x54	BC23D709	take	Hover0X of a machine: the next number nearer 0 than the least Z below 0
+6	0x54	BC23D70A	take	Hover0X of a machine: at the least Z below 0
+6	0x54	BC23D70B	take	Hover0X of a machine: the next number farther from 0 than the least Z below 0
+6	0x5C	00000000	refuse	Hover0Z of a machine: the bits of 0
+6	0x5C	80000000	refuse	Hover0Z of a machine: -0
+6	0x5C	00000001	refuse	Hover0Z of a machine: the smallest denormal
+6	0x5C	007FFFFF	refuse	Hover0Z of a machine: the largest denormal
+6	0x5C	80000001	refuse	Hover0Z of a machine: a negative denormal
+6	0x5C	00800000	refuse	Hover0Z of a machine: the smallest normal number
+6	0x5C	7F800000	refuse	Hover0Z of a machine: infinity
+6	0x5C	FF800000	refuse	Hover0Z of a machine: minus infinity
+6	0x5C	7FC00000	refuse	Hover0Z of a machine: a NaN
+6	0x5C	7F7FFFFF	refuse	Hover0Z of a machine: the largest number
+6	0x5C	FF7FFFFF	refuse	Hover0Z of a machine: the largest negative number
+6	0x5C	C1C7FFFF	take	Hover0Z of a machine: the next number nearer 0 than the least
+6	0x5C	C1C80000	take	Hover0Z of a machine: at the least
+6	0x5C	C1C80001	refuse	Hover0Z of a machine: the next number farther from 0 than the least
+6	0x5C	41C7FFFF	take	Hover0Z of a machine: the next number nearer 0 than the most
+6	0x5C	41C80000	take	Hover0Z of a machine: at the most
+6	0x5C	41C80001	refuse	Hover0Z of a machine: the next number farther from 0 than the most
+6	0x5C	41480000	take	Hover0Z of a machine: inside
+6	0x5C	C1480000	take	Hover0Z of a machine: inside, negative
+6	0x5C	3C23D709	refuse	Hover0Z of a machine: the next number nearer 0 than the least Z above 0
+6	0x5C	3C23D70A	take	Hover0Z of a machine: at the least Z above 0
+6	0x5C	3C23D70B	take	Hover0Z of a machine: the next number farther from 0 than the least Z above 0
+6	0x5C	BC23D709	refuse	Hover0Z of a machine: the next number nearer 0 than the least Z below 0
+6	0x5C	BC23D70A	take	Hover0Z of a machine: at the least Z below 0
+6	0x5C	BC23D70B	take	Hover0Z of a machine: the next number farther from 0 than the least Z below 0
+6	0x80	00000000	refuse	Hover3Z of a machine: the bits of 0
+6	0x80	80000000	refuse	Hover3Z of a machine: -0
+6	0x80	00000001	refuse	Hover3Z of a machine: the smallest denormal
+6	0x80	007FFFFF	refuse	Hover3Z of a machine: the largest denormal
+6	0x80	80000001	refuse	Hover3Z of a machine: a negative denormal
+6	0x80	00800000	refuse	Hover3Z of a machine: the smallest normal number
+6	0x80	7F800000	refuse	Hover3Z of a machine: infinity
+6	0x80	FF800000	refuse	Hover3Z of a machine: minus infinity
+6	0x80	7FC00000	refuse	Hover3Z of a machine: a NaN
+6	0x80	7F7FFFFF	refuse	Hover3Z of a machine: the largest number
+6	0x80	FF7FFFFF	refuse	Hover3Z of a machine: the largest negative number
+6	0x80	C1C7FFFF	take	Hover3Z of a machine: the next number nearer 0 than the least
+6	0x80	C1C80000	take	Hover3Z of a machine: at the least
+6	0x80	C1C80001	refuse	Hover3Z of a machine: the next number farther from 0 than the least
+6	0x80	41C7FFFF	take	Hover3Z of a machine: the next number nearer 0 than the most
+6	0x80	41C80000	take	Hover3Z of a machine: at the most
+6	0x80	41C80001	refuse	Hover3Z of a machine: the next number farther from 0 than the most
+6	0x80	41480000	take	Hover3Z of a machine: inside
+6	0x80	C1480000	take	Hover3Z of a machine: inside, negative
+6	0x80	3C23D709	refuse	Hover3Z of a machine: the next number nearer 0 than the least Z above 0
+6	0x80	3C23D70A	take	Hover3Z of a machine: at the least Z above 0
+6	0x80	3C23D70B	take	Hover3Z of a machine: the next number farther from 0 than the least Z above 0
+6	0x80	BC23D709	refuse	Hover3Z of a machine: the next number nearer 0 than the least Z below 0
+6	0x80	BC23D70A	take	Hover3Z of a machine: at the least Z below 0
+6	0x80	BC23D70B	take	Hover3Z of a machine: the next number farther from 0 than the least Z below 0
+41	0x54	00000000	take	Hover0X of a body: the bits of 0
+41	0x54	80000000	refuse	Hover0X of a body: -0
+41	0x54	00000001	refuse	Hover0X of a body: the smallest denormal
+41	0x54	007FFFFF	refuse	Hover0X of a body: the largest denormal
+41	0x54	80000001	refuse	Hover0X of a body: a negative denormal
+41	0x54	00800000	take	Hover0X of a body: the smallest normal number
+41	0x54	7F800000	refuse	Hover0X of a body: infinity
+41	0x54	FF800000	refuse	Hover0X of a body: minus infinity
+41	0x54	7FC00000	refuse	Hover0X of a body: a NaN
+41	0x54	7F7FFFFF	refuse	Hover0X of a body: the largest number
+41	0x54	FF7FFFFF	refuse	Hover0X of a body: the largest negative number
+41	0x54	C1C7FFFF	take	Hover0X of a body: the next number nearer 0 than the least
+41	0x54	C1C80000	take	Hover0X of a body: at the least
+41	0x54	C1C80001	refuse	Hover0X of a body: the next number farther from 0 than the least
+41	0x54	41C7FFFF	take	Hover0X of a body: the next number nearer 0 than the most
+41	0x54	41C80000	take	Hover0X of a body: at the most
+41	0x54	41C80001	refuse	Hover0X of a body: the next number farther from 0 than the most
+41	0x54	41480000	take	Hover0X of a body: inside
+41	0x54	C1480000	take	Hover0X of a body: inside, negative
+41	0x54	3C23D709	take	Hover0X of a body: the next number nearer 0 than the least Z above 0
+41	0x54	3C23D70A	take	Hover0X of a body: at the least Z above 0
+41	0x54	3C23D70B	take	Hover0X of a body: the next number farther from 0 than the least Z above 0
+41	0x54	BC23D709	take	Hover0X of a body: the next number nearer 0 than the least Z below 0
+41	0x54	BC23D70A	take	Hover0X of a body: at the least Z below 0
+41	0x54	BC23D70B	take	Hover0X of a body: the next number farther from 0 than the least Z below 0
+41	0x5C	00000000	take	Hover0Z of a body: the bits of 0
+41	0x5C	80000000	refuse	Hover0Z of a body: -0
+41	0x5C	00000001	refuse	Hover0Z of a body: the smallest denormal
+41	0x5C	007FFFFF	refuse	Hover0Z of a body: the largest denormal
+41	0x5C	80000001	refuse	Hover0Z of a body: a negative denormal
+41	0x5C	00800000	take	Hover0Z of a body: the smallest normal number
+41	0x5C	7F800000	refuse	Hover0Z of a body: infinity
+41	0x5C	FF800000	refuse	Hover0Z of a body: minus infinity
+41	0x5C	7FC00000	refuse	Hover0Z of a body: a NaN
+41	0x5C	7F7FFFFF	refuse	Hover0Z of a body: the largest number
+41	0x5C	FF7FFFFF	refuse	Hover0Z of a body: the largest negative number
+41	0x5C	C1C7FFFF	take	Hover0Z of a body: the next number nearer 0 than the least
+41	0x5C	C1C80000	take	Hover0Z of a body: at the least
+41	0x5C	C1C80001	refuse	Hover0Z of a body: the next number farther from 0 than the least
+41	0x5C	41C7FFFF	take	Hover0Z of a body: the next number nearer 0 than the most
+41	0x5C	41C80000	take	Hover0Z of a body: at the most
+41	0x5C	41C80001	refuse	Hover0Z of a body: the next number farther from 0 than the most
+41	0x5C	41480000	take	Hover0Z of a body: inside
+41	0x5C	C1480000	take	Hover0Z of a body: inside, negative
+41	0x5C	3C23D709	take	Hover0Z of a body: the next number nearer 0 than the least Z above 0
+41	0x5C	3C23D70A	take	Hover0Z of a body: at the least Z above 0
+41	0x5C	3C23D70B	take	Hover0Z of a body: the next number farther from 0 than the least Z above 0
+41	0x5C	BC23D709	take	Hover0Z of a body: the next number nearer 0 than the least Z below 0
+41	0x5C	BC23D70A	take	Hover0Z of a body: at the least Z below 0
+41	0x5C	BC23D70B	take	Hover0Z of a body: the next number farther from 0 than the least Z below 0
+41	0x80	00000000	take	Hover3Z of a body: the bits of 0
+41	0x80	80000000	refuse	Hover3Z of a body: -0
+41	0x80	00000001	refuse	Hover3Z of a body: the smallest denormal
+41	0x80	007FFFFF	refuse	Hover3Z of a body: the largest denormal
+41	0x80	80000001	refuse	Hover3Z of a body: a negative denormal
+41	0x80	00800000	take	Hover3Z of a body: the smallest normal number
+41	0x80	7F800000	refuse	Hover3Z of a body: infinity
+41	0x80	FF800000	refuse	Hover3Z of a body: minus infinity
+41	0x80	7FC00000	refuse	Hover3Z of a body: a NaN
+41	0x80	7F7FFFFF	refuse	Hover3Z of a body: the largest number
+41	0x80	FF7FFFFF	refuse	Hover3Z of a body: the largest negative number
+41	0x80	C1C7FFFF	take	Hover3Z of a body: the next number nearer 0 than the least
+41	0x80	C1C80000	take	Hover3Z of a body: at the least
+41	0x80	C1C80001	refuse	Hover3Z of a body: the next number farther from 0 than the least
+41	0x80	41C7FFFF	take	Hover3Z of a body: the next number nearer 0 than the most
+41	0x80	41C80000	take	Hover3Z of a body: at the most
+41	0x80	41C80001	refuse	Hover3Z of a body: the next number farther from 0 than the most
+41	0x80	41480000	take	Hover3Z of a body: inside
+41	0x80	C1480000	take	Hover3Z of a body: inside, negative
+41	0x80	3C23D709	take	Hover3Z of a body: the next number nearer 0 than the least Z above 0
+41	0x80	3C23D70A	take	Hover3Z of a body: at the least Z above 0
+41	0x80	3C23D70B	take	Hover3Z of a body: the next number farther from 0 than the least Z above 0
+41	0x80	BC23D709	take	Hover3Z of a body: the next number nearer 0 than the least Z below 0
+41	0x80	BC23D70A	take	Hover3Z of a body: at the least Z below 0
+41	0x80	BC23D70B	take	Hover3Z of a body: the next number farther from 0 than the least Z below 0
+66	0x54	00000000	take	Hover0X of a cockpit: the bits of 0
+66	0x54	80000000	refuse	Hover0X of a cockpit: -0
+66	0x54	00000001	refuse	Hover0X of a cockpit: the smallest denormal
+66	0x54	007FFFFF	refuse	Hover0X of a cockpit: the largest denormal
+66	0x54	80000001	refuse	Hover0X of a cockpit: a negative denormal
+66	0x54	00800000	take	Hover0X of a cockpit: the smallest normal number
+66	0x54	7F800000	refuse	Hover0X of a cockpit: infinity
+66	0x54	FF800000	refuse	Hover0X of a cockpit: minus infinity
+66	0x54	7FC00000	refuse	Hover0X of a cockpit: a NaN
+66	0x54	7F7FFFFF	refuse	Hover0X of a cockpit: the largest number
+66	0x54	FF7FFFFF	refuse	Hover0X of a cockpit: the largest negative number
+66	0x54	C1C7FFFF	take	Hover0X of a cockpit: the next number nearer 0 than the least
+66	0x54	C1C80000	take	Hover0X of a cockpit: at the least
+66	0x54	C1C80001	refuse	Hover0X of a cockpit: the next number farther from 0 than the least
+66	0x54	41C7FFFF	take	Hover0X of a cockpit: the next number nearer 0 than the most
+66	0x54	41C80000	take	Hover0X of a cockpit: at the most
+66	0x54	41C80001	refuse	Hover0X of a cockpit: the next number farther from 0 than the most
+66	0x54	41480000	take	Hover0X of a cockpit: inside
+66	0x54	C1480000	take	Hover0X of a cockpit: inside, negative
+66	0x54	3C23D709	take	Hover0X of a cockpit: the next number nearer 0 than the least Z above 0
+66	0x54	3C23D70A	take	Hover0X of a cockpit: at the least Z above 0
+66	0x54	3C23D70B	take	Hover0X of a cockpit: the next number farther from 0 than the least Z above 0
+66	0x54	BC23D709	take	Hover0X of a cockpit: the next number nearer 0 than the least Z below 0
+66	0x54	BC23D70A	take	Hover0X of a cockpit: at the least Z below 0
+66	0x54	BC23D70B	take	Hover0X of a cockpit: the next number farther from 0 than the least Z below 0
+66	0x5C	00000000	take	Hover0Z of a cockpit: the bits of 0
+66	0x5C	80000000	refuse	Hover0Z of a cockpit: -0
+66	0x5C	00000001	refuse	Hover0Z of a cockpit: the smallest denormal
+66	0x5C	007FFFFF	refuse	Hover0Z of a cockpit: the largest denormal
+66	0x5C	80000001	refuse	Hover0Z of a cockpit: a negative denormal
+66	0x5C	00800000	take	Hover0Z of a cockpit: the smallest normal number
+66	0x5C	7F800000	refuse	Hover0Z of a cockpit: infinity
+66	0x5C	FF800000	refuse	Hover0Z of a cockpit: minus infinity
+66	0x5C	7FC00000	refuse	Hover0Z of a cockpit: a NaN
+66	0x5C	7F7FFFFF	refuse	Hover0Z of a cockpit: the largest number
+66	0x5C	FF7FFFFF	refuse	Hover0Z of a cockpit: the largest negative number
+66	0x5C	C1C7FFFF	take	Hover0Z of a cockpit: the next number nearer 0 than the least
+66	0x5C	C1C80000	take	Hover0Z of a cockpit: at the least
+66	0x5C	C1C80001	refuse	Hover0Z of a cockpit: the next number farther from 0 than the least
+66	0x5C	41C7FFFF	take	Hover0Z of a cockpit: the next number nearer 0 than the most
+66	0x5C	41C80000	take	Hover0Z of a cockpit: at the most
+66	0x5C	41C80001	refuse	Hover0Z of a cockpit: the next number farther from 0 than the most
+66	0x5C	41480000	take	Hover0Z of a cockpit: inside
+66	0x5C	C1480000	take	Hover0Z of a cockpit: inside, negative
+66	0x5C	3C23D709	take	Hover0Z of a cockpit: the next number nearer 0 than the least Z above 0
+66	0x5C	3C23D70A	take	Hover0Z of a cockpit: at the least Z above 0
+66	0x5C	3C23D70B	take	Hover0Z of a cockpit: the next number farther from 0 than the least Z above 0
+66	0x5C	BC23D709	take	Hover0Z of a cockpit: the next number nearer 0 than the least Z below 0
+66	0x5C	BC23D70A	take	Hover0Z of a cockpit: at the least Z below 0
+66	0x5C	BC23D70B	take	Hover0Z of a cockpit: the next number farther from 0 than the least Z below 0
+66	0x80	00000000	take	Hover3Z of a cockpit: the bits of 0
+66	0x80	80000000	refuse	Hover3Z of a cockpit: -0
+66	0x80	00000001	refuse	Hover3Z of a cockpit: the smallest denormal
+66	0x80	007FFFFF	refuse	Hover3Z of a cockpit: the largest denormal
+66	0x80	80000001	refuse	Hover3Z of a cockpit: a negative denormal
+66	0x80	00800000	take	Hover3Z of a cockpit: the smallest normal number
+66	0x80	7F800000	refuse	Hover3Z of a cockpit: infinity
+66	0x80	FF800000	refuse	Hover3Z of a cockpit: minus infinity
+66	0x80	7FC00000	refuse	Hover3Z of a cockpit: a NaN
+66	0x80	7F7FFFFF	refuse	Hover3Z of a cockpit: the largest number
+66	0x80	FF7FFFFF	refuse	Hover3Z of a cockpit: the largest negative number
+66	0x80	C1C7FFFF	take	Hover3Z of a cockpit: the next number nearer 0 than the least
+66	0x80	C1C80000	take	Hover3Z of a cockpit: at the least
+66	0x80	C1C80001	refuse	Hover3Z of a cockpit: the next number farther from 0 than the least
+66	0x80	41C7FFFF	take	Hover3Z of a cockpit: the next number nearer 0 than the most
+66	0x80	41C80000	take	Hover3Z of a cockpit: at the most
+66	0x80	41C80001	refuse	Hover3Z of a cockpit: the next number farther from 0 than the most
+66	0x80	41480000	take	Hover3Z of a cockpit: inside
+66	0x80	C1480000	take	Hover3Z of a cockpit: inside, negative
+66	0x80	3C23D709	take	Hover3Z of a cockpit: the next number nearer 0 than the least Z above 0
+66	0x80	3C23D70A	take	Hover3Z of a cockpit: at the least Z above 0
+66	0x80	3C23D70B	take	Hover3Z of a cockpit: the next number farther from 0 than the least Z above 0
+66	0x80	BC23D709	take	Hover3Z of a cockpit: the next number nearer 0 than the least Z below 0
+66	0x80	BC23D70A	take	Hover3Z of a cockpit: at the least Z below 0
+66	0x80	BC23D70B	take	Hover3Z of a cockpit: the next number farther from 0 than the least Z below 0
+91	0x54	00000000	take	Hover0X of a booster: the bits of 0
+91	0x54	80000000	refuse	Hover0X of a booster: -0
+91	0x54	00000001	refuse	Hover0X of a booster: the smallest denormal
+91	0x54	007FFFFF	refuse	Hover0X of a booster: the largest denormal
+91	0x54	80000001	refuse	Hover0X of a booster: a negative denormal
+91	0x54	00800000	take	Hover0X of a booster: the smallest normal number
+91	0x54	7F800000	refuse	Hover0X of a booster: infinity
+91	0x54	FF800000	refuse	Hover0X of a booster: minus infinity
+91	0x54	7FC00000	refuse	Hover0X of a booster: a NaN
+91	0x54	7F7FFFFF	refuse	Hover0X of a booster: the largest number
+91	0x54	FF7FFFFF	refuse	Hover0X of a booster: the largest negative number
+91	0x54	C1C7FFFF	take	Hover0X of a booster: the next number nearer 0 than the least
+91	0x54	C1C80000	take	Hover0X of a booster: at the least
+91	0x54	C1C80001	refuse	Hover0X of a booster: the next number farther from 0 than the least
+91	0x54	41C7FFFF	take	Hover0X of a booster: the next number nearer 0 than the most
+91	0x54	41C80000	take	Hover0X of a booster: at the most
+91	0x54	41C80001	refuse	Hover0X of a booster: the next number farther from 0 than the most
+91	0x54	41480000	take	Hover0X of a booster: inside
+91	0x54	C1480000	take	Hover0X of a booster: inside, negative
+91	0x54	3C23D709	take	Hover0X of a booster: the next number nearer 0 than the least Z above 0
+91	0x54	3C23D70A	take	Hover0X of a booster: at the least Z above 0
+91	0x54	3C23D70B	take	Hover0X of a booster: the next number farther from 0 than the least Z above 0
+91	0x54	BC23D709	take	Hover0X of a booster: the next number nearer 0 than the least Z below 0
+91	0x54	BC23D70A	take	Hover0X of a booster: at the least Z below 0
+91	0x54	BC23D70B	take	Hover0X of a booster: the next number farther from 0 than the least Z below 0
+91	0x5C	00000000	take	Hover0Z of a booster: the bits of 0
+91	0x5C	80000000	refuse	Hover0Z of a booster: -0
+91	0x5C	00000001	refuse	Hover0Z of a booster: the smallest denormal
+91	0x5C	007FFFFF	refuse	Hover0Z of a booster: the largest denormal
+91	0x5C	80000001	refuse	Hover0Z of a booster: a negative denormal
+91	0x5C	00800000	take	Hover0Z of a booster: the smallest normal number
+91	0x5C	7F800000	refuse	Hover0Z of a booster: infinity
+91	0x5C	FF800000	refuse	Hover0Z of a booster: minus infinity
+91	0x5C	7FC00000	refuse	Hover0Z of a booster: a NaN
+91	0x5C	7F7FFFFF	refuse	Hover0Z of a booster: the largest number
+91	0x5C	FF7FFFFF	refuse	Hover0Z of a booster: the largest negative number
+91	0x5C	C1C7FFFF	take	Hover0Z of a booster: the next number nearer 0 than the least
+91	0x5C	C1C80000	take	Hover0Z of a booster: at the least
+91	0x5C	C1C80001	refuse	Hover0Z of a booster: the next number farther from 0 than the least
+91	0x5C	41C7FFFF	take	Hover0Z of a booster: the next number nearer 0 than the most
+91	0x5C	41C80000	take	Hover0Z of a booster: at the most
+91	0x5C	41C80001	refuse	Hover0Z of a booster: the next number farther from 0 than the most
+91	0x5C	41480000	take	Hover0Z of a booster: inside
+91	0x5C	C1480000	take	Hover0Z of a booster: inside, negative
+91	0x5C	3C23D709	take	Hover0Z of a booster: the next number nearer 0 than the least Z above 0
+91	0x5C	3C23D70A	take	Hover0Z of a booster: at the least Z above 0
+91	0x5C	3C23D70B	take	Hover0Z of a booster: the next number farther from 0 than the least Z above 0
+91	0x5C	BC23D709	take	Hover0Z of a booster: the next number nearer 0 than the least Z below 0
+91	0x5C	BC23D70A	take	Hover0Z of a booster: at the least Z below 0
+91	0x5C	BC23D70B	take	Hover0Z of a booster: the next number farther from 0 than the least Z below 0
+91	0x80	00000000	take	Hover3Z of a booster: the bits of 0
+91	0x80	80000000	refuse	Hover3Z of a booster: -0
+91	0x80	00000001	refuse	Hover3Z of a booster: the smallest denormal
+91	0x80	007FFFFF	refuse	Hover3Z of a booster: the largest denormal
+91	0x80	80000001	refuse	Hover3Z of a booster: a negative denormal
+91	0x80	00800000	take	Hover3Z of a booster: the smallest normal number
+91	0x80	7F800000	refuse	Hover3Z of a booster: infinity
+91	0x80	FF800000	refuse	Hover3Z of a booster: minus infinity
+91	0x80	7FC00000	refuse	Hover3Z of a booster: a NaN
+91	0x80	7F7FFFFF	refuse	Hover3Z of a booster: the largest number
+91	0x80	FF7FFFFF	refuse	Hover3Z of a booster: the largest negative number
+91	0x80	C1C7FFFF	take	Hover3Z of a booster: the next number nearer 0 than the least
+91	0x80	C1C80000	take	Hover3Z of a booster: at the least
+91	0x80	C1C80001	refuse	Hover3Z of a booster: the next number farther from 0 than the least
+91	0x80	41C7FFFF	take	Hover3Z of a booster: the next number nearer 0 than the most
+91	0x80	41C80000	take	Hover3Z of a booster: at the most
+91	0x80	41C80001	refuse	Hover3Z of a booster: the next number farther from 0 than the most
+91	0x80	41480000	take	Hover3Z of a booster: inside
+91	0x80	C1480000	take	Hover3Z of a booster: inside, negative
+91	0x80	3C23D709	take	Hover3Z of a booster: the next number nearer 0 than the least Z above 0
+91	0x80	3C23D70A	take	Hover3Z of a booster: at the least Z above 0
+91	0x80	3C23D70B	take	Hover3Z of a booster: the next number farther from 0 than the least Z above 0
+91	0x80	BC23D709	take	Hover3Z of a booster: the next number nearer 0 than the least Z below 0
+91	0x80	BC23D70A	take	Hover3Z of a booster: at the least Z below 0
+91	0x80	BC23D70B	take	Hover3Z of a booster: the next number farther from 0 than the least Z below 0
+6	0x84	00000000	take	Wall0X of a machine: the bits of 0
+6	0x84	80000000	refuse	Wall0X of a machine: -0
+6	0x84	00000001	refuse	Wall0X of a machine: the smallest denormal
+6	0x84	007FFFFF	refuse	Wall0X of a machine: the largest denormal
+6	0x84	80000001	refuse	Wall0X of a machine: a negative denormal
+6	0x84	00800000	take	Wall0X of a machine: the smallest normal number
+6	0x84	7F800000	refuse	Wall0X of a machine: infinity
+6	0x84	FF800000	refuse	Wall0X of a machine: minus infinity
+6	0x84	7FC00000	refuse	Wall0X of a machine: a NaN
+6	0x84	7F7FFFFF	refuse	Wall0X of a machine: the largest number
+6	0x84	FF7FFFFF	refuse	Wall0X of a machine: the largest negative number
+6	0x84	C1C7FFFF	take	Wall0X of a machine: the next number nearer 0 than the least
+6	0x84	C1C80000	take	Wall0X of a machine: at the least
+6	0x84	C1C80001	refuse	Wall0X of a machine: the next number farther from 0 than the least
+6	0x84	41C7FFFF	take	Wall0X of a machine: the next number nearer 0 than the most
+6	0x84	41C80000	take	Wall0X of a machine: at the most
+6	0x84	41C80001	refuse	Wall0X of a machine: the next number farther from 0 than the most
+6	0x84	41480000	take	Wall0X of a machine: inside
+6	0x84	C1480000	take	Wall0X of a machine: inside, negative
+6	0x8C	00000000	take	Wall0Z of a machine: the bits of 0
+6	0x8C	80000000	refuse	Wall0Z of a machine: -0
+6	0x8C	00000001	refuse	Wall0Z of a machine: the smallest denormal
+6	0x8C	007FFFFF	refuse	Wall0Z of a machine: the largest denormal
+6	0x8C	80000001	refuse	Wall0Z of a machine: a negative denormal
+6	0x8C	00800000	take	Wall0Z of a machine: the smallest normal number
+6	0x8C	7F800000	refuse	Wall0Z of a machine: infinity
+6	0x8C	FF800000	refuse	Wall0Z of a machine: minus infinity
+6	0x8C	7FC00000	refuse	Wall0Z of a machine: a NaN
+6	0x8C	7F7FFFFF	refuse	Wall0Z of a machine: the largest number
+6	0x8C	FF7FFFFF	refuse	Wall0Z of a machine: the largest negative number
+6	0x8C	C1C7FFFF	take	Wall0Z of a machine: the next number nearer 0 than the least
+6	0x8C	C1C80000	take	Wall0Z of a machine: at the least
+6	0x8C	C1C80001	refuse	Wall0Z of a machine: the next number farther from 0 than the least
+6	0x8C	41C7FFFF	take	Wall0Z of a machine: the next number nearer 0 than the most
+6	0x8C	41C80000	take	Wall0Z of a machine: at the most
+6	0x8C	41C80001	refuse	Wall0Z of a machine: the next number farther from 0 than the most
+6	0x8C	41480000	take	Wall0Z of a machine: inside
+6	0x8C	C1480000	take	Wall0Z of a machine: inside, negative
+6	0xB0	00000000	take	Wall3Z of a machine: the bits of 0
+6	0xB0	80000000	refuse	Wall3Z of a machine: -0
+6	0xB0	00000001	refuse	Wall3Z of a machine: the smallest denormal
+6	0xB0	007FFFFF	refuse	Wall3Z of a machine: the largest denormal
+6	0xB0	80000001	refuse	Wall3Z of a machine: a negative denormal
+6	0xB0	00800000	take	Wall3Z of a machine: the smallest normal number
+6	0xB0	7F800000	refuse	Wall3Z of a machine: infinity
+6	0xB0	FF800000	refuse	Wall3Z of a machine: minus infinity
+6	0xB0	7FC00000	refuse	Wall3Z of a machine: a NaN
+6	0xB0	7F7FFFFF	refuse	Wall3Z of a machine: the largest number
+6	0xB0	FF7FFFFF	refuse	Wall3Z of a machine: the largest negative number
+6	0xB0	C1C7FFFF	take	Wall3Z of a machine: the next number nearer 0 than the least
+6	0xB0	C1C80000	take	Wall3Z of a machine: at the least
+6	0xB0	C1C80001	refuse	Wall3Z of a machine: the next number farther from 0 than the least
+6	0xB0	41C7FFFF	take	Wall3Z of a machine: the next number nearer 0 than the most
+6	0xB0	41C80000	take	Wall3Z of a machine: at the most
+6	0xB0	41C80001	refuse	Wall3Z of a machine: the next number farther from 0 than the most
+6	0xB0	41480000	take	Wall3Z of a machine: inside
+6	0xB0	C1480000	take	Wall3Z of a machine: inside, negative
+41	0x84	00000000	take	Wall0X of a body: the bits of 0
+41	0x84	80000000	refuse	Wall0X of a body: -0
+41	0x84	00000001	refuse	Wall0X of a body: the smallest denormal
+41	0x84	007FFFFF	refuse	Wall0X of a body: the largest denormal
+41	0x84	80000001	refuse	Wall0X of a body: a negative denormal
+41	0x84	00800000	take	Wall0X of a body: the smallest normal number
+41	0x84	7F800000	refuse	Wall0X of a body: infinity
+41	0x84	FF800000	refuse	Wall0X of a body: minus infinity
+41	0x84	7FC00000	refuse	Wall0X of a body: a NaN
+41	0x84	7F7FFFFF	refuse	Wall0X of a body: the largest number
+41	0x84	FF7FFFFF	refuse	Wall0X of a body: the largest negative number
+41	0x84	C1C7FFFF	take	Wall0X of a body: the next number nearer 0 than the least
+41	0x84	C1C80000	take	Wall0X of a body: at the least
+41	0x84	C1C80001	refuse	Wall0X of a body: the next number farther from 0 than the least
+41	0x84	41C7FFFF	take	Wall0X of a body: the next number nearer 0 than the most
+41	0x84	41C80000	take	Wall0X of a body: at the most
+41	0x84	41C80001	refuse	Wall0X of a body: the next number farther from 0 than the most
+41	0x84	41480000	take	Wall0X of a body: inside
+41	0x84	C1480000	take	Wall0X of a body: inside, negative
+41	0x8C	00000000	take	Wall0Z of a body: the bits of 0
+41	0x8C	80000000	refuse	Wall0Z of a body: -0
+41	0x8C	00000001	refuse	Wall0Z of a body: the smallest denormal
+41	0x8C	007FFFFF	refuse	Wall0Z of a body: the largest denormal
+41	0x8C	80000001	refuse	Wall0Z of a body: a negative denormal
+41	0x8C	00800000	take	Wall0Z of a body: the smallest normal number
+41	0x8C	7F800000	refuse	Wall0Z of a body: infinity
+41	0x8C	FF800000	refuse	Wall0Z of a body: minus infinity
+41	0x8C	7FC00000	refuse	Wall0Z of a body: a NaN
+41	0x8C	7F7FFFFF	refuse	Wall0Z of a body: the largest number
+41	0x8C	FF7FFFFF	refuse	Wall0Z of a body: the largest negative number
+41	0x8C	C1C7FFFF	take	Wall0Z of a body: the next number nearer 0 than the least
+41	0x8C	C1C80000	take	Wall0Z of a body: at the least
+41	0x8C	C1C80001	refuse	Wall0Z of a body: the next number farther from 0 than the least
+41	0x8C	41C7FFFF	take	Wall0Z of a body: the next number nearer 0 than the most
+41	0x8C	41C80000	take	Wall0Z of a body: at the most
+41	0x8C	41C80001	refuse	Wall0Z of a body: the next number farther from 0 than the most
+41	0x8C	41480000	take	Wall0Z of a body: inside
+41	0x8C	C1480000	take	Wall0Z of a body: inside, negative
+41	0xB0	00000000	take	Wall3Z of a body: the bits of 0
+41	0xB0	80000000	refuse	Wall3Z of a body: -0
+41	0xB0	00000001	refuse	Wall3Z of a body: the smallest denormal
+41	0xB0	007FFFFF	refuse	Wall3Z of a body: the largest denormal
+41	0xB0	80000001	refuse	Wall3Z of a body: a negative denormal
+41	0xB0	00800000	take	Wall3Z of a body: the smallest normal number
+41	0xB0	7F800000	refuse	Wall3Z of a body: infinity
+41	0xB0	FF800000	refuse	Wall3Z of a body: minus infinity
+41	0xB0	7FC00000	refuse	Wall3Z of a body: a NaN
+41	0xB0	7F7FFFFF	refuse	Wall3Z of a body: the largest number
+41	0xB0	FF7FFFFF	refuse	Wall3Z of a body: the largest negative number
+41	0xB0	C1C7FFFF	take	Wall3Z of a body: the next number nearer 0 than the least
+41	0xB0	C1C80000	take	Wall3Z of a body: at the least
+41	0xB0	C1C80001	refuse	Wall3Z of a body: the next number farther from 0 than the least
+41	0xB0	41C7FFFF	take	Wall3Z of a body: the next number nearer 0 than the most
+41	0xB0	41C80000	take	Wall3Z of a body: at the most
+41	0xB0	41C80001	refuse	Wall3Z of a body: the next number farther from 0 than the most
+41	0xB0	41480000	take	Wall3Z of a body: inside
+41	0xB0	C1480000	take	Wall3Z of a body: inside, negative
+66	0x84	00000000	take	Wall0X of a cockpit: the bits of 0
+66	0x84	80000000	refuse	Wall0X of a cockpit: -0
+66	0x84	00000001	refuse	Wall0X of a cockpit: the smallest denormal
+66	0x84	007FFFFF	refuse	Wall0X of a cockpit: the largest denormal
+66	0x84	80000001	refuse	Wall0X of a cockpit: a negative denormal
+66	0x84	00800000	take	Wall0X of a cockpit: the smallest normal number
+66	0x84	7F800000	refuse	Wall0X of a cockpit: infinity
+66	0x84	FF800000	refuse	Wall0X of a cockpit: minus infinity
+66	0x84	7FC00000	refuse	Wall0X of a cockpit: a NaN
+66	0x84	7F7FFFFF	refuse	Wall0X of a cockpit: the largest number
+66	0x84	FF7FFFFF	refuse	Wall0X of a cockpit: the largest negative number
+66	0x84	C1C7FFFF	take	Wall0X of a cockpit: the next number nearer 0 than the least
+66	0x84	C1C80000	take	Wall0X of a cockpit: at the least
+66	0x84	C1C80001	refuse	Wall0X of a cockpit: the next number farther from 0 than the least
+66	0x84	41C7FFFF	take	Wall0X of a cockpit: the next number nearer 0 than the most
+66	0x84	41C80000	take	Wall0X of a cockpit: at the most
+66	0x84	41C80001	refuse	Wall0X of a cockpit: the next number farther from 0 than the most
+66	0x84	41480000	take	Wall0X of a cockpit: inside
+66	0x84	C1480000	take	Wall0X of a cockpit: inside, negative
+66	0x8C	00000000	take	Wall0Z of a cockpit: the bits of 0
+66	0x8C	80000000	refuse	Wall0Z of a cockpit: -0
+66	0x8C	00000001	refuse	Wall0Z of a cockpit: the smallest denormal
+66	0x8C	007FFFFF	refuse	Wall0Z of a cockpit: the largest denormal
+66	0x8C	80000001	refuse	Wall0Z of a cockpit: a negative denormal
+66	0x8C	00800000	take	Wall0Z of a cockpit: the smallest normal number
+66	0x8C	7F800000	refuse	Wall0Z of a cockpit: infinity
+66	0x8C	FF800000	refuse	Wall0Z of a cockpit: minus infinity
+66	0x8C	7FC00000	refuse	Wall0Z of a cockpit: a NaN
+66	0x8C	7F7FFFFF	refuse	Wall0Z of a cockpit: the largest number
+66	0x8C	FF7FFFFF	refuse	Wall0Z of a cockpit: the largest negative number
+66	0x8C	C1C7FFFF	take	Wall0Z of a cockpit: the next number nearer 0 than the least
+66	0x8C	C1C80000	take	Wall0Z of a cockpit: at the least
+66	0x8C	C1C80001	refuse	Wall0Z of a cockpit: the next number farther from 0 than the least
+66	0x8C	41C7FFFF	take	Wall0Z of a cockpit: the next number nearer 0 than the most
+66	0x8C	41C80000	take	Wall0Z of a cockpit: at the most
+66	0x8C	41C80001	refuse	Wall0Z of a cockpit: the next number farther from 0 than the most
+66	0x8C	41480000	take	Wall0Z of a cockpit: inside
+66	0x8C	C1480000	take	Wall0Z of a cockpit: inside, negative
+66	0xB0	00000000	take	Wall3Z of a cockpit: the bits of 0
+66	0xB0	80000000	refuse	Wall3Z of a cockpit: -0
+66	0xB0	00000001	refuse	Wall3Z of a cockpit: the smallest denormal
+66	0xB0	007FFFFF	refuse	Wall3Z of a cockpit: the largest denormal
+66	0xB0	80000001	refuse	Wall3Z of a cockpit: a negative denormal
+66	0xB0	00800000	take	Wall3Z of a cockpit: the smallest normal number
+66	0xB0	7F800000	refuse	Wall3Z of a cockpit: infinity
+66	0xB0	FF800000	refuse	Wall3Z of a cockpit: minus infinity
+66	0xB0	7FC00000	refuse	Wall3Z of a cockpit: a NaN
+66	0xB0	7F7FFFFF	refuse	Wall3Z of a cockpit: the largest number
+66	0xB0	FF7FFFFF	refuse	Wall3Z of a cockpit: the largest negative number
+66	0xB0	C1C7FFFF	take	Wall3Z of a cockpit: the next number nearer 0 than the least
+66	0xB0	C1C80000	take	Wall3Z of a cockpit: at the least
+66	0xB0	C1C80001	refuse	Wall3Z of a cockpit: the next number farther from 0 than the least
+66	0xB0	41C7FFFF	take	Wall3Z of a cockpit: the next number nearer 0 than the most
+66	0xB0	41C80000	take	Wall3Z of a cockpit: at the most
+66	0xB0	41C80001	refuse	Wall3Z of a cockpit: the next number farther from 0 than the most
+66	0xB0	41480000	take	Wall3Z of a cockpit: inside
+66	0xB0	C1480000	take	Wall3Z of a cockpit: inside, negative
+91	0x84	00000000	take	Wall0X of a booster: the bits of 0
+91	0x84	80000000	refuse	Wall0X of a booster: -0
+91	0x84	00000001	refuse	Wall0X of a booster: the smallest denormal
+91	0x84	007FFFFF	refuse	Wall0X of a booster: the largest denormal
+91	0x84	80000001	refuse	Wall0X of a booster: a negative denormal
+91	0x84	00800000	take	Wall0X of a booster: the smallest normal number
+91	0x84	7F800000	refuse	Wall0X of a booster: infinity
+91	0x84	FF800000	refuse	Wall0X of a booster: minus infinity
+91	0x84	7FC00000	refuse	Wall0X of a booster: a NaN
+91	0x84	7F7FFFFF	refuse	Wall0X of a booster: the largest number
+91	0x84	FF7FFFFF	refuse	Wall0X of a booster: the largest negative number
+91	0x84	C1C7FFFF	take	Wall0X of a booster: the next number nearer 0 than the least
+91	0x84	C1C80000	take	Wall0X of a booster: at the least
+91	0x84	C1C80001	refuse	Wall0X of a booster: the next number farther from 0 than the least
+91	0x84	41C7FFFF	take	Wall0X of a booster: the next number nearer 0 than the most
+91	0x84	41C80000	take	Wall0X of a booster: at the most
+91	0x84	41C80001	refuse	Wall0X of a booster: the next number farther from 0 than the most
+91	0x84	41480000	take	Wall0X of a booster: inside
+91	0x84	C1480000	take	Wall0X of a booster: inside, negative
+91	0x8C	00000000	take	Wall0Z of a booster: the bits of 0
+91	0x8C	80000000	refuse	Wall0Z of a booster: -0
+91	0x8C	00000001	refuse	Wall0Z of a booster: the smallest denormal
+91	0x8C	007FFFFF	refuse	Wall0Z of a booster: the largest denormal
+91	0x8C	80000001	refuse	Wall0Z of a booster: a negative denormal
+91	0x8C	00800000	take	Wall0Z of a booster: the smallest normal number
+91	0x8C	7F800000	refuse	Wall0Z of a booster: infinity
+91	0x8C	FF800000	refuse	Wall0Z of a booster: minus infinity
+91	0x8C	7FC00000	refuse	Wall0Z of a booster: a NaN
+91	0x8C	7F7FFFFF	refuse	Wall0Z of a booster: the largest number
+91	0x8C	FF7FFFFF	refuse	Wall0Z of a booster: the largest negative number
+91	0x8C	C1C7FFFF	take	Wall0Z of a booster: the next number nearer 0 than the least
+91	0x8C	C1C80000	take	Wall0Z of a booster: at the least
+91	0x8C	C1C80001	refuse	Wall0Z of a booster: the next number farther from 0 than the least
+91	0x8C	41C7FFFF	take	Wall0Z of a booster: the next number nearer 0 than the most
+91	0x8C	41C80000	take	Wall0Z of a booster: at the most
+91	0x8C	41C80001	refuse	Wall0Z of a booster: the next number farther from 0 than the most
+91	0x8C	41480000	take	Wall0Z of a booster: inside
+91	0x8C	C1480000	take	Wall0Z of a booster: inside, negative
+91	0xB0	00000000	take	Wall3Z of a booster: the bits of 0
+91	0xB0	80000000	refuse	Wall3Z of a booster: -0
+91	0xB0	00000001	refuse	Wall3Z of a booster: the smallest denormal
+91	0xB0	007FFFFF	refuse	Wall3Z of a booster: the largest denormal
+91	0xB0	80000001	refuse	Wall3Z of a booster: a negative denormal
+91	0xB0	00800000	take	Wall3Z of a booster: the smallest normal number
+91	0xB0	7F800000	refuse	Wall3Z of a booster: infinity
+91	0xB0	FF800000	refuse	Wall3Z of a booster: minus infinity
+91	0xB0	7FC00000	refuse	Wall3Z of a booster: a NaN
+91	0xB0	7F7FFFFF	refuse	Wall3Z of a booster: the largest number
+91	0xB0	FF7FFFFF	refuse	Wall3Z of a booster: the largest negative number
+91	0xB0	C1C7FFFF	take	Wall3Z of a booster: the next number nearer 0 than the least
+91	0xB0	C1C80000	take	Wall3Z of a booster: at the least
+91	0xB0	C1C80001	refuse	Wall3Z of a booster: the next number farther from 0 than the least
+91	0xB0	41C7FFFF	take	Wall3Z of a booster: the next number nearer 0 than the most
+91	0xB0	41C80000	take	Wall3Z of a booster: at the most
+91	0xB0	41C80001	refuse	Wall3Z of a booster: the next number farther from 0 than the most
+91	0xB0	41480000	take	Wall3Z of a booster: inside
+91	0xB0	C1480000	take	Wall3Z of a booster: inside, negative

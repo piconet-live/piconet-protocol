@@ -1,0 +1,55 @@
+{
+  "about": "Piconet Launcher: a race (match m7)",
+  "bundle": "b",
+  "widescreen": true,
+  "lanes": 0,
+  "match": {
+    "match": {
+      "matchId": "m7",
+      "seat": 1,
+      "token": "1f2e3d4c5b6a7988",
+      "relay": {
+        "host": "",
+        "port": 47811
+      },
+      "setup": {
+        "course": 8,
+        "laps": 3,
+        "seats": [
+          {
+            "seat": 0,
+            "machine": 5,
+            "playerId": "p1"
+          }
+        ]
+      }
+    },
+    "relayHost": "127.0.0.1",
+    "delay": 2,
+    "overclock": 6,
+    "otherSounds": "quieter",
+    "record": "race.fzrp"
+  },
+  "windowName": "Piconet",
+  "windowNamePicture": {
+    "width": 2,
+    "height": 1,
+    "rgba": "/wAA/wECA4A="
+  },
+  "showFrameRate": false,
+  "present": "copy",
+  "fullScreen": "borderless",
+  "refreshRate": "120",
+  "taskbar": {
+    "id": "Piconet.Launcher",
+    "program": "C:\\Piconet\\Launcher.App.exe",
+    "name": "Piconet Launcher"
+  },
+  "board": "g.board",
+  "debug": {
+    "rollbackLog": "rb.csv",
+    "jitterMs": 8,
+    "autopilot": true,
+    "testLagMs": 50
+  }
+}

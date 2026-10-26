@@ -1,0 +1,95 @@
+# The launcher's swear words: masked (****) in the chat lines a player receives while "Hide swear words" is on (the
+# default). The server's always-blocked words (blocked.txt) are masked too. Matched as WordList.cs matches; a term a
+# line; a star at an end: also inside a longer word on that side ("*fuck*": "motherfucker").
+# Picked by hand from dsojevic/profanity-list (en.json, commit c279243; MIT, Copyright (c) 2021 David
+# Sojevic: LICENSE-profanity-list.txt beside this file): its general and shock entries of severity 2 and up, the
+# common sexual swear words, and the milder slurs that are not on the server's list. Left out: identity words that
+# are no insult, and words with an ordinary meaning that a race's chat uses (hell, damn, crap, bloody, sex, nude).
+
+# swearing
+*fuck*
+*shit*
+*bitch*
+cunt
+twat
+wank
+wanker
+tosser
+bastard
+bellend
+bollocks
+bugger
+piss
+pissed
+pissing
+ass
+arse
+ass hole
+arse hole
+asshat
+dumbass
+jackass
+dick
+dick head
+cock
+cock sucker
+prick
+pussy
+whore
+slut
+douche bag
+god damn
+retard
+retarded
+spastic
+
+# sexual
+jizz
+cum
+dildo
+blow job
+hand job
+rim job
+tits
+titty
+titties
+porn
+porno
+rape
+rapist
+raping
+
+# shock sites
+goatse
+2g1c
+two girls one cup
+lemon party
+tub girl
+meat spin
+blue waffle
+
+# slurs that are not on the server's list (milder, or with an ordinary meaning too)
+chinaman
+jap
+kraut
+honky
+honkey
+eyetie
+greaseball
+wog
+gin jockey
+wigger
+whigger
+wigga
+sheep shagger
+wagon burner
+dyke
+bull dyke
+lesbo
+lezzie
+poof
+carpet muncher
+fudge packer
+butt pirate
+ass bandit
+arse bandit

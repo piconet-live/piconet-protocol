@@ -1,0 +1,16 @@
+{
+  "about": "Piconet Launcher: a replay\u0027s playback",
+  "bundle": "b",
+  "widescreen": false,
+  "lanes": 0,
+  "replay": {
+    "file": "r.fzrp",
+    "otherSounds": "off"
+  },
+  "debug": {
+    "rollbackLog": "rb.csv",
+    "jitterMs": 8,
+    "autopilot": true,
+    "testLagMs": 50
+  }
+}

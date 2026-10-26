@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- The status board's generated C# view (../../generated/StatusBoard.g.cs): its header, each block's round trip,
+       the ring, torn reads under two threads, the board the C++ test wrote (and one for it to read), and a live C++
+       writer in another process on the same file mapping, as the launcher and the game share it. Run by
+       protocol/check.sh. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../generated/StatusBoard.g.cs" Link="Generated/StatusBoard.g.cs" />
+  </ItemGroup>
+</Project>

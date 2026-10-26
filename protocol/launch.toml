@@ -1,0 +1,235 @@
+# The game's launch file (formats.md section 2), defined once: generate.py writes the C++ reader's key reading
+# (generated/launch_file.g.h: the game's core, port/core/src/files_launch.cpp) and the C# writer (generated/
+# LaunchFile.g.cs: the launcher, Launcher.Core GameLaunchFile) from this file (README.md). tests/vectors/launch/
+# holds the files the launcher writes: the launcher's tests write each byte for byte, the game's tests take each.
+#
+# A part ([[part]]) is one JSON object of the file: "File" the file itself, the others a member of their `under`
+# part, by `key`. Its `member` list is its members, in the order the game's reader takes them (which only decides
+# which of two wrong keys a refusal names); `cs_order` is the order the launcher writes them in, which is the
+# file's own order (the game's reader does not care); it names the members the launcher writes.
+#
+# A member's `type`: bool, whole (a whole number from `low` to `high`), number (any number from `low` to `high`),
+# text (`may_be_empty` true when "" is a value; `most_bytes`: the longest, a constant the reader's own check uses),
+# one_of (a text of `values`), wholes (a list of `least` to `most` whole numbers, each from `low` to `high`), or
+# object (another part, or an object the reader takes by hand). `to` is the member of the C++ reader's target the
+# value goes to (fzgx::Options, fzgx::Debug or a part's own struct). `hand` true: the reader takes the member itself
+# (files_launch.cpp, files_launch_debug.cpp: a value of its own form, or parsed further); an object is always taken
+# by hand, its part's members by the generated reader. `missing`: why a file without the member is refused. `doc`:
+# what the reader does with a member it takes by hand.
+# Every rule between members (a race needs the bundle, a race or a playback, ...) is the reader's own, by hand.
+#
+# `cs` (a member the launcher writes): `name` the C# member, `write` when it is written: "always" (`value`, a
+# constant: no C# member), "required" (always, a value given), "set" (when given: a C# null leaves it out), "true"
+# (only when true), "false" (only when false; true when not given), "positive" (only above 0). A part with `cs` is a
+# C# record; `cs_base` true: the record starts from an object of members written as they are (the match file's, a
+# test's debug settings), the generated members after them.
+#
+# The emulator's side, members of "debug" by the names the emulator knows them by, are the core's table
+# (EMULATOR_KEYS, port/core/src/files_launch_debug.cpp): another program's settings, handed on as they are.
+
+[launch]
+name = "launch file"
+max_bytes = 1048576    # the game reads no longer file (a match of 30 seats is some 8 KiB)
+
+[codec.csharp]
+namespace = "Launcher.Core"
+
+[codec.cxx]
+namespace = "fzgx::launch_file"
+
+[[part]]
+name = "File"
+cs = "LaunchFile"
+doc = "the launch file: every setting of one start of the game"
+cs_order = ["about", "bundle", "widescreen", "trueWidescreen", "lanes", "controllerSetup", "match", "replay",
+            "windowName", "windowNamePicture", "showFrameRate", "rumble", "present", "verticalSync", "fullScreen",
+            "refreshRate", "taskbar", "board", "debug"]
+member = [
+    { key = "about", type = "text", to = "about", missing = "a line that says what this start is for", cs = { name = "About", write = "required" } },
+    { key = "bundle", type = "text", to = "bundle_dir", cs = { name = "Bundle", write = "set" } },
+    { key = "board", type = "text", to = "board", cs = { name = "Board", write = "set" } },
+    { key = "widescreen", type = "bool", to = "widescreen", cs = { name = "Widescreen", write = "set" } },
+    { key = "trueWidescreen", type = "bool", to = "true_widescreen", cs = { name = "TrueWidescreen", write = "true" } },
+    { key = "windowName", type = "text", to = "window_name", most_bytes = 64, cs = { name = "WindowName", write = "set" } },
+    { key = "showFrameRate", type = "bool", to = "show_frame_rate", cs = { name = "ShowFrameRate", write = "set" } },
+    { key = "rumble", type = "bool", to = "rumble", cs = { name = "Rumble", write = "false" } },
+    { key = "windowNamePicture", type = "object", cs = { name = "WindowNamePicture", write = "set" } },
+    { key = "taskbar", type = "object", cs = { name = "Taskbar", write = "set" } },
+    { key = "present", type = "one_of", values = ["field", "console", "copy"], to = "present", cs = { name = "Present", write = "set" } },
+    { key = "refreshRate", type = "one_of", values = ["60", "120", "240", "display"], to = "refresh_rate", cs = { name = "RefreshRate", write = "set" } },
+    { key = "verticalSync", type = "bool", to = "vertical_sync", cs = { name = "VerticalSync", write = "true" } },
+    { key = "fullScreen", type = "one_of", values = ["borderless", "exclusive"], to = "full_screen", cs = { name = "FullScreen", write = "set" } },
+    { key = "controllerSetup", type = "bool", to = "controller_setup", cs = { name = "ControllerSetup", write = "true" } },
+    { key = "lanes", type = "whole", hand = true, low = 0, high = 0, cs = { write = "always", value = 0 }, doc = "0 only: the multicore physics is parked on branch parked/lanes (ReadLanesOff)" },
+    { key = "match", type = "object", cs = { name = "Match", write = "set" } },
+    { key = "replay", type = "object", cs = { name = "Replay", write = "set" } },
+    { key = "debug", type = "object", cs = { name = "Debug", write = "set" } },
+]
+
+[[part]]
+name = "Match"
+under = "File"
+key = "match"
+cs = "LaunchMatch"
+cs_base = true
+doc = "a race: the match file the launcher wrote, with where the race is recorded"
+member = [
+    { key = "match", type = "object", missing = "the coordinator's match start", doc = "held as its text: only the coordinator's message may hold members the game does not know" },
+    { key = "relayHost", type = "text", to = "relay_host", may_be_empty = true },
+    { key = "delay", type = "whole", to = "delay", low = 0, high = 2, doc = "PLAYERS_INPUT_DELAY: the player's choice, whoever wrote the file" },
+    { key = "overclock", type = "number", to = "cpu_clock", low = 1, high = 16 },
+    { key = "otherSounds", type = "one_of", values = ["full", "quieter", "off"], to = "other_sounds" },
+    { key = "record", type = "text", to = "replay_file", cs = { name = "Record", write = "set" } },
+    { key = "rejoin", type = "bool", to = "rejoin", cs = { name = "Rejoin", write = "true" } },
+    { key = "spectate", type = "bool", to = "spectate" },
+    { key = "practice", type = "bool", to = "practice" },
+]
+
+[[part]]
+name = "Replay"
+under = "File"
+key = "replay"
+cs = "LaunchReplay"
+doc = "a replay's playback, as the race"
+member = [
+    { key = "scrubber", type = "bool", to = "replay_scrubber" },
+    { key = "file", type = "text", to = "play_file", missing = "the replay to play", cs = { name = "File", write = "required" } },
+    { key = "otherSounds", type = "one_of", values = ["full", "quieter", "off"], to = "other_sounds", cs = { name = "OtherSounds", write = "required" } },
+]
+
+[[part]]
+name = "WindowNamePicture"
+under = "File"
+key = "windowNamePicture"
+cs = "LaunchNamePicture"
+doc = "the name in the window's strip as the launcher draws it: the pixels row by row, red, green, blue, opacity, as base64"
+member = [
+    { key = "width", type = "whole", to = "width", low = 1, high = 512, cs = { name = "Width", write = "required" } },
+    { key = "height", type = "whole", to = "height", low = 1, high = 64, cs = { name = "Height", write = "required" } },
+    { key = "rgba", type = "text", to = "rgba", cs = { name = "Rgba", write = "required" } },
+]
+
+[[part]]
+name = "Taskbar"
+under = "File"
+key = "taskbar"
+cs = "LaunchTaskbar"
+doc = "the launcher's taskbar button, which the game's window joins; each member goes to Windows as it is"
+member = [
+    { key = "id", type = "text", to = "id", most_bytes = 128, missing = "the taskbar button's id, the launcher's program file and its name go together", cs = { name = "Id", write = "required" }, doc = "Windows' own limit for an application id" },
+    { key = "program", type = "text", to = "program", most_bytes = 1024, missing = "the taskbar button's id, the launcher's program file and its name go together", cs = { name = "Program", write = "required" } },
+    { key = "name", type = "text", to = "name", most_bytes = 64, missing = "the taskbar button's id, the launcher's program file and its name go together", cs = { name = "Name", write = "required" } },
+]
+
+[[part]]
+name = "Debug"
+under = "File"
+key = "debug"
+cs = "LaunchDebug"
+cs_base = true
+doc = "the test settings (fzgx::Debug says what each does); without the part every one is off"
+cs_order = ["autopilot", "testLagMs"]
+member = [
+    { key = "testLagMs", type = "whole", to = "lag_ms", low = 0, high = 10000, cs = { name = "TestLagMs", write = "positive" } },
+    { key = "jitterMs", type = "whole", to = "jitter_ms", low = 0, high = 10000 },
+    { key = "autopilot", type = "bool", to = "autopilot", cs = { name = "Autopilot", write = "true" } },
+    { key = "blackoutStep", type = "whole", to = "blackout_step", low = 1, high = 4294967295 },
+    { key = "blackoutSeconds", type = "whole", to = "blackout_seconds", low = 1, high = 600 },
+    { key = "handbackAt", type = "whole", to = "handback_at", low = 1, high = 4294967295 },
+    { key = "forceRollback", type = "object" },
+    { key = "rollbackLog", type = "text", to = "rollback_log" },
+    { key = "alterStep", type = "whole", to = "alter_step", low = 1, high = 4294967295 },
+    { key = "clock", type = "text", hand = true, doc = "a real-time clock value: 1 to 8 hexadecimal digits, not zero" },
+    { key = "forcePatches", type = "bool", to = "force_patches" },
+    { key = "drawnFrames", type = "whole", to = "drawn_frames", low = 1, high = 3 },
+    { key = "redraw", type = "object" },
+    { key = "lateSteps", type = "whole", to = "late_steps", low = 1, high = 20 },
+    { key = "lateSeats", type = "wholes", to = "late_seats", low = 0, high = 29, least = 1, most = 30 },
+    { key = "lateNoise", type = "whole", to = "late_noise", low = 1, high = 100 },
+    { key = "skipDraws", type = "whole", to = "skip_draws", low = 1, high = 600 },
+    { key = "trace", type = "text", to = "trace_file" },
+    { key = "traceStates", type = "wholes", hand = true, low = 0, high = 4294967295, least = 2, most = 2, doc = "[FROM, TO] with TO after FROM, with \"trace\"" },
+    { key = "dump", type = "object" },
+    { key = "keepScratch", type = "bool", to = "keep_scratch" },
+    { key = "bufferShare", type = "whole", to = "buffer_share", low = 5, high = 95 },
+    { key = "bufferSteps", type = "whole", to = "buffer_steps", low = 1, high = 64 },
+    { key = "replayMemory", type = "whole", to = "replay_memory", low = 64, high = 65536 },
+    { key = "replayNear", type = "whole", to = "replay_near", low = 64, high = 65536 },
+    { key = "replayScript", type = "text", to = "replay_script" },
+    { key = "replayEndQuits", type = "bool", to = "replay_end_quits" },
+    { key = "hitLog", type = "text", to = "hit_log" },
+    { key = "slowSteps", type = "text", hand = true, doc = "FROM-TO, two steps, the first not 0 and not past the second" },
+    { key = "undoLog", type = "text", to = "undo_log", doc = "\"guard\", \"scan\" or \"both\" (the reader's own check)" },
+    { key = "undoTrace", type = "object" },
+    { key = "standStill", type = "object" },
+    { key = "partialRollback", type = "object", hand = true, doc = "a mode alone, or an object (ReadPartialKeys)" },
+    { key = "fullScreenWithoutFocus", type = "bool", to = "full_screen_without_focus" },
+    { key = "singleCore", type = "bool", to = "single_core" },
+    { key = "jit", type = "bool", to = "jit" },
+    { key = "cheats", type = "bool", to = "cheats" },
+    { key = "mods", type = "bool", to = "mods" },
+    { key = "automation", type = "bool", to = "automation" },
+    { key = "loadState", type = "bool", to = "load_state" },
+    { key = "userSettings", type = "bool", to = "user_settings" },
+]
+
+[[part]]
+name = "ForceRollback"
+under = "Debug"
+key = "forceRollback"
+doc = "rollbacks on purpose: every so many frames, of these depths in turn (both needed)"
+member = [
+    { key = "every", type = "whole", to = "force_every", low = 1, high = 65535 },
+    { key = "depths", type = "wholes", to = "force_depths", low = 1, high = 20, least = 1, most = 64 },
+]
+
+[[part]]
+name = "Redraw"
+under = "Debug"
+key = "redraw"
+doc = "the high refresh rate's re-draw (VideoCommon/FrameRedraw.h); \"replays\" needed"
+member = [
+    { key = "replays", type = "whole", to = "redraw_replays", low = 1, high = 3 },
+    { key = "compareEvery", type = "whole", to = "redraw_compare", low = 1, high = 100000 },
+    { key = "log", type = "text", to = "redraw_log" },
+    { key = "dump", type = "text", to = "redraw_dump" },
+    { key = "turn", type = "number", to = "redraw_turn", low = -90, high = 90 },
+    { key = "budgetMs", type = "number", to = "redraw_budget_ms", low = 0, high = 1000 },
+    { key = "drawsAt", type = "whole", to = "redraw_draws_at", low = 1, high = 100000000 },
+    { key = "stillsAt", type = "whole", to = "redraw_stills_at", low = 1, high = 100000000 },
+    { key = "stills", type = "whole", to = "redraw_stills", low = 1, high = 600 },
+    { key = "stillsEvery", type = "whole", to = "redraw_stills_every", low = 1, high = 100000 },
+    { key = "perStep", type = "number", to = "redraw_per_step", low = 1, high = 12 },
+    { key = "at", type = "text", hand = true, doc = "\"copy\" or \"drawDone\"" },
+]
+
+[[part]]
+name = "Dump"
+under = "Debug"
+key = "dump"
+doc = "the game's memory written at a step (both needed)"
+member = [
+    { key = "step", type = "whole", to = "dump_step", low = 1, high = 4294967295 },
+    { key = "prefix", type = "text", to = "dump_prefix" },
+]
+
+[[part]]
+name = "UndoTrace"
+under = "Debug"
+key = "undoTrace"
+doc = "the undo log's trace: its file (needed), the heaps' address, the steps checked"
+member = [
+    { key = "file", type = "text", to = "undo_trace" },
+    { key = "heaps", type = "text", hand = true, doc = "an address in the game's memory, hexadecimal" },
+    { key = "check", type = "wholes", hand = true, low = 0, high = 4294967295, least = 2, most = 2, doc = "[FROM, TO], TO after FROM by 4,096 steps at most" },
+]
+
+[[part]]
+name = "StandStill"
+under = "Debug"
+key = "standStill"
+doc = "the freeze on purpose: at these steps (ascending), for as many tenths of a second"
+member = [
+    { key = "steps", type = "wholes", to = "stand_steps", low = 1, high = 4294967295, least = 1, most = 4 },
+    { key = "tenths", type = "wholes", to = "stand_tenths", low = 1, high = 1200, least = 1, most = 4 },
+]

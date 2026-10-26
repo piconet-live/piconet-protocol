@@ -1,0 +1,158 @@
+using System.Text.Json.Serialization;
+
+namespace Online.Protocol;
+
+/// <summary>
+/// A custom lobby's rules: the host's value of each rule a host sets (<see cref="Settable"/>), keyed by the rule's
+/// name (<see cref="HostRule.Name"/>). A missing key is Quick Play's value: the server's own. The server checks every
+/// value against the rule's range in <see cref="HostRules"/>: a number outside it is brought to the nearest one the
+/// rule takes (<see cref="HostRule.Kept"/>); an unknown name, or a value that is none of a choice's, is refused
+/// (<see cref="CustomLobby.BadRules"/>).
+/// </summary>
+/// <remarks>Each value is a whole number: a number, delay or lobby time as the rule counts it (seconds for the course
+/// vote and the machine choice); a switch 0 off, 1 on; a choice its enum's value in declaration order
+/// (<see cref="HostRules.CpuFill"/>: <see cref="CpuFillMode"/>; <see cref="HostRules.CourseSelect"/>:
+/// <see cref="CourseSelectMode"/>, with the fixed course under <see cref="FixedCourseKey"/>, a course of
+/// <see cref="CoursePool.Default"/>); the machine setting's range its low end under "machine-setting" and its high
+/// end under <see cref="SettingHighKey"/>. StatPack: the race's stat pack by its name, one of the server's packs;
+/// null: the disc's own stats. The course pool and the allowed machines are Quick Play's in a custom lobby.
+/// The server sends a lobby's rules whole (every settable rule's value), so a launcher compares them with Quick
+/// Play's (<see cref="LobbyList.QuickPlay"/>) and shows only the rules that differ (<see cref="Differing"/>).</remarks>
+public sealed record LobbyRules(IReadOnlyDictionary<string, int> Values,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? StatPack = null)
+{
+    /// <summary>The key of the machine setting's high end ("machine-setting" holds the low end).</summary>
+    public const string SettingHighKey = "machine-setting-high";
+
+    /// <summary>The key of the fixed course, with <see cref="HostRules.CourseSelect"/> at
+    /// <see cref="CourseSelectMode.Fixed"/>.</summary>
+    public const string FixedCourseKey = "course-select-course";
+
+    /// <summary>No rule of the host's own: Quick Play's rules throughout, with the disc's own stats.</summary>
+    public static LobbyRules QuickPlay { get; } = new(new Dictionary<string, int>());
+
+    /// <summary>The rules a custom lobby's host sets: those of <see cref="HostRules.All"/> that reach a race alone or
+    /// a lobby (not the server's own, <see cref="RuleReach.Server"/>), but the course pool and the allowed machines.</summary>
+    public static IReadOnlyList<HostRule> Settable { get; } =
+        [.. HostRules.All.Where(r => r.Reach != RuleReach.Server && r.Kind is not (RuleKind.Courses or RuleKind.Machines))];
+
+    /// <summary>The keys <see cref="Values"/> may hold: the settable rules' names but the stat pack's (its own
+    /// member), and the two extra keys.</summary>
+    public static IReadOnlyList<string> Keys { get; } =
+        [.. Settable.Where(r => r.Kind != RuleKind.Pack).Select(r => r.Name), SettingHighKey, FixedCourseKey];
+
+    /// <summary>The value under a key; null: Quick Play's.</summary>
+    public int? Value(string key) => Values is not null && Values.TryGetValue(key, out var v) ? v : null;
+
+    /// <summary>The value of a rule; null: Quick Play's.</summary>
+    public int? Value(HostRule rule)
+    {
+        ArgumentNullException.ThrowIfNull(rule);
+        return Value(rule.Name);
+    }
+
+    /// <summary>The names of the settable rules whose value here is not <paramref name="quickPlay"/>'s, in the rules'
+    /// order (<see cref="Settable"/>): what a lobby's rules summary shows. A key missing here is Quick Play's.</summary>
+    public IReadOnlyList<string> Differing(LobbyRules quickPlay)
+    {
+        ArgumentNullException.ThrowIfNull(quickPlay);
+        bool Differs(string key) => Value(key) is { } v && v != quickPlay.Value(key);
+        return [.. Settable.Where(rule => rule.Kind switch
+        {
+            RuleKind.Pack => StatPack != quickPlay.StatPack,
+            RuleKind.Range => Differs(rule.Name) || Differs(SettingHighKey),
+            RuleKind.Course => Differs(rule.Name) || (Value(rule) == (int)CourseSelectMode.Fixed && Differs(FixedCourseKey)),
+            _ => Differs(rule.Name),
+        }).Select(r => r.Name)];
+    }
+}
+
+/// <summary>One custom lobby as the lobby browser lists it. Players: its members now; Capacity: its racers rule.
+/// Locked: joining asks for its password. Rules: its rules whole (<see cref="LobbyRules"/>). Stage: as
+/// <see cref="LobbyState.Stage"/> (nobody joins while it is starting or choosing).</summary>
+public sealed record LobbySummary(string Id, string Name, string HostName, int Players, int Capacity, bool Locked,
+    LobbyRules Rules, string Stage);
+
+/// <summary>Custom lobbies' limits and the codes of their refusals (<see cref="ErrorMessage"/>).</summary>
+public static class CustomLobby
+{
+    /// <summary>The longest lobby name (after trimming); at least one character.</summary>
+    public const int MaxName = 32;
+
+    /// <summary>The longest password; an empty one is none.</summary>
+    public const int MaxPassword = 64;
+
+    /// <summary>Joining a locked lobby without its password or with another ("Wrong password"); also a password
+    /// longer than <see cref="MaxPassword"/>.</summary>
+    public const string BadPassword = "bad_lobby_password";
+
+    /// <summary>A host's request from a member who is not the host (or from a player in no custom lobby).</summary>
+    public const string NotHost = "not_host";
+
+    /// <summary>No such lobby (it closed, or never was), or one whose players' build does not race with the joiner's.</summary>
+    public const string NoSuchLobby = "no_such_lobby";
+
+    /// <summary>The lobby has as many members as its racers rule.</summary>
+    public const string LobbyFull = "lobby_full";
+
+    /// <summary>The lobby takes nobody now (its match is starting or choosing machines), or not this player (the
+    /// host removed them from it).</summary>
+    public const string LobbyClosed = "lobby_closed";
+
+    /// <summary>An unknown rule name, a choice's value it does not have, or a stat pack the server does not have.</summary>
+    public const string BadRules = "bad_rules";
+
+    /// <summary>The rules change only while the lobby waits (forming), not during the course vote, the machine choice
+    /// or a race.</summary>
+    public const string RulesLocked = "rules_locked";
+
+    /// <summary>A lobby name that is empty, too long, or holds characters a name does not.</summary>
+    public const string BadName = "bad_lobby_name";
+
+    /// <summary><see cref="LeftLobby.Reason"/>: the host removed the player.</summary>
+    public const string Kicked = "kicked";
+
+    /// <summary><see cref="LeftLobby.Reason"/>: the lobby closed.</summary>
+    public const string Closed = "closed";
+}
+
+/// <summary>Subscribe to the lobby browser (<see cref="LobbyList"/>), or stop. Connected players only; the list
+/// holds the lobbies whose build races with the player's.</summary>
+public sealed record BrowseLobbies(bool On) : ClientMessage;
+
+/// <summary>A new custom lobby with this name, these rules (<see cref="LobbyRules"/>) and, when not null or empty,
+/// this password. The creator joins it as its host, leaving the lobby they were in, with the racer as
+/// <see cref="EnterQuickPlay"/> names one (machine, colour, setting, stock colour, a garage-built machine): in a
+/// custom lobby the launcher sends no <see cref="EnterQuickPlay"/>.</summary>
+public sealed record CreateLobby(string Name, LobbyRules Rules, string? Password, int Machine, Rgb Color, int? Setting = null,
+    int? StockColor = null, CustomMachine? Custom = null) : ClientMessage;
+
+/// <summary>Join a custom lobby of the browser, leaving the lobby one is in, with the racer as
+/// <see cref="EnterQuickPlay"/> names one. A locked lobby needs its password: another is refused with
+/// <see cref="CustomLobby.BadPassword"/>.</summary>
+public sealed record JoinLobby(string LobbyId, string? Password, int Machine, Rgb Color, int? Setting = null,
+    int? StockColor = null, CustomMachine? Custom = null) : ClientMessage;
+
+/// <summary>The host's change to their lobby while it is forming: a new name (null: the same), the rules whole
+/// (a missing key: Quick Play's), a new password (null: the same), or none (<paramref name="ClearPassword"/>).
+/// Refused with <see cref="CustomLobby.NotHost"/> or <see cref="CustomLobby.RulesLocked"/>.</summary>
+public sealed record SetLobbyRules(string? Name, LobbyRules Rules, string? Password = null, bool ClearPassword = false)
+    : ClientMessage;
+
+/// <summary>The host removes a member: they are sent <see cref="LeftLobby"/> with <see cref="CustomLobby.Kicked"/>
+/// and cannot join that lobby again.</summary>
+public sealed record KickPlayer(string PlayerId) : ClientMessage;
+
+/// <summary>The host starts the next race of their forming lobby with whoever is there (the start vote also does
+/// when more than half of the present vote, from the voting minimum on).</summary>
+public sealed record StartLobbyRace : ClientMessage;
+
+/// <summary>Leave the lobby one is in, custom or Quick Play's (as <see cref="LeaveQuickPlay"/>): answered with
+/// <see cref="LeftLobby"/>.</summary>
+public sealed record LeaveLobby : ClientMessage;
+
+/// <summary>The lobby browser: every custom lobby the player may join (their build's), sent on
+/// <see cref="BrowseLobbies"/> and then when the list changes, at most about twice a second. QuickPlay: the server's
+/// own rules in the same form, whole: what a lobby's rules are compared with (<see cref="LobbyRules.Differing"/>).</summary>
+public sealed record LobbyList(IReadOnlyList<LobbySummary> Lobbies,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] LobbyRules? QuickPlay = null) : ServerMessage;

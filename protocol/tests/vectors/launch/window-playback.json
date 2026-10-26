@@ -1,0 +1,14 @@
+{
+  "about": "Piconet Launcher: a replay\u0027s playback",
+  "bundle": "b",
+  "widescreen": true,
+  "lanes": 0,
+  "replay": {
+    "file": "r.fzrp",
+    "otherSounds": "quieter"
+  },
+  "windowName": "Piconet",
+  "showFrameRate": false,
+  "fullScreen": "borderless",
+  "refreshRate": "display"
+}

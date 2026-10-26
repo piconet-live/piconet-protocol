@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Only the protocol: these tests go with it to its own repository. -->
+    <ProjectReference Include="$(OnlineProtocolProject)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+    <!-- A time limit for every test of the assembly. -->
+    <Compile Include="../TestTimeLimit.cs" />
+    <!-- The repository's folder, for the tests that read its files (RepositoryFolder.cs), whatever the build output. -->
+    <Compile Include="../RepositoryFolder.cs" />
+    <AssemblyMetadata Include="RepositoryFolder" Value="$([MSBuild]::NormalizeDirectory('$(MSBuildThisFileDirectory)', '..', '..', '..'))" />
+    <!-- The protocol's checkout (ProtocolFolder, net/Directory.Build.props), for the tests that read its files. -->
+    <AssemblyMetadata Include="ProtocolFolder" Value="$([MSBuild]::NormalizeDirectory('$(ProtocolFolder)'))" />
+  </ItemGroup>
+
+</Project>

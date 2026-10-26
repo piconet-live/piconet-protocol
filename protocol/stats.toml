@@ -1,0 +1,664 @@
+# A stat pack's tables, written once: what a pack may hold of the car data (the ranges, by a block's word) and of the
+# game's code constants (the constants, by slot). generate.py writes from this file the game's C++ tables
+# (generated/stat_ranges.g.h, generated/const_ranges.g.h: the runner's port/core/src/stat_ranges.h and
+# const_ranges.h include them), the launcher's and the server's C# lists (generated/StatTables.g.cs: StatPackRules.All,
+# StatPackConstants.All) and the two tables of the handbook (handbook/stat-packs.md, "The ranges";
+# handbook/stat-pack-constants.md, the list), each between its two marker lines. The tests that hold the programs to
+# the handbook (StatPackRulesTests, StatPackConstantsTests; the core's TestTheStatRangesAreTheHandbooks and
+# TestAStatPacksConstants) and tests/vectors/stat-cases.tsv read what is generated. A table is frozen into a game
+# build: a change here is a new game build (handbook/stat-packs.md).
+#
+# [ranges] rule: one row a stat, by offset, covering the 44 words of a block after word 0 each once. `at`: the first
+# word's offset in a block. `kind`: "number" (one word), "bytes" (the word at 0x48, the facts' CAR_BYTES_AT: two
+# bytes, then two that are zero; `high` is the most the second byte may be, `low` 0) or "points" (four points of X,
+# Y, Z: 12 words; `low` is -`high`). A number is at least `low` and at most `high` (less than `high` with `below`).
+# `z_least`: points only, how far from 0 a machine's Z is at least. `tried`: the narrower range of what has been
+# raced, 0 to this (a warning where a pack is made, never a refusal: C# only). Every value is a 32-bit float; a row's
+# numbers are written as the C++ and the C# type them (an integer, or a decimal that is read as a float).
+#
+# [[constant]]: one a code constant, in slot order; a 64-bit one takes two slots (its high word, then its low word).
+# `bits` 32 or 64; `stock` the game's own bits; a value is at least `low` and at most `high` (a double).
+# `seat`: its place in a seat's constants record (0x100 bytes; the facts' SEAT_ rows, which the runner's
+# const_ranges.h holds the generated places to). `game_place`: where the game's own word lies, where the handbook says
+# it beside the seat's place. `what`: its plain name beside a pack's (the launcher). `read_by`: the handbook's
+# column of its readers in main.rel's code (the runner's const_ranges.h names each in full). `unleashed`: GX
+# Unleashed 5.0.4's value, where it is not the game's.
+
+[codec.cxx]
+ranges_namespace = "fzgx::stats"
+constants_namespace = "fzgx::consts"
+
+[codec.csharp]
+namespace = "Online.Protocol"
+
+[ranges]
+rule = [
+    { at = 0x04, name = "Weight", kind = "number", low = 1, high = 25000 },
+    { at = 0x08, name = "Acceleration", kind = "number", low = -7, high = 7 },
+    { at = 0x0C, name = "MaxSpeed", kind = "number", low = 0, high = 4 },
+    { at = 0x10, name = "Grip1", kind = "number", low = -45, high = 45, tried = 9 },
+    { at = 0x14, name = "Grip3", kind = "number", low = -3.5, high = 3.5, tried = 0.7 },
+    { at = 0x18, name = "TurnTension", kind = "number", low = -2.2, high = 2.2, tried = 0.45 },
+    { at = 0x1C, name = "DriftAcceleration", kind = "number", low = -19, high = 19, tried = 4 },
+    { at = 0x20, name = "TurnMovement", kind = "number", low = -2000, high = 2000, tried = 400 },
+    { at = 0x24, name = "StrafeTurn", kind = "number", low = -1000, high = 1000, tried = 200 },
+    { at = 0x28, name = "Strafe", kind = "number", low = -500, high = 500, tried = 100 },
+    { at = 0x2C, name = "TurnReaction", kind = "number", low = -300, high = 300, tried = 60 },
+    { at = 0x30, name = "Grip2", kind = "number", low = -10, high = 10, tried = 2 },
+    { at = 0x34, name = "BoostStrength", kind = "number", low = 0.1, high = 220 },
+    { at = 0x38, name = "BoostDuration", kind = "number", low = 0, high = 4.26, below = true },
+    { at = 0x3C, name = "TurnDeceleration", kind = "number", low = -0.7, high = 0.7 },
+    { at = 0x40, name = "Drag", kind = "number", low = -0.15, high = 0.15 },
+    { at = 0x44, name = "Body", kind = "number", low = -13, high = 13 },
+    { at = 0x48, name = "Bytes48", kind = "bytes", low = 0, high = 3 },
+    { at = 0x4C, name = "CameraReorienting", kind = "number", low = -19, high = 19 },
+    { at = 0x50, name = "CameraRepositioning", kind = "number", low = -15, high = 15 },
+    { at = 0x54, name = "Hover", kind = "points", low = -25, high = 25, z_least = 0.01 },
+    { at = 0x84, name = "Wall", kind = "points", low = -25, high = 25 },
+]
+
+[[constant]]
+name = "BoostEnergyUse"
+bits = 32
+stock = 0x3E2AAAAB
+low = 0
+high = 1.7
+seat = 0x08
+game_place = ".rodata+0xAA0"
+what = "Boost energy"
+read_by = "fn_1_26F34 0x27420 only: while the boost's countdown (+0x18B) runs, energy (+0x184) -= this x the usage factor (+0x4DC) every frame"
+unleashed = "0.15"
+
+[[constant]]
+name = "SpeedCap"
+bits = 64
+stock = 0x40C3830000000000
+low = 1000
+high = 1.7976931348623157e308
+seat = 0x10
+game_place = ".rodata+0xB20"
+what = "Speed cap"
+read_by = "fn_1_294D0 0x29570 only: above this speed (216 x momentum / weight, km/h) the momentum is cut to length 46.25, a near stop"
+unleashed = "the largest double: no cap"
+
+[[constant]]
+name = "DashPlateBase"
+bits = 32
+stock = 0x00000000
+low = 0
+high = 60
+seat = 0x00
+what = "Dash plate base"
+read_by = "the patched site in fn_1_26F34 0x271C4 only (`port/image/sites_dash.py`)"
+unleashed = "30"
+
+[[constant]]
+name = "DashPlateScale"
+bits = 32
+stock = 0x41F00000
+low = 0
+high = 45
+seat = 0x04
+what = "Dash plate scale"
+read_by = "the same site"
+unleashed = "15"
+
+[[constant]]
+name = "BoostLengthBase"
+bits = 32
+stock = 0x00000000
+low = 0
+high = 60
+seat = 0x0C
+what = "Boost length base"
+read_by = "the boost length's site in fn_1_26F34 0x272D0 only (`sites_dash.py`): an energy boost lasts int(Base + Scale x D) frames, where the game multiplies its 60.0 (.rodata+0xA98, read eight times)"
+
+[[constant]]
+name = "BoostLengthScale"
+bits = 32
+stock = 0x42700000
+low = 0
+high = 60
+seat = 0x18
+what = "Boost length scale"
+read_by = "the same site"
+
+[[constant]]
+name = "SettingMiddle"
+bits = 32
+stock = 0x3F000000
+low = 0
+high = 1
+seat = 0x1C
+what = "Setting: middle"
+read_by = "fn_1_22B10 0x22B1C (its load, the game's .rodata+0x85C): d = setting/100 - this: the setting where nothing changes"
+
+[[constant]]
+name = "DriftFastFloor"
+bits = 32
+stock = 0x3F800000
+low = -19
+high = 19
+seat = 0x20
+what = "Setting: drift floor, speed side"
+read_by = "fn_1_22B10 0x22B30 (its load, the game's .rodata+0x854): speed side (d > 0): the drift acceleration D changes only above this"
+
+[[constant]]
+name = "AccelFastTarget"
+bits = 32
+stock = 0x00000000
+low = -7
+high = 7
+seat = 0x24
+what = "Setting: acceleration target, speed side"
+read_by = "fn_1_22B10 0x22B34 (its copy, the game's .rodata+0x84C): speed side: A += AccelGain x (-d) x abs(this - A)"
+
+[[constant]]
+name = "SpeedFastRef"
+bits = 32
+stock = 0x3F800000
+low = 0
+high = 4
+seat = 0x28
+what = "Setting: max speed reference, speed side"
+read_by = "fn_1_22B10 0x22B3C (after its compare, the game's .rodata+0x854): speed side: the max speed's change is d x abs(this - M) x ..."
+
+[[constant]]
+name = "DriftFastLoss"
+bits = 32
+stock = 0x3FE66666
+low = -10
+high = 10
+seat = 0x2C
+what = "Setting: drift loss, speed side"
+read_by = "fn_1_22B10 0x22B48 (its load, the game's .rodata+0x8BC): speed side: D -= this x D x d"
+
+[[constant]]
+name = "SpeedSlowRef"
+bits = 32
+stock = 0x00000000
+low = 0
+high = 4
+seat = 0x30
+what = "Setting: max speed reference, acceleration side"
+read_by = "fn_1_22B10 0x22B60 (its copy, the game's .rodata+0x84C): acceleration side (d <= 0): the max speed's change is d x abs(this - M) x ..."
+
+[[constant]]
+name = "DriftSlowEdge1"
+bits = 32
+stock = 0x3F800000
+low = -19
+high = 19
+seat = 0x34
+what = "Setting: drift band 1 edge"
+read_by = "fn_1_22B10 0x22B64 (its load, the game's .rodata+0x854): acceleration side: band 1 is D below this"
+
+[[constant]]
+name = "AccelSlowTarget"
+bits = 32
+stock = 0x3FB33333
+low = -7
+high = 7
+seat = 0x38
+what = "Setting: acceleration target, acceleration side"
+read_by = "fn_1_22B10 0x22B68 (its load, the game's .rodata+0x8C0): acceleration side: A += AccelGain x (-d) x abs(this - A)"
+
+[[constant]]
+name = "DriftSlowTarget1"
+bits = 32
+stock = 0x40000000
+low = -19
+high = 19
+seat = 0x3C
+what = "Setting: drift band 1 target"
+read_by = "fn_1_22B10 0x22B74 (its load, the game's .rodata+0x8B8): band 1: D -= DriftSlowGain1 x (this - D) x d"
+
+[[constant]]
+name = "DriftSlowGain1"
+bits = 32
+stock = 0x40000000
+low = -10
+high = 10
+seat = 0x40
+what = "Setting: drift band 1 gain"
+read_by = "fn_1_22B10 0x22B80 (before its use, the game's .rodata+0x8B8): band 1's gain"
+
+[[constant]]
+name = "DriftSlowEdge2"
+bits = 32
+stock = 0x3FC00000
+low = -19
+high = 19
+seat = 0x44
+what = "Setting: drift band 2 edge"
+read_by = "fn_1_22B10 0x22B90 (its load, the game's .rodata+0x8C4): band 2 is D below this (from DriftSlowEdge1); band 3's origin"
+
+[[constant]]
+name = "DriftSlowGain2"
+bits = 32
+stock = 0x3F99999A
+low = -10
+high = 10
+seat = 0x48
+what = "Setting: drift band 2 gain"
+read_by = "fn_1_22B10 0x22BA0 (its load, the game's .rodata+0x8C8): band 2: D -= this x D x d"
+
+[[constant]]
+name = "DriftSlowGain3"
+bits = 32
+stock = 0x3F99999A
+low = -10
+high = 10
+seat = 0x4C
+what = "Setting: drift band 3 gain"
+read_by = "fn_1_22B10 0x22BB8 (its load, the game's .rodata+0x8C8): band 3: D -= (this - (D - DriftSlowEdge2)) x D x d"
+
+[[constant]]
+name = "DriftCap"
+bits = 32
+stock = 0x40133333
+low = -19
+high = 19
+seat = 0x50
+what = "Setting: drift cap"
+read_by = "fn_1_22B10 0x22BD4 (its load, the game's .rodata+0x8CC): acceleration side and middle: D is at most this"
+
+[[constant]]
+name = "BoostKeepAccel"
+bits = 32
+stock = 0x3F000000
+low = -7
+high = 7
+seat = 0x54
+what = "Setting: boost kept, acceleration"
+read_by = "fn_1_22B10 0x22BF4 (its load, the game's .rodata+0x85C): the boost strength is left alone when d < 0, A >= this and M <= BoostKeepSpeed"
+
+[[constant]]
+name = "BoostKeepSpeed"
+bits = 32
+stock = 0x3E4CCCCD
+low = 0
+high = 4
+seat = 0x58
+what = "Setting: boost kept, max speed"
+read_by = "fn_1_22B10 0x22C08 (its load, the game's .rodata+0x8A8): the same, the max speed's bound"
+
+[[constant]]
+name = "SpeedFastAccelEdge1"
+bits = 32
+stock = 0x3ECCCCCD
+low = -7
+high = 7
+seat = 0x5C
+what = "Setting: max speed, low acceleration edge"
+read_by = "fn_1_22B10 0x22C40 (its load, the game's .rodata+0x8D0): speed side: A below this takes SpeedFastGainLow"
+
+[[constant]]
+name = "SpeedFastGainMid"
+bits = 32
+stock = 0x3F800000
+low = -10
+high = 10
+seat = 0x60
+what = "Setting: max speed gain, middle acceleration"
+read_by = "fn_1_22B10 0x22C44 (its load, the game's .rodata+0x854): speed side: the gain between the two edges"
+
+[[constant]]
+name = "SpeedFastGainLow"
+bits = 32
+stock = 0x404CCCCD
+low = -10
+high = 10
+seat = 0x64
+what = "Setting: max speed gain, low acceleration"
+read_by = "fn_1_22B10 0x22C50 (its load, the game's .rodata+0x8D4): speed side: the gain below SpeedFastAccelEdge1"
+
+[[constant]]
+name = "SpeedFastAccelEdge2"
+bits = 32
+stock = 0x3F000000
+low = -7
+high = 7
+seat = 0x68
+what = "Setting: max speed, high acceleration edge"
+read_by = "fn_1_22B10 0x22C58 (its load, the game's .rodata+0x85C): speed side: A at or above this takes one of the two high gains"
+
+[[constant]]
+name = "SpeedFastSpeedEdge"
+bits = 32
+stock = 0x3E19999A
+low = 0
+high = 4
+seat = 0x6C
+what = "Setting: max speed edge, high acceleration"
+read_by = "fn_1_22B10 0x22C68 (its load, the game's .rodata+0x8D8): speed side, high A: M below this takes SpeedFastGainHighSlow"
+
+[[constant]]
+name = "SpeedFastGainHighSlow"
+bits = 32
+stock = 0x00000000
+low = -10
+high = 10
+seat = 0x70
+what = "Setting: max speed gain, high acceleration, low speed"
+read_by = "fn_1_22B10 0x22C74 (its copy, the game's .rodata+0x84C): speed side: the gain with A high and M low"
+
+[[constant]]
+name = "SpeedFastGainHigh"
+bits = 32
+stock = 0xBE800000
+low = -10
+high = 10
+seat = 0x74
+what = "Setting: max speed gain, high acceleration"
+read_by = "fn_1_22B10 0x22C7C (its load, the game's .rodata+0x8DC): speed side: the gain with A high and M not low"
+
+[[constant]]
+name = "SpeedFastScale"
+bits = 32
+stock = 0x3E23D70A
+low = -10
+high = 10
+seat = 0x78
+what = "Setting: max speed scale, speed side"
+read_by = "fn_1_22B10 0x22C80 (its load, the game's .rodata+0x8E0): speed side: M += d x abs(SpeedFastRef - M) x this x gain"
+
+[[constant]]
+name = "SpeedSlowOffset"
+bits = 32
+stock = 0x3DF5C28F
+low = 0
+high = 4
+seat = 0x7C
+what = "Setting: max speed offset, acceleration side"
+read_by = "fn_1_22B10 0x22C90 (its load, the game's .rodata+0x8E4): acceleration side: t = (M - this) / SpeedSlowSpan"
+
+[[constant]]
+name = "SpeedSlowSpan"
+bits = 32
+stock = 0x3DA3D70A
+low = 0.01
+high = 4
+seat = 0x80
+what = "Setting: max speed span, acceleration side"
+read_by = "fn_1_22B10 0x22C94 (its load, the game's .rodata+0x8E8): the same, the divisor"
+
+[[constant]]
+name = "SpeedSlowClamp"
+bits = 32
+stock = 0x3F800000
+low = -10
+high = 10
+seat = 0x84
+what = "Setting: max speed clamp, acceleration side"
+read_by = "fn_1_22B10 0x22C9C (its load, the game's .rodata+0x854): t is at most this"
+
+[[constant]]
+name = "SpeedSlowSlope"
+bits = 32
+stock = 0x3E4CCCCD
+low = -10
+high = 10
+seat = 0x88
+what = "Setting: max speed slope, acceleration side"
+read_by = "fn_1_22B10 0x22CB0 (its load, the game's .rodata+0x8A8): acceleration side: M += d x abs(M) x SpeedSlowScale x (SpeedSlowBase + this x t)"
+
+[[constant]]
+name = "SpeedSlowBase"
+bits = 32
+stock = 0x3ECCCCCD
+low = -10
+high = 10
+seat = 0x8C
+what = "Setting: max speed base, acceleration side"
+read_by = "fn_1_22B10 0x22CB4 (its load, the game's .rodata+0x8D0): the same, the base"
+
+[[constant]]
+name = "SpeedSlowScale"
+bits = 32
+stock = 0x3EE66666
+low = -10
+high = 10
+seat = 0x90
+what = "Setting: max speed scale, acceleration side"
+read_by = "fn_1_22B10 0x22CBC (its load, the game's .rodata+0x8EC): the same, the scale"
+
+[[constant]]
+name = "AccelSlowHighEdge"
+bits = 32
+stock = 0x3F19999A
+low = -7
+high = 7
+seat = 0x94
+what = "Setting: high acceleration edge"
+read_by = "fn_1_22B10 0x22CD0 (its load, the game's .rodata+0x878): acceleration side: A above this takes the high branch"
+
+[[constant]]
+name = "AccelSlowHighTarget"
+bits = 32
+stock = 0x3F333333
+low = -7
+high = 7
+seat = 0x98
+what = "Setting: high acceleration target"
+read_by = "fn_1_22B10 0x22CE8 (its load, the game's .rodata+0x8F0): high branch: A += AccelSlowHighGain x d x abs(this - A)"
+
+[[constant]]
+name = "AccelSlowHighGain"
+bits = 32
+stock = 0x40000000
+low = -10
+high = 10
+seat = 0x9C
+what = "Setting: high acceleration gain"
+read_by = "fn_1_22B10 0x22CEC (its load, the game's .rodata+0x8B8): the same, the gain"
+
+[[constant]]
+name = "AccelGain"
+bits = 64
+stock = 0x3FE3333340000000
+low = -10
+high = 10
+seat = 0xF0
+what = "Setting: acceleration gain"
+read_by = "fn_1_22B10 0x22D14 (its load (lfd), the game's .rodata+0x8F8): otherwise: A += this x (-d) x abs(target - A) (a double)"
+
+[[constant]]
+name = "TurnDecelAccelEdge"
+bits = 32
+stock = 0x3ECCCCCD
+low = -7
+high = 7
+seat = 0xA0
+what = "Setting: turn deceleration, acceleration edge"
+read_by = "fn_1_22B10 0x22D3C (its load, the game's .rodata+0x8D0): the turn deceleration T and the low-acceleration factors change only when the new A is below this"
+
+[[constant]]
+name = "TurnDecelLowAccelEdge"
+bits = 32
+stock = 0x3E9EB852
+low = -7
+high = 7
+seat = 0xA4
+what = "Setting: turn deceleration, low acceleration edge"
+read_by = "fn_1_22B10 0x22D48 (its load, the game's .rodata+0x900): A below this: k = TurnDecelLowAccelFactor, the max speed's change x SpeedLowAccelFactor"
+
+[[constant]]
+name = "TurnDecelBase"
+bits = 32
+stock = 0x3F800000
+low = -10
+high = 10
+seat = 0xA8
+what = "Setting: turn deceleration base"
+read_by = "fn_1_22B10 0x22D4C (its load, the game's .rodata+0x854): k's start"
+
+[[constant]]
+name = "SpeedLowAccelFactor"
+bits = 32
+stock = 0x3FC00000
+low = -10
+high = 10
+seat = 0xAC
+what = "Setting: max speed factor, low acceleration"
+read_by = "fn_1_22B10 0x22D58 (its load, the game's .rodata+0x8C4): A below TurnDecelLowAccelEdge: the max speed's change x this"
+
+[[constant]]
+name = "TurnDecelLowAccelFactor"
+bits = 32
+stock = 0x3FC00000
+low = -10
+high = 10
+seat = 0xB0
+what = "Setting: turn deceleration, low acceleration factor"
+read_by = "fn_1_22B10 0x22D5C (its copy, the game's .rodata+0x8C4): the same: k = this"
+
+[[constant]]
+name = "TurnDecelHighEdge"
+bits = 32
+stock = 0x3CF5C28F
+low = -0.7
+high = 0.7
+seat = 0xB4
+what = "Setting: turn deceleration, high edge"
+read_by = "fn_1_22B10 0x22D68 (its load, the game's .rodata+0x904): T above this: k x TurnDecelHighFactor"
+
+[[constant]]
+name = "TurnDecelHighFactor"
+bits = 32
+stock = 0x3FC00000
+low = -10
+high = 10
+seat = 0xB8
+what = "Setting: turn deceleration, high factor"
+read_by = "fn_1_22B10 0x22D74 (its load, the game's .rodata+0x8C4): the same, the factor"
+
+[[constant]]
+name = "TurnDecelSlowFactor"
+bits = 32
+stock = 0x40000000
+low = -10
+high = 10
+seat = 0xBC
+what = "Setting: turn deceleration, acceleration side factor"
+read_by = "fn_1_22B10 0x22D88 (its load, the game's .rodata+0x8B8): d < 0: k x this"
+
+[[constant]]
+name = "TurnDecelGain"
+bits = 32
+stock = 0x3F333333
+low = -10
+high = 10
+seat = 0xC0
+what = "Setting: turn deceleration gain"
+read_by = "fn_1_22B10 0x22D94 (its load, the game's .rodata+0x8F0): T -= abs(this x k x T x d)"
+
+[[constant]]
+name = "TurnDecelFloor"
+bits = 32
+stock = 0x3C23D70A
+low = -0.7
+high = 0.7
+seat = 0xC4
+what = "Setting: turn deceleration floor"
+read_by = "fn_1_22B10 0x22D9C (its load, the game's .rodata+0x908): T is at least this"
+
+[[constant]]
+name = "LightWeight"
+bits = 32
+stock = 0x442F0000
+low = 0
+high = 25000
+seat = 0xC8
+what = "Setting: light machine weight"
+read_by = "fn_1_22B10 0x22DCC (its load, the game's .rodata+0x90C): a machine lighter than this has its acceleration capped"
+
+[[constant]]
+name = "LightAccelCap"
+bits = 32
+stock = 0x3F333333
+low = -7
+high = 7
+seat = 0xCC
+what = "Setting: light machine acceleration cap"
+read_by = "fn_1_22B10 0x22DDC (its load, the game's .rodata+0x8F0): the cap"
+
+[[constant]]
+name = "TurnMoveFastLoss"
+bits = 32
+stock = 0x3F19999A
+low = -10
+high = 10
+seat = 0xD0
+what = "Setting: turn movement loss, speed side"
+read_by = "fn_1_22B10 0x22E04 (its load, the game's .rodata+0x878): speed side: turn movement x (TurnMoveFastBase - this x d)"
+
+[[constant]]
+name = "TurnMoveFastBase"
+bits = 32
+stock = 0x3F800000
+low = -10
+high = 10
+seat = 0xD4
+what = "Setting: turn movement base, speed side"
+read_by = "fn_1_22B10 0x22E08 (its load, the game's .rodata+0x854): the same, the base"
+
+[[constant]]
+name = "TurnMoveSlowGain"
+bits = 32
+stock = 0x3E4CCCCD
+low = -10
+high = 10
+seat = 0xD8
+what = "Setting: turn movement gain, acceleration side"
+read_by = "fn_1_22B10 0x22E24 (its load, the game's .rodata+0x8A8): acceleration side: turn movement x (TurnMoveSlowBase - this x d)"
+
+[[constant]]
+name = "TurnMoveSlowBase"
+bits = 32
+stock = 0x3F800000
+low = -10
+high = 10
+seat = 0xDC
+what = "Setting: turn movement base, acceleration side"
+read_by = "fn_1_22B10 0x22E28 (its load, the game's .rodata+0x854): the same, the base"
+
+[[constant]]
+name = "GripGain"
+bits = 32
+stock = 0x3E800000
+low = -10
+high = 10
+seat = 0xE0
+what = "Setting: grip gain"
+read_by = "fn_1_22B10 0x22E40 (its load, the game's .rodata+0x8A0): the two grips x (GripBase + this x d)"
+
+[[constant]]
+name = "GripBase"
+bits = 32
+stock = 0x3F800000
+low = -10
+high = 10
+seat = 0xE4
+what = "Setting: grip base"
+read_by = "fn_1_22B10 0x22E48 (its load, the game's .rodata+0x854): the same, the base"
+
+[[constant]]
+name = "BoostGain"
+bits = 32
+stock = 0x3DCCCCCD
+low = -10
+high = 10
+seat = 0xE8
+what = "Setting: boost strength gain"
+read_by = "fn_1_22B10 0x22E70 (its load, the game's .rodata+0x858): boost strength x (BoostBase + this x d), unless kept"
+
+[[constant]]
+name = "BoostBase"
+bits = 32
+stock = 0x3F800000
+low = -10
+high = 10
+seat = 0xEC
+what = "Setting: boost strength base"
+read_by = "fn_1_22B10 0x22E7C (before its use, the game's .rodata+0x854): the same, the base"

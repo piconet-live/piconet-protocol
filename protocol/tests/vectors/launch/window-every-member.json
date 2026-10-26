@@ -1,0 +1,23 @@
+{
+  "about": "Piconet Launcher: offline play",
+  "bundle": "b",
+  "lanes": 0,
+  "windowName": "Piconet",
+  "windowNamePicture": {
+    "width": 2,
+    "height": 1,
+    "rgba": "/wAA/wECA4A="
+  },
+  "showFrameRate": true,
+  "rumble": false,
+  "present": "field",
+  "verticalSync": true,
+  "fullScreen": "exclusive",
+  "refreshRate": "240",
+  "taskbar": {
+    "id": "Piconet.Launcher",
+    "program": "C:\\Piconet\\Launcher.App.exe",
+    "name": "Piconet Launcher"
+  },
+  "board": "C:\\data\\boards\\game-1.board"
+}

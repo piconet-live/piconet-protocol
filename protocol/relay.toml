@@ -1,0 +1,204 @@
+# The relay protocol: the UDP packets between a game and its relay, defined once. generate.py writes the C# codec
+# and the C++ header from this file (README.md): Online.Protocol (server, launcher, bots) compiles the one, the game's
+# core (port/core/src/relay_wire.cpp) includes the other. port/facts/game.tsv's wire rows take their values from here.
+# tests/vectors/relay.tsv holds the wire as 0.4.0 speaks it: a change here that changes it is a new version.
+#
+# Every packet: the mark, the version, the type (one byte each after the two-byte mark), then its body. Every
+# number big-endian. A body's length is exact: a packet of any other length is malformed and decodes to nothing.
+#
+# Field types: u8, u32, u64, i64 (two's complement). `cs`: the C# type a field has where it is not the natural one
+# (written and read as the field's type; a C# int written as u8 keeps its low byte). `optional`: the last field
+# only; the packet is written without it when it is null, and read with it when the body is long enough.
+# `records`: the rest of the body, a run of control records (`record_size` bytes each). `count` names the field
+# that says how many; `per` is "1" (one record per count) or "seats:FIELD" (one per bit set in that mask field).
+# `default`: a number field C# callers may leave out (always on the wire). A packet's `cs_order`: the C# record's
+# parameter order where it is not the wire order (a field added in the middle of the wire, after the others in C#).
+# `[[flags]]`: named bits a field carries, as constants (C#: a static class; C++: cxx_prefix + NAME).
+#
+# Every packet the relay sends a game (Pong, Joined, Go, Official, Desync, SeatLeft, SeatBack) opens with `Key`: the
+# seat's key, the first 8 bytes (big-endian) of SHA-1("fzgx relay key" + the seat's token as 8 big-endian bytes)
+# (net/src/Online.Protocol/RelayKeys.cs, port/core/src/relay_wire.cpp RelayKey). The game drops a packet from the
+# relay's address whose key is not its own (before the key, the relay's packets carried no secret, so anyone
+# who could send from the relay's address could stop a game or feed it inputs). Only the seat's player and the relay
+# know the token; the key does not give it away. A Pong carries the key of the token its Ping named, 0 for a ping
+# without one (the launcher's round trips). game.tsv's LEN_ rows count a packet's bytes after the header and the key.
+
+[protocol]
+name = "relay"
+version = 3                        # 2: Go carries the start barrier; 3: the cookie, rejoin, the seat's key
+mark = "FZ"
+endian = "big"
+header_size = 4                    # mark, version, type
+record_size = 6                    # the game's own control record: one seat's input for one step
+ai_drives = [0, 0x80, 0, 0, 0, 0]  # steering 0x80 (-128), no stick gives it: the game's AI keeps the seat
+max_frames_per_packet = 20         # frames in one packet at most (inputs or official frames)
+max_payload = 1200                 # bytes of records an official packet carries at most (internet MTU)
+
+[codec.csharp]
+namespace = "Online.Protocol"
+class = "RelayProtocol"
+
+[codec.cxx]
+namespace = "fzgx::net::relay"
+
+[[packet]]
+name = "Ping"
+type = 1
+doc = """Round-trip measurement; the relay answers with a Pong carrying the same values. Token: a game's own (its \
+Pong then carries the seat's key); none from the launcher."""
+fields = [
+    { name = "Nonce", type = "u32" },
+    { name = "ClientTicks", type = "i64" },
+    { name = "Token", type = "u64", optional = true },
+]
+
+[[packet]]
+name = "Pong"
+type = 2
+doc = """The ping's values, and for a seat of a running race the relay's clock: milliseconds since its go (the game \
+paces its steps by it rather than by its own clock, which can run at a different rate)."""
+cs_order = ["Nonce", "ClientTicks", "RelayMs", "Key"]
+fields = [
+    { name = "Key", type = "u64", default = 0 },
+    { name = "Nonce", type = "u32" },
+    { name = "ClientTicks", type = "i64" },
+    { name = "RelayMs", type = "u32", optional = true },
+]
+
+[[packet]]
+name = "Join"
+type = 3
+doc = "A player joins its race with the token from the match start (sent until Joined)."
+fields = [{ name = "Token", type = "u64" }]
+
+[[packet]]
+name = "Joined"
+type = 4
+doc = """The player's seat and the race's player seats (bit i = seat i); the cookie of the address the Join came \
+from, which every later packet of the game carries (so that the relay sends the race only to an address \
+that proved it receives there); Flags (JoinedFlags); the frames closed so far."""
+cs_order = ["Session", "Seat", "PlayerSeats", "Cookie", "Flags", "Closed", "Key"]
+fields = [
+    { name = "Key", type = "u64", default = 0 },
+    { name = "Session", type = "u32" },
+    { name = "Seat", type = "u8" },
+    { name = "PlayerSeats", type = "u32" },
+    { name = "Cookie", type = "u64", default = 0 },
+    { name = "Flags", type = "u8", default = 0 },
+    { name = "Closed", type = "u32", default = 0 },
+]
+
+[[packet]]
+name = "Ready"
+type = 5
+doc = "The player's game holds at the race-start gate (sent until Go)."
+fields = [{ name = "Token", type = "u64" }, { name = "Cookie", type = "u64", default = 0 }]
+
+[[packet]]
+name = "Go"
+type = 6
+doc = """Every player is ready: frame 0 starts now. StartBarrier: the race-start barrier's frame (the relay's \
+ServerOptions.StartBarrierFrame), from which the game's catch-up counts."""
+cs_order = ["Session", "StartBarrier", "Key"]
+fields = [
+    { name = "Key", type = "u64", default = 0 },
+    { name = "Session", type = "u32" },
+    { name = "StartBarrier", type = "u32" },
+]
+
+[[packet]]
+name = "Input"
+record = "InputPacket"
+type = 7
+doc = """The sender's control records for frames FirstFrame..FirstFrame+Count-1 (resent until the relay's official \
+frames show them), and the first official frame the sender does not have yet."""
+cs_order = ["Token", "FirstFrame", "NextOfficial", "Count", "Records", "Cookie"]
+fields = [
+    { name = "Token", type = "u64" },
+    { name = "Cookie", type = "u64", default = 0 },
+    { name = "FirstFrame", type = "u32" },
+    { name = "NextOfficial", type = "u32" },
+    { name = "Count", type = "u8", cs = "int" },
+    { name = "Records", type = "records", count = "Count", per = "1" },
+]
+
+[[packet]]
+name = "Official"
+record = "OfficialPacket"
+type = 8
+doc = "Official frames FirstFrame..FirstFrame+Count-1: for each, the records of the player seats in seat order."
+cs_order = ["FirstFrame", "Count", "PlayerSeats", "Records", "Key"]
+fields = [
+    { name = "Key", type = "u64", default = 0 },
+    { name = "FirstFrame", type = "u32" },
+    { name = "Count", type = "u8", cs = "int" },
+    { name = "PlayerSeats", type = "u32" },
+    { name = "Records", type = "records", count = "Count", per = "seats:PlayerSeats" },
+]
+
+[[packet]]
+name = "Checksum"
+record = "ChecksumPacket"
+type = 9
+doc = "The sender's state checksum after official frame Frame."
+cs_order = ["Token", "Frame", "Value", "Cookie"]
+fields = [
+    { name = "Token", type = "u64" },
+    { name = "Cookie", type = "u64", default = 0 },
+    { name = "Frame", type = "u32" },
+    { name = "Value", type = "u32" },
+]
+
+[[packet]]
+name = "Desync"
+type = 10
+doc = "The receiver's checksum for this frame differs from the majority."
+cs_order = ["Frame", "Key"]
+fields = [{ name = "Key", type = "u64", default = 0 }, { name = "Frame", type = "u32" }]
+
+[[packet]]
+name = "SeatLeft"
+type = 11
+doc = "This seat has gone silent; its last input stands from now on."
+cs_order = ["Seat", "Key"]
+fields = [{ name = "Key", type = "u64", default = 0 }, { name = "Seat", type = "u8" }]
+
+[[packet]]
+name = "SeatBack"
+type = 12
+doc = """This seat is its player's again from official frame Frame on: the frames before it are the AI's (a \
+returning seat, after its game caught up)."""
+cs_order = ["Seat", "Frame", "Key"]
+fields = [{ name = "Key", type = "u64", default = 0 }, { name = "Seat", type = "u8" }, { name = "Frame", type = "u32" }]
+
+[[packet]]
+name = "Over"
+type = 13
+doc = """The sender's race is over on official steps before step Frame (its race-over test said so): the race has \
+ended, and no seat comes back into it from now on."""
+cs_order = ["Token", "Frame", "Cookie"]
+fields = [
+    { name = "Token", type = "u64" },
+    { name = "Cookie", type = "u64", default = 0 },
+    { name = "Frame", type = "u32" },
+]
+
+[[flags]]
+name = "JoinedFlags"
+type = "u8"
+cxx_prefix = "JOINED_"
+doc = "What Joined.Flags says."
+values = [
+    { name = "Returning", value = 1, doc = """\
+        The race runs and this seat was away (its game closed, or its network dropped): the game catches up on the \
+        official frames from its own step and races again from the frame a SeatBack names.""" },
+    { name = "Over", value = 2, doc = """\
+        The seat has no race to come back to: the race is over (a game said so, or the relay dropped it), or the seat \
+        left it for good. A game started again into its race leaves (its exit code says so, and the launcher takes the \
+        player back to the lobby); nothing else of the race is sent to it.""" },
+    { name = "Spectator", value = 4, doc = """\
+        The token is a spectator's: its game receives the official \
+        frames and sends no input (an Input of none: what it has received), is not one of the race's seats and is left \
+        out of the checksum vote. Joined.Seat is the seat it watches first. With Returning: the race runs, and the \
+        game catches up from frame 0 behind LOADING.""" },
+]

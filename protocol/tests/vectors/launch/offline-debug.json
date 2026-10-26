@@ -1,0 +1,8 @@
+{
+  "about": "Piconet Launcher: offline play",
+  "bundle": "b",
+  "lanes": 0,
+  "debug": {
+    "alterStep": 1500
+  }
+}

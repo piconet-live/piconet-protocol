@@ -1,0 +1,49 @@
+# protocol
+
+The formats and messages the parts share, each described once, and the C# and C++ code generated from them. It holds
+the relay's UDP packets and the status board between the launcher and a running game. Both are used:
+`Online.Protocol` (server, launcher, bots) compiles `generated/RelayPackets.g.cs` and the game's core includes
+`generated/relay_packets.g.h`; the launcher compiles `generated/StatusBoard.g.cs` (Launcher.Core), the game's
+core includes `generated/status_board.g.h`. The replay file (`replay.toml`) is read and written through generated
+code only: `generated/replay_file.g.h` (the game's core), `generated/ReplayFile.g.cs` (Launcher.Core),
+`generated/replay_file.py` (the test tools, not public). The game's launch file (`launch.toml`) is written by the launcher through
+`generated/LaunchFile.g.cs` and read by the game's core through `generated/launch_file.g.h`, which takes every
+member of a plain kind; the core's `files_launch.cpp` takes the rest and keeps the rules between members.
+`port/facts/generate.py` takes the facts table's wire rows from `relay.toml`.
+
+## The files
+
+| File | What it is |
+|---|---|
+| `relay.toml` | The relay protocol, version 3 (as 0.3.0 defines it: the cookie of the Join's address, rejoin's SeatBack and Over, Joined's flags, the seat's key that opens every packet from the relay; it replaced version 2, which nothing here needs): the header (mark `FZ`, version, type), the numbers (record size, frames per packet, payload), and every packet's fields in order, with their types (u8, u32, u64, i64, all big-endian), the optional trailing fields (Pong's relay clock, Ping's token), the records (Input: Count records; Official: Count rows of one record per player seat), C# defaults and parameter order, and flag constants. Its head comment gives the rules. |
+| `generate.py` | Writes the generated files from `relay.toml`; `--check` writes nothing and fails when one is stale. Standard library only (Python 3.11+, `tomllib`); follows `port/facts/generate.py`. Every path is this folder's own. |
+| `codec_cs.py`, `codec_cxx.py` | The two emitters. |
+| `generated/RelayPackets.g.cs` | The C# codec, `Online.Protocol` (the API the hand-written `RelayPackets.cs` had): `RelayProtocol.Encode`, `Decode`, `ForeignVersion`, `SeatCount`, `WithKey`, `FromRelay`, the constants, `PacketType`, a record per packet, `JoinedFlags`. A packet whose first field is `Key` is one the relay sends a game. |
+| `generated/relay_packets.g.h` | The C++ header, in `fzgx::net::relay`: constants, `Type`, a struct per packet, `Encode` per packet, `DecodeX(body, len)` per packet (the body after the header, the key's included), `FromRelay`, and `Decode`/`Encode` of a whole datagram over `std::variant`. Header-only, C++20, standard library only. |
+| `generated/GameFacts.g.cs` | Not this folder's generator's: `port/facts/generate.py` writes it from `port/facts/game.tsv` (the game's limits, the relay's packets' numbers, the files' marks) and `port/facts/check.sh` fails when it is stale. `Online.Protocol` compiles it. |
+| `tests/test_generate.py` | The generator's rules and stale-file detection. |
+| `tests/vectors/relay.tsv` | 436 datagrams (every packet kind, its fields at their edges, each a byte short and a byte over, other versions, marks and types) with the packet each decodes to, or none, and its foreign version: relay version 3 as 0.4.0's hand-written C# codec decoded them, written by the parity test that compared the codecs before the swap (0 differences: 39,055 packets encoded and 904,931 datagrams decoded by both in C#, 51,072 game-sent packets by the game's old writer and the generated encoder). Never rewritten: a change here is a change of the wire. Its four `Over` lines were added by hand (the parity test's fixed cases had none); the round trips fail unless every kind has a line. |
+| `stats.toml` | A stat pack's tables, once: the ranges of a car data block's words (offset, kind, bounds, a hover Z's least, what has been tried) and the code constants by slot (size, the game's bits, bounds, the place in a seat's record, the plain name, the readers, GX Unleashed's value). `stats.py` loads it; `stats_cxx.py`, `stats_cs.py`, `stats_md.py` emit `generated/stat_ranges.g.h` and `generated/const_ranges.g.h` (the game's core, through the runner's `stat_ranges.h` and `const_ranges.h`, which assert the places against the facts table), `generated/StatTables.g.cs` (`Online.Protocol`: `StatPackRules.All`, `StatPackConstants.All`) and the two tables of `handbook/stat-packs.md` and `handbook/stat-pack-constants.md`, between their marker lines (`generate.py` rewrites a page only when its table changed). |
+| `tests/vectors/stat-cases.tsv`, `tests/vectors/stat-cases.py` | The 2,208 values a stat pack's checks are held to, with the verdict `stat-cases.py` works out from `handbook/stat-packs.md`'s table alone: the C# test (`StatPackRulesTests`) and the game's (`port/core/tests/test_stats.cpp`, through the runner's protocol checkout) read the same file. |
+| `replay.toml` | The replay file (`.fzrp`), versions 2 to 7: its parts in order, the marks, each version's feature and the rule that picks a race's version (the highest whose feature it holds; the game writes 7 alone), the lineup's block, the step (the relay's record size), the results' entries and the header's members. `replay.py` loads it; `replay_cxx.py`, `replay_cs.py`, `replay_py.py` emit `generated/replay_file.g.h` (the game's core: the readers' parts and the writer's), `generated/ReplayFile.g.cs` (Launcher.Core) and `generated/replay_file.py` (the test tools). `port/facts/game.tsv`'s REPLAY_ rows take their values from it. |
+| `launch.toml` | The game's launch file (formats.md section 2): its parts (the file, `match`, `replay`, the window's picture and taskbar, `debug` and its objects), each member's type, range, values and place in the game's `Options`/`Debug`, the members the launcher writes and when (`cs`); the emulator's side, another program's settings, stays the core's table. `launch.py` loads it; `launch_cxx.py`, `launch_cs.py` emit `generated/launch_file.g.h` (the game's core: a `ReadPART` per part, the limits) and `generated/LaunchFile.g.cs` (Launcher.Core: `LaunchFile` and its parts' records, `LaunchFormat`). |
+| `tests/vectors/launch/` | The launch files the launcher writes (every kind of start, each window member, what it leaves out), as `GameLaunchFile` wrote them before the schema: Launcher.Tests' `LaunchVectorsTests` writes each byte for byte, `port/core/tests/test_launch.cpp` (`TestTheSharedLaunchFiles`) reads each. A change here is a change of what the launcher writes. |
+| `tests/vectors/replays/` | A real recording of every version 2 to 7 (test seats only, cut to 240 steps; one of version 2 with no step and no lineup), each as hex text (`NAME.fzrp.hex`: the repository takes no binary file), and `replays.tsv`: every part of each as the hand-written readers read them before the schema. `tests/dotnet-replay` holds the C# reader to it, `port/core/tests/test_replay_vectors.cpp` the C++ reader, and writes every sample again byte for byte. Never rewritten: a change here is a change of the format. |
+| `formats.md` | The file formats: the replay file, the launch file, the match file, the runner's exit status and stop lines (the protocol's, read by the runner's and the launcher's tests). |
+| `packs/` | The stat packs that are shipped: the launcher copies them beside the program for practice (`ProtocolPacks`), the service's image beside the server; the runner's stat-pack gate races one (`packs/README.md`). |
+| `tests/dotnet/` | `RelayRoundTrip`: the generated C# codec over the vectors, both directions (decode to the recorded packet and foreign version, encode back to the same bytes). |
+| `tests/cxx/test_relay_roundtrip.cpp` | The same for the generated C++ header, and packets whose count and records disagree (written as they are, never decoded). |
+| `tests/generated/relay_describe.g.h` | Generated for the C++ test only: a packet as the line the vectors file holds. |
+| `check.sh` | All of the above; about twenty seconds. |
+
+## What the session checks on top of the decoded packet
+
+`port/core/src/relay_wire.cpp` takes each packet the relay sends through its generated `DecodeX` (which checks the
+length) and keeps its own checks on the struct: the seat's key (`Handle`), a joined seat below 30 and a mask within
+30 seats that holds it (`TakeJoined`), a pong's round trip within a minute (`TakePong`), and an official packet's
+mask equal to the joined one, and frames not far past the game's step (`TakeOfficial`).
+
+## Not generated yet
+
+The lobby and relay-link JSON (`net/src/Online.Protocol/Messages.cs`, `RelayControl.cs`) and the runner's exit
+status and stop lines (`protocol/formats.md` section 7) are written by hand.

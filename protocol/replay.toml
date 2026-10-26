@@ -1,0 +1,242 @@
+# The replay file (.fzrp), defined once: generate.py writes the C++ reader and writer (generated/replay_file.g.h: the
+# game's core, port/core/src/files_replay.cpp and replay.cpp), the C# reader (generated/ReplayFile.g.cs: the
+# launcher's Replays list, Launcher.Core ReplayFile) and the Python reader (generated/replay_file.py: the test
+# tools' recording comparison and reports) from this file (README.md). port/facts/game.tsv's REPLAY_ rows take their
+# values from here. tests/vectors/replays/ holds a real recording of every version: a change here that reads one of them
+# otherwise, or writes it back otherwise, is a change of the format.
+#
+# The file, in order; every number big-endian:
+#   head      the mark, then [head]'s fields (the version, the header's length)
+#   header    JSON, the header's length of it ([[header]]: its members)
+#   frames    [frames]'s mark, then its fields (the player seats' mask, the recorder's seat)
+#   lineup    [lineup]'s mark, u32 the block's length, the block (its fields); absent in no file the game wrote, but
+#             a reader that only runs the steps does without it
+#   steps     to the results (or the file's end): per step a control record (`record_size` bytes, relay.toml's) of
+#             each player seat, in seat order, then the step's checksum (u32)
+#   results   optional, the file's last bytes, found from the end: JSON ([[result]]: one entry per racer), u32 its
+#             length, [results]'s mark. Taken as the results only when the JSON lies after the frames' block.
+#
+# A version (`[[version]]`) is the same layout under another number: each says what its race holds (`feature`), so
+# that a program from before that feature refuses the file. A file's version is the highest whose feature its
+# header's race holds, or the first (no feature) when it holds none; a reader of the game refuses a file whose
+# version is another (formats.md section 1). The writer writes `written` only: every race and practice since 0.4.0
+# is 0.4.0's set-up (the rubber band off). Older versions stay readable: older replays keep playing.
+#
+# Field types: u16, u32, u8, i16; `count`: an array of that many; `pad`: bytes written as zero, never read.
+# [[header]] and [[result]] members: `key` the JSON name, `type` int, bool, text, object; `null` true when the JSON
+# may hold null (a result's time of a racer that did not finish); `optional` true when a file may leave it out;
+# `low`, `high`, `default`: a whole number's range and what a file without it means.
+
+[replay]
+name = "replay file"
+mark = "FZRP"
+endian = "big"
+written = 7
+max_bytes = 268435456    # 256 MiB: an hour of 30 seats is 40 MiB
+max_steps = 1296000      # six hours at 60 steps a second
+max_json = 1048576       # the longest header, and results block, the launcher reads (1 MiB)
+max_seats = 30           # the game's seats: a mask names seats 0 to 29, the recorder's seat is one of them
+
+[codec.csharp]
+namespace = "Launcher.Core"
+prefix = "Replay"
+
+[codec.cxx]
+namespace = "fzgx::replay"
+
+[[version]]
+number = 2
+name = "Plain"
+doc = "a race of the disc's own car data and none of the features below"
+
+[[version]]
+number = 3
+name = "Stats"
+feature = "stats"
+doc = "the race ran on a stat pack (the header's match.setup.stats)"
+
+[[version]]
+number = 4
+name = "Custom"
+feature = "custom"
+doc = "a seat raced a custom machine (a seat's match.setup.seats[].custom)"
+
+[[version]]
+number = 5
+name = "Mines"
+feature = "mines"
+doc = "the race's mines came back (match.setup.rules.mineRegenMs gives a step or more)"
+
+[[version]]
+number = 6
+name = "Seats"
+feature = "seat_packs"
+doc = "a seat raced a pack of its own (match.setup.packs, a seat's pack)"
+
+[[version]]
+number = 7
+name = "Grid"
+feature = "grid"
+doc = """0.4.0's set-up: the race started on the coordinator's grid (match.setup.grid) or raced with no rubber band \
+(the header's rubberBand false: every race and practice from 0.4.0)"""
+
+[head]
+fields = [
+    { name = "Version", type = "u16" },
+    { name = "HeaderLength", type = "u32" },
+]
+
+[frames]
+mark = "FZRF"
+fields = [
+    { name = "Mask", type = "u32", doc = "the player seats: bit i is seat i" },
+    { name = "Seat", type = "u32", doc = "the recorder's seat" },
+]
+
+[lineup]
+mark = "FZRL"
+least = 122              # a playback's set-up reads no lineup shorter (the machines, ranks, settings, two bytes)
+doc = "read from the game when the relay says go; a playback takes its machines into the race block"
+fields = [
+    { name = "Machines", type = "u8", count = 30, doc = "each seat's machine: 0 to 40, 0x32 a custom machine" },
+    { name = "Ranks", type = "u8", count = 30, doc = "each seat's starting rank" },
+    { name = "Settings", type = "i16", count = 30, doc = "each seat's machine setting" },
+    { name = "ControlMode", type = "u8", doc = "machine 0's control mode (its block +0x590)" },
+    { name = "RelD70", type = "u8", doc = "the byte at .bss+0xD70 of main.rel" },
+    { name = "Padding", type = "pad", count = 2 },
+]
+
+[steps]
+checksum = "u32"         # after the seats' records: the state checksum the recording game kept for the step
+
+[results]
+mark = "FZRS"
+list = "results"         # the JSON: {"results": [entry, ...]}, members in this order
+
+[[result]]
+key = "seat"
+type = "int"
+low = 0
+high = 29
+
+[[result]]
+key = "rank"
+type = "int"
+low = 0
+high = 255
+
+[[result]]
+key = "finished"
+type = "bool"
+
+[[result]]
+key = "out"
+type = "bool"
+
+[[result]]
+key = "laps"
+type = "int"
+low = -2147483648
+high = 2147483647
+
+[[result]]
+key = "timeMs"
+type = "int"
+null = true
+low = 0
+high = 4294967295
+doc = "null for a racer that did not finish"
+
+[[result]]
+key = "bestLapMs"
+type = "int"
+low = 0
+high = 4294967295
+
+[[header]]
+key = "match"
+type = "object"
+doc = "the match start as the coordinator sent it (formats.md section 2), without relay and token"
+
+[[header]]
+key = "seat"
+type = "int"
+optional = true
+default = 0
+low = 0
+high = 29
+doc = "the recorder's seat"
+
+[[header]]
+key = "mask"
+type = "int"
+optional = true
+low = 0
+high = 1073741823
+doc = "the player seats (absent: the match's)"
+
+[[header]]
+key = "delay"
+type = "int"
+optional = true
+default = 2
+low = 0
+high = 60
+doc = "the input delay in frames"
+
+[[header]]
+key = "flow"
+type = "int"
+optional = true
+default = 0
+low = 0
+high = 1
+doc = "1: a race of the game's flow; absent in recordings before it"
+
+[[header]]
+key = "rubberBand"
+type = "bool"
+optional = true
+doc = "false from 0.4.0 on; absent (or true) in recordings before, which race with the band"
+
+[[header]]
+key = "mod_sha1"
+type = "text"
+optional = true
+doc = "the bundle's image"
+
+[[header]]
+key = "mod_commit"
+type = "text"
+optional = true
+doc = "the commit the image was built from"
+
+[[header]]
+key = "game"
+type = "text"
+optional = true
+doc = "the disc's ID, GFZE01 (absent: the fork's, which ran only this game)"
+
+[[header]]
+key = "engine"
+type = "text"
+optional = true
+doc = "what ran the game, when the runner says"
+
+[[header]]
+key = "module_sha1"
+type = "text"
+optional = true
+doc = "the native module, when the runner says"
+
+[[header]]
+key = "recorded"
+type = "text"
+optional = true
+doc = "the UTC time, 2026-10-06T12:00:00+00:00"
+
+[[header]]
+key = "practice"
+type = "bool"
+optional = true
+doc = "true for a practice run; absent in a race"
