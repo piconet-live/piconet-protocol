@@ -1,5 +1,7 @@
 # piconet-protocol
 
+[![CI](https://github.com/piconet-live/piconet-protocol/actions/workflows/ci.yml/badge.svg)](https://github.com/piconet-live/piconet-protocol/actions/workflows/ci.yml)
+
 The formats and messages Piconet's parts share, each described once: the relay's UDP packets, the lobby and
 relay-link messages, the game's launch file, the runner's exit status, the replay file (`.fzrp`) and the status
 board a running game shares with the launcher. C# and C++ are generated from the definitions in `protocol/`;
