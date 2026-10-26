@@ -33,9 +33,15 @@ paths piconet-launcher's; the service's (`Online.Server`, `deploy/`) and the pro
 
 ## Requirements
 
-- Python 3.11 or later (standard library only)
-- g++ with C++20 (checked with GCC 13.3)
-- the .NET SDK 10.0.401 or a later 10.0 patch (`net/global.json`)
+- Python 3.11 or later (standard library only) and g++ with C++20 (checked with GCC 13.3): `sudo apt install
+  build-essential python3 python3-venv rsync git`
+- the .NET SDK 10.0.401 or a later 10.0 patch (`net/global.json`). Ubuntu's apt package (10.0.1xx) is
+  older, so install it with Microsoft's script, then put it on `PATH`:
+
+      curl -sSLO https://dot.net/v1/dotnet-install.sh && bash dotnet-install.sh --channel 10.0
+      export DOTNET_ROOT=$HOME/.dotnet PATH=$HOME/.dotnet:$PATH    # in ~/.bashrc too
+
+  In WSL, Windows' `dotnet.exe` can come first on `PATH`; `command -v dotnet` should name `~/.dotnet/dotnet`.
 
 ## Check
 
