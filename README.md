@@ -7,7 +7,7 @@ relay-link messages, the game's launch file, the runner's exit status, the repla
 board a running game shares with the launcher. C# and C++ are generated from the definitions in `protocol/`;
 `Online.Protocol` is the C# library the launcher, the server and the simulated players build with, and the stat
 packs that are shipped are kept here. Piconet is online multiplayer for F-Zero GX: see
-[piconet](https://github.com/piconet-live/piconet).
+[github.com/piconet-live](https://github.com/piconet-live).
 
 This repository is a submodule of the others (`external/protocol` in
 [piconet-runner](https://github.com/piconet-live/piconet-runner),
