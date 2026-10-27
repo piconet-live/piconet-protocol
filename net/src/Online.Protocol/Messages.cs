@@ -362,7 +362,10 @@ public sealed record ErrorMessage(string Code, string Message, int? Seconds = nu
 /// longest takes over when the host leaves) and whose rules are <paramref name="Rules"/>, whole; sent again when
 /// the host or the rules change. Name: a custom lobby's name; Locked: joining it asks for a password; both sent
 /// again when the host renames the lobby or sets or clears its password. Quick Play's lobbies have none of these,
-/// and a launcher from before them passes over them.</summary>
+/// and a launcher from before them passes over them. StartsInMs: a Quick Play lobby's start countdown
+/// (<see cref="HostRules.StartCountdown"/>), the milliseconds left when the state was sent; the lobby's match begins
+/// when it runs out, unless its start vote begins it first. Null: no countdown runs (too few players, a custom lobby,
+/// the rule off, or the lobby is past forming); a launcher from before it passes over it.</summary>
 public sealed record LobbyState(
     string LobbyId, IReadOnlyList<PlayerInfo> Players, int Capacity, int VotingMinimum, bool VotingOpen,
     int StartVotes, int CpuFillVotes, string Stage = LobbyState.Forming, LobbyRace? Race = null, string? Waiting = null,
@@ -372,7 +375,8 @@ public sealed record LobbyState(
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? HostId = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] LobbyRules? Rules = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Name = null,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool Locked = false)
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool Locked = false,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] int? StartsInMs = null)
     : ServerMessage
 {
     /// <summary><see cref="Waiting"/>: the race server (relay) is being started.</summary>

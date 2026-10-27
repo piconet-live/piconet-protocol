@@ -137,6 +137,17 @@ public static class HostRules
     /// (<see cref="Racers"/>) is taken, and such a lobby never starts by vote.</summary>
     public static HostRule VotingMinimum { get; } = Lobby("voting-minimum", "Voting minimum", 1, GameFacts.Limits.Seats, RuleReach.Together);
 
+    /// <summary>A Quick Play lobby's start countdown, in seconds: it runs once the lobby has its voting minimum
+    /// (<see cref="VotingMinimum"/>) and lasts this long at that many players, shorter with every player more, down to
+    /// <see cref="StartCountdownLeast"/> seconds when one seat is left; a full lobby starts at once, and the start vote
+    /// still starts it sooner. 0: no countdown, the vote alone (as before 0.5.2). Custom lobbies never count down: their
+    /// host or their vote starts them.</summary>
+    public static HostRule StartCountdown { get; } = Lobby("start-countdown", "Start countdown", 0, 600);
+
+    /// <summary>The shortest a start countdown lasts, in seconds (<see cref="StartCountdown"/> is the longest; a
+    /// countdown set shorter than this lasts its own length throughout).</summary>
+    public const int StartCountdownLeast = 10;
+
     /// <summary>How long the relay waits for every game of a race to join, in seconds.</summary>
     public static HostRule StartTimeout { get; } = Lobby("start-timeout", "Start timeout", 10, 600);
 
@@ -158,7 +169,7 @@ public static class HostRules
     [
         CourseSelect, CoursePool, Racers, Laps, CpuLevel, CpuFill, BoostStart, Restore, FinishLimit, MinesReturn, Machines,
         MachineSetting, StatPack, MixedPacks,
-        VoteSeconds, ChooseSeconds, VotingMinimum, StartTimeout, ReadyTimeout, StragglerWait, LatencyLimit,
+        VoteSeconds, ChooseSeconds, VotingMinimum, StartCountdown, StartTimeout, ReadyTimeout, StragglerWait, LatencyLimit,
         new("together", "Builds together", RuleReach.Server, RuleKind.Text),
         new("relay-ceiling", "Relay ceiling", RuleReach.Server, RuleKind.Text),
     ];
