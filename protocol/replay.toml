@@ -16,11 +16,28 @@
 #   results   optional, the file's last bytes, found from the end: JSON ([[result]]: one entry per racer), u32 its
 #             length, [results]'s mark. Taken as the results only when the JSON lies after the frames' block.
 #
+# The compact file ([compact], version 8), which the game makes of the file above when the recording ends: the mark,
+# u16 the version, u16 the version of the recording it was made of (its race's: the features' rules are that
+# version's; the game makes it of version 7 alone), then five sections, each its mark, u32 its length and its bytes, in this order, then the results
+# as above:
+#   header    [compact]'s header_mark: the header's JSON, xz
+#   frames    [frames]'s mark: its fields (the player seats' mask, the recorder's seat)
+#   lineup    [lineup]'s mark: the block (the lineup's part above, byte for byte)
+#   inputs    [compact]'s inputs_mark: u32 the steps, then xz of the steps' records in columns: every step's first
+#             byte of the step's records, then every step's second byte, and so on (a step's records are one row)
+#   checksums [compact]'s checksums_mark: xz of a byte a step (the step's checksum folded: its four bytes XORed),
+#             then the whole checksum (u32) of every step that is a multiple of full_every and of the last step
+# xz: one stream, the check `check`, LZMA2 at
+# `preset` with the extreme flag and a dictionary of the part's own size (dict_min at least, dict_max at most);
+# a reader takes no more than `memlimit` bytes of memory for one.
+#
 # A version (`[[version]]`) is the same layout under another number: each says what its race holds (`feature`), so
 # that a program from before that feature refuses the file. A file's version is the highest whose feature its
 # header's race holds, or the first (no feature) when it holds none; a reader of the game refuses a file whose
 # version is another (formats.md section 1). The writer writes `written` only: every race and practice since 0.4.0
 # is 0.4.0's set-up (the rubber band off). Older versions stay readable: older replays keep playing.
+#
+# A reader plays both forms; the compact one compares a step's folded checksum, and the whole one where it has it.
 #
 # Field types: u16, u32, u8, i16; `count`: an array of that many; `pad`: bytes written as zero, never read.
 # [[header]] and [[result]] members: `key` the JSON name, `type` int, bool, text, object; `null` true when the JSON
@@ -36,6 +53,18 @@ max_bytes = 268435456    # 256 MiB: an hour of 30 seats is 40 MiB
 max_steps = 1296000      # six hours at 60 steps a second
 max_json = 1048576       # the longest header, and results block, the launcher reads (1 MiB)
 max_seats = 30           # the game's seats: a mask names seats 0 to 29, the recorder's seat is one of them
+
+[compact]
+version = 8              # the file a recording becomes when it ends (0.5.2 on); a program from before refuses it
+header_mark = "FZRH"
+inputs_mark = "FZRI"
+checksums_mark = "FZRC"
+full_every = 60          # every 60th step (and the last) keeps its whole checksum; the rest a byte
+check = "crc32"
+preset = 9
+dict_min = 4096          # xz's smallest dictionary
+dict_max = 67108864      # 64 MiB, preset 9's own
+memlimit = 134217728     # 128 MiB
 
 [codec.csharp]
 namespace = "Launcher.Core"

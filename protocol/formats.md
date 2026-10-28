@@ -16,7 +16,7 @@ are not public, nor are the project's test scripts named here (`launch-file.py`,
 | Race summaries, `race-summary.txt` (section 6) | the game, one line when it stops after a race: `net::WriteSummary` (`port/core/src/summary.cpp`, `files_summary.cpp`) | a person, or a tool that reads section 6's format; the game reads it only as lines, to keep the last 300 |
 | Bundle (a folder) | `port/image/build.py` (native form); `bundle.py` beside the image's generators (the JIT reference's) | the game: `boot::TheBundle`, `ReadPatches`, `ReadCodes` (`files_bundle.cpp`); the launcher: `RecompLaunch.cs` |
 
-## 1. The replay file (version 2; version 3 for a race with a stat pack; version 4 for a race with a custom machine; version 5 for a race whose mines come back; version 6 for a race with a pack a seat; version 7 for a race of 0.4.0's set-up: the coordinator's start grid, or no rubber band)
+## 1. The replay file (version 2; version 3 for a race with a stat pack; version 4 for a race with a custom machine; version 5 for a race whose mines come back; version 6 for a race with a pack a seat; version 7 for a race of 0.4.0's set-up: the coordinator's start grid, or no rubber band; version 8, the compact file a recording becomes when it ends)
 
 A replay holds everything that rebuilds its race: the race's set-up, every player seat's input for every step, and
 the checksum the recording game kept for each step. CPU racers are not recorded; they are computed again.
@@ -24,10 +24,13 @@ the checksum the recording game kept for each step. CPU racers are not recorded;
 **The definition is `protocol/replay.toml`**: its parts, marks, versions and the rule that picks
 a race's version, the lineup's block, the step, the results' entries and the header's members. `protocol/generate.py`
 writes every reader and the writer from it: `generated/replay_file.g.h` (the game's core: `Parse`, the writer's
-`EncodeStart`, `EncodeLineup`, `EncodeStep`, `EncodeResults`, `ResultsJson`), `generated/ReplayFile.g.cs` (the
-launcher: `ReplayParts`, `ReplayFormat`) and `generated/replay_file.py` (the test tools' `replay-compare.py` and reports).
+`EncodeStart`, `EncodeLineup`, `EncodeStep`, `EncodeResults`, `ResultsJson`), `generated/replay_compact.g.h` (the
+game's core: the compact file's `Compact`, `Expand`, `ChecksumMatches`, through liblzma), `generated/ReplayFile.g.cs`
+(the launcher: `ReplayParts`, `ReplayFormat`; a compact file's header through SharpCompress) and
+`generated/replay_file.py` (the test tools' `replay-compare.py` and reports; a compact file through the standard
+library's `lzma`).
 No reader is written by hand; what follows is the schema in prose, and what each reader refuses (its own policy over
-the generated parts). `tests/vectors/replays/` holds a real recording of every version 2 to 7 (cut to 240 steps; as hex text, `NAME.fzrp.hex`) and
+the generated parts). `tests/vectors/replays/` holds a real recording of every version 2 to 7 (cut to 240 steps; as hex text, `NAME.fzrp.hex`), `v8.fzrp.hex` (the version 7 one made compact) and
 `replays.tsv`, every part of each as the readers before the schema read it: the game's core test and the protocol's
 C# test hold the generated readers to it, and the core test writes each sample again, byte for byte. The runner's
 `--replay-info FILE` prints what a file holds as one JSON object, starting no game.
@@ -35,7 +38,7 @@ C# test hold the generated readers to it, and the core test writes each sample a
 | Part | Size | Content |
 |---|---|---|
 | Mark | 4 | `FZRP` |
-| Version | u16 | 2; 3 when the race ran on a stat pack (the header's `match.setup.stats`, section 2); 4 when a seat raced a custom machine (a seat's `custom`, section 2), with a stat pack or without (the pack is then read as in version 3); 5 when the race's mines came back (its set-up's `rules.mineRegenMs` gives a step or more, section 2), with a pack or a custom machine or neither; 6 when a seat raced a pack of its own (`setup.packs`, a seat's `pack`), whatever else it holds; 7 when the race started on the coordinator's grid (`setup.grid`, section 2), whatever else it holds. Nothing else of the file differs |
+| Version | u16 | (8: the compact file, below) 2; 3 when the race ran on a stat pack (the header's `match.setup.stats`, section 2); 4 when a seat raced a custom machine (a seat's `custom`, section 2), with a stat pack or without (the pack is then read as in version 3); 5 when the race's mines came back (its set-up's `rules.mineRegenMs` gives a step or more, section 2), with a pack or a custom machine or neither; 6 when a seat raced a pack of its own (`setup.packs`, a seat's `pack`), whatever else it holds; 7 when the race started on the coordinator's grid (`setup.grid`, section 2), whatever else it holds. Nothing else of the file differs |
 | Header length | u32 | n |
 | Header | n | JSON (below) |
 | Frames mark | 4 + u32 + u32 | `FZRF`, the player seats' mask (bit i is seat i), the recorder's seat |
@@ -79,6 +82,35 @@ held at that step; the game's list and the launcher's say "Disqualified".
 
 **Version 7.** A race of 0.4.0's set-up, one that started on the coordinator's grid (its header's match names `setup.grid`) or raced with no rubber band (its header's `rubberBand` false: every race and practice from 0.4.0), is written as version 7 whatever else it holds (a stat pack, a custom machine, mines that come back, a pack a seat), so that a program from before the grid refuses it and does not start the race from the game's own grid; the grid is the header's match start's as it came. A race with neither (a recording made before 0.4.0) kept its version, and plays the game's own sort and the band. Since every race and practice from 0.4.0 has no rubber band, the game writes version 7 alone (replay.toml's `written`); versions 2 to 6 are read, never written. A version 7 file with neither, or another version's with either, is refused (both readers of the game; the launcher lists version 7). Its lineup's starting ranks (bytes 30-59) are the grid as the game placed it: a seat's rank at go is its slot.
 
+**Version 8, the compact file.** When a recording ends (the session's end: a race, a practice) the game makes the
+file compact: it writes the compact file beside it (`NAME.fzrp.compact`) and moves it over the recording, so the file is
+at every moment one or the other, and a game that stops on the way leaves the recording of the steps written so far
+(`CompactReplay`, `port/core/src/replay.cpp`). A file that is not a whole recording (no step, no lineup, a part of a
+step at its end) stays as it is. On the 135 replays of one player's folder (295.9 KiB on average) a compact file is
+31.8 KiB (10.8%): the header 5.3 KiB, the inputs 17.3, the checksums 8.6, the results 0.45.
+
+| Part | Size | Content |
+|---|---|---|
+| Mark | 4 | `FZRP` |
+| Version | u16 | 8 |
+| Recording's version | u16 | the version of the recording it was made of, 2 to 7 (the game makes it of version 7): the features' rules above are that version's |
+| Header | 4 + u32 + n | `FZRH`, n, the header's JSON as one xz stream |
+| Frames | 4 + u32 + 8 | `FZRF`, 8, the player seats' mask, the recorder's seat |
+| Lineup | 4 + u32 + 124 | `FZRL`, 124, the block (the lineup's part above, byte for byte) |
+| Inputs | 4 + u32 + 4 + n | `FZRI`, its length, u32 the steps, then the player seats' records in columns as one xz stream: of each step's row (the seats' records in seat order) every step's first byte, then every step's second byte, and so on |
+| Checksums | 4 + u32 + n | `FZRC`, n, one xz stream of: a byte for every step, its checksum folded (`c ^ c >> 8 ^ c >> 16 ^ c >> 24`, the low 8 bits: every bit of the word counts), then the whole checksum (u32) of every step that is a multiple of 60 and of the last step, in the steps' order |
+| Results | m + u32 + 4, optional | as above: JSON, its length m, `FZRS`, the file's last bytes, found from the end (plain: 0.45 KiB, xz would save 0.25 KiB a file, and a reader takes them as in every version) |
+
+The parts come in this order and fill the file up to the results; each xz stream is one stream, LZMA2 at preset 9 with
+the extreme flag and a dictionary of its part's own size (4 KiB at least), checked by its CRC32. A reader takes no
+more than 128 MiB of memory for one, no header longer than 1 MiB and exactly the inputs' and checksums' lengths the
+steps make. A reader reads the file as the recording it was made of (`Expand`), whose steps between the whole
+checksums hold their folded byte; a playback compares each step's byte, and the whole checksum where the file keeps
+it (`ChecksumMatches`). The first step that differs is still found: a game that differed stays different (nothing is
+repaired), so a difference the byte cannot see (1 in 256) shows a step or a few later, and the next whole checksum is
+at most 60 steps on. A program from before version 8 refuses the file by its version (0.5.2's replays need 0.5.2 or
+later); every program from 0.5.2 reads versions 2 to 8.
+
 **Version 5.** A race whose mines came back is written as version 5 so that a program from before the rule refuses it and does not play the race with its mines gone; the rule is the header's match start's as it came. A race without it keeps its version, byte for byte as before. A version 5 file without the rule, or another version's with it, is refused (both readers of the game, and the launcher's list says so).
 
 **Version 3.** A race with a stat pack is written as version 3 so that a program from before stat packs (which
@@ -86,17 +118,18 @@ knows only version 2) refuses the file and does not play the race on the disc's 
 header as it came, and a playback lays it through the same reader as a race. A race without a pack is version 2,
 byte for byte as before.
 
-**Writing** (always version 7). With the launch file's `match.record` the game writes the header and the frames mark when the session starts,
+**Writing** (version 7 while the race runs, then version 8). With the launch file's `match.record` the game writes the header and the frames mark when the session starts,
 appends the lineup at go, appends every step once it is final (it has run with the relay's official inputs), and
-appends the results at the end. A file the game closed always ends on a whole step.
+appends the results at the end. A file the game closed always ends on a whole step. Then it makes the file compact
+(version 8, above).
 
 **Reading. What each reader refuses:**
 
 | Reader | Refuses |
 |---|---|
-| `boot::ReadReplay` (sets up the race of a playback) | a file over 256 MiB; more than 1,296,000 steps (six hours); no `FZRP` or a version other than 2 to 7; a version 7 file whose set-up names no start grid and keeps the rubber band, or another version's with a grid or without the band; a version 5 file whose set-up names no mine rule or another version's that names one; a version 3 file whose set-up names no stat pack, a version 2 file whose set-up names one, a version 4 file whose set-up names no custom machine or another version's that names one, a stat pack the game refuses (section 2); no `FZRF`; no `FZRL` or fewer than 122 bytes after it; a header that is not a JSON object, or one nested more than 32 levels deep; a `game` other than `GFZE01` (a header without `game` is accepted); a frames mark whose mask has no seat or a seat above 29, or whose recorder's seat is above 29; no step, or a part of a step, between the lineup and the results; a header without `match`, its `setup` or its `seats`; a set-up the game does not have (section 2: seats, course, laps, seeds, a seat's machine); a header's `seat` (0-29), `delay` (0-60), `mask` (seats 0-29 only) or `flow` (0-1) that is not a whole number in its range; a lineup machine above 40 in any of the 30 slots, the race's racers and the slots after them (0 in every recording written: all 30 go into the race block), but 0x32 in the slot of a seat whose set-up names a custom machine |
-| `net::ReadRecording` (the steps a playback runs and compares) | a file over 256 MiB; more than 1,296,000 steps (six hours); no `FZRP` version 2 to 7; no `FZRF`; a mask with no seat or a seat above 29; a recorder's seat above 29. The lineup and the results are skipped when present, and a part of a step at the end is not read |
-| `ReplayFile.Read`, `ReplayFile.Problem` (the launcher's list, and why a file is not played) | a version other than 2 to 7, another game, a version and a mine rule that disagree, a file that ends early, each as a sentence for the player; a header or results block longer than 1 MiB; a header or results whose members are missing, of another kind or out of a number's range ("not a replay", never an exception in the window). A missing lineup is not refused here |
+| `boot::ReadReplay` (sets up the race of a playback) | a file over 256 MiB; more than 1,296,000 steps (six hours); no `FZRP` or a version other than 2 to 8; a version 8 file that does not expand (a part missing, out of its place or of another length, an xz stream that does not read or check, a recording's version other than 2 to 7, a whole checksum whose byte disagrees), and then what follows of the recording it was made of; a version 7 file whose set-up names no start grid and keeps the rubber band, or another version's with a grid or without the band; a version 5 file whose set-up names no mine rule or another version's that names one; a version 3 file whose set-up names no stat pack, a version 2 file whose set-up names one, a version 4 file whose set-up names no custom machine or another version's that names one, a stat pack the game refuses (section 2); no `FZRF`; no `FZRL` or fewer than 122 bytes after it; a header that is not a JSON object, or one nested more than 32 levels deep; a `game` other than `GFZE01` (a header without `game` is accepted); a frames mark whose mask has no seat or a seat above 29, or whose recorder's seat is above 29; no step, or a part of a step, between the lineup and the results; a header without `match`, its `setup` or its `seats`; a set-up the game does not have (section 2: seats, course, laps, seeds, a seat's machine); a header's `seat` (0-29), `delay` (0-60), `mask` (seats 0-29 only) or `flow` (0-1) that is not a whole number in its range; a lineup machine above 40 in any of the 30 slots, the race's racers and the slots after them (0 in every recording written: all 30 go into the race block), but 0x32 in the slot of a seat whose set-up names a custom machine |
+| `net::ReadRecording` (the steps a playback runs and compares) | a file over 256 MiB; more than 1,296,000 steps (six hours); no `FZRP` version 2 to 8; a version 8 file that does not expand; no `FZRF`; a mask with no seat or a seat above 29; a recorder's seat above 29. The lineup and the results are skipped when present, and a part of a step at the end is not read |
+| `ReplayFile.Read`, `ReplayFile.Problem` (the launcher's list, and why a file is not played) | a version other than 2 to 8 (a version 8 file is judged by its recording's version, and one of a recording's version other than 2 to 7 is another version's), a version 8 file whose parts are not whole or whose header does not read, another game, a version and a mine rule that disagree, a file that ends early, each as a sentence for the player; a header or results block longer than 1 MiB; a header or results whose members are missing, of another kind or out of a number's range ("not a replay", never an exception in the window). A missing lineup is not refused here |
 | `RecompLaunch.RecordedWithThisImage` (the launcher only; the game does not check) | a `mod_sha1` that is neither the bundle's image nor named for it in `same-race.json` (section 3). A replay that names no image is played |
 
 - A header's `mask` replaces the mask worked out from the seats. Seats are 0 to 29: the game's two readers refuse a
@@ -108,12 +141,20 @@ appends the results at the end. A file the game closed always ends on a whole st
   placed on the grid.
 - The results are the file's last bytes only when their JSON lies after the frames' part (replay.toml); the launcher
   reads no header or results longer than 1 MiB (`max_json`).
-- A playback compares every step's checksum with the file's; a difference counts as a desync.
+- A playback compares every step's checksum with the file's (a version 8 file's: above); a difference counts as a
+  desync. It also compares the race's results with the file's, where a recording takes them (`CheckResults`,
+  `port/core/src/playback.cpp`), and says `results: the recording's` or `results: DIFFER ...` (and in its summary:
+  `playback: results the recording's|DIFFER from the recording's|not in the recording|not reached`); the gates'
+  judge fails a playback whose results differ. A recording of a version before 7 (before 0.4.0) is not judged by
+  its results: some took them from a state that was not the race's end (one of 4 October holds every lap 0 and
+  times of hours); a difference there reads `results: other than the recording's` and `results other, not judged`.
 - Files are named `yyyyMMdd-HHmmss-MATCHID.fzrp` (`RecompLaunch.ReplayFileFor`).
 
 **Comparing recordings**: `replay-compare.py [--same-length] A.fzrp B.fzrp [...]` reads files only and
 says whether they are one race. One line a file: `FOLDER/FILE: seen from seat S, N player seats, M steps, course C,
-L lap(s), engine E, results yes|no` (`M steps (cut inside a step)` for a file that ends in a part of a step). One
+L lap(s), engine E, results yes|no` (`M steps (cut inside a step)` for a file that ends in a part of a step,
+`M steps, compact` for a version 8 file). Where either file of a pair keeps a step's folded byte alone (version 8),
+the bytes are compared (the reader's `Checksum`): a compact file compares with a whole one or another compact one. One
 line a pair: `files I and J: N steps in both; inputs equal|differ first at step T; checksums equal at every
 step|differ first at step T (K steps differ); the same lineup|ANOTHER lineup`, then `, the same results|, OTHER
 results` when both files hold results, then `; LENGTHS DIFFER: A and B steps (file I is K short)` when they do.

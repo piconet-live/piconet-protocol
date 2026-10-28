@@ -29,6 +29,7 @@ import launch_cxx
 import replay
 import replay_cs
 import replay_cxx
+import replay_cxx_compact
 import replay_py
 import stats
 import stats_cs
@@ -42,6 +43,7 @@ OUTPUTS = {"csharp": "generated/RelayPackets.g.cs", "cxx": "generated/relay_pack
            "cxx_describe": "tests/generated/relay_describe.g.h",
            "board_csharp": "generated/StatusBoard.g.cs", "board_cxx": "generated/status_board.g.h",
            "replay_csharp": "generated/ReplayFile.g.cs", "replay_cxx": "generated/replay_file.g.h",
+           "replay_cxx_compact": "generated/replay_compact.g.h",
            "replay_python": "generated/replay_file.py",
            "launch_csharp": "generated/LaunchFile.g.cs", "launch_cxx": "generated/launch_file.g.h",
            "stats_csharp": "generated/StatTables.g.cs", "stats_ranges_cxx": "generated/stat_ranges.g.h",
@@ -229,6 +231,7 @@ def generated(path=SCHEMA, board_path=board.SCHEMA, replay_path=replay.SCHEMA, l
             OUTPUTS["cxx_describe"]: codec_cxx.emit_describe(protocol, packets),
             OUTPUTS["board_csharp"]: board_cs.emit(*laid), OUTPUTS["board_cxx"]: board_cxx.emit(*laid),
             OUTPUTS["replay_csharp"]: replay_cs.emit(file), OUTPUTS["replay_cxx"]: replay_cxx.emit(file),
+            OUTPUTS["replay_cxx_compact"]: replay_cxx_compact.emit(file),
             OUTPUTS["replay_python"]: replay_py.emit(file),
             OUTPUTS["launch_csharp"]: launch_cs.emit(started), OUTPUTS["launch_cxx"]: launch_cxx.emit(started),
             OUTPUTS["stats_csharp"]: stats_cs.emit(tables), OUTPUTS["stats_ranges_cxx"]: stats_cxx.emit_ranges(tables),
