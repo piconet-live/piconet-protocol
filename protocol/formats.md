@@ -145,7 +145,9 @@ appends the results at the end. A file the game closed always ends on a whole st
   desync. It also compares the race's results with the file's, where a recording takes them (`CheckResults`,
   `port/core/src/playback.cpp`), and says `results: the recording's` or `results: DIFFER ...` (and in its summary:
   `playback: results the recording's|DIFFER from the recording's|not in the recording|not reached`); the gates'
-  judge fails a playback whose results differ.
+  judge fails a playback whose results differ. A recording of a version before 7 (before 0.4.0) is not judged by
+  its results: some took them from a state that was not the race's end (one of 4 October holds every lap 0 and
+  times of hours); a difference there reads `results: other than the recording's` and `results other, not judged`.
 - Files are named `yyyyMMdd-HHmmss-MATCHID.fzrp` (`RecompLaunch.ReplayFileFor`).
 
 **Comparing recordings**: `replay-compare.py [--same-length] A.fzrp B.fzrp [...]` reads files only and
