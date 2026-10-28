@@ -23,7 +23,7 @@ foreach (var line in File.ReadLines(Path.Combine(args[0], "replays.tsv")))
     var bytes = Convert.FromHexString(string.Concat(File.ReadAllLines(Path.Combine(args[0], name + ".hex"))));
     var path = Path.Combine(temp, name);
     File.WriteAllBytes(path, bytes);
-    var got = Describe(name, path, bytes);
+    var got = Describe(name, path, bytes, line.Split('\t'));
     if (got != line)
     {
         failures++;
@@ -31,7 +31,7 @@ foreach (var line in File.ReadLines(Path.Combine(args[0], "replays.tsv")))
     }
     versions.Add(ReplayParts.Read(path).Version);
 }
-foreach (var v in new[] { 2, 3, 4, 5, 6, 7 })
+foreach (var v in new[] { 2, 3, 4, 5, 6, 7, 8 })
 {
     if (!versions.Contains(v))
     {
@@ -39,6 +39,7 @@ foreach (var v in new[] { 2, 3, 4, 5, 6, 7 })
         Console.Error.WriteLine($"replay vectors: no sample of version {v}");
     }
 }
+failures += CompactRefusals(temp);
 Directory.Delete(temp, recursive: true);
 Console.WriteLine($"replay vectors (C#): {versions.Count} versions, {failures} differences");
 return failures == 0 ? 0 : 1;
@@ -53,7 +54,36 @@ static string Fnv(ReadOnlySpan<byte> data)
     return h.ToString("x16", CultureInfo.InvariantCulture);
 }
 
-static string Describe(string name, string path, byte[] d)
+// A compact file's header part damaged: the reader's xz check finds it (no header, never another one); a file cut
+// inside its parts is not whole.
+static int CompactRefusals(string temp)
+{
+    var failures = 0;
+    var bytes = Convert.FromHexString(string.Concat(File.ReadAllLines(Path.Combine(Environment.GetCommandLineArgs()[1], "v8.fzrp.hex"))));
+    var length = (int)System.Buffers.Binary.BinaryPrimitives.ReadUInt32BigEndian(bytes.AsSpan(12));
+    foreach (var at in new[] { 16 + (length / 2), 16 + length - 9 })
+    {
+        var broken = (byte[])bytes.Clone();
+        broken[at] ^= 0x10;
+        var path = Path.Combine(temp, "broken.fzrp");
+        File.WriteAllBytes(path, broken);
+        if (ReplayParts.Read(path) is not { Marked: true, Compact: true, Header: null })
+        {
+            failures++;
+            Console.Error.WriteLine($"replay vectors: a compact header damaged at byte {at} was read");
+        }
+    }
+    var cut = Path.Combine(temp, "cut.fzrp");
+    File.WriteAllBytes(cut, bytes[..(bytes.Length / 2)]);
+    if (ReplayParts.Read(cut) is not { Marked: true, Whole: false })
+    {
+        failures++;
+        Console.Error.WriteLine("replay vectors: a compact file cut in half is whole");
+    }
+    return failures;
+}
+
+static string Describe(string name, string path, byte[] d, string[] vectors)
 {
     var p = ReplayParts.Read(path);
     var cells = new List<string>
@@ -72,14 +102,16 @@ static string Describe(string name, string path, byte[] d)
     }
     var rows = new List<byte>();
     var sums = new List<byte>();
-    for (var step = 0L; step < p.Steps; step++)
+    for (var step = 0L; !p.Compact && step < p.Steps; step++)
     {
         var at = (int)(p.StepsAt + (step * p.StepSize));
         var row = (int)p.StepSize - ReplayFormat.ChecksumSize;
         rows.AddRange(d.AsSpan(at, row));
         sums.AddRange(d.AsSpan(at + row, ReplayFormat.ChecksumSize));
     }
-    cells.AddRange([I(p.Steps), p.Whole ? "1" : "0", Fnv(rows.ToArray()), Fnv(sums.ToArray())]);
+    // (a compact file's steps are xz: the launcher reads their count, never their bytes; the game's core test and
+    // the Python reader hold the steps of the compact sample)
+    cells.AddRange([I(p.Steps), p.Whole ? "1" : "0", p.Compact ? vectors[14] : Fnv(rows.ToArray()), p.Compact ? vectors[15] : Fnv(sums.ToArray())]);
     if (p.Results is { } json)
     {
         var entries = ReplayFormat.ParseResults(json).Select(e =>
