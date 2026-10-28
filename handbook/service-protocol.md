@@ -8,7 +8,7 @@ A seat is a racer's place in a race, 0 to 29. A match is a lobby's next race fro
 
 | Message | Who to whom | When | What the receiver does |
 |---|---|---|---|
-| `hello` | L to C | first message | Checks version, key, name, build; refuses with `error` (`bad_version`, `bad_message`, `bad_name`, `bad_build`, `tags_taken`); a `password` field (launchers before custom lobbies) is passed over or answers `welcome` (player id, server name, rules, `tag`). The rules (`ServerRules`) are the lobby's as the launcher shows them, among them (0.5.0) `latencyLimitMs`, the lobby's latency limit (`HostRules.LatencyLimit`: 30 to 300 ms, Quick Play 250); a launcher from before passes over it, and a rules message without it reads as 250. Optional `key` and `players` (players list) One a connection: a second is `already_welcomed`. Test settings, the key, limits: below the table |
+| `hello` | L to C | first message | Checks version, key, name, build, line; refuses with `error` (`bad_version`, `bad_message`, `bad_name`, `bad_build`, `bad_line`, `tags_taken`); a `password` field (launchers before custom lobbies) is passed over or answers `welcome` (player id, server name, rules, `tag`). The rules (`ServerRules`) are the lobby's as the launcher shows them, among them (0.5.0) `latencyLimitMs`, the lobby's latency limit (`HostRules.LatencyLimit`: 30 to 300 ms, Quick Play 250); a launcher from before passes over it, and a rules message without it reads as 250. Optional `key`, `players` (players list) and `line` (the release line, below) One a connection: a second is `already_welcomed`. Test settings, the key, limits: below the table |
 | `queue` | L to C | RACE pressed (machine, colour, setting) | Puts the player in a lobby; `error` `machine_not_allowed`, or `not_ready` when already in one |
 | `leaveQueue` | L to C | the player leaves Quick Play | Takes them out of the lobby and any match; answers `leftLobby` |
 | `browseLobbies`, `lobbyList` | L to C, C to L | the lobby browser opens (`on` true) or closes | The custom lobbies of the player's build (`LobbySummary`: id, name, host's name, players, capacity, `locked`, rules whole, stage), on subscribe and then on changes, at most about twice a second; `quickPlay`: the server's own rules in the same form, to compare with |
@@ -19,7 +19,7 @@ A seat is a racer's place in a race, 0 to 29. A match is a lobby's next race fro
 | `name` | L to C | a name change while connected (`welcome` says `renames`) | Checked as a hello's name, logged (`id: old -> new`), the lobby sent again; `error` `bad_name`, or `rename_too_soon` within a second of the last (the launcher sends its saved name again) |
 | `chat` | L to C, C to L | any time after hello | Sends it to everyone (`global`) or the lobby (`lobby`); `error` `bad_text`, `bad_channel`, or the filter's `chat_*` (the service's chat filter). A player's line has `fromTag`; a notice is a `chat` from id `server`, name `SYSTEM`, with `level`, `noticeId` and no tag |
 | `recentNotices` | C to L | after `welcome`; joining a lobby | The last hour's notices to all, or that lobby, if hello said `notices`; listed once by id, never as chat |
-| `lobby` | C to L | every change of the lobby | The launcher shows it: members (each with `tag`), stage, votes, the race, `waiting`, `otherBuilds`; `startsInMs` (0.5.2): a Quick Play lobby's start countdown, the milliseconds left when sent (`HostRules.StartCountdown`: from the voting minimum, shorter with each player, down to 10 s; a full lobby starts at once); absent: none runs, and a launcher from before passes over it |
+| `lobby` | C to L | every change of the lobby | The launcher shows it: members (each with `tag`), stage, votes, the race, `waiting`, `otherBuilds` (one entry per release line or build; an entry of a line has `line`, and its `build` is the build most of its players have, for a launcher from before lines); `startsInMs` (0.5.2): a Quick Play lobby's start countdown, the milliseconds left when sent (`HostRules.StartCountdown`: from the voting minimum, shorter with each player, down to 10 s; a full lobby starts at once); absent: none runs, and a launcher from before passes over it |
 | `tag` | C to L | a rename changed the tag (worked out again from the key; without a key, the pair was another player's) | The new tag (`TagChanged`), for this connection: the launcher uses it and saves nothing. A launcher of 0.2.x drops it as an unknown type |
 | `rules` | C to L | the operator changed a live rule that a welcome's rules carry (`Coordinator.TellRules`) | The rules whole (`RulesChanged`), to every welcomed launcher, in a lobby or not; the launcher shows them at once (lobby, home). A running race keeps its match start's set-up; the next match start has the new rules. A 0.2.x launcher drops it as an unknown type |
 | `players` | C to L | after `welcome`, if hello said `players` | The whole players list (`PlayersList`) as it last went out, in parts (`part`, `parts`) of at most 50: id, name, tag, colour, `status` (`online`, `lobby`, `racing`, `watching`) and `lobby` |
@@ -90,6 +90,16 @@ simulated lag left on), not a protection. The official service refuses: `deploy/
 the option (`DebugRefusalTests` fails if it does), so a test visit to it (the manual gate
 `service`) is refused. `quickplay-run.sh`'s own test server passes it; `pair-run.sh` and `match-file.sh` need none
 (their players are bots).
+
+**The line in `hello`** (`Hello.Line`, a launcher of 0.5.2 on): the launcher's release line, the first two numbers
+of its version (`VersionLine.Of`: 0.5.2 says `"0.5"`; a launcher built with no version, 0.0.x, or a pre-release
+says none). Every build of a line races together (the owner's rule): the coordinator keys a player's lobby to the line
+when there is one, else to the build as before (`handbook/service.md` in the service, "What identifies a build").
+Written only when set, so a server from before it passes over it and the version stayed 3. A text that is not two
+numbers of one to four digits, no leading zero, and not `0.0` (`VersionLine.IsLine`) is refused with `bad_line`
+(`Hello.BadLine`). Like the build it is a claim the server cannot check; that the builds of a line compute the same
+race is the release's to show (the gate row `mixed`). The status page shows each lobby's `line`, and the released
+builds that name none with the line the server gives them (`lineBuilds`, `lineBuildsFault`).
 
 **The key in `hello`** (`Hello.Key`): the launcher's secret, 32 random bytes in base64url without padding (43
 characters, `PlayerTags.NewKey`), made once and kept in its settings (`LauncherSettings.PlayerKey`). The coordinator

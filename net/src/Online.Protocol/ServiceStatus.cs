@@ -12,13 +12,21 @@ namespace Online.Protocol;
 /// was set; null: a server from before that setting. TogetherFault: why a setting that was found is not in force (the
 /// server then runs with builds apart); null: nothing is wrong. TogetherFiles: the group files the server holds
 /// beside its program, by name, each with its fingerprint (see <see cref="TogetherFileView"/>); null: a server from
-/// before the setting. The deploy tooling reads the four; no launcher does.
+/// before the setting. The deploy tooling reads the four; no launcher does. LineBuilds: the released builds whose
+/// launchers name no line (<see cref="Hello.Line"/>), each with the line the server puts them in (the file the
+/// server holds beside its program); null: a server from before lines, or one that holds none. LineBuildsFault: why
+/// that file is not in force (those builds then race by their build alone); null: nothing is wrong.
 /// </summary>
 public sealed record ServiceStatus(
     string Name, DateTimeOffset Time, int PlayersOnline, IReadOnlyList<LobbyView> Lobbies,
     IReadOnlyList<FormingMatchView> Starting, IReadOnlyList<RaceView> Races, IReadOnlyList<RelayView> Relays,
     StatPackName? StatPack = null, string? PackSetting = null, TogetherView? Together = null, string? TogetherSetting = null,
-    string? TogetherFault = null, IReadOnlyList<TogetherFileView>? TogetherFiles = null);
+    string? TogetherFault = null, IReadOnlyList<TogetherFileView>? TogetherFiles = null,
+    IReadOnlyList<LineBuildView>? LineBuilds = null, string? LineBuildsFault = null);
+
+/// <summary>A released build that names no line, and the line a server puts it in (<see cref="ServiceStatus.LineBuilds"/>):
+/// the build with each hash cut to eight characters, its line ("0.5") and what the file calls it ("0.5.1").</summary>
+public sealed record LineBuildView(string Build, string Line, string? Label = null);
 
 /// <summary>A group file a server holds (the folder <c>together</c> beside its program): the name a setting would
 /// say, and the fingerprint of the group it is. No fingerprint: the file is no group (it names fewer than two
@@ -41,10 +49,12 @@ public sealed record RacerView(string Name, int Machine, string? Color, string? 
 /// <summary>A lobby: its players, racing or waiting. Stage: forming, starting, choosing or racing (RaceId: its race).
 /// Build: the game build its players share (<see cref="Hello.Build"/>), each hash cut to eight characters; null: none
 /// named. In a lobby of the builds that race together it is the group's first build, whoever is in the lobby, and
-/// Builds says how many of its players have which build while they have more than one; null: they all have one.</summary>
+/// Builds says how many of its players have which build while they have more than one; null: they all have one.
+/// Line: the release line the lobby is kept under (<see cref="Hello.Line"/>), whatever its players' builds; Build is
+/// then null and Builds says the builds. Null: a lobby of one build (or group), as before lines.</summary>
 public sealed record LobbyView(string Id, IReadOnlyList<RacerView> Players, int Capacity, bool VotingOpen, int StartVotes,
     string Stage = "forming", string? RaceId = null, int Racing = 0, string? Build = null,
-    IReadOnlyList<LobbyBuildView>? Builds = null);
+    IReadOnlyList<LobbyBuildView>? Builds = null, string? Line = null);
 
 /// <summary>A match between its lobby and its race. Stage: "picking a relay" (the players measure the relays),
 /// "course vote", "course drawn" (the vote's draw shown), "choosing machines".</summary>

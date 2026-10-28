@@ -209,14 +209,21 @@ public abstract record ClientMessage;
 /// tag (<see cref="PlayerTags.Derived"/>); none (a launcher of 0.2.x): a random tag for this visit; a key that is
 /// not one is refused (bad_message). The coordinator keeps it for the connection only and never logs or sends it.
 /// A hello cannot choose a tag: a "tag" field (sent by no released launcher) is passed over as unknown. Players: this launcher keeps the live list of connected
-/// players (<see cref="PlayersList"/>, <see cref="PlayersChanged"/>): a launcher from before it is sent neither.</summary>
+/// players (<see cref="PlayersList"/>, <see cref="PlayersChanged"/>): a launcher from before it is sent neither.
+/// Line: the launcher's release line, the first two numbers of its version ("0.5": <see cref="VersionLine"/>). Every
+/// build of a line races together (the owner's rule): a server puts players who name a line into the lobbies of that
+/// line, whatever their builds, and players who name none by their build as before (a server may know the line of a
+/// released build that named none). A claim, as the build is. Written only when set: a launcher with no version
+/// (built with none, or a pre-release) names none, and a launcher from before the field says nothing; a server from
+/// before it passes over it, which is why the version stays. A text that is no line is refused (bad_line).</summary>
 public sealed record Hello(string Name, int Version, string? Build = null, bool VoteCounts = false,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool Debug = false,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool StatPacks = false,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool Pings = false,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool Notices = false,
     string? Key = null,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool Players = false) : ClientMessage
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool Players = false,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Line = null) : ClientMessage
 {
     /// <summary>The longest build name a server takes.</summary>
     public const int MaxBuildLength = 128;
@@ -224,6 +231,10 @@ public sealed record Hello(string Name, int Version, string? Build = null, bool 
     /// <summary>The code of the error (<see cref="ErrorMessage"/>) a hello with <see cref="Debug"/> is answered with
     /// by a server that takes no such launcher.</summary>
     public const string DebugNotAllowed = "debug_not_allowed";
+
+    /// <summary>The code of the error a hello is answered with when its <see cref="Line"/> is no line
+    /// (<see cref="VersionLine.IsLine"/>).</summary>
+    public const string BadLine = "bad_line";
 
     /// <summary>The code of the error a hello with a <see cref="Key"/> is answered with when every tag the server
     /// would work out from that secret for that name is held (a launcher's own connections, thousands of them): a
@@ -349,7 +360,8 @@ public sealed record ErrorMessage(string Code, string Message, int? Seconds = nu
 /// chosen (<see cref="WaitingForRelay"/>: its race server is still being started); null: nothing.
 /// OtherBuilds: the players in Quick Play with another build of the game (<see cref="Hello.Build"/>), by build: they
 /// are in lobbies of their own and are never matched with this lobby's players; the launcher says which part of the
-/// game differs. Null: there are none. The builds a server lets race together count as one build here: they are not
+/// game differs. Null: there are none. The builds of one release line (<see cref="Hello.Line"/>) are one entry, which
+/// names the line; they are not "other" to each other. The builds a server lets race together count as one build here: they are not
 /// "other" to each other, and other lobbies are told of them as one entry, under the first build of the server's list. VotingOpen, StartVotes and CpuFillVotes are of the members present, those
 /// whose <see cref="PlayerInfo"/> does not say racing: a member still out in a race the lobby moved on from has no
 /// vote until they are back, and more than half of the present start the next race. StatPack: the stat pack every
@@ -389,8 +401,11 @@ public sealed record LobbyState(
 }
 
 /// <summary>Players in Quick Play whose game is another build than the lobby's (<see cref="LobbyState.OtherBuilds"/>):
-/// their build as their launchers named it (null: launchers that name none) and how many they are.</summary>
-public sealed record OtherBuild(string? Build, int Players);
+/// their build as their launchers named it (null: launchers that name none) and how many they are. Line: those
+/// players' release line (<see cref="Hello.Line"/>), when they are a line's lobbies: Build is then the build most of
+/// them have, for a launcher from before lines, which compares builds only. Written only when set.</summary>
+public sealed record OtherBuild(string? Build, int Players,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Line = null);
 
 /// <summary>The player is out of the lobby: they left (Reason null), the host removed them
 /// (<see cref="CustomLobby.Kicked"/>) or it closed (<see cref="CustomLobby.Closed"/>).</summary>
