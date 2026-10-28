@@ -11,7 +11,9 @@ SCHEMA = os.path.join(here, "replay.toml")
 
 SIZES = {"u8": 1, "i16": 2, "u16": 2, "u32": 4, "pad": 1}
 REPLAY_KEYS = {"name", "mark", "endian", "written", "max_bytes", "max_steps", "max_json", "max_seats"}
-TOP_KEYS = {"replay", "codec", "version", "head", "frames", "lineup", "steps", "results", "result", "header"}
+TOP_KEYS = {"replay", "compact", "codec", "version", "head", "frames", "lineup", "steps", "results", "result", "header"}
+COMPACT_KEYS = {"version", "header_mark", "inputs_mark", "checksums_mark", "full_every", "check", "preset",
+                "dict_min", "dict_max", "memlimit"}
 VERSION_KEYS = {"number", "name", "feature", "doc"}
 FIELD_KEYS = {"name", "type", "count", "doc"}
 MEMBER_KEYS = {"key", "type", "null", "optional", "default", "low", "high", "doc"}
@@ -107,6 +109,11 @@ def load(path=SCHEMA, record_size=None):
         raise SchemaError("[replay]: endian is big (no other is written)")
     marks = {"replay": file["mark"], "frames": raw.get("frames", {}).get("mark"),
              "lineup": raw.get("lineup", {}).get("mark"), "results": raw.get("results", {}).get("mark")}
+    compact = dict(raw.get("compact", {}))
+    if set(compact) != COMPACT_KEYS:
+        raise SchemaError(f"[compact]: missing {sorted(COMPACT_KEYS - set(compact))}, unknown {sorted(set(compact) - COMPACT_KEYS)}")
+    for part in ("header", "inputs", "checksums"):
+        marks[f"compact {part}"] = compact[f"{part}_mark"]
     for part, mark in marks.items():
         if not (isinstance(mark, str) and mark.isascii() and len(mark) == 4):
             raise SchemaError(f"[{part}]: a mark is four ASCII characters")
@@ -136,6 +143,11 @@ def load(path=SCHEMA, record_size=None):
         raise SchemaError("[[version]]: names and features once each")
     if file["written"] not in numbers:
         raise SchemaError("[replay]: written is one of the versions")
+    if compact["version"] != numbers[-1] + 1 or compact["version"] > 0xFFFF:
+        raise SchemaError("[compact]: version is the number after the last [[version]]")
+    if compact["check"] != "crc32" or compact["preset"] not in range(10) or type(compact["full_every"]) is not int \
+            or compact["full_every"] < 1 or not 4096 <= compact["dict_min"] <= compact["dict_max"] <= compact["memlimit"]:
+        raise SchemaError("[compact]: check crc32, a preset 0 to 9, full_every above 0, dict_min <= dict_max <= memlimit")
 
     head, head_size = fields(raw.get("head", {}).get("fields", []), "head")
     if [(f.name, f.type) for f in head] != [("Version", "u16"), ("HeaderLength", "u32")]:
@@ -167,7 +179,7 @@ def load(path=SCHEMA, record_size=None):
     if any(m.null for m in header):
         raise SchemaError("[[header]]: no member is null (optional ones are left out)")
 
-    file.update(codec=codecs, versions=versions, head=head, head_size=len(file["mark"]) + head_size,
+    file.update(compact=compact, codec=codecs, versions=versions, head=head, head_size=len(file["mark"]) + head_size,
                 frames=frames, frames_size=len(marks["frames"]) + frames_size, frames_mark=marks["frames"],
                 lineup=lineup, lineup_size=lineup_size, lineup_least=least, lineup_mark=marks["lineup"],
                 lineup_doc=lineup_raw.get("doc", ""), record_size=record_size, checksum_size=4,

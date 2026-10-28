@@ -27,8 +27,20 @@ def format_class(s, prefix):
     for x in v:
         out += [f"    /// <summary>Version {x['number']}: {x['doc']}.</summary>",
                 f"    public const int Version{x['name']} = {x['number']};"]
-    out += [f"    /// <summary>The only version the game writes.</summary>",
+    c = s["compact"]
+    out += [f"    /// <summary>The version a recording is written as while its race runs.</summary>",
             f"    public const int VersionWritten = {s['written']};", "",
+            "    /// <summary>The compact file a recording becomes when it ends: the mark, the version, the recording's own",
+            "    /// version, the header (xz), frames, lineup, inputs (the steps, xz) and checksums (xz) parts, then the results.</summary>",
+            f"    public const int CompactVersion = {c['version']};", "    public const int CompactHead = 8;",
+            f"    public static ReadOnlySpan<byte> HeaderMark => \"{c['header_mark']}\"u8;",
+            f"    public static ReadOnlySpan<byte> InputsMark => \"{c['inputs_mark']}\"u8;",
+            f"    public static ReadOnlySpan<byte> ChecksumsMark => \"{c['checksums_mark']}\"u8;",
+            f"    public const int FullEvery = {c['full_every']};", "",
+            "    /// <summary>A step's checksum as the compact file keeps it between its whole ones: its four bytes XORed.</summary>",
+            "    public static byte Fold(uint c) => (byte)(c ^ (c >> 8) ^ (c >> 16) ^ (c >> 24));", "",
+            "    /// <summary>Whether a compact file of <paramref name=\"steps\"/> steps keeps step's whole checksum.</summary>",
+            "    public static bool IsFull(long step, long steps) => step % FullEvery == 0 || step + 1 == steps;", "",
             f"    public const int HeadSize = {s['head_size']};", f"    public const int FramesSize = {s['frames_size']};",
             f"    public const int LineupSize = {s['lineup_size']};", f"    public const int LineupLeast = {s['lineup_least']};",
             f"    public const int RecordSize = {s['record_size']};", f"    public const int ChecksumSize = {s['checksum_size']};",
@@ -36,7 +48,7 @@ def format_class(s, prefix):
             f"    public const long MaxSteps = {s['max_steps']};", f"    public const uint MaxJson = {s['max_json']};",
             f"    public const int MaxSeats = {s['max_seats']};", "",
             "    /// <summary>Whether the game plays a file of this version.</summary>",
-            "    public static bool Plays(int version) => version is " + " or ".join(str(x["number"]) for x in v) + ";", "",
+            "    public static bool Plays(int version) => version is " + " or ".join(str(x["number"]) for x in v) + " or CompactVersion;", "",
             "    /// <summary>The version a race of these features is, and the only one its file may be: the highest whose",
             "    /// feature it holds, else the first.</summary>",
             f"    public static int VersionOf({prefix}Features f) =>"]
@@ -115,7 +127,15 @@ def parts(prefix):
             f"public sealed class {p}Parts", "{",
             "    /// <summary>The file begins with the head, its first four bytes the mark.</summary>",
             "    public bool Marked { get; private set; }", "",
+            "    /// <summary>The file's version: a recording's, or the compact file's.</summary>",
             "    public int Version { get; private set; }", "",
+            "    /// <summary>The version of the race the file holds, whose features' rules hold for it: the recording's own,",
+            "    /// which a compact file names (0 when it does not read).</summary>",
+            "    public int RaceVersion { get; private set; }", "",
+            f"    /// <summary>A compact file ({p}Format.CompactVersion): its header was read through xz, its steps not at all.</summary>",
+            "    public bool Compact { get; private set; }", "",
+            "    private long compactSteps;", "",
+            "    private bool compactWhole;", "",
             "    /// <summary>The header's length as the file names it.</summary>",
             "    public uint HeaderLength { get; private set; }", "",
             f"    /// <summary>The header's JSON; null when it is named longer than {p}Format.MaxJson (not read) or the file",
@@ -146,9 +166,9 @@ def parts(prefix):
             f"    public long StepSize => ((long){p}Format.RecordSize * Seats) + {p}Format.ChecksumSize;", "",
             "    public long StepBytes => Math.Max(0, StepsEnd - StepsAt);", "",
             "    /// <summary>The whole steps.</summary>",
-            "    public long Steps => Seats == 0 ? 0 : StepBytes / StepSize;", "",
+            "    public long Steps => Compact ? compactSteps : Seats == 0 ? 0 : StepBytes / StepSize;", "",
             "    /// <summary>The steps' bytes are whole steps (none at all included).</summary>",
-            "    public bool Whole => Frames && Seats != 0 && StepsEnd >= StepsAt && StepBytes % StepSize == 0;", "",
+            "    public bool Whole => Compact ? compactWhole : Frames && Seats != 0 && StepsEnd >= StepsAt && StepBytes % StepSize == 0;", "",
             f"    public static {p}Parts Read(string path)", "    {", f"        var parts = new {p}Parts();",
             "        try", "        {", "            using var file = File.OpenRead(path);", "            parts.ReadFrom(file);", "        }",
             "        catch (Exception e) when (e is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException",
@@ -156,9 +176,14 @@ def parts(prefix):
             "            parts.Failed = true;", "        }", "        return parts;", "    }", "",
             "    private void ReadFrom(FileStream file)", "    {",
             f"        Span<byte> head = stackalloc byte[{p}Format.HeadSize];",
-            f"        if (file.ReadAtLeast(head, head.Length, throwOnEndOfStream: false) < head.Length || !head[..4].SequenceEqual({p}Format.Mark))",
+            "        var got = file.ReadAtLeast(head, head.Length, throwOnEndOfStream: false);",
+            f"        if (got >= {p}Format.CompactHead && head[..4].SequenceEqual({p}Format.Mark) &&",
+            f"            BinaryPrimitives.ReadUInt16BigEndian(head[4..]) == {p}Format.CompactVersion)",
+            "        {", f"            ReadCompact(file, BinaryPrimitives.ReadUInt16BigEndian(head[6..]));", "            return;", "        }",
+            f"        if (got < head.Length || !head[..4].SequenceEqual({p}Format.Mark))",
             "        {", "            return;", "        }",
             "        Marked = true;", "        Version = BinaryPrimitives.ReadUInt16BigEndian(head[4..]);",
+            "        RaceVersion = Version;",
             "        HeaderLength = BinaryPrimitives.ReadUInt32BigEndian(head[6..]);",
             f"        if (HeaderLength > {p}Format.MaxJson)", "        {", "            return;", "        }",
             "        var json = new byte[HeaderLength];",
@@ -182,7 +207,128 @@ def parts(prefix):
             f"            if (l[..4].SequenceEqual({p}Format.LineupMark))", "            {",
             "                Lineup = true;", "                LineupLength = BinaryPrimitives.ReadUInt32BigEndian(l[4..]);",
             "                LineupAt = framesEnd + 8;", "                StepsAt = LineupAt + LineupLength;", "            }", "        }", "    }",
-            "}"]
+            ] + COMPACT.replace("@P@", p).split("\n") + ["}"]
+
+
+COMPACT = """
+    /// <summary>A compact file: its parts in their order, each its mark and length; the header through xz
+    /// (SharpCompress), the steps' count from the inputs' part, the results from the end as in every version.</summary>
+    private void ReadCompact(FileStream file, int race)
+    {
+        Marked = true;
+        Compact = true;
+        Version = @P@Format.CompactVersion;
+        Length = file.Length;
+        var end = Length;
+        Span<byte> tail = stackalloc byte[@P@Format.ResultsTail];
+        if (Length - @P@Format.CompactHead >= tail.Length)
+        {
+            file.Seek(-tail.Length, SeekOrigin.End);
+            file.ReadExactly(tail);
+            var length = BinaryPrimitives.ReadUInt32BigEndian(tail);
+            if (tail[4..].SequenceEqual(@P@Format.ResultsMark) && length + (long)tail.Length <= Length - @P@Format.CompactHead)
+            {
+                end = Length - tail.Length - length;
+                if (length <= @P@Format.MaxJson)
+                {
+                    var results = new byte[length];
+                    file.Seek(end, SeekOrigin.Begin);
+                    file.ReadExactly(results);
+                    Results = results;
+                }
+            }
+        }
+        StepsAt = StepsEnd = end;
+        var at = (long)@P@Format.CompactHead;
+        if (Section(file, ref at, end, @P@Format.HeaderMark) is not { } header || header > @P@Format.MaxJson)
+        {
+            return;
+        }
+        var xz = new byte[header];
+        file.Position = at - header;
+        file.ReadExactly(xz);
+        if (Unxz(xz, @P@Format.MaxJson) is not { } json)
+        {
+            return;
+        }
+        (Header, HeaderLength) = (json, (uint)json.Length);
+        Span<byte> four = stackalloc byte[8];
+        if (Section(file, ref at, end, @P@Format.FramesMark) != 8)
+        {
+            return;
+        }
+        file.Position = at - 8;
+        file.ReadExactly(four);
+        (Frames, FramesMarked) = (true, true);
+        Mask = BinaryPrimitives.ReadUInt32BigEndian(four);
+        Seat = BinaryPrimitives.ReadUInt32BigEndian(four[4..]);
+        if (Section(file, ref at, end, @P@Format.LineupMark) is not { } lineup)
+        {
+            return;
+        }
+        (Lineup, LineupLength, LineupAt) = (true, (uint)lineup, at - lineup);
+        if (Section(file, ref at, end, @P@Format.InputsMark) is not { } inputs || inputs < 4)
+        {
+            return;
+        }
+        file.Position = at - inputs;
+        file.ReadExactly(four[..4]);
+        var steps = BinaryPrimitives.ReadUInt32BigEndian(four);
+        if (Section(file, ref at, end, @P@Format.ChecksumsMark) is null)
+        {
+            return;
+        }
+        RaceVersion = race is >= @P@Format.VersionPlain and < @P@Format.CompactVersion ? race : 0;
+        compactSteps = steps;
+        compactWhole = at == end && Seats != 0 && steps > 0 && steps <= @P@Format.MaxSteps && RaceVersion != 0;
+    }
+
+    /// <summary>The part at <paramref name="at"/> when it has this mark and ends by <paramref name="end"/>: its
+    /// length, with <paramref name="at"/> moved past it; else null.</summary>
+    private static long? Section(FileStream file, ref long at, long end, ReadOnlySpan<byte> mark)
+    {
+        if (end - at < 8)
+        {
+            return null;
+        }
+        Span<byte> head = stackalloc byte[8];
+        file.Position = at;
+        file.ReadExactly(head);
+        var length = BinaryPrimitives.ReadUInt32BigEndian(head[4..]);
+        if (!head[..4].SequenceEqual(mark) || length > end - at - 8)
+        {
+            return null;
+        }
+        at += 8 + length;
+        return length;
+    }
+
+    /// <summary>One xz stream, whole and checked, of at most <paramref name="most"/> bytes; null for any other.</summary>
+    public static byte[]? Unxz(byte[] data, long most)
+    {
+        try
+        {
+            using var xz = new SharpCompress.Compressors.Xz.XZStream(new MemoryStream(data, writable: false));
+            using var output = new MemoryStream();
+            var buffer = new byte[65536];
+            int n;
+            while ((n = xz.Read(buffer, 0, buffer.Length)) > 0)
+            {
+                output.Write(buffer, 0, n);
+                if (output.Length > most)
+                {
+                    return null;
+                }
+            }
+            return output.ToArray();
+        }
+        catch (Exception e) when (e is IOException or InvalidDataException or InvalidOperationException or ArgumentException
+                                       or NotSupportedException or IndexOutOfRangeException or OverflowException
+                                       or SharpCompress.Common.SharpCompressException)
+        {
+            return null;
+        }
+    }"""
 
 
 def emit(s):

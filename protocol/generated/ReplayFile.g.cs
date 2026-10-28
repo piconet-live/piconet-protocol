@@ -25,8 +25,23 @@ public static class ReplayFormat
     public const int VersionSeats = 6;
     /// <summary>Version 7: 0.4.0's set-up: the race started on the coordinator's grid (match.setup.grid) or raced with no rubber band (the header's rubberBand false: every race and practice from 0.4.0).</summary>
     public const int VersionGrid = 7;
-    /// <summary>The only version the game writes.</summary>
+    /// <summary>The version a recording is written as while its race runs.</summary>
     public const int VersionWritten = 7;
+
+    /// <summary>The compact file a recording becomes when it ends: the mark, the version, the recording's own
+    /// version, the header (xz), frames, lineup, inputs (the steps, xz) and checksums (xz) parts, then the results.</summary>
+    public const int CompactVersion = 8;
+    public const int CompactHead = 8;
+    public static ReadOnlySpan<byte> HeaderMark => "FZRH"u8;
+    public static ReadOnlySpan<byte> InputsMark => "FZRI"u8;
+    public static ReadOnlySpan<byte> ChecksumsMark => "FZRC"u8;
+    public const int FullEvery = 60;
+
+    /// <summary>A step's checksum as the compact file keeps it between its whole ones: its four bytes XORed.</summary>
+    public static byte Fold(uint c) => (byte)(c ^ (c >> 8) ^ (c >> 16) ^ (c >> 24));
+
+    /// <summary>Whether a compact file of <paramref name="steps"/> steps keeps step's whole checksum.</summary>
+    public static bool IsFull(long step, long steps) => step % FullEvery == 0 || step + 1 == steps;
 
     public const int HeadSize = 10;
     public const int FramesSize = 12;
@@ -41,7 +56,7 @@ public static class ReplayFormat
     public const int MaxSeats = 30;
 
     /// <summary>Whether the game plays a file of this version.</summary>
-    public static bool Plays(int version) => version is 2 or 3 or 4 or 5 or 6 or 7;
+    public static bool Plays(int version) => version is 2 or 3 or 4 or 5 or 6 or 7 or CompactVersion;
 
     /// <summary>The version a race of these features is, and the only one its file may be: the highest whose
     /// feature it holds, else the first.</summary>
@@ -154,7 +169,19 @@ public sealed class ReplayParts
     /// <summary>The file begins with the head, its first four bytes the mark.</summary>
     public bool Marked { get; private set; }
 
+    /// <summary>The file's version: a recording's, or the compact file's.</summary>
     public int Version { get; private set; }
+
+    /// <summary>The version of the race the file holds, whose features' rules hold for it: the recording's own,
+    /// which a compact file names (0 when it does not read).</summary>
+    public int RaceVersion { get; private set; }
+
+    /// <summary>A compact file (ReplayFormat.CompactVersion): its header was read through xz, its steps not at all.</summary>
+    public bool Compact { get; private set; }
+
+    private long compactSteps;
+
+    private bool compactWhole;
 
     /// <summary>The header's length as the file names it.</summary>
     public uint HeaderLength { get; private set; }
@@ -203,10 +230,10 @@ public sealed class ReplayParts
     public long StepBytes => Math.Max(0, StepsEnd - StepsAt);
 
     /// <summary>The whole steps.</summary>
-    public long Steps => Seats == 0 ? 0 : StepBytes / StepSize;
+    public long Steps => Compact ? compactSteps : Seats == 0 ? 0 : StepBytes / StepSize;
 
     /// <summary>The steps' bytes are whole steps (none at all included).</summary>
-    public bool Whole => Frames && Seats != 0 && StepsEnd >= StepsAt && StepBytes % StepSize == 0;
+    public bool Whole => Compact ? compactWhole : Frames && Seats != 0 && StepsEnd >= StepsAt && StepBytes % StepSize == 0;
 
     public static ReplayParts Read(string path)
     {
@@ -227,12 +254,20 @@ public sealed class ReplayParts
     private void ReadFrom(FileStream file)
     {
         Span<byte> head = stackalloc byte[ReplayFormat.HeadSize];
-        if (file.ReadAtLeast(head, head.Length, throwOnEndOfStream: false) < head.Length || !head[..4].SequenceEqual(ReplayFormat.Mark))
+        var got = file.ReadAtLeast(head, head.Length, throwOnEndOfStream: false);
+        if (got >= ReplayFormat.CompactHead && head[..4].SequenceEqual(ReplayFormat.Mark) &&
+            BinaryPrimitives.ReadUInt16BigEndian(head[4..]) == ReplayFormat.CompactVersion)
+        {
+            ReadCompact(file, BinaryPrimitives.ReadUInt16BigEndian(head[6..]));
+            return;
+        }
+        if (got < head.Length || !head[..4].SequenceEqual(ReplayFormat.Mark))
         {
             return;
         }
         Marked = true;
         Version = BinaryPrimitives.ReadUInt16BigEndian(head[4..]);
+        RaceVersion = Version;
         HeaderLength = BinaryPrimitives.ReadUInt32BigEndian(head[6..]);
         if (HeaderLength > ReplayFormat.MaxJson)
         {
@@ -284,6 +319,125 @@ public sealed class ReplayParts
                 LineupAt = framesEnd + 8;
                 StepsAt = LineupAt + LineupLength;
             }
+        }
+    }
+
+    /// <summary>A compact file: its parts in their order, each its mark and length; the header through xz
+    /// (SharpCompress), the steps' count from the inputs' part, the results from the end as in every version.</summary>
+    private void ReadCompact(FileStream file, int race)
+    {
+        Marked = true;
+        Compact = true;
+        Version = ReplayFormat.CompactVersion;
+        Length = file.Length;
+        var end = Length;
+        Span<byte> tail = stackalloc byte[ReplayFormat.ResultsTail];
+        if (Length - ReplayFormat.CompactHead >= tail.Length)
+        {
+            file.Seek(-tail.Length, SeekOrigin.End);
+            file.ReadExactly(tail);
+            var length = BinaryPrimitives.ReadUInt32BigEndian(tail);
+            if (tail[4..].SequenceEqual(ReplayFormat.ResultsMark) && length + (long)tail.Length <= Length - ReplayFormat.CompactHead)
+            {
+                end = Length - tail.Length - length;
+                if (length <= ReplayFormat.MaxJson)
+                {
+                    var results = new byte[length];
+                    file.Seek(end, SeekOrigin.Begin);
+                    file.ReadExactly(results);
+                    Results = results;
+                }
+            }
+        }
+        StepsAt = StepsEnd = end;
+        var at = (long)ReplayFormat.CompactHead;
+        if (Section(file, ref at, end, ReplayFormat.HeaderMark) is not { } header || header > ReplayFormat.MaxJson)
+        {
+            return;
+        }
+        var xz = new byte[header];
+        file.Position = at - header;
+        file.ReadExactly(xz);
+        if (Unxz(xz, ReplayFormat.MaxJson) is not { } json)
+        {
+            return;
+        }
+        (Header, HeaderLength) = (json, (uint)json.Length);
+        Span<byte> four = stackalloc byte[8];
+        if (Section(file, ref at, end, ReplayFormat.FramesMark) != 8)
+        {
+            return;
+        }
+        file.Position = at - 8;
+        file.ReadExactly(four);
+        (Frames, FramesMarked) = (true, true);
+        Mask = BinaryPrimitives.ReadUInt32BigEndian(four);
+        Seat = BinaryPrimitives.ReadUInt32BigEndian(four[4..]);
+        if (Section(file, ref at, end, ReplayFormat.LineupMark) is not { } lineup)
+        {
+            return;
+        }
+        (Lineup, LineupLength, LineupAt) = (true, (uint)lineup, at - lineup);
+        if (Section(file, ref at, end, ReplayFormat.InputsMark) is not { } inputs || inputs < 4)
+        {
+            return;
+        }
+        file.Position = at - inputs;
+        file.ReadExactly(four[..4]);
+        var steps = BinaryPrimitives.ReadUInt32BigEndian(four);
+        if (Section(file, ref at, end, ReplayFormat.ChecksumsMark) is null)
+        {
+            return;
+        }
+        RaceVersion = race is >= ReplayFormat.VersionPlain and < ReplayFormat.CompactVersion ? race : 0;
+        compactSteps = steps;
+        compactWhole = at == end && Seats != 0 && steps > 0 && steps <= ReplayFormat.MaxSteps && RaceVersion != 0;
+    }
+
+    /// <summary>The part at <paramref name="at"/> when it has this mark and ends by <paramref name="end"/>: its
+    /// length, with <paramref name="at"/> moved past it; else null.</summary>
+    private static long? Section(FileStream file, ref long at, long end, ReadOnlySpan<byte> mark)
+    {
+        if (end - at < 8)
+        {
+            return null;
+        }
+        Span<byte> head = stackalloc byte[8];
+        file.Position = at;
+        file.ReadExactly(head);
+        var length = BinaryPrimitives.ReadUInt32BigEndian(head[4..]);
+        if (!head[..4].SequenceEqual(mark) || length > end - at - 8)
+        {
+            return null;
+        }
+        at += 8 + length;
+        return length;
+    }
+
+    /// <summary>One xz stream, whole and checked, of at most <paramref name="most"/> bytes; null for any other.</summary>
+    public static byte[]? Unxz(byte[] data, long most)
+    {
+        try
+        {
+            using var xz = new SharpCompress.Compressors.Xz.XZStream(new MemoryStream(data, writable: false));
+            using var output = new MemoryStream();
+            var buffer = new byte[65536];
+            int n;
+            while ((n = xz.Read(buffer, 0, buffer.Length)) > 0)
+            {
+                output.Write(buffer, 0, n);
+                if (output.Length > most)
+                {
+                    return null;
+                }
+            }
+            return output.ToArray();
+        }
+        catch (Exception e) when (e is IOException or InvalidDataException or InvalidOperationException or ArgumentException
+                                       or NotSupportedException or IndexOutOfRangeException or OverflowException
+                                       or SharpCompress.Common.SharpCompressException)
+        {
+            return null;
         }
     }
 }
