@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace Online.Protocol;
 
 /// <summary>
@@ -43,8 +45,10 @@ public sealed record TogetherBuildView(string Build, string? Label = null);
 public sealed record LobbyBuildView(string Build, int Players);
 
 /// <summary>A racer as shown: the name the game shows, the machine (the game's id) and colour ("#RRGGBB", null for a
-/// CPU's stock colour); a lobby's player also their tag (<see cref="PlayerTags"/>; a reader from before passes over it).</summary>
-public sealed record RacerView(string Name, int Machine, string? Color, string? Tag = null);
+/// CPU's stock colour); a lobby's player also their tag (<see cref="PlayerTags"/>; a reader from before passes over it)
+/// and their garage-built machine (<see cref="PlayerInfo.Custom"/>; null: Machine; a reader from before passes over it).</summary>
+public sealed record RacerView(string Name, int Machine, string? Color, string? Tag = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] CustomMachine? Custom = null);
 
 /// <summary>A lobby: its players, racing or waiting. Stage: forming, starting, choosing or racing (RaceId: its race).
 /// Build: the game build its players share (<see cref="Hello.Build"/>), each hash cut to eight characters; null: none
