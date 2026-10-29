@@ -33,6 +33,30 @@ printf '#include "stat_ranges.g.h"\n#include "const_ranges.g.h"\nint main() { re
     g++ -std=c++20 -Wall -Wextra -Werror -I"$here/generated" -x c++ - -o "$temp/stat_tables"
 "$temp/stat_tables"
 
+echo "check: protocol host rules' C++ header, on its own (a match start's rules into the race block's words)"
+cat > "$temp/race_rules.cpp" <<'CXX'
+#include <cstring>
+#include <string>
+#include "race_rules.g.h"
+struct Rules
+{
+  double Number(const char* key, double absent) const { return std::string(key) == "mineRegenMs" ? 200.0 : absent; }
+  bool Flag(const char* key) const { return std::string(key) == "restore"; }
+};
+int main()
+{
+  unsigned char block[fzgx::race_rules::RACE_SIZE] = {};
+  fzgx::race_rules::IntoRace(Rules{}, block);
+  const unsigned char mines[4] = {0, 0, 0, 12}, restore[4] = {0, 0, 0, 1}, cpu[4] = {0, 0, 0, 3};
+  return std::memcmp(block + fzgx::race_rules::RACE_MINE_REGEN, mines, 4) == 0 &&
+                 std::memcmp(block + fzgx::race_rules::RACE_RESTORE, restore, 4) == 0 &&
+                 std::memcmp(block + fzgx::race_rules::RACE_CPULEVEL, cpu, 4) == 0
+             ? 0 : 1;
+}
+CXX
+g++ -std=c++20 -Wall -Wextra -Werror -I"$here/generated" "$temp/race_rules.cpp" -o "$temp/race_rules"
+"$temp/race_rules"
+
 echo "check: protocol generator tests"
 timeout 300 python3 -W error -m unittest discover -s "$here/tests" -q
 
