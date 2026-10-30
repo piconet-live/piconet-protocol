@@ -25,6 +25,8 @@ public static class ReplayFormat
     public const int VersionSeats = 6;
     /// <summary>Version 7: 0.4.0's set-up: the race started on the coordinator's grid (match.setup.grid) or raced with no rubber band (the header's rubberBand false: every race and practice from 0.4.0).</summary>
     public const int VersionGrid = 7;
+    /// <summary>Version 9: a race of a game mode (the header's match.setup.mode: the package, its hash, its api and its parameters, formats.md section 9): one growable section, so a later mode word needs no version of its own. 8 is the compact file's, never a recording's.</summary>
+    public const int VersionMode = 9;
     /// <summary>The version a recording is written as while its race runs.</summary>
     public const int VersionWritten = 7;
 
@@ -56,12 +58,12 @@ public static class ReplayFormat
     public const int MaxSeats = 30;
 
     /// <summary>Whether the game plays a file of this version.</summary>
-    public static bool Plays(int version) => version is 2 or 3 or 4 or 5 or 6 or 7 or CompactVersion;
+    public static bool Plays(int version) => version is 2 or 3 or 4 or 5 or 6 or 7 or 9 or CompactVersion;
 
     /// <summary>The version a race of these features is, and the only one its file may be: the highest whose
     /// feature it holds, else the first.</summary>
     public static int VersionOf(ReplayFeatures f) =>
-        f.Grid ? VersionGrid : f.Seats ? VersionSeats : f.Mines ? VersionMines : f.Custom ? VersionCustom : f.Stats ? VersionStats : VersionPlain;
+        f.Mode ? VersionMode : f.Grid ? VersionGrid : f.Seats ? VersionSeats : f.Mines ? VersionMines : f.Custom ? VersionCustom : f.Stats ? VersionStats : VersionPlain;
 
     /// <summary>The header's JSON members.</summary>
     public static class Header
@@ -152,7 +154,7 @@ public static class ReplayFormat
 }
 
 /// <summary>What a race holds that a replay's version says (replay.toml's features).</summary>
-public readonly record struct ReplayFeatures(bool Stats = false, bool Custom = false, bool Mines = false, bool Seats = false, bool Grid = false);
+public readonly record struct ReplayFeatures(bool Stats = false, bool Custom = false, bool Mines = false, bool Seats = false, bool Grid = false, bool Mode = false);
 
 /// <summary>The lineup's block: read from the game when the relay says go; a playback takes its machines into the race block.</summary>
 public sealed record ReplayLineup(byte[] Machines, byte[] Ranks, short[] Settings, byte ControlMode, byte RelD70);
@@ -389,7 +391,7 @@ public sealed class ReplayParts
         {
             return;
         }
-        RaceVersion = race is >= ReplayFormat.VersionPlain and < ReplayFormat.CompactVersion ? race : 0;
+        RaceVersion = race != ReplayFormat.CompactVersion && ReplayFormat.Plays(race) ? race : 0;   // a recording's version (9 too)
         compactSteps = steps;
         compactWhole = at == end && Seats != 0 && steps > 0 && steps <= ReplayFormat.MaxSteps && RaceVersion != 0;
     }

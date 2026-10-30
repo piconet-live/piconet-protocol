@@ -609,7 +609,7 @@ a run's file from one, and the scripts that start a game name one (`CONFIG=`) an
 | `setup.course`, `setup.laps` | the stage number (default 1); the laps, 0-99 (default 3) |
 | `setup.shuffleSeed`, `setup.cpuSeed` | the two seeds every game starts the race from |
 | `setup.seats[]` | `seat` (0-29), `machine` (0-40, default 0), `setting` (0-100, default 50), `playerId` (a player seat when present), `name`, `cpu`, `stockColor` (0-3) or `color` (`r`, `g`, `b`), `custom` (optional: a garage-built machine raced in place of `machine`: `body` 0-24, `cockpit` 25-49, `booster` 50-74, `pilot` 0-40 (the stock machine whose pilot drives it), `colors` three 32-bit words (red, green, blue, the part's material byte; absent or 0: the part's own colour). The game races it as id 0x32 and reads it from the race block's table, `memmap.RACE_CUSTOM`, `port/image/sites_custom.py`) |
-| `setup.rules` | `cpuLevel` (0-3, default 3), `boostFromStart`, `restore`, `finishLimitSeconds` (0-600, default 0: the race ends for everyone that long after the first machine finishes; 0, and a set-up without it, as every replay from before the rule: when the last has finished or is out), `mineRegenMs` (0-5000, default 0: a mine that went off is armed again that long after; 0, and a set-up without it, as every replay from before the rule: it stays gone) |
+| `setup.rules` | `cpuLevel` (0-3, default 3), `boostFromStart`, `restore` (a practice's and old recordings' alone: no lobby or server sets it; under a mode, off), `finishLimitSeconds` (0-600, default 0: the race ends for everyone that long after the first machine finishes; 0, and a set-up without it, as every replay from before the rule: when the last has finished or is out), `mineRegenMs` (0-5000, default 0: a mine that went off is armed again that long after; 0, and a set-up without it, as every replay from before the rule: it stays gone) |
 | `setup.stats` | optional: the race's stat pack (`handbook/stat-packs.md`). `name` (1 to 40 characters of plain ASCII), `fingerprint` (40 hexadecimal digits) and `values`: base64 of 6 bytes a value (the block 0-115, the offset in the block, the word's 32 bits high byte first), in the order of block and offset, each word once; then the game's code constants the pack changes, each an entry of block 240 whose offset byte is its slot (0-4; a 64-bit number two entries, high word first: `handbook/stat-pack-constants.md`). Absent or `null`: the disc's own car data and the game's own constants, and nothing of the race differs from a game without stat packs |
 | `setup.packs` | optional: at most 4 packs, each as `setup.stats`, that a seat may race in place of the race's (`seats[].pack`). Absent or `null`: none (`handbook/stat-pack-constants.md`, "A pack a seat") |
 | `setup.grid` | optional: the start grid, the seats in starting order, pole first (the coordinator's rule: the players ahead of the CPUs, in reverse of the lobby's last finish; `Online.Server/Matchmaking/StartGrid.cs`). The core writes it into the race block (`memmap.py` `RACE_GRID_ON`, `RACE_GRID`), and the image hands it to the game's grid sort in place of its own (`port/image/sites_grid.py`). Absent or `null`: the game's own grid (the CPUs ahead of seat 0, which starts last), as every match and replay before it |
@@ -961,7 +961,7 @@ has given its seat up and loses the race (a wait, a race that ends under it, `st
 The channel between the launcher and one running game (a file both map, never a localhost
 socket or a pipe). Defined once in `protocol/board.toml`, generated into the launcher's `BoardView`
 (`protocol/generated/StatusBoard.g.cs`, compiled into Launcher.Core) and the core's `View`
-(`protocol/generated/status_board.g.h`); `protocol/README.md` says how it is checked. **Version 1, 4,096 bytes**,
+(`protocol/generated/status_board.g.h`); `protocol/README.md` says how it is checked. **Version 2, 7,168 bytes** (version 1, 4,096 bytes, had no mode blocks),
 little-endian, every word naturally aligned, every block on a 64-byte line:
 
 | Block | At | Kind, writer | Holds |
@@ -970,8 +970,10 @@ little-endian, every word naturally aligned, every block on a 64-byte line:
 | Pulse | 64 | single words; game | `Heartbeat` (u64): one more each game frame begun in a race's or replay's start (the frame tick), each picture in a plain start and while a race's course loads; `WatchBeat`: the runner's watching thread, four times a second; `StopReason`: the first stop asked for |
 | Status | 128 | seqlock; game | `Phase` (None, Starting, Offline, Loading, Joining, Gate, Countdown, Racing, Finished, Playback, Left, Stopping), `Flags` (waits for the relay, practice, watching, rejoin), `Step`, `StopSeen`, `NoticeSeen` |
 | Snapshot | 192 | seqlock; game | the race every displayed race frame (not a replay's): `Serial`, `Frame` (the step), `LocalSeat`, `Count`, 30 racer records of 52 bytes (seat, state, rank, flags, lap, knockouts, maximum energy, lap time, race time, best lap, speed, energy, top speed, x, y, z, distance): what the UDP feed carried as JSON before |
-| Events | 1792 | ring of 64 records of 32 bytes; game (several threads) | `Head`, then events: Phase, Stop, Stands and Moves (the runner's freeze reports), Notice (taken), Desync, Camera (the local racer's chase camera view, 1 to 3, said at its first reading in a race and at each change while the racer races: the launcher keeps the last for the next race's `match.camera`); overwrite-oldest, the reader counts what it lost |
-| Mailbox | 3904 | seqlock; launcher | `StopSerial` (one more: stop gracefully), `NoticeSerial`, `NoticeLength`, `NoticeText` (128 bytes UTF-8) |
+| ModeHead | 1792 | seqlock; game | the race's game mode, once, at its first picture: `Serial` (1; 0 no mode), `NameLength`, `Name` (64 bytes UTF-8), `Hash` (the content hash's first 8 bytes), `Count`, 24 lines of 44 bytes: `Scope` (Global, Seat, Team), `Type` (Int, Real, Bool, Seat, Seats), `Column` (0 to 7), `LabelLength`, `Label` (32 bytes UTF-8), `WordCount` (0 to 16), the file's `board` lines in its order; then `Words`, 384 records of 20 bytes, `Length` and `Text` (16 bytes UTF-8): `Words[line * 16 + value]` is what a line with words shows for a value from 0 to `WordCount` - 1; `Length` 0 shows a blank; any other value shows the number. No word is ever part of the simulation |
+| ModeValues | 10624 | seqlock; game | the `board` lines' values every picture drawn, of a race, a practice, a watched race and a replay alike, from the mode's block: `Serial`, `Frame` (the step of the picture), `Globals[Column]`, `Seats[seat * 8 + Column]`, `Teams[team * 8 + Column]`, each a word read as its line's type. Not written for a mode with no line. Picture only: nothing a step reads |
+| Events | 12608 | ring of 64 records of 32 bytes; game (several threads) | `Head`, then events: Phase, Stop, Stands and Moves (the runner's freeze reports), Notice (taken), Desync, Camera (the local racer's chase camera view, 1 to 3, said at its first reading in a race and at each change while the racer races: the launcher keeps the last for the next race's `match.camera`); overwrite-oldest, the reader counts what it lost |
+| Mailbox | 14720 | seqlock; launcher | `StopSerial` (one more: stop gracefully), `NoticeSerial`, `NoticeLength`, `NoticeText` (128 bytes UTF-8) |
 
 A **seqlock** group starts with a sequence word: the writer makes it odd, writes, makes it even; a reader that saw it
 odd or changed reads again (as iRacing's and Assetto Corsa's shared memory). Neither side ever waits on the other.
@@ -980,7 +982,7 @@ odd or changed reads again (as iRacing's and Assetto Corsa's shared memory). Nei
 launcher that ended are removed when the next is made) and names it in the launch file (`board`). The core maps it at
 Init (`port/core/src/board.cpp`, `board_map.cpp`) and takes it: no magic, nothing written; another version, or too
 small a file: its own version, size and process id written, then nothing else, and the log says `fzgx: board:
-FILE refused: ...`; else `fzgx: board: taken (FILE, version 1)`. A launcher whose game refused goes without (no live
+FILE refused: ...`; else `fzgx: board: taken (FILE, version 2)`. A launcher whose game refused goes without (no live
 race, no freeze detection) and says so in its log; the exit code and the log's stop lines stay the floor.
 
 **What the launcher does with it** (`net/src/Launcher.Core/Board/`): looks every 15 ms; passes each new snapshot on
@@ -997,3 +999,83 @@ publishes under a fixed name, read-only for others, with the same header and the
 from the game's board (a version of its own, so that a tool can refuse cleanly), never this board itself: this one
 is the launcher's private channel, in its own data folder, and the mailbox stays the launcher's alone.
 
+
+## 9. The mode package
+
+A game mode (piconet-docs `research/game-modes/`: the design, the vocabulary, the language) is a text file,
+`.fzmode`, which one compiler (`Online.Protocol` `ModeCompiler`, D11) turns into a **package**, `.fzmp`: the bytes a
+match start carries and every game runs. The words and the bytecode's operations are defined once,
+`protocol/modes.toml` (generated: `generated/ModeWords.g.cs` for the compiler, `generated/mode_words.g.h` for the
+runner's interpreter, `port/core/src/mode.cpp`). Api 1: the first slice's words (Overdrive's) and the whole language;
+the standard library (`net/src/Online.Protocol/Modes/std.fzmode`) is compiled with every file, so a
+package holds the code of every macro it used and every sub it called, and nothing of the library else.
+
+**The package.** Big-endian; a string is u16 its byte length and UTF-8. The mark `FZMP`, u16 the format (1), u16 the
+api; then seven sections in this order, and an eighth in a mode with `board` lines alone (so a mode without keeps the
+bytes and hash it had), each u32 its tag (four letters), u32 its length and its bytes:
+
+| Section | Content |
+|---|---|
+| `HEAD` | the header: name, badge, about (strings; an empty string when left out) |
+| `PARM` | u16 the parameters, then each: name, label (strings), u8 its kind (0 number, 1 delay, 2 switch, 3 choice), u8 its type (0 int, 1 real), i32 least, i32 most, i32 step, i32 default (a real's binary32 bits; a delay in steps; a switch 0 or 1; a choice its index), u16 the choices, each a string |
+| `SETP` | u16 the setup words the game applies (the coordinator's alone, `lobby` in modes.toml, are not here: what they set reaches the game as the match start's own fields, and the file's text in `SRC ` holds them), then each: u8 its id (`[[setup]]`), u8 its arguments, each u8 its source (0 a constant, 1 a parameter) and i32 the constant or the parameter's index; a word with a table (`laps by course`) has two constants more a row after its own arguments, the course's number and its value |
+| `VARS` | u16 the globals, u16 the words a seat; then each global's start value, then each seat word's (i32); then, only in a mode that keeps words a team, u16 those (1 to `[api] team_words`) and each one's start value |
+| `RULE` | u16 the rules, in the file's order; then each: its label (string), u8 its event (`[[event]]`), u8 0, u16 its locals (the event's binding is local 0), u32 its `when` condition, u32 its `while` condition (each an offset in `CODE`, 0xFFFFFFFF none: several `when`s are one condition, joined by `and`), u32 its body |
+| `CODE` | the bytecode (`[[op]]`): a condition ends with `Ret`, a body with `End` |
+| `SRC ` | the mode file's text, as it was compiled (a replay can show what was raced) |
+| `BORD` | only with `board` lines: u16 the lines (at most `[api] board` a scope), then each: u8 its scope (0 global, 1 seat, 2 team), u8 its type (0 int, 1 real, 2 bool, 3 seat, 4 seats), u16 its variable's word, its label (a string, 1 to `[api] board_label` bytes), u8 its words (at most `[api] board_words`), each a string of at most `[api] board_word` bytes (an empty one shows nothing). The status board's (section 8) |
+
+The **content hash** is the SHA-256 of the package's bytes; its **share code** the first 8 characters of the hash's
+base32 (RFC 4648, upper case, no padding). At most 64 KiB, the source included.
+
+**A mode's words over a lobby's rules** (`ModeTerms`): a word stated wins; left out, the lobby's rule stands, but for the finish limit (0 unless stated: a mode owns its ending) and CPUs (none without `cpus allowed`). The coordinator writes the result in the match start, so `setup.rules`, `laps` and the seats say what is raced.
+
+**In a match start**: `setup.mode` = `{"package": BASE64, "hash": HEX, "api": N, "params": [i32, ...], "teams":
+[team, ...]}`, the parameters in `PARM`'s order (a real's bits); `teams` each seat's team by seat, 0 to 29, set by
+the launcher or the host (left out, or a seat past its end: the seat's own number, every seat a team of one). The
+game refuses the race (section 2's refusals) when the hash is not the package's, its api is newer than the build's,
+a parameter is missing or outside its range, a team is not 0 to 29, or the package does not read. A replay carries it in its header's match as it came (section 1, version 9), so a replay plays with no
+download.
+
+**The run** (the language's section 6), once a step at the mode point (main.rel 0x8548C, every step, re-run ones
+too): every state the mode keeps is in its block in the game's main heap, under the undo log and in the checksum:
+the variables (global, a seat's, a team's), the edges, the waiting rules with the locals they keep, the generator;
+nothing is kept outside it. The rules run in this order: the discrete events (`out`, by seat), each rule on it in the
+file's order; then the waits (below); then the continuous rules in the file's order (`each seat`: by seat). A rule
+instance (a rule, and its seat for a rule on a seat) that waits neither fires nor has its conditions tested. `while` runs the body every step
+its condition holds; `when` on the step it becomes true (an edge, kept a rule and seat in the block); a discrete
+event's `when` is tested at each occurrence. Reads of the game see the step as it stood at the mode point; actions
+are queued and applied after the run in their order (the last write to a field wins). The operations of a step are
+counted (`[[op]]`'s cost; an `FSqrt` takes `[api] fsqrt_cost`); past `[api] budget`, a full queue, or a non-finite real for a game field is a **fault**:
+the race ends for everyone at that step with the results as they stand, and the log says `mode error` (D6).
+
+**Waits.** `Wait` (its operands: the live locals, the kind, the condition) pops the steps; more than 0, the instance
+takes a free wait record of the block (at most `[api] waits`; none free is a fault), with its first locals (at most
+`[api] wait_locals`; the compiler allows a wait only where the stack is empty and outside a sorted walk), the step it
+ends at and where its code goes on, and its run ends there. Every step, after the discrete events, the waiting
+instances in rule order, then seat order: from the step after a wait began, its condition (run with the kept locals)
+is tested every step: `abort when` true ends the instance there (the rest of its code is dropped); `restart when`
+true begins the wait again from this step. Then a wait whose step has come is freed and its instance goes on from it,
+the kept locals put back (the others 0). The compiler counts a rule that waits twice in the step's budget (it may go
+on from its wait and fire again in one step), and refuses a mode that could have more waiting instances than the api
+allows (a rule on a seat counted 30 times).
+
+**Sets and vecs.** A set of seats is one cell, bit i seat i (`SeatBit`, `AllSeats`, `BitAnd`, `BitOr`,
+`BitAndNot`); a vec three, x, y, z (a read of type vec pushes the three; the compiler works them one by one, so a vec
+is never more than its reals).
+
+**The square root** (`FSqrt`) is the game's own, main.dol 0x8006D0B4: a NaN stays one, +infinity itself, zero, a
+negative number, a denormal or -infinity 0; else, the processor's way, in its single-precision operations: h =
+fmuls(0.5, x); y = frsqrte(x) (Dolphin's table, `Common::ApproximateReciprocalSquareRoot`); twice: y = fmuls(y,
+fnmsubs(fmuls(y, y), h, 1.5)); then fmuls(y, x). fmuls rounds its second operand's mantissa to 25 bits before the
+multiply; fnmsubs is fused, rounded once to single. The compiler folds with the same steps (`ModeMaths.GameSqrt`);
+`tests/vectors/modes/sqrt.tsv` holds both sides to the same bits.
+
+**Random numbers** (`Random`, `RandomReal`): the mode's own generator, xoshiro128** (four words in the block),
+never the game's. Its first state, written with the start values at the race's first run: SHA-256 of the match
+start's `matchId` (its UTF-8 bytes) followed by the package's hash (its 32 bytes); the digest's first 16 bytes as
+four big-endian words w0 to w3; word k of the state is one step of SplitMix32 from wk (z = wk + 0x9E3779B9; z = (z ^
+z >> 16) × 0x85EBCA6B; z = (z ^ z >> 13) × 0xC2B2AE35; z ^ z >> 16, in 32 bits), and a state of four zeros has its
+first word 1. A draw is the generator's next(): `random(n)` gives (next() × n) >> 32 in 64 bits for n above 0 and 0,
+with no draw, for any other n; `random_real()` (next() >> 8) × 2^-24. `tests/vectors/modes/random.json` holds first
+states and draws from an independent reference.

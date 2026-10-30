@@ -11,9 +11,9 @@ SCHEMA = os.path.join(here, "rules.toml")
 
 TOP_KEYS = {"codec", "race_block", "rule"}
 BLOCK_KEYS = {"size", "steps_a_second", "others"}
-RULE_KEYS = {"name", "label", "cs", "reach", "kind", "least", "most", "step", "default", "unit", "takes", "doc", "race"}
+RULE_KEYS = {"name", "setup", "label", "cs", "reach", "kind", "least", "most", "step", "default", "unit", "takes", "doc", "race"}
 RACE_KEYS = {"key", "absent", "word", "at", "steps", "flag", "replay", "doc"}
-REACHES = {"alone": "Alone", "together": "Together", "server": "Server"}
+REACHES = {"alone": "Alone", "together": "Together", "server": "Server", "practice": "Practice"}
 KINDS = {"course": "Course", "courses": "Courses", "number": "Number", "switch": "Switch", "range": "Range",
          "choice": "Choice", "delay": "Delay", "machines": "Machines", "pack": "Pack", "text": "Text"}
 RACE_KINDS = {"number", "switch", "delay"}     # what a word of the race block can hold
@@ -69,7 +69,10 @@ class Race:
         if self.steps not in STEPS or (self.steps and rule.kind == "switch"):
             fail("steps is \"seconds\" or \"ms\", or none; a switch has none")
         self.flag, self.replay, self.doc = raw.get("flag", ""), raw.get("replay"), raw.get("doc", "")
-        if not FLAG.match(self.flag):
+        if rule.reach == "practice":
+            if self.flag:
+                fail("a practice's rule has no server's option")
+        elif not FLAG.match(self.flag):
             fail("flag is the server's option, --words-with-dashes")
         if not self.doc:
             fail("no doc")
@@ -90,6 +93,9 @@ class Rule:
         if not NAME.match(name):
             fail("a name is lower-case words between dashes")
         self.name, self.label, self.doc = name, raw.get("label", ""), raw.get("doc", "")
+        self.setup = raw.get("setup")
+        if not self.setup:
+            fail("no setup: its mode word, or flow, or practice")
         if not self.label:
             fail("no label")
         self.cs = raw.get("cs")
@@ -180,7 +186,7 @@ def load(path=SCHEMA):
             raise SchemaError(f"rules share a {key}: {', '.join(twice)}")
     race = [r for r in rules if r.race]
     for key in ("key", "word", "flag"):
-        seen = [getattr(r.race, key) for r in race]
+        seen = [getattr(r.race, key) for r in race if getattr(r.race, key)]
         twice = sorted({v for v in seen if seen.count(v) > 1})
         if twice:
             raise SchemaError(f"rules the games apply share a {key}: {', '.join(twice)}")

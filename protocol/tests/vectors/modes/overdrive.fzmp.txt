@@ -1,0 +1,43 @@
+FZMP format 1 api 1, 1239 bytes, hash 05fbfd998993bc562d16c257b4449353521cd47f3420b58200765a0c087ae094
+HEAD name "Overdrive" badge "OVERDRIVE" about "Speed locked and rising. Last one alive wins."
+PARM 1
+  0 rise "Speed added every 10 s" number int 5..50 step 5 default 10
+SETP 4
+  cpus allowed
+  laps 0
+  pedals locked accel 1 (0x3f800000) brake 0 (0x00000000)
+  boost off
+VARS globals 0, seat words 1
+  seat 0 = 0
+RULE 2
+  0 "Lock the speed" event each seat, locals 1, when none, while 0000, body 000e
+  1 "Out" event out, locals 1, when none, while none, body 002b
+CODE 51 bytes
+  ; rule 0 while
+  0000  RaceRead started
+  0002  Dup
+  0003  JumpIfZero 000d
+  0008  Pop
+  0009  LoadLocal 0
+  000b  SeatRead racing
+  000d  Ret
+  ; rule 0 body
+  000e  LoadLocal 0
+  0010  Push 1175232512 (0x460ca000, real 9000)
+  0015  Push 1148846080 (0x447a0000, real 1000)
+  001a  Param 0 (rise)
+  001c  RaceRead steps
+  001e  IMul
+  001f  IToF
+  0020  Push 1142292480 (0x44160000, real 600)
+  0025  FDiv
+  0026  FAdd
+  0027  FMin
+  0028  Action seat.speed
+  002a  End
+  ; rule 1 body
+  002b  LoadLocal 0
+  002d  RaceRead steps
+  002f  StoreSeatVar 0
+  0032  End
+SRC  915 bytes

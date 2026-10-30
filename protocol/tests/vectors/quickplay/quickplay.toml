@@ -1,0 +1,17 @@
+# A Quick Play rotation of the words api 1's first slice compiles (protocol/quickplay/ is the official one): the
+# tests of the rotation, the service's vote and the launcher's stand-in race it.
+
+cards = 5
+spicy_cards = 1
+random_spicy_chance = 0.15
+leaderboards = false
+show_laps = true
+
+[normal]
+mode = "competitive.fzmode"
+courses = "pool"
+
+[[spicy]]
+mode = "overdrive.fzmode"
+courses = [8]
+weight = 1

@@ -73,6 +73,21 @@ static int CompactRefusals(string temp)
             Console.Error.WriteLine($"replay vectors: a compact header damaged at byte {at} was read");
         }
     }
+    // a compact file of a version 9 recording (a game mode's race): read as 9, and whole, as every recording's
+    // version is (a version the game does not play, 10: 0, not whole)
+    foreach (var (race, expect) in new[] { (9, 9), (10, 0) })
+    {
+        var other = (byte[])bytes.Clone();
+        System.Buffers.Binary.BinaryPrimitives.WriteUInt16BigEndian(other.AsSpan(6), (ushort)race);
+        var path = Path.Combine(temp, $"race{race}.fzrp");
+        File.WriteAllBytes(path, other);
+        var p = ReplayParts.Read(path);
+        if (p.RaceVersion != expect || p.Whole != (expect != 0))
+        {
+            failures++;
+            Console.Error.WriteLine($"replay vectors: a compact file of a version {race} recording reads as {p.RaceVersion} (whole: {p.Whole})");
+        }
+    }
     var cut = Path.Combine(temp, "cut.fzrp");
     File.WriteAllBytes(cut, bytes[..(bytes.Length / 2)]);
     if (ReplayParts.Read(cut) is not { Marked: true, Whole: false })

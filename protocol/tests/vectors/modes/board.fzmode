@@ -1,0 +1,33 @@
+// A vector of the board's lines: every scope and every type a line can show.
+
+mode "Board" { api 1; }
+
+global int next_cut = 7;
+global real pace = 1.5;
+global bool armed;
+global seat leader;
+global seats alive;
+seat int lives_left = 3;
+seat real best;
+seat int state;
+team int pool = 100;
+
+board global next_cut "Next cut";
+board global pace "Pace";
+board global armed "Armed";
+board global leader "Leader";
+board global alive "Alive";
+board seat lives_left "Lives";
+board seat best "Best";
+board team pool "Tank";
+board seat state "State" ["", "Sûr", "Out"];
+
+rule "Count" {
+  event every step;
+  do { next_cut += 1; }
+}
+
+rule "Lose" {
+  event each seat;
+  do { seat.lives_left = seat.index + race.steps; seat.state = seat.index; seat.team.pool = seat.index * 2; }
+}
