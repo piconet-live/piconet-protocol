@@ -10,7 +10,7 @@ namespace fzgx::modes
 {
 // the api this build runs, and its limits (language 11.1)
 inline constexpr int API = 1;
-inline constexpr int BUDGET = 4096;
+inline constexpr int BUDGET = 65536;
 inline constexpr int QUEUE = 64;
 inline constexpr int GLOBALS = 256;
 inline constexpr int SEAT_WORDS = 64;
@@ -166,7 +166,8 @@ enum Setup : std::uint8_t
   SETUP_CPUSALLOWED = 1,  // cpus allowed
   SETUP_PEDALSLOCKED = 2,  // pedals locked
   SETUP_BOOSTOFF = 3,  // boost off
-  SETUP_COUNT = 4,
+  SETUP_LAPSBYCOURSE = 4,  // laps by course
+  SETUP_COUNT = 5,
 };
 
 // a read of a seat (OP_SEATREAD)

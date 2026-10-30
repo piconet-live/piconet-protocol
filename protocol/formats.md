@@ -1013,7 +1013,7 @@ api; then seven sections in this order, each u32 its tag (four letters), u32 its
 |---|---|
 | `HEAD` | the header: name, badge, about (strings; an empty string when left out) |
 | `PARM` | u16 the parameters, then each: name, label (strings), u8 its kind (0 number, 1 delay, 2 switch, 3 choice), u8 its type (0 int, 1 real), i32 least, i32 most, i32 step, i32 default (a real's binary32 bits; a delay in steps; a switch 0 or 1; a choice its index), u16 the choices, each a string |
-| `SETP` | u16 the setup words, then each: u8 its id (`[[setup]]`), u8 its arguments, each u8 its source (0 a constant, 1 a parameter) and i32 the constant or the parameter's index |
+| `SETP` | u16 the setup words, then each: u8 its id (`[[setup]]`), u8 its arguments, each u8 its source (0 a constant, 1 a parameter) and i32 the constant or the parameter's index; a word with a table (`laps by course`) has two constants more a row after its own arguments, the course's number and its value |
 | `VARS` | u16 the globals, u16 the words a seat; then each global's start value, then each seat word's (i32) |
 | `RULE` | u16 the rules, in the file's order; then each: its label (string), u8 its event (`[[event]]`), u8 0, u16 its locals (the event's binding is local 0), u32 its `when` condition, u32 its `while` condition (each an offset in `CODE`, 0xFFFFFFFF none: several `when`s are one condition, joined by `and`), u32 its body |
 | `CODE` | the bytecode (`[[op]]`): a condition ends with `Ret`, a body with `End` |

@@ -123,6 +123,8 @@ public enum ModeSetup : byte
     PedalsLocked = 2,
     /// <summary><c>boost off</c></summary>
     BoostOff = 3,
+    /// <summary><c>laps by course</c></summary>
+    LapsByCourse = 4,
 }
 
 /// <summary>A read of a seat (protocol/modes.toml).</summary>
@@ -178,7 +180,7 @@ public static partial class ModeWords
     /// <summary>The api this build compiles.</summary>
     public const int Api = 1;
     /// <summary>The api's limit <c>budget</c>.</summary>
-    public const int Budget = 4096;
+    public const int Budget = 65536;
     /// <summary>The api's limit <c>queue</c>.</summary>
     public const int Queue = 64;
     /// <summary>The api's limit <c>globals</c>.</summary>
@@ -275,6 +277,7 @@ public static partial class ModeWords
         ("cpus allowed", ModeSetup.CpusAllowed, []),
         ("pedals locked", ModeSetup.PedalsLocked, [new ModeArgument("accel", ModeType.Real, 0.0f, 1.0f, 1.0f), new ModeArgument("brake", ModeType.Real, 0.0f, 1.0f, 0.0f)]),
         ("boost off", ModeSetup.BoostOff, []),
+        ("laps by course", ModeSetup.LapsByCourse, [new ModeArgument("else", ModeType.Int, 0, 99, 3)]),
     ];
 
     /// <summary>The reads of a seat (<c>seat.NAME</c>): name, id, type.</summary>

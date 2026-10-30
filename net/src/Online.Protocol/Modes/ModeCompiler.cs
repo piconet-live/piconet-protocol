@@ -150,6 +150,31 @@ public static class ModeCompiler
                 }
             }
             var values = word.Args.Select(a => SetupValue(item, word.Name, a, given.GetValueOrDefault(a.Name))).ToList();
+            if (word.Id is ModeSetup.Laps or ModeSetup.LapsByCourse &&
+                _setups.Any(s => s.Id is ModeSetup.Laps or ModeSetup.LapsByCourse))
+            {
+                throw new ModeCompileException(item.Line, "laps and laps by course: one of them");
+            }
+            // a table's rows: a pair a course, its number and its value (in the range of the word's first argument)
+            var courses = new HashSet<int>();
+            foreach (var row in item.Table ?? [])
+            {
+                var course = CourseTable.Courses.FirstOrDefault(c => $"{c.Place}: {c.Track}" == row.Key).Course;
+                if (course == 0)
+                {
+                    throw new ModeCompileException(row.Line, $"\"{row.Key}\" is no course of the game's (\"Venue: Track\", as courses.toml names them)");
+                }
+                if (!courses.Add(course))
+                {
+                    throw new ModeCompileException(row.Line, $"\"{row.Key}\" is in the table twice");
+                }
+                values.Add(new ModeSetupValue(false, course));
+                var laps = SetupValue(item, $"{word.Name} \"{row.Key}\"", word.Args[0],
+                    new ModeSetupArgument(row.Line, "", row.Value));
+                values.Add(laps.FromParam
+                    ? throw new ModeCompileException(row.Line, $"a row of {word.Name} is a number, not a parameter")
+                    : laps);
+            }
             _setups.Add(new ModeSetupWord(word.Id, values));
         }
 

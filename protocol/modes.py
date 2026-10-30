@@ -12,7 +12,7 @@ TOP_KEYS = {"codec", "api", "op", "event", "setup", "seat_read", "race_read", "a
 API_KEYS = {"number", "budget", "queue", "globals", "seat_words", "locals", "rules", "sorts", "package_bytes", "seats"}
 OP_KEYS = {"name", "code", "operands", "doc"}
 EVENT_KEYS = {"name", "id", "kind", "binds", "doc"}
-SETUP_KEYS = {"name", "id", "args", "where", "doc"}
+SETUP_KEYS = {"name", "id", "args", "where", "doc", "table"}
 ARG_KEYS = {"type", "name", "least", "most", "default"}
 READ_KEYS = {"name", "id", "type", "doc"}
 ACTION_KEYS = {"name", "id", "args", "where", "doc"}
@@ -105,6 +105,8 @@ def load(path=SCHEMA):
             keys(a, ARG_KEYS, f"setup {s['name']}: an argument")
             if a.get("type") not in ("int", "real"):
                 raise SchemaError(f"setup {s['name']}: an argument is an int or a real")
+        if s.get("table", "course") != "course":
+            raise SchemaError(f"setup {s['name']}: a table is of courses")
     reads = {}
     for kind in ("seat_read", "race_read"):
         reads[kind] = numbered(raw.get(kind, []), READ_KEYS, kind)

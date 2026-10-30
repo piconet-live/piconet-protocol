@@ -131,6 +131,9 @@ class ReplaySchema(unittest.TestCase):
         older[7] = 10
         with self.assertRaises(ValueError):
             replay_file.expand(bytes(older))
+        mode = bytearray(compact)   # a version 9 recording's compact file (a game mode's race) plays
+        mode[7] = 9
+        self.assertEqual(replay_file.parse(replay_file.expand(bytes(mode))).version, 9)
 
 
 if __name__ == "__main__":

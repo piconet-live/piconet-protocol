@@ -30,6 +30,8 @@ public sealed class ModeCompilerTests
     [Theory]
     [InlineData("overdrive")]
     [InlineData("words")]
+    [InlineData("competitive")]
+    [InlineData("pairs")]
     public void AVectorCompilesToItsPackage(string name)
     {
         var result = CompileVector(name);
@@ -53,12 +55,14 @@ public sealed class ModeCompilerTests
         }
         Assert.Empty(result.Warnings);
         Assert.InRange(package.Length, 1, ModeWords.PackageBytes);
-        Assert.InRange(result.Budget, 1, ModeWords.Budget);
+        Assert.InRange(result.Budget, 0, ModeWords.Budget);   // (0: a mode of setup words only, as Quick Play)
     }
 
     [Theory]
     [InlineData("overdrive")]
     [InlineData("words")]
+    [InlineData("competitive")]
+    [InlineData("pairs")]
     public void APackageReadsBackAsItWasWritten(string name)
     {
         var result = CompileVector(name);
@@ -103,13 +107,30 @@ public sealed class ModeCompilerTests
         Assert.All(ModeWords.SeatReads, r => Assert.Contains(code, l => l.EndsWith("SeatRead " + r.Name, StringComparison.Ordinal)));
         Assert.All(ModeWords.RaceReads, r => Assert.Contains(code, l => l.EndsWith("RaceRead " + r.Name, StringComparison.Ordinal)));
         Assert.All(ModeWords.Actions, a => Assert.Contains(code, l => l.EndsWith("Action " + a.Name, StringComparison.Ordinal)));
-        Assert.Equal(ModeWords.Setups.Select(s => s.Id).Order(), mode.Setups.Select(s => s.Id).Order());
+        // every setup word but laps by course (one of the two laps words: the competitive vector has the other)
+        Assert.Equal(ModeWords.Setups.Select(s => s.Id).Where(id => id != ModeSetup.LapsByCourse).Order(), mode.Setups.Select(s => s.Id).Order());
         Assert.Equal(ModeWords.Events.Select(e => e.Id).Order(), mode.Rules.Select(r => r.Event).Distinct().Order());
         Assert.Equal(Enum.GetValues<ModeParamKind>(), mode.Params.Select(p => p.Kind).Distinct().Order());
         Assert.Contains(mode.Params, p => p.Type == ModeType.Real);
         Assert.Contains(mode.Setups.SelectMany(s => s.Arguments), a => a.FromParam);
         Assert.Equal(3845, result.Budget);
     }
+
+    [Fact]
+    public void QuickPlaysLapsAreByCourse()
+    {
+        var mode = CompileVector("competitive").Mode!;
+        var read = ModePackage.Read(mode.Write());
+        Assert.Equal(8, read.LapsFor(36));   // Mute City: Sonic Oval (courses.toml)
+        Assert.Equal(6, read.LapsFor(1));    // Mute City: Twist Road
+        Assert.Equal(3, read.LapsFor(2));    // left out: else
+        Assert.Equal(0, CompileVector("overdrive").Mode!.LapsFor(1));   // laps unlimited
+        Assert.Contains("is no course of the game's", Errors("mode \"M\" { api 1; } laps by course { \"Mute City: Nowhere\": 3; else: 3; }"));
+        Assert.Contains("one of them", Errors("mode \"M\" { api 1; } laps 3; laps by course { else: 3; }"));
+        Assert.Contains("twice", Errors("mode \"M\" { api 1; } laps by course { \"Mute City: Sonic Oval\": 3; \"Mute City: Sonic Oval\": 4; else: 3; }"));
+    }
+
+    private static string Errors(string source) => string.Join("\n", ModeCompiler.Compile(source).Errors.Select(e => e.ToString()));
 
     [Fact]
     public void TheHashAndShareCodeAreThePackagesOwn()
@@ -203,13 +224,25 @@ public sealed class ModeCompilerTests
     [Fact]
     public void AModeOverItsBudgetIsRefused()
     {
-        // A sorted loop inside a loop over the seats: its SortRun alone is (1 + 5 x 30) x 31 operations.
-        var source = Head + "rule \"Heavy\" {\n  event every step;\n  do {\n    for each a in seats {\n"
-            + "      for each seat by speed { eliminate seat; }\n    }\n  }\n}\n";
+        // Every pair of seats (900 a step), each with a long body: some 100 operations a pair.
+        var body = string.Concat(Enumerable.Repeat("near = near + a.speed * b.speed - a.energy * b.energy; ", 10));
+        var source = Head + "global real near;\nrule \"Heavy\" {\n  event every step;\n  do {\n    for each a in seats {\n"
+            + "      for each b in seats { " + body + "}\n    }\n  }\n}\n";
         var result = ModeCompiler.Compile(source);
         var error = Assert.Single(result.Errors);
-        Assert.StartsWith("line 2: the mode takes ", error, StringComparison.Ordinal);
-        Assert.Contains("past api 1's 4096", error, StringComparison.Ordinal);
+        Assert.StartsWith("line 3: the mode takes ", error, StringComparison.Ordinal);
+        Assert.Contains("past api 1's 65536", error, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ANestedLoopOverEveryPairOfSeatsFits()
+    {
+        // 30 x 30 pairs, as a slipstream or a haunting needs: inside the budget, with a sorted loop in each seat's too
+        var source = Head + "global real near;\nrule \"Pairs\" {\n  event every step;\n  do {\n    for each a in seats {\n"
+            + "      for each b in seats { if (a.distance - b.distance < 10.0) { near = near + 1.0; } }\n    }\n  }\n}\n";
+        var result = ModeCompiler.Compile(source);
+        Assert.Empty(result.Errors);
+        Assert.InRange(result.Budget, 900 * 10, ModeWords.Budget);
     }
 
     [Fact]

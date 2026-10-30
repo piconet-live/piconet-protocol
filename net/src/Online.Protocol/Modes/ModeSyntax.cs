@@ -63,7 +63,11 @@ internal sealed record ModeParamItem(int Line, string Name, string Label, ModePa
 /// <summary>A setup argument: its name (empty for the unnamed one) and its value, a literal or a parameter's name.</summary>
 internal sealed record ModeSetupArgument(int Line, string Name, ModeExpr Value);
 
-internal sealed record ModeSetupItem(int Line, string Word, IReadOnlyList<ModeSetupArgument> Arguments) : ModeItem(Line);
+/// <summary>A row of a setup word's table (<c>laps by course</c>): the course as players write it and its value.</summary>
+internal sealed record ModeSetupRow(int Line, string Key, ModeExpr Value);
+
+internal sealed record ModeSetupItem(int Line, string Word, IReadOnlyList<ModeSetupArgument> Arguments,
+    IReadOnlyList<ModeSetupRow>? Table = null) : ModeItem(Line);
 
 internal sealed record ModeConstItem(int Line, ModeType Type, string Name, ModeExpr Value) : ModeItem(Line);
 

@@ -279,6 +279,10 @@ internal sealed class ModeParser
         var word = ModeWords.Setups.Select(s => s.Name).OrderByDescending(n => n.Length).FirstOrDefault(StartsHere)
             ?? throw Error($"'{Current.Text}' is not a word of api {ModeWords.Api}");
         _at += word.Split(' ').Length;
+        if (ModeWords.Setups.Single(s => s.Name == word).Id == ModeSetup.LapsByCourse)
+        {
+            return SetupTable(line, word);
+        }
         var arguments = new List<ModeSetupArgument>();
         while (!Accept(";"))
         {
@@ -291,6 +295,37 @@ internal sealed class ModeParser
             arguments.Add(new ModeSetupArgument(argumentLine, name, SetupValue()));
         }
         return new ModeSetupItem(line, word, arguments);
+    }
+
+    /// <summary>A setup word's table: <c>{ "Venue: Track": n; ...; else: n; }</c>, its <c>else</c> the word's
+    /// argument.</summary>
+    private ModeSetupItem SetupTable(int line, string word)
+    {
+        Expect("{");
+        var arguments = new List<ModeSetupArgument>();
+        var rows = new List<ModeSetupRow>();
+        while (!Accept("}"))
+        {
+            var rowLine = Current.Line;
+            if (Accept("else"))
+            {
+                Expect(":");
+                arguments.Add(new ModeSetupArgument(rowLine, "else", SetupValue()));
+            }
+            else
+            {
+                if (Current.Kind != ModeTokenKind.Text)
+                {
+                    throw Error($"a course's name in quotes or else is expected here, not {Describe(Current)}");
+                }
+                var key = Take().Text;
+                Expect(":");
+                rows.Add(new ModeSetupRow(rowLine, key, SetupValue()));
+            }
+            Expect(";");
+        }
+        Accept(";");
+        return new ModeSetupItem(line, word, arguments, rows);
     }
 
     private bool StartsHere(string words)

@@ -173,6 +173,35 @@ public sealed class ModePackage
     /// <summary>The match start's <c>setup.mode</c>, with the parameters given (in <c>PARM</c>'s order; null or left
     /// out: their defaults). A value outside its range is refused. The package is <see cref="Write"/>'s bytes, which
     /// are the bytes it was read from (a package reads only as its writer writes it).</summary>
+    /// <summary>The race's laps on <paramref name="course"/> (the game's course number) as the mode sets them: its
+    /// <c>laps by course</c> row (or its <c>else</c>), or its <c>laps</c>; 0 is the game's free run (<c>unlimited</c>).
+    /// Null: the mode leaves the laps to the lobby's rules. A value a parameter gives is read from
+    /// <paramref name="values"/> (in <c>PARM</c>'s order; left out, the parameters' defaults).</summary>
+    public int? LapsFor(int course, IReadOnlyList<int>? values = null)
+    {
+        int Value(ModeSetupValue v) =>
+            !v.FromParam ? v.Value : values is not null && v.Value < values.Count ? values[v.Value] : Params[v.Value].Default;
+        foreach (var word in Setups)
+        {
+            if (word.Id == ModeSetup.Laps)
+            {
+                return Value(word.Arguments[0]);
+            }
+            if (word.Id == ModeSetup.LapsByCourse)
+            {
+                for (var i = 1; i + 1 < word.Arguments.Count; i += 2)
+                {
+                    if (word.Arguments[i].Value == course)
+                    {
+                        return word.Arguments[i + 1].Value;
+                    }
+                }
+                return Value(word.Arguments[0]);
+            }
+        }
+        return null;
+    }
+
     public ModeStart Start(IReadOnlyList<int>? values = null)
     {
         var package = Write();
@@ -282,7 +311,11 @@ public sealed class ModePackage
                 1 => true,
                 _ => throw new InvalidDataException($"the setup word {word.Name}'s argument has an unknown source"),
             }, s.I32())).ToList();
-            if (arguments.Count != word.Args.Count || arguments.Any(a => a.FromParam && (a.Value < 0 || a.Value >= parameters)))
+            var table = word.Id == ModeSetup.LapsByCourse;  // (modes.toml's `table`: a pair a course after the arguments)
+            if ((table ? arguments.Count < word.Args.Count || (arguments.Count - word.Args.Count) % 2 != 0
+                       : arguments.Count != word.Args.Count) ||
+                arguments.Any(a => a.FromParam && (a.Value < 0 || a.Value >= parameters)) ||
+                (table && arguments.Skip(word.Args.Count).Any(a => a.FromParam)))
             {
                 throw new InvalidDataException($"the setup word {word.Name}'s arguments are not its own");
             }
