@@ -391,7 +391,7 @@ public sealed class ReplayParts
         {
             return;
         }
-        RaceVersion = race is >= ReplayFormat.VersionPlain and < ReplayFormat.CompactVersion ? race : 0;
+        RaceVersion = race != ReplayFormat.CompactVersion && ReplayFormat.Plays(race) ? race : 0;   // a recording's version (9 too)
         compactSteps = steps;
         compactWhole = at == end && Seats != 0 && steps > 0 && steps <= ReplayFormat.MaxSteps && RaceVersion != 0;
     }
