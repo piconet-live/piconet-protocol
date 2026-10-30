@@ -172,6 +172,10 @@ member = [
     { key = "automation", type = "bool", to = "automation" },
     { key = "loadState", type = "bool", to = "load_state" },
     { key = "userSettings", type = "bool", to = "user_settings" },
+    { key = "renderer", type = "one_of", values = ["dolphin", "aurora"], to = "renderer", doc = "who draws the picture shown: the emulator (default), or Aurora beside it (presentation only)" },
+    { key = "auroraShots", type = "wholes", to = "aurora_shots", low = 1, high = 4294967295, least = 1, most = 32 },
+    { key = "auroraScale", type = "whole", to = "aurora_scale", low = 1, high = 8, doc = "Aurora's render scale; left out: the same as the emulator's internal resolution" },
+    { key = "auroraLog", type = "text", to = "aurora_log" },
 ]
 
 [[part]]
