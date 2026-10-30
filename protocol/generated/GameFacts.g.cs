@@ -56,6 +56,30 @@ public static class GameFacts
         public const uint MaxUntracked = 32;
     }
 
+    public static class Rel
+    {
+        /// <summary>where main.rel's header is in every boot (the pin makes it so)</summary>
+        public const uint MainRel = 0x801BA660;
+
+        /// <summary>main.rel's module number, the first word of its header</summary>
+        public const uint MainRelId = 1;
+
+        /// <summary>main.rel's code (.text)</summary>
+        public const uint RelText = 0xDC;
+
+        /// <summary>bytes of main.rel's code</summary>
+        public const uint RelTextSize = 0x15F62C;
+
+        /// <summary>main.rel's data (.data)</summary>
+        public const uint RelData = 0x16D600;
+
+        /// <summary>main.rel's constants (.rodata), which no step writes</summary>
+        public const uint RelRodata = 0x15F710;
+
+        /// <summary>main.rel's zeroed data (.bss), where the race's state is</summary>
+        public const uint RelBss = 0x1BA040;
+    }
+
     public static class Wire
     {
         /// <summary>the relay protocol's version: a packet of another version is ignored</summary>
