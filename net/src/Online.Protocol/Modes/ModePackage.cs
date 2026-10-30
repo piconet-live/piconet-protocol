@@ -43,9 +43,10 @@ public sealed record ModeRule(string Label, ModeEvent Event, int Locals, uint Wh
     public const uint None = 0xFFFFFFFF;
 }
 
-/// <summary>The match start's <c>setup.mode</c> (formats.md section 9): the package, its hash, its api and the
-/// parameters' values in <c>PARM</c>'s order (a real's bits).</summary>
-public sealed record ModeStart(string Package, string Hash, int Api, IReadOnlyList<int> Params)
+/// <summary>The match start's <c>setup.mode</c> (formats.md section 9): the package, its hash, its api, the
+/// parameters' values in <c>PARM</c>'s order (a real's bits) and each seat's team, by seat (0 to 29; null: every seat
+/// its own, its number).</summary>
+public sealed record ModeStart(string Package, string Hash, int Api, IReadOnlyList<int> Params, IReadOnlyList<int>? Teams = null)
 {
     public string ToJson() => JsonSerializer.Serialize(this, ControlProtocol.Json);
 }
@@ -69,6 +70,8 @@ public sealed class ModePackage
     public IReadOnlyList<int> Globals { get; init; } = [];
     /// <summary>Each seat word's start value.</summary>
     public IReadOnlyList<int> SeatWords { get; init; } = [];
+    /// <summary>Each team word's start value.</summary>
+    public IReadOnlyList<int> TeamWords { get; init; } = [];
     public IReadOnlyList<ModeRule> Rules { get; init; } = [];
     public required byte[] Code { get; init; }
     public required string Source { get; init; }
@@ -127,6 +130,15 @@ public sealed class ModePackage
             foreach (var value in Globals.Concat(SeatWords))
             {
                 s.I32(value);
+            }
+            // a mode with words a team: their count and start values after the seats' (none: nothing, as before teams)
+            if (TeamWords.Count > 0)
+            {
+                s.U16(TeamWords.Count);
+                foreach (var value in TeamWords)
+                {
+                    s.I32(value);
+                }
             }
         });
         w.Section("RULE", s =>
@@ -202,8 +214,12 @@ public sealed class ModePackage
         return null;
     }
 
-    public ModeStart Start(IReadOnlyList<int>? values = null)
+    public ModeStart Start(IReadOnlyList<int>? values = null, IReadOnlyList<int>? teams = null)
     {
+        if (teams is not null && (teams.Count > ModeWords.Seats || teams.Any(t => t is < 0 or >= ModeWords.Teams)))
+        {
+            throw new ArgumentException($"a team is 0 to {ModeWords.Teams - 1}, at most one a seat", nameof(teams));
+        }
         var package = Write();
         if (values is not null && values.Count > Params.Count)
         {
@@ -217,7 +233,7 @@ public sealed class ModePackage
                 throw new ArgumentException($"the parameter {Params[i].Name} is outside its range", nameof(values));
             }
         }
-        return new ModeStart(Convert.ToBase64String(package), Hash(package), Api, chosen);
+        return new ModeStart(Convert.ToBase64String(package), Hash(package), Api, chosen, teams);
     }
 
     /// <summary>Reads and checks a package; a package that does not read throws <see cref="InvalidDataException"/>
@@ -258,8 +274,9 @@ public sealed class ModePackage
             About = about,
             Params = parameters,
             Setups = ReadSetups(sections[2], parameters.Count),
-            Globals = ReadVars(sections[3], out var seatWords),
+            Globals = ReadVars(sections[3], out var seatWords, out var teamWords),
             SeatWords = seatWords,
+            TeamWords = teamWords,
             Rules = ReadRules(sections[4], code.Length),
             Code = code,
             Source = sections[6].Utf8(sections[6].Left),
@@ -325,7 +342,7 @@ public sealed class ModePackage
         return list;
     }
 
-    private static List<int> ReadVars(ModeReader s, out List<int> seatWordValues)
+    private static List<int> ReadVars(ModeReader s, out List<int> seatWordValues, out List<int> teamWordValues)
     {
         var (globals, seatWords) = (s.U16(), s.U16());
         if (globals > ModeWords.Globals || seatWords > ModeWords.SeatWords)
@@ -334,6 +351,16 @@ public sealed class ModePackage
         }
         var g = Enumerable.Range(0, globals).Select(_ => s.I32()).ToList();
         seatWordValues = Enumerable.Range(0, seatWords).Select(_ => s.I32()).ToList();
+        teamWordValues = [];
+        if (s.Left > 0)
+        {
+            var teamWords = s.U16();
+            if (teamWords == 0 || teamWords > ModeWords.TeamWords)
+            {
+                throw new InvalidDataException($"1 to {ModeWords.TeamWords} words a team, when a mode keeps any");
+            }
+            teamWordValues = Enumerable.Range(0, teamWords).Select(_ => s.I32()).ToList();
+        }
         s.End();
         return g;
     }

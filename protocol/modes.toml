@@ -9,11 +9,12 @@
 #
 # An operation ([[op]]): `name` (PascalCase, the C# enum's and the C++ constant's name), `code` its byte, `operands`
 # the bytes after it, in order (u8, u16, u32, i32: big-endian), `doc` what it does. The stack holds 32-bit cells: an
-# int, a real's binary32 bits, a bool (0 or 1), a seat (0 to 29, or -1 none). A binary operation pops b, then a, and
-# pushes a op b. Every operation costs one operation of the step's budget, but SortRun: 1 + 5 x entries x keys.
+# int, a real's binary32 bits, a bool (0 or 1), a seat (0 to 29, or -1 none), a set of seats (bit i: seat i); a vec is
+# three cells, x then y then z (a read of type vec pushes all three). A binary operation pops b, then a, and pushes
+# a op b. Every operation costs one operation of the step's budget, but SortRun: 1 + 5 x entries x keys.
 #
 # A word: `name` as a mode file writes it, `id` its number in the bytecode (Action, SeatRead, RaceRead) or the package
-# (setup words, events), `type` what a read gives (int, real, bool, seat), `args` an action's or setup word's
+# (setup words, events), `type` what a read gives (int, real, bool, seat, seats, vec), `args` an action's or setup word's
 # arguments in order, `doc`, and `where`: the game's site or the part that applies it (vocabulary.md's). A setup word
 # with `table` takes a table of pairs after its arguments (the package: two more arguments a pair, `table`'s value
 # first): "course", a course's number (courses.toml).
@@ -32,7 +33,12 @@ globals = 256          # global words
 seat_words = 64        # words per seat
 locals = 64            # a rule's locals, its event's binding included
 rules = 256
+subs = 128             # subs a file declares (the library's not counted)
 sorts = 2              # sort buffers: a `for each ... by` inside another
+team_words = 32        # words per team
+teams = 30             # teams in a race at most (a team's number 0 to 29)
+waits = 64             # rule instances waiting at once (the compiler counts the most a mode can have)
+wait_locals = 8        # locals a waiting rule keeps, its event's binding included
 package_bytes = 65536  # a package's whole size, the source included
 seats = 30
 
@@ -117,6 +123,18 @@ operands = ["u8"]
 doc = "pushes a read of the race ([[race_read]])"
 
 [[op]]
+name = "LoadTeamVar"
+code = 0x0E
+operands = ["u16"]
+doc = "pops a seat, pushes its team's word (none: 0)"
+
+[[op]]
+name = "StoreTeamVar"
+code = 0x0F
+operands = ["u16"]
+doc = "pops a value, then a seat, and stores the value in the seat's team's word (none: nothing)"
+
+[[op]]
 name = "IAdd"
 code = 0x10
 doc = "whole numbers wrap"
@@ -168,7 +186,8 @@ doc = "the sign bit flipped"
 [[op]]
 name = "FSqrt"
 code = 0x1D
-doc = "correctly rounded; of a negative number: 0x7FC00000"
+doc = """the game's square root (main.dol 0x8006D0B4: x times two Newton steps from the estimate frsqrte, in the \
+processor's single-precision operations): a NaN 0x7FC00000, infinity itself; zero, a negative number or a denormal 0"""
 
 [[op]]
 name = "IToF"
@@ -294,6 +313,14 @@ operands = ["u32"]
 doc = "pops; jumps when it is not 0"
 
 [[op]]
+name = "Wait"
+code = 0x45
+operands = ["u8", "u8", "u32"]
+doc = """live locals, kind (0 plain, 1 abort, 2 restart), condition (an offset in the code, 0xFFFFFFFF none): pops the \
+steps; more than 0, the rule instance waits that many steps in a wait record of the block, keeping its first `live` \
+locals, and the run of its code ends here; 0 or fewer, nothing"""
+
+[[op]]
 name = "SortBegin"
 code = 0x48
 operands = ["u8"]
@@ -324,6 +351,42 @@ name = "Action"
 code = 0x50
 operands = ["u8"]
 doc = "pops the action's arguments (the last first) and queues it ([[action]])"
+
+[[op]]
+name = "SeatBit"
+code = 0x58
+doc = "pops a seat, pushes its set: the bit 1 << seat (none, or a seat not in the race: 0)"
+
+[[op]]
+name = "AllSeats"
+code = 0x59
+doc = "pushes the race's seats as a set (bit i: seat i)"
+
+[[op]]
+name = "BitAnd"
+code = 0x5A
+doc = "a & b: sets' intersection"
+
+[[op]]
+name = "BitOr"
+code = 0x5B
+doc = "a | b: sets' union"
+
+[[op]]
+name = "BitAndNot"
+code = 0x5C
+doc = "a & ~b: sets' difference"
+
+[[op]]
+name = "Random"
+code = 0x60
+doc = """pops n; n more than 0: draws the mode's generator (xoshiro128**, formats.md section 9) and pushes \
+(draw x n) >> 32 in 64 bits, 0 to n - 1; else pushes 0 and draws nothing"""
+
+[[op]]
+name = "RandomReal"
+code = 0x61
+doc = "draws the mode's generator and pushes (draw >> 8) x 2^-24, a real 0 to below 1"
 
 [[event]]
 name = "every step"
@@ -437,6 +500,24 @@ name = "distance"
 id = 9
 type = "real"
 doc = "course distance over all laps, P+0xF8"
+
+[[seat_read]]
+name = "team"
+id = 10
+type = "int"
+doc = "the seat's team, 0 to 29, as the match start's setup.mode.teams gives it (none given: the seat's number)"
+
+[[seat_read]]
+name = "position"
+id = 11
+type = "vec"
+doc = "where the machine is, M+0x7C, +0x80, +0x84 (the step's, at the mode point)"
+
+[[seat_read]]
+name = "lap_length"
+id = 12
+type = "real"
+doc = "the course's length, one lap, P+0xFC"
 
 [[race_read]]
 name = "steps"

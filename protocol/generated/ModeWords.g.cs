@@ -32,6 +32,10 @@ public enum ModeOp : byte
     SeatRead = 0x0c,
     /// <summary>pushes a read of the race ([[race_read]])</summary>
     RaceRead = 0x0d,
+    /// <summary>pops a seat, pushes its team's word (none: 0)</summary>
+    LoadTeamVar = 0x0e,
+    /// <summary>pops a value, then a seat, and stores the value in the seat's team's word (none: nothing)</summary>
+    StoreTeamVar = 0x0f,
     /// <summary>whole numbers wrap</summary>
     IAdd = 0x10,
     ISub = 0x11,
@@ -48,7 +52,7 @@ public enum ModeOp : byte
     FDiv = 0x1b,
     /// <summary>the sign bit flipped</summary>
     FNeg = 0x1c,
-    /// <summary>correctly rounded; of a negative number: 0x7FC00000</summary>
+    /// <summary>the game's square root (main.dol 0x8006D0B4: x times two Newton steps from the estimate frsqrte, in the processor's single-precision operations): a NaN 0x7FC00000, infinity itself; zero, a negative number or a denormal 0</summary>
     FSqrt = 0x1d,
     /// <summary>an int as the nearest binary32 (ties to even)</summary>
     IToF = 0x20,
@@ -89,6 +93,8 @@ public enum ModeOp : byte
     JumpIfZero = 0x42,
     /// <summary>pops; jumps when it is not 0</summary>
     JumpIfNotZero = 0x43,
+    /// <summary>live locals, kind (0 plain, 1 abort, 2 restart), condition (an offset in the code, 0xFFFFFFFF none): pops the steps; more than 0, the rule instance waits that many steps in a wait record of the block, keeping its first `live` locals, and the run of its code ends here; 0 or fewer, nothing</summary>
+    Wait = 0x45,
     /// <summary>empties a sort buffer</summary>
     SortBegin = 0x48,
     /// <summary>buffer, keys: pops a seat, then its keys (the last key first), and adds the entry</summary>
@@ -99,6 +105,20 @@ public enum ModeOp : byte
     SortNext = 0x4b,
     /// <summary>pops the action's arguments (the last first) and queues it ([[action]])</summary>
     Action = 0x50,
+    /// <summary>pops a seat, pushes its set: the bit 1 &lt;&lt; seat (none, or a seat not in the race: 0)</summary>
+    SeatBit = 0x58,
+    /// <summary>pushes the race's seats as a set (bit i: seat i)</summary>
+    AllSeats = 0x59,
+    /// <summary>a &amp; b: sets' intersection</summary>
+    BitAnd = 0x5a,
+    /// <summary>a | b: sets' union</summary>
+    BitOr = 0x5b,
+    /// <summary>a &amp; ~b: sets' difference</summary>
+    BitAndNot = 0x5c,
+    /// <summary>pops n; n more than 0: draws the mode's generator (xoshiro128**, formats.md section 9) and pushes (draw x n) &gt;&gt; 32 in 64 bits, 0 to n - 1; else pushes 0 and draws nothing</summary>
+    Random = 0x60,
+    /// <summary>draws the mode's generator and pushes (draw &gt;&gt; 8) x 2^-24, a real 0 to below 1</summary>
+    RandomReal = 0x61,
 }
 
 /// <summary>A rule's event (protocol/modes.toml).</summary>
@@ -150,6 +170,12 @@ public enum ModeSeatRead : byte
     Destroyed = 8,
     /// <summary><c>distance</c></summary>
     Distance = 9,
+    /// <summary><c>team</c></summary>
+    Team = 10,
+    /// <summary><c>position</c></summary>
+    Position = 11,
+    /// <summary><c>lap_length</c></summary>
+    LapLength = 12,
 }
 
 /// <summary>A read of the race (protocol/modes.toml).</summary>
@@ -191,8 +217,18 @@ public static partial class ModeWords
     public const int Locals = 64;
     /// <summary>The api's limit <c>rules</c>.</summary>
     public const int Rules = 256;
+    /// <summary>The api's limit <c>subs</c>.</summary>
+    public const int Subs = 128;
     /// <summary>The api's limit <c>sorts</c>.</summary>
     public const int Sorts = 2;
+    /// <summary>The api's limit <c>team_words</c>.</summary>
+    public const int TeamWords = 32;
+    /// <summary>The api's limit <c>teams</c>.</summary>
+    public const int Teams = 30;
+    /// <summary>The api's limit <c>waits</c>.</summary>
+    public const int Waits = 64;
+    /// <summary>The api's limit <c>wait_locals</c>.</summary>
+    public const int WaitLocals = 8;
     /// <summary>The api's limit <c>package_bytes</c>.</summary>
     public const int PackageBytes = 65536;
     /// <summary>The api's limit <c>seats</c>.</summary>
@@ -215,6 +251,8 @@ public static partial class ModeWords
         ModeOp.Param => 2,
         ModeOp.SeatRead => 2,
         ModeOp.RaceRead => 2,
+        ModeOp.LoadTeamVar => 3,
+        ModeOp.StoreTeamVar => 3,
         ModeOp.IAdd => 1,
         ModeOp.ISub => 1,
         ModeOp.IMul => 1,
@@ -254,11 +292,19 @@ public static partial class ModeWords
         ModeOp.Jump => 5,
         ModeOp.JumpIfZero => 5,
         ModeOp.JumpIfNotZero => 5,
+        ModeOp.Wait => 7,
         ModeOp.SortBegin => 2,
         ModeOp.SortAdd => 3,
         ModeOp.SortRun => 5,
         ModeOp.SortNext => 2,
         ModeOp.Action => 2,
+        ModeOp.SeatBit => 1,
+        ModeOp.AllSeats => 1,
+        ModeOp.BitAnd => 1,
+        ModeOp.BitOr => 1,
+        ModeOp.BitAndNot => 1,
+        ModeOp.Random => 1,
+        ModeOp.RandomReal => 1,
         _ => 0,
     };
 
@@ -293,6 +339,9 @@ public static partial class ModeWords
         ("broken", ModeSeatRead.Broken, ModeType.Bool),
         ("destroyed", ModeSeatRead.Destroyed, ModeType.Bool),
         ("distance", ModeSeatRead.Distance, ModeType.Real),
+        ("team", ModeSeatRead.Team, ModeType.Int),
+        ("position", ModeSeatRead.Position, ModeType.Vec),
+        ("lap_length", ModeSeatRead.LapLength, ModeType.Real),
     ];
 
     /// <summary>The reads of the race (<c>race.NAME</c>): name, id, type.</summary>

@@ -25,7 +25,8 @@ public static class ModeDisassembler
         {
             Line("  " + Setup(word, mode));
         }
-        Line(Invariant($"VARS globals {mode.Globals.Count}, seat words {mode.SeatWords.Count}"));
+        Line(Invariant($"VARS globals {mode.Globals.Count}, seat words {mode.SeatWords.Count}")
+            + (mode.TeamWords.Count > 0 ? Invariant($", team words {mode.TeamWords.Count}") : ""));
         for (var i = 0; i < mode.Globals.Count; i++)
         {
             Line(Invariant($"  global {i} = {Cell(mode.Globals[i])}"));
@@ -33,6 +34,10 @@ public static class ModeDisassembler
         for (var i = 0; i < mode.SeatWords.Count; i++)
         {
             Line(Invariant($"  seat {i} = {Cell(mode.SeatWords[i])}"));
+        }
+        for (var i = 0; i < mode.TeamWords.Count; i++)
+        {
+            Line(Invariant($"  team {i} = {Cell(mode.TeamWords[i])}"));
         }
         Line(Invariant($"RULE {mode.Rules.Count}"));
         for (var i = 0; i < mode.Rules.Count; i++)
@@ -114,6 +119,11 @@ public static class ModeDisassembler
             ModeOp.Jump or ModeOp.JumpIfZero or ModeOp.JumpIfNotZero => Invariant($"{operand:x4}"),
             ModeOp.SortRun => Invariant($"buffer {i.Operands[0]} keys {i.Operands[1]} desc 0x{i.Operands[2]:x2} reals 0x{i.Operands[3]:x2}"),
             ModeOp.SortAdd => Invariant($"buffer {i.Operands[0]} keys {i.Operands[1]}"),
+            ModeOp.Wait => Invariant($"locals {i.Operands[0]}") + (i.Operands[1] switch
+            {
+                0 => "",
+                var kind => Invariant($" {(kind == 1 ? "abort" : "restart")} when {i.Operands[2]:x4}"),
+            }),
             _ => string.Join(' ', i.Operands.Select(o => o.ToString(CultureInfo.InvariantCulture))),
         };
         return detail.Length == 0 ? i.Op.ToString() : i.Op + " " + detail;
