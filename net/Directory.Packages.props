@@ -18,7 +18,8 @@
     <!-- Discord's activity status (Launcher.Core DiscordPresence): Lachee's DiscordRichPresence, MIT, local IPC to
          the player's own Discord only. It brings Newtonsoft.Json (MIT). -->
     <PackageVersion Include="DiscordRichPresence" Version="1.6.1.70" />
-    <!-- recomp/manifest.toml read by the developer's tool tools/DiscPinsWriter (not shipped): Tomlyn, BSD-2-Clause. -->
+    <!-- Quick Play's rotation (Online.Protocol QuickPlayRotation), and recomp/manifest.toml read by the developer's tool
+         tools/DiscPinsWriter: Tomlyn, BSD-2-Clause. -->
     <PackageVersion Include="Tomlyn" Version="2.10.1" />
   </ItemGroup>
 </Project>

@@ -19,13 +19,25 @@ namespace Online.Protocol;
 /// (<see cref="StatPackText"/>), which the server reads and checks as it would a pack file of its own; StatPack then
 /// holds that pack's own name (a server from before PackFile looks for a pack of that name, and refuses the rules
 /// when it has none). A launcher sends PackFile with a lobby's rules (<see cref="CreateLobby"/>,
-/// <see cref="SetLobbyRules"/>); the server sends a lobby's rules with the pack by its name alone. The course pool and the allowed machines are Quick Play's in a custom lobby.
+/// <see cref="SetLobbyRules"/>); the server sends a lobby's rules with the pack by its name alone. ModeFile: the
+/// host's game mode, the whole text of a <c>.fzmode</c> file (piconet-docs research/game-modes/), which the server
+/// compiles with the one compiler (<see cref="ModeCompiler"/>) and races in place of Quick Play's rules: a file that
+/// does not compile is refused with the compiler's messages (<see cref="CustomLobby.BadMode"/>). The server sends a
+/// lobby's rules with the mode as <see cref="Mode"/> alone (its hash, name and badge); a launcher that sends rules again
+/// without a ModeFile and with the Mode the server sent keeps it, and without either races no mode. A server from
+/// before modes passes over both. The course pool and the allowed machines are Quick Play's in a custom lobby.
 /// The server sends a lobby's rules whole (every settable rule's value), so a launcher compares them with Quick
 /// Play's (<see cref="LobbyList.QuickPlay"/>) and shows only the rules that differ (<see cref="Differing"/>).</remarks>
 public sealed record LobbyRules(IReadOnlyDictionary<string, int> Values,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? StatPack = null,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? PackFile = null)
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? PackFile = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] LobbyMode? Mode = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? ModeFile = null)
 {
+    /// <summary>The longest <see cref="ModeFile"/>, in characters: the package a mode compiles to holds the file's
+    /// text and is at most <see cref="ModeWords.PackageBytes"/>.</summary>
+    public const int MostModeFile = ModeWords.PackageBytes;
+
     /// <summary>The longest <see cref="PackFile"/>, in characters: a pack of every value the car data holds, with a
     /// comment a machine, is about half of it.</summary>
     public const int MostPackFile = 256 * 1024;
@@ -117,6 +129,11 @@ public static class CustomLobby
     /// or a race.</summary>
     public const string RulesLocked = "rules_locked";
 
+    /// <summary>A host's mode file that is too long or does not compile (<see cref="LobbyRules.ModeFile"/>; the
+    /// error's message holds the compiler's first error, "line N: ..."), or a <see cref="LobbyRules.Mode"/> the lobby
+    /// does not hold.</summary>
+    public const string BadMode = "bad_mode";
+
     /// <summary>A lobby name that is empty, too long, or holds characters a name does not.</summary>
     public const string BadName = "bad_lobby_name";
 
@@ -167,3 +184,8 @@ public sealed record LeaveLobby : ClientMessage;
 /// own rules in the same form, whole: what a lobby's rules are compared with (<see cref="LobbyRules.Differing"/>).</summary>
 public sealed record LobbyList(IReadOnlyList<LobbySummary> Lobbies,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] LobbyRules? QuickPlay = null) : ServerMessage;
+
+/// <summary>A custom lobby's game mode as the server names it (<see cref="LobbyRules.Mode"/>): the package's content
+/// hash (<see cref="ModePackage.Hash"/>) and share code, the mode's name, its badge and its line of what it changes
+/// (the header's; "" when it has none), and the api it needs (<see cref="Hello.Modes"/>).</summary>
+public sealed record LobbyMode(string Hash, string ShareCode, string Name, int Api, string Badge = "", string About = "");
