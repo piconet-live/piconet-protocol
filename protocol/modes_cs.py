@@ -73,7 +73,25 @@ def emit(t):
             "    /// <summary>The actions: name, id, the types of their arguments in order.</summary>",
             "    public static readonly IReadOnlyList<(string Name, ModeAction Id, IReadOnlyList<ModeType> Args)> Actions =",
             "    ["]
-    out += [f"        ({text(a['name'])}, ModeAction.{a['pascal']}, [{', '.join(cs_type(x) for x in a.get('args', []))}]),"
+    choices = {c["name"]: c for c in t["choices"]}
+    out += [f"        ({text(a['name'])}, ModeAction.{a['pascal']}, "
+            f"[{', '.join('ModeType.Int' if x in choices else cs_type(x) for x in a.get('args', []))}]),"
             for a in t["actions"]]
-    out += ["    ];", "}", ""]
+    out += ["    ];", "",
+            "    /// <summary>The choices: an argument of one takes one of its names, its value the name's place.</summary>",
+            "    public static readonly IReadOnlyDictionary<string, IReadOnlyList<string>> Choices =",
+            "        new Dictionary<string, IReadOnlyList<string>>", "        {"]
+    out += [f"            [{text(c['name'])}] = [{', '.join(text(v) for v in c['values'])}]," for c in t["choices"]]
+    out += ["        };", "",
+            "    /// <summary>The actions' arguments that take a choice: (action, argument) to the choice's name.</summary>",
+            "    public static readonly IReadOnlyDictionary<(ModeAction Action, int Argument), string> ActionChoices =",
+            "        new Dictionary<(ModeAction Action, int Argument), string>", "        {"]
+    out += [f"            [(ModeAction.{a['pascal']}, {i})] = {text(x)},"
+            for a in t["actions"] for i, x in enumerate(a.get("args", [])) if x in choices]
+    out += ["        };", "",
+            "    /// <summary>The actions written with a word between their first two arguments in place of a comma.</summary>",
+            "    public static readonly IReadOnlyDictionary<ModeAction, string> ActionJoins =",
+            "        new Dictionary<ModeAction, string>", "        {"]
+    out += [f"            [ModeAction.{a['pascal']}] = {text(a['join'])}," for a in t["actions"] if "join" in a]
+    out += ["        };", "}", ""]
     return "\n".join(out)

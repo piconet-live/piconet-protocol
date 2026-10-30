@@ -28,6 +28,11 @@ def emit(t):
         out += [f"// {what}", f"enum {prefix.title()} : std::uint8_t", "{"]
         out += [f"  {prefix}_{e['pascal'].upper()} = {e['id']},  // {e['name']}" for e in t[kind]]
         out += [f"  {prefix}_COUNT = {len(t[kind])},", "};", ""]
+    for c in t["choices"]:
+        out += [f"// the choice `{c['name']}`: {c['doc']}" if c["doc"] else f"// the choice `{c['name']}`",
+                f"enum {c['pascal']} : std::uint8_t", "{"]
+        out += [f"  {c['name'].upper()}_{v.upper()} = {i}," for i, v in enumerate(c["values"])]
+        out += [f"  {c['name'].upper()}_COUNT = {len(c['values'])},", "};", ""]
     out += ["// the arguments an action pops", "constexpr int ActionArguments(std::uint8_t action)", "{",
             "  switch (action)", "  {"]
     out += [f"    case ACTION_{a['pascal'].upper()}: return {len(a.get('args', []))};" for a in t["actions"]]

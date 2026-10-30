@@ -706,10 +706,16 @@ internal sealed class ModeParser
     {
         var token = Take();
         var arguments = new List<ModeExpr>();
+        // a word between the first two arguments in place of the comma (map_hide s from seats)
+        var join = ModeWords.ActionJoins.GetValueOrDefault(ModeWords.Actions.First(a => a.Name == token.Text).Id);
         if (!Current.Is(";"))
         {
             arguments.Add(Expression());
-            while (Accept(","))
+            if (join is not null && Current.Is(","))
+            {
+                throw Error($"{token.Text} writes '{join}' before its second argument: {token.Text} s {join} seats;");
+            }
+            while (join is not null && arguments.Count == 1 ? Accept(join) : Accept(","))
             {
                 arguments.Add(Expression());
             }

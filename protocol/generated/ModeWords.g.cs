@@ -198,6 +198,24 @@ public enum ModeAction : byte
     SeatSpeed = 0,
     /// <summary><c>eliminate</c></summary>
     Eliminate = 1,
+    /// <summary><c>show</c></summary>
+    Show = 2,
+    /// <summary><c>hide</c></summary>
+    Hide = 3,
+    /// <summary><c>show_number</c></summary>
+    ShowNumber = 4,
+    /// <summary><c>stock_banner</c></summary>
+    StockBanner = 5,
+    /// <summary><c>seat.look</c></summary>
+    SeatLook = 6,
+    /// <summary><c>seat.own_look</c></summary>
+    SeatOwnLook = 7,
+    /// <summary><c>seat.colour</c></summary>
+    SeatColour = 8,
+    /// <summary><c>map_hide</c></summary>
+    MapHide = 9,
+    /// <summary><c>map_mark</c></summary>
+    MapMark = 10,
 }
 
 /// <summary>The vocabulary of one api, by the names a mode file writes (protocol/modes.toml).</summary>
@@ -358,5 +376,41 @@ public static partial class ModeWords
     [
         ("seat.speed", ModeAction.SeatSpeed, [ModeType.Seat, ModeType.Real]),
         ("eliminate", ModeAction.Eliminate, [ModeType.Seat]),
+        ("show", ModeAction.Show, [ModeType.Seat, ModeType.Int]),
+        ("hide", ModeAction.Hide, [ModeType.Seat, ModeType.Int]),
+        ("show_number", ModeAction.ShowNumber, [ModeType.Seat, ModeType.Int]),
+        ("stock_banner", ModeAction.StockBanner, [ModeType.Seat, ModeType.Int]),
+        ("seat.look", ModeAction.SeatLook, [ModeType.Seat, ModeType.Int]),
+        ("seat.own_look", ModeAction.SeatOwnLook, [ModeType.Seat, ModeType.Int]),
+        ("seat.colour", ModeAction.SeatColour, [ModeType.Seat, ModeType.Int]),
+        ("map_hide", ModeAction.MapHide, [ModeType.Seat, ModeType.Seats]),
+        ("map_mark", ModeAction.MapMark, [ModeType.Seat, ModeType.Int]),
     ];
+
+    /// <summary>The choices: an argument of one takes one of its names, its value the name's place.</summary>
+    public static readonly IReadOnlyDictionary<string, IReadOnlyList<string>> Choices =
+        new Dictionary<string, IReadOnlyList<string>>
+        {
+            ["part"] = ["TIMER", "DISTANCE", "DIGIT", "WARNING", "SUCCESS", "FAILED", "TIME_OVER", "SPEED_GAUGE", "OBJECTS"],
+            ["banner"] = ["FINAL_LAP", "BOOST_POWER", "TIME_BONUS", "GAP", "WRONG_WAY"],
+            ["look"] = ["normal", "ghost", "invisible"],
+        };
+
+    /// <summary>The actions' arguments that take a choice: (action, argument) to the choice's name.</summary>
+    public static readonly IReadOnlyDictionary<(ModeAction Action, int Argument), string> ActionChoices =
+        new Dictionary<(ModeAction Action, int Argument), string>
+        {
+            [(ModeAction.Show, 1)] = "part",
+            [(ModeAction.Hide, 1)] = "part",
+            [(ModeAction.StockBanner, 1)] = "banner",
+            [(ModeAction.SeatLook, 1)] = "look",
+            [(ModeAction.SeatOwnLook, 1)] = "look",
+        };
+
+    /// <summary>The actions written with a word between their first two arguments in place of a comma.</summary>
+    public static readonly IReadOnlyDictionary<ModeAction, string> ActionJoins =
+        new Dictionary<ModeAction, string>
+        {
+            [ModeAction.MapHide] = "from",
+        };
 }

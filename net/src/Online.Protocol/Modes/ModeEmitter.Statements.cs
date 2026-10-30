@@ -162,6 +162,16 @@ internal sealed partial class ModeEmitter
         var action = ModeWords.Actions.FirstOrDefault(a => a.Name == "seat." + field.Field);
         var read = ModeWords.SeatReads.FirstOrDefault(r => r.Name == field.Field);
         Value(field.Target, ModeType.Seat, $"'.{field.Field}'");
+        if (action.Name is not null && ModeWords.ActionChoices.TryGetValue((action.Id, 1), out var choice))
+        {
+            if (assign.Operator != "=")
+            {
+                throw new ModeCompileException(assign.Line, $"seat.{field.Field} takes a name: write seat.{field.Field} = {ModeWords.Choices[choice][0]};");
+            }
+            Choice(assign.Value, choice, $"seat.{field.Field}");
+            Op(ModeOp.Action, (long)action.Id);
+            return;
+        }
         if (action.Name is not null)
         {
             Work(assign, action.Args[1], $"seat.{field.Field}", () =>
@@ -303,9 +313,39 @@ internal sealed partial class ModeEmitter
             {
                 warnings.Add(ModeCompiler.Message(statement.Line, $"{action.Name} on none does nothing"));
             }
+            if (ModeWords.ActionChoices.TryGetValue((action.Id, i), out var choice))
+            {
+                Choice(statement.Arguments[i], choice, action.Name);
+                continue;
+            }
             Value(statement.Arguments[i], action.Args[i], action.Name);
         }
         Op(ModeOp.Action, (long)action.Id);
+    }
+
+    /// <summary>An argument of a choice (protocol/modes.toml's <c>[[choice]]</c>): one of its names, pushed as its
+    /// place; a number or anything else is refused, so a mode names what it shows.</summary>
+    private void Choice(ModeExpr expr, string choice, string what)
+    {
+        var values = ModeWords.Choices[choice];
+        var index = expr is ModeName name && FindLocal(name.Name) is null ? IndexOf(values, name.Name) : -1;
+        if (index < 0)
+        {
+            throw new ModeCompileException(expr.Line, $"{what} takes one of {string.Join(", ", values)}");
+        }
+        Push(index);
+    }
+
+    private static int IndexOf(IReadOnlyList<string> values, string name)
+    {
+        for (var i = 0; i < values.Count; i++)
+        {
+            if (values[i] == name)
+            {
+                return i;
+            }
+        }
+        return -1;
     }
 }
 
