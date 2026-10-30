@@ -28,7 +28,7 @@ namespace = "fzgx::modes"
 [api]
 number = 1
 budget = 65536         # operations a step at worst: the compiler's static count, and the interpreter's backstop (a nested loop over 30 x 30 seats fits)
-queue = 64             # queued actions a step (a full queue is a fault)
+queue = 256            # queued actions a step (a full queue is a fault): eight a seat for thirty seats
 globals = 256          # global words
 seat_words = 64        # words per seat
 locals = 64            # a rule's locals, its event's binding included
@@ -1142,3 +1142,20 @@ id = 22
 args = ["int"]
 where = "the pair gate: every pair of seats of the team passes through (their rows keep each other's bits)"
 doc = "team T no contact: teammates pass through each other and still bump their rivals"
+
+[[action]]
+name = "danger_zone"
+id = 23
+args = ["seat", "real", "real", "int"]
+where = """the block (the engine page's danger zone, a seat's: below, arm, the count, its state), worked at every mode point: \
+story chapter 6's speed bomb (unsafe-words-b 3.2)"""
+doc = """danger_zone s, below, arm, seconds: armed once the seat has reached arm km/h; under below, a count of seconds (60 a \
+second, plus 60) runs down, and at 60 the seat explodes (once). The count's display is the display words' (show s, \
+DIGIT); its state is in the block"""
+
+[[action]]
+name = "danger_zone off"
+id = 24
+args = ["seat"]
+where = "the block: the seat's danger zone cleared (a count under way stops)"
+doc = "the seat carries no bomb"

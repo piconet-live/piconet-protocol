@@ -11,7 +11,7 @@ namespace fzgx::modes
 // the api this build runs, and its limits (language 11.1)
 inline constexpr int API = 1;
 inline constexpr int BUDGET = 65536;
-inline constexpr int QUEUE = 64;
+inline constexpr int QUEUE = 256;
 inline constexpr int GLOBALS = 256;
 inline constexpr int SEAT_WORDS = 64;
 inline constexpr int LOCALS = 64;
@@ -316,7 +316,9 @@ enum Action : std::uint8_t
   ACTION_GHOSTOFF = 20,  // ghost off
   ACTION_NOCONTACT = 21,  // no contact
   ACTION_TEAMNOCONTACT = 22,  // team no contact
-  ACTION_COUNT = 23,
+  ACTION_DANGERZONE = 23,  // danger_zone
+  ACTION_DANGERZONEOFF = 24,  // danger_zone off
+  ACTION_COUNT = 25,
 };
 
 // the arguments an action pops
@@ -347,6 +349,8 @@ constexpr int ActionArguments(std::uint8_t action)
     case ACTION_GHOSTOFF: return 1;
     case ACTION_NOCONTACT: return 2;
     case ACTION_TEAMNOCONTACT: return 1;
+    case ACTION_DANGERZONE: return 4;
+    case ACTION_DANGERZONEOFF: return 1;
     default: return -1;
   }
 }

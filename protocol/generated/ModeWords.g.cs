@@ -372,6 +372,10 @@ public enum ModeAction : byte
     NoContact = 21,
     /// <summary><c>team no contact</c></summary>
     TeamNoContact = 22,
+    /// <summary><c>danger_zone</c></summary>
+    DangerZone = 23,
+    /// <summary><c>danger_zone off</c></summary>
+    DangerZoneOff = 24,
 }
 
 /// <summary>The vocabulary of one api, by the names a mode file writes (protocol/modes.toml).</summary>
@@ -382,7 +386,7 @@ public static partial class ModeWords
     /// <summary>The api's limit <c>budget</c>.</summary>
     public const int Budget = 65536;
     /// <summary>The api's limit <c>queue</c>.</summary>
-    public const int Queue = 64;
+    public const int Queue = 256;
     /// <summary>The api's limit <c>globals</c>.</summary>
     public const int Globals = 256;
     /// <summary>The api's limit <c>seat_words</c>.</summary>
@@ -620,5 +624,7 @@ public static partial class ModeWords
         ("ghost off", ModeAction.GhostOff, [ModeType.Seat]),
         ("no contact", ModeAction.NoContact, [ModeType.Seats, ModeType.Seats]),
         ("team no contact", ModeAction.TeamNoContact, [ModeType.Int]),
+        ("danger_zone", ModeAction.DangerZone, [ModeType.Seat, ModeType.Real, ModeType.Real, ModeType.Int]),
+        ("danger_zone off", ModeAction.DangerZoneOff, [ModeType.Seat]),
     ];
 }
