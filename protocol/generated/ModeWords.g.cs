@@ -180,7 +180,7 @@ public static partial class ModeWords
     /// <summary>The api this build compiles.</summary>
     public const int Api = 1;
     /// <summary>The api's limit <c>budget</c>.</summary>
-    public const int Budget = 4096;
+    public const int Budget = 65536;
     /// <summary>The api's limit <c>queue</c>.</summary>
     public const int Queue = 64;
     /// <summary>The api's limit <c>globals</c>.</summary>

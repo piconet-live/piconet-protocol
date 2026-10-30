@@ -26,7 +26,7 @@ namespace = "fzgx::modes"
 
 [api]
 number = 1
-budget = 4096          # operations a step at worst: the compiler's static count, and the interpreter's backstop
+budget = 65536         # operations a step at worst: the compiler's static count, and the interpreter's backstop (a nested loop over 30 x 30 seats fits)
 queue = 64             # queued actions a step (a full queue is a fault)
 globals = 256          # global words
 seat_words = 64        # words per seat
