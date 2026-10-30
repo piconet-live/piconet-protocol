@@ -57,6 +57,11 @@ CXX
 g++ -std=c++20 -Wall -Wextra -Werror -I"$here/generated" "$temp/race_rules.cpp" -o "$temp/race_rules"
 "$temp/race_rules"
 
+echo "check: protocol course names' C++ header, on its own"
+printf '#include "course_names.g.h"\nstatic_assert(fzgx::courses::StoryName(39) != nullptr && fzgx::courses::StoryName(37) == nullptr);\nint main() { return fzgx::courses::COURSES.size() == 26 ? 0 : 1; }\n' |
+    g++ -std=c++17 -Wall -Wextra -Werror -I"$here/generated" -x c++ - -o "$temp/course_names"
+"$temp/course_names"
+
 echo "check: protocol generator tests"
 timeout 300 python3 -W error -m unittest discover -s "$here/tests" -q
 

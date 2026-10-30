@@ -1,0 +1,173 @@
+# The courses' names as players know them, defined once: generate.py writes the C# table (generated/CourseTable.g.cs:
+# Online.Protocol's CourseNames, which the launcher, the server's status page and the vote read) and the game's
+# (generated/course_names.g.h: the runner writes a story stage's name into the game, port/core/src/boot.cpp, so the
+# course intro's title card shows it where the game's own table has "---") from this file (README.md).
+#
+# A course ([[course]]), by the game's course number (1 to 36), as the game's own course name table names it in
+# main.rel (English):
+#   course    the game's course number
+#   place     its venue, as players write it ("Mute City")
+#   track     the course's own name ("Twist Road")
+#
+# The story ([story]): its stages are the game's course numbers `first` on, one a chapter, `chapters` of them, as the
+# game numbers the chapters. A stage is told from a cup course by "Story" where a cup course has its venue. A chapter
+# ([[story.chapter]]) may have a name of our own (the game names no story stage: its table says "---"); a chapter
+# without one is "Chapter N".
+#   chapter   the chapter, 1 to `chapters`
+#   track     its name
+#
+# A name is what the game's own 24 by 24 font can write (its course names: letters, digits, the space, - ' . &) and at
+# most `longest` characters, which the game window's place for it holds with the ending zero (the runner's
+# COURSE_NAME, NAME_SIZE bytes).
+
+longest = 31
+
+[story]
+first = 37
+chapters = 9
+
+[[story.chapter]]
+chapter = 3
+track = "High-Stakes Jumps"
+
+[[story.chapter]]
+chapter = 7
+track = "Championship Circuit"
+
+[[story.chapter]]
+chapter = 8
+track = "Emperor's Trial"
+
+[[story.chapter]]
+chapter = 9
+track = "Dimension's Edge"
+
+[[course]]
+course = 1
+place = "Mute City"
+track = "Twist Road"
+
+[[course]]
+course = 3
+place = "Mute City"
+track = "Serial Gaps"
+
+[[course]]
+course = 5
+place = "Aeropolis"
+track = "Multiplex"
+
+[[course]]
+course = 7
+place = "Port Town"
+track = "Aero Dive"
+
+[[course]]
+course = 8
+place = "Lightning"
+track = "Loop Cross"
+
+[[course]]
+course = 9
+place = "Lightning"
+track = "Half Pipe"
+
+[[course]]
+course = 10
+place = "Green Plant"
+track = "Intersection"
+
+[[course]]
+course = 11
+place = "Green Plant"
+track = "Mobius Ring"
+
+[[course]]
+course = 13
+place = "Port Town"
+track = "Long Pipe"
+
+[[course]]
+course = 14
+place = "Big Blue"
+track = "Drift Highway"
+
+[[course]]
+course = 15
+place = "Fire Field"
+track = "Cylinder Knot"
+
+[[course]]
+course = 16
+place = "Casino Palace"
+track = "Split Oval"
+
+[[course]]
+course = 17
+place = "Fire Field"
+track = "Undulation"
+
+[[course]]
+course = 21
+place = "Aeropolis"
+track = "Dragon Slope"
+
+[[course]]
+course = 24
+place = "Cosmo Terminal"
+track = "Trident"
+
+[[course]]
+course = 25
+place = "Sand Ocean"
+track = "Lateral Shift"
+
+[[course]]
+course = 26
+place = "Sand Ocean"
+track = "Surface Slide"
+
+[[course]]
+course = 27
+place = "Big Blue"
+track = "Ordeal"
+
+[[course]]
+course = 28
+place = "Phantom Road"
+track = "Slim-Line Slits"
+
+[[course]]
+course = 29
+place = "Casino Palace"
+track = "Double Branches"
+
+[[course]]
+course = 31
+place = "Aeropolis"
+track = "Screw Drive"
+
+[[course]]
+course = 32
+place = "Outer Space"
+track = "Meteor Stream"
+
+[[course]]
+course = 33
+place = "Port Town"
+track = "Cylinder Wave"
+
+[[course]]
+course = 34
+place = "Lightning"
+track = "Thunder Road"
+
+[[course]]
+course = 35
+place = "Green Plant"
+track = "Spiral"
+
+[[course]]
+course = 36
+place = "Mute City"
+track = "Sonic Oval"
