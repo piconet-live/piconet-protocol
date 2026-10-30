@@ -771,6 +771,12 @@ id = 30
 args = [{ type = "int", least = 0, most = 300 }]
 where = "the time between a resume or a load and the race running on, a time or steps. Left out: 0, at once"
 
+[[setup]]
+name = "customs off"
+id = 31
+lobby = true
+where = "the coordinator: no custom machines in this mode's races, whatever the machines word says; a choice of one is refused and the racer races their stock machine. Left out: custom machines are allowed, a machines list holds the stock machines only"
+
 [[seat_read]]
 name = "racing"
 id = 0

@@ -241,7 +241,8 @@ enum Setup : std::uint8_t
   SETUP_PAUSE = 28,  // pause
   SETUP_SAVESTATE = 29,  // save_state
   SETUP_RESUMECOUNTDOWN = 30,  // resume_countdown
-  SETUP_COUNT = 31,
+  SETUP_CUSTOMSOFF = 31,  // customs off
+  SETUP_COUNT = 32,
 };
 
 // a read of a seat (OP_SEATREAD)

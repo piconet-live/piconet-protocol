@@ -47,6 +47,10 @@ public sealed record ModeTerms
     /// <summary>The machines it allows, by id; null: as the lobby's; empty: all (<c>machines all</c>).</summary>
     public IReadOnlyList<int>? Machines { get; init; }
 
+    /// <summary>No custom machines in its races (<c>customs off</c>). Left out, they are allowed, under a list of
+    /// machines too: the list holds the stock machines.</summary>
+    public bool CustomsOff { get; init; }
+
     /// <summary>The range a racer's own setting is brought into.</summary>
     public SettingRange? Setting { get; init; }
 
@@ -98,6 +102,7 @@ public sealed record ModeTerms
                 ModeSetup.Racers => terms with { Racers = (Cell(a[0]), Cell(a[1])) },
                 ModeSetup.MachinesAll => terms with { Machines = [] },
                 ModeSetup.Machines => terms with { Machines = [.. a.Select(Cell).Order()] },
+                ModeSetup.CustomsOff => terms with { CustomsOff = true },
                 ModeSetup.MachineSetting => terms with { Setting = new SettingRange(Cell(a[0]), Cell(a[1])) },
                 ModeSetup.Stats => terms with { Pack = word.Text },
                 ModeSetup.StatsStock => terms with { Pack = "" },

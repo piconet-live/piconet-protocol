@@ -233,6 +233,8 @@ public enum ModeSetup : byte
     SaveState = 29,
     /// <summary><c>resume_countdown</c></summary>
     ResumeCountdown = 30,
+    /// <summary><c>customs off</c></summary>
+    CustomsOff = 31,
 }
 
 /// <summary>A read of a seat (protocol/modes.toml).</summary>
@@ -609,6 +611,7 @@ public static partial class ModeWords
         ("pause", ModeSetup.Pause, [], false, ""),
         ("save_state", ModeSetup.SaveState, [], false, ""),
         ("resume_countdown", ModeSetup.ResumeCountdown, [new ModeArgument("", ModeType.Int, 0, 300, null)], false, ""),
+        ("customs off", ModeSetup.CustomsOff, [], true, ""),
     ];
 
     /// <summary>The reads of a seat (<c>seat.NAME</c>): name, id, type.</summary>
