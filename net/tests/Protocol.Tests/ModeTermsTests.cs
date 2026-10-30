@@ -212,4 +212,74 @@ public sealed class ModeTermsTests
             Mode: new LobbyMode("h", "s", "M", 1, Terms: new Dictionary<string, int> { ["finish-limit"] = 0 }));
         Assert.Equal(["laps"], rules.Differing(quickPlay));
     }
+
+    private const string Params = """
+        param n "Laps" number 2..10 step 2 default 4;
+        param d "Cut every" delay 10s..60s step 5s default 30s;
+        param f "Fast" switch default off;
+        param c "Map" choice ["a", "b"] default "b";
+        param r "Rate" number 0.5..2.0 default 1.0;
+        laps n;
+
+        """;
+
+    private static RotationMode Mode(IReadOnlyList<int>? values = null)
+    {
+        var compiled = Compile(Params);
+        Assert.True(compiled.Succeeded, string.Join("; ", compiled.Errors));
+        return new RotationMode("host", compiled.Mode!, compiled.Hash!, values);
+    }
+
+    private static int[] Defaults => [.. Mode().Package.Params.Select(p => p.Default)];
+
+    /// <summary>A host's values: the words they feed, and the race's <c>setup.mode.params</c>; none, the defaults.</summary>
+    [Fact]
+    public void AHostsValuesReachTheTermsAndTheMatchStart()
+    {
+        Assert.Equal(4, Mode().Laps(1));
+        Assert.Equal(Defaults, Mode().Start().Params);
+        int[] values = [8, 600, 1, 0, BitConverter.SingleToInt32Bits(1.5f)];
+        var chosen = Mode(values);
+        Assert.Equal(8, chosen.Laps(1));
+        Assert.Equal(values, chosen.Start().Params);
+        Assert.Equal(Mode().Hash, chosen.Hash);   // (the same file: the values travel beside its hash)
+    }
+
+    [Theory]
+    [InlineData(0, 12, "Laps")]        // past the range
+    [InlineData(0, 3, "Laps")]         // off its step
+    [InlineData(1, 60, "Cut every")]   // 1 s: below the range
+    [InlineData(1, 601, "Cut every")]  // off its step
+    [InlineData(2, 2, "Fast")]
+    [InlineData(3, 2, "Map")]
+    public void AValueOutsideItsDeclarationIsRefused(int index, int value, string says)
+    {
+        var values = Defaults;
+        Assert.Null(Mode().Package.ValuesRefusal(values));
+        values[index] = value;
+        Assert.StartsWith(says + ":", Mode().Package.ValuesRefusal(values), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ARealOutsideItsRangeAndAWrongCountAreRefused()
+    {
+        var values = Defaults;
+        values[4] = BitConverter.SingleToInt32Bits(2.5f);
+        Assert.StartsWith("Rate:", Mode().Package.ValuesRefusal(values), StringComparison.Ordinal);
+        values[4] = BitConverter.SingleToInt32Bits(1.25f);
+        Assert.Null(Mode().Package.ValuesRefusal(values));
+        Assert.Contains("5 settings, not 1", Mode().Package.ValuesRefusal([4]), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void TheParametersTravelInALobbysRules()
+    {
+        var mode = Mode();
+        var named = new LobbyMode(mode.Hash, "S", "T", 1, Params: mode.Package.Params, Values: [8, 600, 1, 0, 0]);
+        var rules = new LobbyRules(new Dictionary<string, int>(), Mode: named, ModeValues: [8, 600, 1, 0, 0]);
+        var back = Assert.IsType<SetLobbyRules>(ControlProtocol.DecodeClient(ControlProtocol.Encode(new SetLobbyRules(null, rules))));
+        Assert.Equal([8, 600, 1, 0, 0], back.Rules.ModeValues!);
+        Assert.Equal(mode.Package.Params.Select(p => (p.Label, p.Kind, p.Least, p.Most, p.Step)), back.Rules.Mode!.Params!.Select(p => (p.Label, p.Kind, p.Least, p.Most, p.Step)));
+        Assert.Equal(["a", "b"], back.Rules.Mode.Params![3].Choices);
+    }
 }

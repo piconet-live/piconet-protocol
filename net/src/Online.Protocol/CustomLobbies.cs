@@ -25,14 +25,17 @@ namespace Online.Protocol;
 /// does not compile is refused with the compiler's messages (<see cref="CustomLobby.BadMode"/>). The server sends a
 /// lobby's rules with the mode as <see cref="Mode"/> alone (its hash, name and badge); a launcher that sends rules again
 /// without a ModeFile and with the Mode the server sent keeps it, and without either races no mode. A server from
-/// before modes passes over both. The course pool and the allowed machines are Quick Play's in a custom lobby.
+/// before modes passes over both. ModeValues: the host's values of the mode's parameters, in <c>PARM</c>'s order (a
+/// real's bits), checked against its declared ranges (<see cref="ModePackage.ValuesRefusal"/>) and raced in
+/// <c>setup.mode.params</c>; null: a new file's defaults, or what the lobby's mode has. The course pool and the allowed machines are Quick Play's in a custom lobby.
 /// The server sends a lobby's rules whole (every settable rule's value), so a launcher compares them with Quick
 /// Play's (<see cref="LobbyList.QuickPlay"/>) and shows only the rules that differ (<see cref="Differing"/>).</remarks>
 public sealed record LobbyRules(IReadOnlyDictionary<string, int> Values,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? StatPack = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? PackFile = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] LobbyMode? Mode = null,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? ModeFile = null)
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? ModeFile = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<int>? ModeValues = null)
 {
     /// <summary>The longest <see cref="ModeFile"/>, in characters: the package a mode compiles to holds the file's
     /// text and is at most <see cref="ModeWords.PackageBytes"/>.</summary>
@@ -199,10 +202,14 @@ public sealed record LobbyList(IReadOnlyList<LobbySummary> Lobbies,
 /// (the header's; "" when it has none), and the api it needs (<see cref="Hello.Modes"/>). Terms: the rules the mode
 /// owns, by the rule's key as <see cref="LobbyRules.Values"/> holds them (<see cref="ModeTerms.Rules"/>), which win over
 /// the lobby's own; Pack: the stat pack it names ("" the disc's own stats; null: it names none). CpusAllowed is in Terms
-/// (cpu-fill). Null Terms: a server from before them.</summary>
+/// (cpu-fill). Null Terms: a server from before them. Params: the mode's parameters as its package declares them, and
+/// Values their values now, in the same order: the lobby's rule controls and what its panel shows. Null: it has none,
+/// or a server from before them.</summary>
 public sealed record LobbyMode(string Hash, string ShareCode, string Name, int Api, string Badge = "", string About = "",
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyDictionary<string, int>? Terms = null,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Pack = null);
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Pack = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<ModeParam>? Params = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<int>? Values = null);
 
 /// <summary>The player's team in a custom lobby with teams: their own, or (from the host) another member's
 /// (<paramref name="PlayerId"/>); null Team: none, the race gives them one. A race's seats get their teams from these

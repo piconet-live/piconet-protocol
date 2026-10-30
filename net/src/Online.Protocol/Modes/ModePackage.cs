@@ -27,6 +27,10 @@ public sealed record ModeParam(string Name, string Label, ModeParamKind Kind, Mo
     public bool Holds(int value) => Type == ModeType.Real
         ? BitConverter.Int32BitsToSingle(value) is var v && v >= BitConverter.Int32BitsToSingle(Least) && v <= BitConverter.Int32BitsToSingle(Most)
         : value >= Least && value <= Most;
+
+    /// <summary>Whether a host may set this value: within the range and, for whole numbers, on a step from the least.
+    /// (A real's step is the control's; the game's check is the range.)</summary>
+    public bool Fits(int value) => Holds(value) && (Type == ModeType.Real || Step <= 1 || ((long)value - Least) % Step == 0);
 }
 
 /// <summary>A setup word's argument: a constant cell, or the index of the parameter that gives it.</summary>
@@ -218,6 +222,25 @@ public sealed class ModePackage
                     }
                 }
                 return Value(word.Arguments[0]);
+            }
+        }
+        return null;
+    }
+
+    /// <summary>Why a host's parameter values are not this mode's, in a line for them; null: they are. One value a
+    /// parameter in <c>PARM</c>'s order, each within its declared range and on its step.</summary>
+    public string? ValuesRefusal(IReadOnlyList<int> values)
+    {
+        ArgumentNullException.ThrowIfNull(values);
+        if (values.Count != Params.Count)
+        {
+            return $"the mode has {Params.Count} settings, not {values.Count}";
+        }
+        for (var i = 0; i < values.Count; i++)
+        {
+            if (!Params[i].Fits(values[i]))
+            {
+                return $"{Params[i].Label}: that value is outside what the mode allows";
             }
         }
         return null;

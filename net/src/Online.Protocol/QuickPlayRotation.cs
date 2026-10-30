@@ -5,11 +5,12 @@ using Tomlyn.Model;
 namespace Online.Protocol;
 
 /// <summary>A mode of Quick Play's rotation, compiled (<see cref="ModeCompiler"/>): its file's name, its package and
-/// the package's content hash.</summary>
-public sealed record RotationMode(string File, ModePackage Package, string Hash)
+/// the package's content hash. Values: the parameters as a custom lobby's host set them, in <c>PARM</c>'s order, checked
+/// (<see cref="ModePackage.ValuesRefusal"/>); null: their defaults, as Quick Play races every mode.</summary>
+public sealed record RotationMode(string File, ModePackage Package, string Hash, IReadOnlyList<int>? Values = null)
 {
-    /// <summary>What the mode states of the race, on its parameters' defaults.</summary>
-    public ModeTerms Terms { get; } = ModeTerms.Of(Package);
+    /// <summary>What the mode states of the race, on its parameters' values.</summary>
+    public ModeTerms Terms { get; } = ModeTerms.Of(Package, Values);
 
     /// <summary>The race's laps on a course as the mode states them (<c>laps</c>, or its <c>laps by course</c>); null:
     /// it states none, so the lobby's laps. 0: unlimited.</summary>
@@ -18,8 +19,8 @@ public sealed record RotationMode(string File, ModePackage Package, string Hash)
     /// <summary>The mode says <c>cpus allowed</c>: players may vote CPUs into its race (left out, they may not).</summary>
     public bool CpusAllowed => Terms.CpusAllowed;
 
-    /// <summary>The match start's <c>setup.mode</c>: the package on its parameters' defaults.</summary>
-    public ModeStart Start() => Package.Start();
+    /// <summary>The match start's <c>setup.mode</c>: the package on its parameters' values.</summary>
+    public ModeStart Start() => Package.Start(Values);
 
     /// <summary>The vote card of this mode on a course (<see cref="CourseVote.RandomCourse"/>: laps not known); a spicy
     /// mode's carries its badge and its line.</summary>
