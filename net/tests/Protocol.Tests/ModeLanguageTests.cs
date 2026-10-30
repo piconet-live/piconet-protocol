@@ -27,6 +27,26 @@ public sealed class ModeLanguageTests
     private static int Cell(float value) => float.IsNaN(value) ? 0x7FC00000 : BitConverter.SingleToInt32Bits(value);
 
     [Fact]
+    public void ARuleWithNothingToKeepStillHasItsLocal()
+    {
+        var rule = Assert.Single(Compile("global int n;\nrule { event go; do { n += 1; } }\n").Mode!.Rules);
+        Assert.Equal(1, rule.Locals);                             // the runner's reader refuses 0
+    }
+
+    [Fact]
+    public void ByNamesAnEventsSeatAndStaysTheSortWord()
+    {
+        const string body = "do { award by, 5; for each seat where seat != by by seat.distance { award seat, 1; } }";
+        var spelled = Compile("rule { event ko(v, by); " + body + " }\n");
+        var plain = Compile("rule { event ko(v, k); " + body.Replace("award by", "award k").Replace("!= by by", "!= k by") + " }\n");
+        Assert.Equal(plain.Mode!.Code, spelled.Mode!.Code);       // the same code as with any other name
+        Compile("rule { event hit(by, b); do { award by, 1; } }\n");
+        // only an event's names: everywhere else it is the language's word
+        Assert.Contains("'by' is a word of the language", Error("global int by;\n"));
+        Assert.Contains("'by' is a word of the language", Error("rule { event each seat; do { int by = 1; } }\n"));
+    }
+
+    [Fact]
     public void TheLibraryReadsAndHoldsItsMacrosAndSubs()
     {
         Assert.Equal(["at", "every", "lives", "pits_off", "time_limit"], ModeCompiler.Library.Macros);
@@ -75,14 +95,11 @@ public sealed class ModeLanguageTests
     }
 
     [Theory]
-    [InlineData("lives 3;\n", "line 2: 'respawns' is not a word of api 1")]
-    [InlineData("time_limit 5min;\n", "line 2: 'clock_limit' is not a word of api 1")]
-    [InlineData("pits_off;\n", "line 2: a seat has no 'in_pit' (neither a read of api 1 nor a seat variable)")]
     [InlineData("lives;\n", "line 2: lives takes 1 value (n), not 0")]
     [InlineData("every(10s);\n", "line 2: every takes a block: every(t) { ... }")]
     [InlineData("param p \"P\" number 1..3;\nat(p) { }\n", "line 3: at takes a time of at least one step (at(10s)) or a delay parameter")]
     [InlineData("macro m() { }\n", "line 2: macros are the standard library's (api 1): a mode file reuses its code with a sub")]
-    public void ALibraryMacroWhoseWordsAreNotBuiltYetIsRefusedAtItsUse(string items, string message) =>
+    public void ALibraryMacroUsedWronglyIsRefusedAtItsUse(string items, string message) =>
         Assert.Equal(message, Error(items));
 
     [Fact]

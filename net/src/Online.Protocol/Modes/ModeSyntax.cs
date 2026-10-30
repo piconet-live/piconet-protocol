@@ -107,6 +107,7 @@ internal sealed record ModeSubItem(int Line, ModeType? Returns, string Name, IRe
 /// step, or a delay parameter that is never less): <c>every(10s)</c>'s 10s.</summary>
 internal sealed record ModeTimeArgument(int Line, string Macro, ModeExpr Value) : ModeItem(Line);
 
-/// <summary>A rule. <see cref="Bound"/> is the name its event binds (null: none).</summary>
+/// <summary>A rule. <see cref="Bound"/> is the name its event binds (null: none), <see cref="Second"/> the second
+/// name (<c>ko(v, by)</c>'s <c>by</c>; null: none).</summary>
 internal sealed record ModeRuleItem(int Line, string Label, string Event, string? Bound, IReadOnlyList<ModeExpr> Whens,
-    IReadOnlyList<ModeExpr> Whiles, IReadOnlyList<ModeStatement> Body) : ModeItem(Line);
+    IReadOnlyList<ModeExpr> Whiles, IReadOnlyList<ModeStatement> Body, string? Second = null) : ModeItem(Line);

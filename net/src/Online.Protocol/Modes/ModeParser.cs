@@ -561,7 +561,7 @@ internal sealed class ModeParser
         var line = Take().Line;
         var label = Current.Kind == ModeTokenKind.Text ? Take().Text : _label;
         Expect("{");
-        var (eventName, bound) = Event();
+        var (eventName, bound, second) = Event();
         var whens = new List<ModeExpr>();
         var whiles = new List<ModeExpr>();
         while (Current.Is("when") || Current.Is("while"))
@@ -572,11 +572,11 @@ internal sealed class ModeParser
         Expect("do");
         var body = Block();
         Expect("}");
-        return new ModeRuleItem(line, label, eventName, bound, whens, whiles, body);
+        return new ModeRuleItem(line, label, eventName, bound, whens, whiles, body, second);
     }
 
-    /// <summary><c>event NAME [(names)];</c>: the event's words as one name, and the name it binds.</summary>
-    private (string Event, string? Bound) Event()
+    /// <summary><c>event NAME [(names)];</c>: the event's words as one name, and the names it binds (one or two).</summary>
+    private (string Event, string? Bound, string? Second) Event()
     {
         Expect("event");
         var words = new List<string>();
@@ -588,19 +588,27 @@ internal sealed class ModeParser
         {
             throw Error($"an event is expected here, not {Describe(Current)}");
         }
-        string? bound = null;
+        string? bound = null, second = null;
         if (Accept("("))
         {
-            bound = NewName("the event's seat");
-            if (Current.Is(","))
+            bound = EventName("the event's seat");
+            if (Accept(","))
             {
-                throw Error("an event of api 1 binds one name, its seat");
+                second = EventName("the event's second name");
+                if (Current.Is(","))
+                {
+                    throw Error("an event of api 1 binds at most two names");
+                }
             }
             Expect(")");
         }
         Expect(";");
-        return (string.Join(' ', words), bound);
+        return (string.Join(' ', words), bound, second);
     }
+
+    /// <summary>A name an event binds. <c>by</c> may be one, as the vocabulary's <c>event ko(v, by)</c> spells it: the
+    /// word is a keyword only after a set's condition, where a bound <c>by</c> can still be a sort key.</summary>
+    private string EventName(string what) => Current.Is("by") && Current.Kind == ModeTokenKind.Name ? Take().Text : NewName(what);
 
     private List<ModeStatement> Block()
     {
@@ -632,6 +640,7 @@ internal sealed class ModeParser
             "wait" when token.Kind == ModeTokenKind.Name => Wait(),
             "call" when token.Kind == ModeTokenKind.Name => CallStatement(),
             "return" when token.Kind == ModeTokenKind.Name => Return(),
+            "team" when token.Kind == ModeTokenKind.Name => TeamAction(),
             _ when IsActionWord(token) => ActionStatement(),
             _ => Assignment(),
         };
@@ -639,7 +648,8 @@ internal sealed class ModeParser
 
     private bool IsActionWord(ModeToken token) =>
         token.Kind == ModeTokenKind.Name && !PeekToken(1).Is(".") && !Assignments.Any(a => PeekToken(1).Is(a))
-        && ModeWords.Actions.Any(a => a.Name == token.Text);
+        && ModeWords.Actions.Any(a => a.Name == token.Text || (a.Name.StartsWith(token.Text + " ", StringComparison.Ordinal)
+            && !a.Name.EndsWith(" off", StringComparison.Ordinal)));
 
     private ModeWait Wait()
     {
@@ -702,20 +712,56 @@ internal sealed class ModeParser
         return new ModeAssign(line, target, op, value);
     }
 
+    /// <summary>An action: its words (<c>no contact</c>), its arguments with commas or without (<c>no contact a b</c>,
+    /// <c>cpu_mode s, 4</c>), and a last <c>off</c> that names the word's <c>off</c> form (<c>respawns s off</c>,
+    /// <c>ghost s off</c>).</summary>
     private ModeActionStatement ActionStatement()
     {
         var token = Take();
-        var arguments = new List<ModeExpr>();
-        if (!Current.Is(";"))
+        var name = token.Text;
+        while (!ModeWords.Actions.Any(a => a.Name == name) && Current.Kind == ModeTokenKind.Name
+               && ModeWords.Actions.Any(a => a.Name.StartsWith(name + " " + Current.Text, StringComparison.Ordinal)))
         {
-            arguments.Add(Expression());
-            while (Accept(","))
+            name += " " + Take().Text;
+        }
+        if (!ModeWords.Actions.Any(a => a.Name == name))
+        {
+            throw Error($"'{name}' is not an action of api {ModeWords.Api}");
+        }
+        var arguments = new List<ModeExpr>();
+        while (!Current.Is(";"))
+        {
+            if (Current.Is("off") && ModeWords.Actions.Any(a => a.Name == name + " off"))
             {
-                arguments.Add(Expression());
+                Take();
+                name += " off";
+                break;
             }
+            if (arguments.Count > 0)
+            {
+                Accept(",");
+            }
+            arguments.Add(Expression());
         }
         Expect(";");
-        return new ModeActionStatement(token.Line, token.Text, arguments);
+        return new ModeActionStatement(token.Line, name, arguments);
+    }
+
+    /// <summary><c>team T no contact;</c>: the action <c>team no contact</c> on team T.</summary>
+    private ModeActionStatement TeamAction()
+    {
+        var line = Take().Line;
+        var team = Expression();
+        foreach (var word in new[] { "no", "contact" })
+        {
+            if (!Current.Is(word))
+            {
+                throw Error($"team T no contact; is the team action: '{word}' is expected here, not {Describe(Current)}");
+            }
+            Take();
+        }
+        Expect(";");
+        return new ModeActionStatement(line, "team no contact", [team]);
     }
 
     private ModeIf If()

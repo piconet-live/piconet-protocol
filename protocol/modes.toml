@@ -28,7 +28,7 @@ namespace = "fzgx::modes"
 [api]
 number = 1
 budget = 65536         # operations a step at worst: the compiler's static count, and the interpreter's backstop (a nested loop over 30 x 30 seats fits)
-queue = 64             # queued actions a step (a full queue is a fault)
+queue = 256            # queued actions a step (a full queue is a fault): eight a seat for thirty seats
 globals = 256          # global words
 seat_words = 64        # words per seat
 locals = 64            # a rule's locals, its event's binding included
@@ -405,8 +405,149 @@ doc = "every step, for each seat of the race in seat order"
 name = "out"
 id = 2
 kind = "discrete"
+binds = "seat int"
+doc = """the game's out verdict became true for the seat this step (the image's outtest.py); its second name, the \
+cause (an int, what the machine's state says at that step; the first that holds: 5 time over; 2 exploded (the event \
+`destroyed` below: contact, a strip, a death surface, the skip limit, `explode`); 3 fell (flag 0x800 with no explosion: \
+lost course, out of bounds, under the fall planes); 1 energy (broken down, flag 0x80, at rest; a CPU at rest too: it \
+comes to rest broken down); 4 retired (`retire`, `eliminate`); 0 none of these)"""
+
+# --- wave 2A, the race side: events (each found at the mode point by comparing a seat's state with the last step's,
+# kept in the block's engine page; language 6 gives their order in a step)
+
+[[event]]
+name = "race_start"
+id = 3
+kind = "discrete"
+doc = "the first step after the start gate (the countdown begins): the mode's first run"
+
+[[event]]
+name = "go"
+id = 4
+kind = "discrete"
+doc = "the game's GO: race.started became true this step"
+
+[[event]]
+name = "lap"
+id = 5
+kind = "discrete"
 binds = "seat"
-doc = "the game's out verdict became true for the seat this step (the image's outtest.py)"
+doc = "the seat's laps completed (P+0x118) rose this step"
+
+[[event]]
+name = "checkpoint"
+id = 6
+kind = "discrete"
+binds = "seat"
+doc = "the seat's checkpoint (P+0x140) changed this step"
+
+[[event]]
+name = "finish"
+id = 7
+kind = "discrete"
+binds = "seat"
+doc = "machine flag 0x10000 (finished) rose this step"
+
+[[event]]
+name = "fall"
+id = 8
+kind = "discrete"
+binds = "seat"
+doc = """machine flag 0x800 (out of the course) rose with no explosion (`destroyed`): lost course, out of bounds, or a \
+machine that reached the fall planes (fn_1_24A4C: y < -5000 or 900 under the course's floor) with no flag before"""
+
+[[event]]
+name = "destroyed"
+id = 9
+kind = "discrete"
+binds = "seat"
+doc = """the machine exploded: +0x58C 0x10, the game's record of its destroy routine (fn_1_25004 and its copies in fn_1_2A694, \
+fn_1_2A8D0: contact, a strip, a death surface, the skip limit, `explode`), rose; once for each life. Not when the \
+routine ran under the fall planes (that only ends a fall). May come after the seat's `out`: a wreck at rest explodes when \
+another machine touches it. Flag 0x40000000 is not read: it lasts until that machine's next step start, so `explode` \
+never shows it"""
+
+[[event]]
+name = "ko"
+id = 10
+kind = "discrete"
+binds = "seat seat"
+doc = """ko(v, by): the game's own record. The victim v's contact KO began this step (flag 0x80 rose with M+0x593 = 60, \
+fn_1_24F10); by is the one seat whose skull count M+0x482 rose this step, or none when no skull or more than one \
+rose (two KOs in one step: none for both; a wall, a strip or a mine gives no skull). No new site (owner 2026-10-29)"""
+
+[[event]]
+name = "hit"
+id = 11
+kind = "discrete"
+binds = "seat seat"
+doc = """hit(a, b), a below b: the pair's contact answer began this step (fn_1_239C4 returned 1 at the pair call \
+0x8514C, recorded in the block's touching rows, and did not the step before)"""
+
+[[event]]
+name = "damaged"
+id = 12
+kind = "discrete"
+binds = "seat"
+doc = "the seat's energy M+0x184 fell this step while it was not boosting (flag 0x20) [inf: a boost's own cost is not damage]"
+
+[[event]]
+name = "boost"
+id = 13
+kind = "discrete"
+binds = "seat"
+doc = "flag 0x20 (boost active: an energy boost or a dash plate) rose this step"
+
+[[event]]
+name = "wall"
+id = 14
+kind = "discrete"
+binds = "seat"
+doc = """the seat began touching a wall this step: (flags & 0x00800000) and (M+0x58C & 0x8) and not (M+0x58C & 0x10), \
+the race map's test, true now and not the step before"""
+
+[[event]]
+name = "pit"
+id = 15
+kind = "discrete"
+binds = "seat"
+doc = "the seat came onto a pit strip this step (M+0x218 & 0x08000000 rose)"
+
+[[event]]
+name = "overtake"
+id = 16
+kind = "discrete"
+binds = "seat seat"
+doc = """overtake(a, b): a, racing, is ahead of b, racing, in the standing (R+0xE) this step and was behind it the step \
+before; by a, then b"""
+
+[[event]]
+name = "respawned"
+id = 17
+kind = "discrete"
+binds = "seat"
+doc = "the seat's restore came to its exit (M+0x214 went from above 20 to 20 or less): it drives again"
+
+[[event]]
+name = "land"
+id = 18
+kind = "discrete"
+binds = "seat"
+doc = "machine flag 0x2 (airborne) fell this step"
+
+[[event]]
+name = "boost_end"
+id = 19
+kind = "discrete"
+binds = "seat"
+doc = "flag 0x20 (boost active) fell this step"
+
+[[event]]
+name = "wrong_way"
+id = 20
+kind = "discrete"
+binds = "seat"
+doc = "the seat began going the wrong way (P+0x10C became not 0)"
 
 [[setup]]
 name = "laps"
@@ -440,6 +581,68 @@ where = "the coordinator and the game: the race's laps on its course (0, `unlimi
 doc = """`laps by course { "Venue: Track": n; ...; else: n; }`: a table after the arguments, a pair a course (the \
 game's course number, courses.toml, then its laps, as `else`'s range); a course the table leaves out takes `else`. \
 Never with `laps`"""
+
+# --- wave 2A, the race side: setup words. A mode's word wins over the lobby's rule (files_match.cpp)
+
+[[setup]]
+name = "finish_limit"
+id = 5
+args = [{ type = "int", least = 0, most = 600 }]
+where = """the race block's RACE_FINISH_LIMIT in steps (seconds x 60; the image's raceend.py): so many seconds after the first \
+finish the race stops waiting for the machines still racing (0: no such end). The results then begin when the last player \
+seat that finished by then has had its 480 steps of FINISH! (at once if none has), so at most limit + 8 s after the first \
+finish; a machine that crosses the line during that wait still finishes. In a mode left out, 0: the mode owns its ending \
+(the lobby's rule does not reach it)"""
+
+[[setup]]
+name = "mine_regen"
+id = 6
+args = [{ type = "int", least = 50, most = 5000 }]
+where = "the race block's RACE_MINE_REGEN: a mine comes back so many milliseconds after it went off (in steps, rounded down)"
+
+[[setup]]
+name = "mine_regen off"
+id = 7
+where = "the race block's RACE_MINE_REGEN 0: a mine stays gone, the game's own way"
+
+[[setup]]
+name = "cpu_level"
+id = 8
+args = [{ type = "int", least = 0, most = 3 }]
+where = "the race block's RACE_CPULEVEL: 0 Novice, 1 Standard, 2 Expert, 3 Master"
+
+[[setup]]
+name = "restore on"
+id = 9
+where = """every seat respawns (machine flag 0x1, the mode's respawns on each seat at its first run), never the lobby's rule \
+0x8000, so `respawns s off` may take one seat out of it. Left out in a mode, no seat respawns unless a rule says `respawns s`: the lobby's restore rule never reaches a mode's race"""
+
+[[setup]]
+name = "restore off"
+id = 10
+where = "no seat respawns unless a rule says `respawns s`, as when left out"
+
+[[setup]]
+name = "contact off"
+id = 11
+where = "every pair of seats passes through each other (the pair gate at main.rel 0x8514C reads the block's no-contact rows)"
+
+[[setup]]
+name = "clock_limit"
+id = 12
+args = [{ type = "int", least = 60, most = 65535 }]
+where = """the game's timed-mode timer, held from the step: rule 0x40000, R+0xA4 written at every mode point from the race \
+clock (never 0), the once-a-frame decrement skipped (main.rel 0x3A36C -> 0x3A448); at the limit the race ends (the end \
+clause). A time (5min) or steps, at most 65,535 (18 min 12 s)"""
+
+[[setup]]
+name = "rolling_start"
+id = 13
+args = [{ type = "real", least = 0.0, most = 9000.0, default = 1000.0 }]
+where = """the first step after the gate: every seat's speed written as fn_1_23500 computes it (momentum along the nose, \
+M+0x224, flag 0x400, M+0x481 90, no start charge M+0xDC) and the frozen flag 0x8000 cleared; through the countdown the \
+CPU steers every seat (the stand-in's AI path) with the accelerator held at 0.6, no brake, no boost and no attacks; \
+every pad drives from GO. A seat the rejoin's autopilot drives stays its"""
 
 [[seat_read]]
 name = "racing"
@@ -493,7 +696,7 @@ doc = "broken down, machine flag 0x80"
 name = "destroyed"
 id = 8
 type = "bool"
-doc = "machine flag 0x40000000 (the destruction; 0x800, out of the course, follows it)"
+doc = "this life of the machine ended in an explosion (the event `destroyed` has fired; a fall under the planes: false)"
 
 [[seat_read]]
 name = "distance"
@@ -518,6 +721,244 @@ name = "lap_length"
 id = 12
 type = "real"
 doc = "the course's length, one lap, P+0xFC"
+
+# --- wave 2A, the race side: reads. Every one is a value held by the step (written by the step before the mode point)
+
+[[seat_read]]
+name = "forward"
+id = 13
+type = "vec"
+doc = "the nose, a unit vector: -(M+0xF4, M+0x104, M+0x114), the orientation's column 2"
+
+[[seat_read]]
+name = "velocity"
+id = 14
+type = "vec"
+doc = "the motion in km/h, a vector: the momentum M+0x94, +0x98, +0x9C times 216 / W (M+0x8), in binary32"
+
+[[seat_read]]
+name = "up"
+id = 15
+type = "vec"
+doc = "the machine's up, a unit vector: (M+0xF0, M+0x100, M+0x110), the orientation's column 1 [inf]"
+
+[[seat_read]]
+name = "restoring"
+id = 16
+type = "bool"
+doc = "the game restores the machine (M+0x214 not 0, u16)"
+
+[[seat_read]]
+name = "surface"
+id = 17
+type = "int"
+doc = """what the machine is on this step (M+0x218): 1 a pit strip (0x08000000), 2 a dash plate (0x10000000), 3 a jump \
+plate (0x04000000), 4 ice (0x80000000), 5 dirt (0x20000000), 6 a damage strip (0x02000000), 7 a mine (0x40000000); \
+0 none of these. The first that holds, in this order"""
+
+[[seat_read]]
+name = "input.accel"
+id = 18
+type = "real"
+doc = "the accelerator the step drove with, M+0x200 (0 to 1 for a player; a CPU's may pass 1)"
+
+[[seat_read]]
+name = "input.brake"
+id = 19
+type = "real"
+doc = "the brake the step drove with, M+0x204"
+
+[[seat_read]]
+name = "input.steer"
+id = 20
+type = "real"
+doc = "the steering the step drove with, M+0x1FC (-1 to 1)"
+
+[[seat_read]]
+name = "input.strafe"
+id = 21
+type = "real"
+doc = "the strafe the step drove with, M+0x1F8"
+
+[[seat_read]]
+name = "input.pitch"
+id = 22
+type = "real"
+doc = "the pitch the step drove with, M+0x1F4"
+
+[[seat_read]]
+name = "race_time"
+id = 23
+type = "int"
+doc = "steps from GO to the seat's finish, or to now while it races (the mode's own count, in the block)"
+
+[[seat_read]]
+name = "lap_time"
+id = 24
+type = "int"
+doc = "steps since the seat's last lap (or GO): the mode's own count"
+
+[[seat_read]]
+name = "best_lap"
+id = 25
+type = "int"
+doc = "the seat's fewest steps for a lap this race (0: no lap yet): the mode's own count"
+
+[[seat_read]]
+name = "machine"
+id = 26
+type = "int"
+doc = "the seat's machine as the race block names it (0 to 40 the game's machines, 50 a custom machine)"
+
+[[seat_read]]
+name = "is_cpu"
+id = 27
+type = "bool"
+doc = "no player drives the seat (the match start's player seats)"
+
+[[seat_read]]
+name = "hits"
+id = 28
+type = "int"
+doc = "the seat's hit events this race (contact answers begun)"
+
+[[seat_read]]
+name = "damage_taken"
+id = 29
+type = "real"
+doc = "the energy the seat lost this race to damage (the damaged events' sum)"
+
+[[seat_read]]
+name = "touching"
+id = 30
+type = "seats"
+doc = "the seats whose contact with this one was answered this step (the pair call's record, never M+0x514)"
+
+[[seat_read]]
+name = "lap_distance"
+id = 31
+type = "real"
+doc = "the distance into the lap, P+0x100"
+
+[[seat_read]]
+name = "checkpoint"
+id = 32
+type = "int"
+doc = "the checkpoint, P+0x140"
+
+[[seat_read]]
+name = "checkpoint_fraction"
+id = 33
+type = "real"
+doc = "the way between this checkpoint and the next, P+0xE8"
+
+[[seat_read]]
+name = "lap_steps"
+id = 34
+type = "int"
+doc = "the game's lap clock, P+0x160"
+
+[[seat_read]]
+name = "wrong_way"
+id = 35
+type = "bool"
+doc = "the game says the seat goes the wrong way (P+0x10C not 0)"
+
+[[seat_read]]
+name = "top_speed"
+id = 36
+type = "real"
+doc = "the race's highest speed so far, M+0xD8 (km/h; the results' max speed)"
+
+[[seat_read]]
+name = "max_energy"
+id = 37
+type = "real"
+doc = "the full energy, M+0x5DA (u16; 100 for every machine)"
+
+[[seat_read]]
+name = "last_hit_energy"
+id = 38
+type = "real"
+doc = "the last hit's amount, M+0x4AC"
+
+[[seat_read]]
+name = "fallen"
+id = 39
+type = "bool"
+doc = "machine flag 0x800: destroyed or out of the course"
+
+[[seat_read]]
+name = "spinning"
+id = 40
+type = "bool"
+doc = "machine flag 0x8: a spin attack"
+
+[[seat_read]]
+name = "airborne"
+id = 41
+type = "bool"
+doc = "machine flag 0x2: all four hover corners in the air"
+
+[[seat_read]]
+name = "boosting"
+id = 42
+type = "bool"
+doc = "machine flag 0x20: a boost (energy or dash plate)"
+
+[[seat_read]]
+name = "side_attack"
+id = 43
+type = "bool"
+doc = "machine flag 0x20000"
+
+[[seat_read]]
+name = "in_pit"
+id = 44
+type = "bool"
+doc = "on a pit strip this step (M+0x218 & 0x08000000)"
+
+[[seat_read]]
+name = "used_pit"
+id = 45
+type = "bool"
+doc = "has used a pit this race (M+0x58C & 0x1)"
+
+[[seat_read]]
+name = "standing"
+id = 46
+type = "int"
+doc = "the seat's place in the race order, 1 first (R+0xE, the ranking pass's)"
+
+[[seat_read]]
+name = "place"
+id = 47
+type = "int"
+doc = "the place the mode gave the seat (seat.place), 0 none"
+
+[[seat_read]]
+name = "points"
+id = 48
+type = "int"
+doc = "the points the mode gave the seat (award)"
+
+[[seat_read]]
+name = "kos"
+id = 49
+type = "int"
+doc = "the seat's skulls, M+0x482 (u8)"
+
+[[seat_read]]
+name = "is_player"
+id = 50
+type = "bool"
+doc = "a player drives the seat (the match start's player seats)"
+
+[[seat_read]]
+name = "ghost"
+id = 51
+type = "bool"
+doc = "nobody touches the seat (its no-contact row is every seat)"
 
 [[race_read]]
 name = "steps"
@@ -557,3 +998,175 @@ id = 1
 args = ["seat"]
 where = "the mode point: flag 0x08000000 (retired) and flag 0x1 cleared; the game's own verdict books it out at the next step"
 doc = "the seat is out of the race, by the game's own verdict"
+
+# --- wave 2A, the race side: actions. Applied after the run, in the queue's order (language 6)
+
+[[action]]
+name = "retire"
+id = 2
+args = ["seat"]
+where = "the mode point: flag 0x08000000 and flag 0x1 cleared in one write (never on a finished seat)"
+doc = "as eliminate: the seat is retired, the game's verdict books it out at the next step"
+
+[[action]]
+name = "explode"
+id = 3
+args = ["seat"]
+where = """the mode point, after the run (the image's mode_point): story action 16, fn_1_25004(M) with the momentum \
+M+0x94..+0xA8, M+0x224 and M+0x17C written back, so the wreck slides on"""
+doc = """the seat explodes; the verdict books it at the next step (a respawns seat restores instead). No KO credit, and none \
+later for that wreck. A finished, restoring or already destroyed seat: nothing"""
+
+[[action]]
+name = "respawns"
+id = 4
+args = ["seat"]
+where = "the mode point: machine flag 0x1 (the seat's own Restore), at once and every step after"
+doc = "the game restores the seat instead of booking it out (a fall, a destroy, a breakdown; never time over)"
+
+[[action]]
+name = "respawns off"
+id = 5
+args = ["seat"]
+where = """the mode point: flag 0x1 cleared at the first step its restore is not in the wreck phase (M+0x214 0 or 20 and \
+less), never on a finished seat (its booking set the flag)"""
+doc = "the seat's next wreck is final"
+
+[[action]]
+name = "hand_to_cpu"
+id = 6
+args = ["seat"]
+where = "the stand-in routine: the seat drives on the CPU's inputs (its pad's records skipped, as the rejoin's AI rows are)"
+doc = "the CPU drives the seat from the next step until pads_back"
+
+[[action]]
+name = "pads_back"
+id = 7
+where = "the stand-in routine: every seat drives on its pad again from the next step (a rejoin's AI rows still hold theirs)"
+doc = "every seat handed to the CPU is given back"
+
+[[action]]
+name = "cpu_mode"
+id = 8
+args = ["seat", "int"]
+where = """the mode point: story action 14 on a CPU seat's driver block CB = M+0x484: n 0, word 0 &= ~1 and CB+0x32 = 0 (the \
+normal driver); 1 to 33, word 0 |= 1 and CB+0x32 = n. The story's difficulty byte .bss 0x9C+1 is pinned to 0 at the \
+mode's first run. Modes 5 to 8 refused on courses 37, 38 and 41"""
+doc = "a CPU seat drives one of the story's scripted drivers (mode-open-words 2.2); a player seat: nothing"
+
+[[action]]
+name = "seat.place"
+id = 9
+args = ["seat", "int"]
+where = "the block: kept for the end clause, never written into the results before the race ends"
+doc = "the seat's place in the results when the race ends, 1 first (0: the mode's order does not name it)"
+
+[[action]]
+name = "end_race"
+id = 10
+where = """the end clause, after every other queued action of the run: the mode's order into the standing and the results \
+(R+0xE, R+0x2C, P+0x115, CM+0x23C, CM+0x21C, the record's place, time, skulls, max speed and points), held every step \
+after; the block's end word 2 ends the race at this step's boundary (the image's raceend.py)"""
+doc = "the race ends for everyone at this step"
+
+[[action]]
+name = "award"
+id = 11
+args = ["seat", "int"]
+where = "the block: the seat's points (read as seat.points); the end clause writes them into the record's +0x4"
+doc = "adds points to the seat"
+
+[[action]]
+name = "stop_all"
+id = 12
+where = "the mode point: rule 0x80 (fn_1_331EC 0x33354: every machine brakes), from the next step"
+doc = "every machine brakes. Ends nothing: the compiler refuses a mode that has it without end_race or clock_limit"
+
+[[action]]
+name = "seat.energy"
+id = 13
+args = ["seat", "real"]
+where = "the mode point: M+0x184, held to 0 .. 101% of the full energy M+0x5DA"
+doc = "sets the seat's energy"
+
+[[action]]
+name = "boost"
+id = 14
+args = ["seat"]
+where = "the stand-in routine, before the game's rule hook fn_1_331EC, the next step: flag 0x40 (the game's own request)"
+doc = "asks for the game's own energy boost; refused by its own rules (lap 1, energy, brake, a running boost), for one step"
+
+[[action]]
+name = "push"
+id = 15
+args = ["seat", "vec"]
+where = "site L (main.rel 0x23854) in the next machine step: the momentum M+0x94.. += v x W / 216"
+doc = "an impulse of v km/h, a vector, added to the seat's motion in the next step; the game's forces act on it from then on"
+
+[[action]]
+name = "seat.velocity"
+id = 16
+args = ["seat", "vec"]
+where = "site L (main.rel 0x23854) in the next machine step: the momentum M+0x94.. = v x W / 216"
+doc = """sets the seat's motion to v km/h, a vector (direction and speed), for that one step's travel: the seat moves v / 216 \
+m and reads v. It is not held: from the next step the game's forces act on it (2000 km/h on a 1000 km/h seat: 1780, 1631, \
+1529, about 1400 after 8 steps). To keep it, run the word every step (each seat), or use `seat.speed`"""
+
+[[action]]
+name = "freeze"
+id = 17
+args = ["seat"]
+where = "site L and the mode point's rescale: the seat's speed held at 0 every step until release (as seat.speed = 0)"
+doc = "the seat stands still (it may still turn); a seat frozen, broken, destroyed, finished, retired or restoring is not held"
+
+[[action]]
+name = "release"
+id = 18
+args = ["seat"]
+where = "the block"
+doc = "a frozen seat drives again"
+
+[[action]]
+name = "ghost"
+id = 19
+args = ["seat"]
+where = "the pair gate (main.rel 0x8514C): the seat's no-contact row is every seat"
+doc = "nobody touches the seat (and it touches nobody), from the next step's contact pass"
+
+[[action]]
+name = "ghost off"
+id = 20
+args = ["seat"]
+where = "the pair gate: the seat's row back to its team's no-contact bits (none, without team no contact)"
+doc = "the seat is solid again; a pair still overlapping stays immune until apart (the game's own +0x514 hand-back)"
+
+[[action]]
+name = "no contact"
+id = 21
+args = ["seats", "seats"]
+where = "the pair gate: every pair of a seat of the first set and a seat of the second passes through"
+doc = "no contact a b: a seat on either side is taken as its set"
+
+[[action]]
+name = "team no contact"
+id = 22
+args = ["int"]
+where = "the pair gate: every pair of seats of the team passes through (their rows keep each other's bits)"
+doc = "team T no contact: teammates pass through each other and still bump their rivals"
+
+[[action]]
+name = "danger_zone"
+id = 23
+args = ["seat", "real", "real", "int"]
+where = """the block (the engine page's danger zone, a seat's: below, arm, the count, its state), worked at every mode point: \
+story chapter 6's speed bomb (unsafe-words-b 3.2)"""
+doc = """danger_zone s, below, arm, seconds: armed once the seat has reached arm km/h; under below, a count of seconds (60 a \
+second, plus 60) runs down, and at 60 the seat explodes (once). The count's display is the display words' (show s, \
+DIGIT); its state is in the block"""
+
+[[action]]
+name = "danger_zone off"
+id = 24
+args = ["seat"]
+where = "the block: the seat's danger zone cleared (a count under way stops)"
+doc = "the seat carries no bomb"

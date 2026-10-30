@@ -88,6 +88,12 @@ public static class ModeCompiler
             {
                 Item(item);
             }
+            // stop_all ends nothing (rule 0x80 only brakes): a mode with it must reach an end of its own
+            if (_emitter.Used.TryGetValue(ModeAction.StopAll, out var stopLine) && !_emitter.Used.ContainsKey(ModeAction.EndRace)
+                && !_setups.Any(s => s.Id == ModeSetup.ClockLimit))
+            {
+                throw new ModeCompileException(stopLine, "stop_all only brakes the machines: a mode with it needs end_race or clock_limit, or its race never ends");
+            }
             var mode = new ModePackage
             {
                 Api = api,
@@ -278,12 +284,16 @@ public static class ModeCompiler
             {
                 throw new ModeCompileException(item.Line, $"{e.Name} binds {(e.BindsSeat ? "seat, and takes no name" : "nothing")}");
             }
+            if (item.Second is not null && e.Second is null)
+            {
+                throw new ModeCompileException(item.Line, $"{e.Name} binds one name, its seat");
+            }
             if (!e.Continuous && item.Whiles.Count > 0)
             {
                 throw new ModeCompileException(item.Whiles[0].Line, $"while is for the events that go on (every step, each seat): {e.Name} happens once, so its rule takes when");
             }
             var before = _emitter!.Cost;
-            var (rule, waits) = _emitter.Rule(item, e.Id, e.BindsSeat);
+            var (rule, waits) = _emitter.Rule(item, e.Id, e.BindsSeat, e.Second);
             _rules.Add(rule);
             if (waits)
             {

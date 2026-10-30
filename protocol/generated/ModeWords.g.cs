@@ -130,6 +130,42 @@ public enum ModeEvent : byte
     EachSeat = 1,
     /// <summary><c>out</c></summary>
     Out = 2,
+    /// <summary><c>race_start</c></summary>
+    RaceStart = 3,
+    /// <summary><c>go</c></summary>
+    Go = 4,
+    /// <summary><c>lap</c></summary>
+    Lap = 5,
+    /// <summary><c>checkpoint</c></summary>
+    Checkpoint = 6,
+    /// <summary><c>finish</c></summary>
+    Finish = 7,
+    /// <summary><c>fall</c></summary>
+    Fall = 8,
+    /// <summary><c>destroyed</c></summary>
+    Destroyed = 9,
+    /// <summary><c>ko</c></summary>
+    Ko = 10,
+    /// <summary><c>hit</c></summary>
+    Hit = 11,
+    /// <summary><c>damaged</c></summary>
+    Damaged = 12,
+    /// <summary><c>boost</c></summary>
+    Boost = 13,
+    /// <summary><c>wall</c></summary>
+    Wall = 14,
+    /// <summary><c>pit</c></summary>
+    Pit = 15,
+    /// <summary><c>overtake</c></summary>
+    Overtake = 16,
+    /// <summary><c>respawned</c></summary>
+    Respawned = 17,
+    /// <summary><c>land</c></summary>
+    Land = 18,
+    /// <summary><c>boost_end</c></summary>
+    BoostEnd = 19,
+    /// <summary><c>wrong_way</c></summary>
+    WrongWay = 20,
 }
 
 /// <summary>A setup word (protocol/modes.toml).</summary>
@@ -145,6 +181,24 @@ public enum ModeSetup : byte
     BoostOff = 3,
     /// <summary><c>laps by course</c></summary>
     LapsByCourse = 4,
+    /// <summary><c>finish_limit</c></summary>
+    FinishLimit = 5,
+    /// <summary><c>mine_regen</c></summary>
+    MineRegen = 6,
+    /// <summary><c>mine_regen off</c></summary>
+    MineRegenOff = 7,
+    /// <summary><c>cpu_level</c></summary>
+    CpuLevel = 8,
+    /// <summary><c>restore on</c></summary>
+    RestoreOn = 9,
+    /// <summary><c>restore off</c></summary>
+    RestoreOff = 10,
+    /// <summary><c>contact off</c></summary>
+    ContactOff = 11,
+    /// <summary><c>clock_limit</c></summary>
+    ClockLimit = 12,
+    /// <summary><c>rolling_start</c></summary>
+    RollingStart = 13,
 }
 
 /// <summary>A read of a seat (protocol/modes.toml).</summary>
@@ -176,6 +230,84 @@ public enum ModeSeatRead : byte
     Position = 11,
     /// <summary><c>lap_length</c></summary>
     LapLength = 12,
+    /// <summary><c>forward</c></summary>
+    Forward = 13,
+    /// <summary><c>velocity</c></summary>
+    Velocity = 14,
+    /// <summary><c>up</c></summary>
+    Up = 15,
+    /// <summary><c>restoring</c></summary>
+    Restoring = 16,
+    /// <summary><c>surface</c></summary>
+    Surface = 17,
+    /// <summary><c>input.accel</c></summary>
+    InputAccel = 18,
+    /// <summary><c>input.brake</c></summary>
+    InputBrake = 19,
+    /// <summary><c>input.steer</c></summary>
+    InputSteer = 20,
+    /// <summary><c>input.strafe</c></summary>
+    InputStrafe = 21,
+    /// <summary><c>input.pitch</c></summary>
+    InputPitch = 22,
+    /// <summary><c>race_time</c></summary>
+    RaceTime = 23,
+    /// <summary><c>lap_time</c></summary>
+    LapTime = 24,
+    /// <summary><c>best_lap</c></summary>
+    BestLap = 25,
+    /// <summary><c>machine</c></summary>
+    Machine = 26,
+    /// <summary><c>is_cpu</c></summary>
+    IsCpu = 27,
+    /// <summary><c>hits</c></summary>
+    Hits = 28,
+    /// <summary><c>damage_taken</c></summary>
+    DamageTaken = 29,
+    /// <summary><c>touching</c></summary>
+    Touching = 30,
+    /// <summary><c>lap_distance</c></summary>
+    LapDistance = 31,
+    /// <summary><c>checkpoint</c></summary>
+    Checkpoint = 32,
+    /// <summary><c>checkpoint_fraction</c></summary>
+    CheckpointFraction = 33,
+    /// <summary><c>lap_steps</c></summary>
+    LapSteps = 34,
+    /// <summary><c>wrong_way</c></summary>
+    WrongWay = 35,
+    /// <summary><c>top_speed</c></summary>
+    TopSpeed = 36,
+    /// <summary><c>max_energy</c></summary>
+    MaxEnergy = 37,
+    /// <summary><c>last_hit_energy</c></summary>
+    LastHitEnergy = 38,
+    /// <summary><c>fallen</c></summary>
+    Fallen = 39,
+    /// <summary><c>spinning</c></summary>
+    Spinning = 40,
+    /// <summary><c>airborne</c></summary>
+    Airborne = 41,
+    /// <summary><c>boosting</c></summary>
+    Boosting = 42,
+    /// <summary><c>side_attack</c></summary>
+    SideAttack = 43,
+    /// <summary><c>in_pit</c></summary>
+    InPit = 44,
+    /// <summary><c>used_pit</c></summary>
+    UsedPit = 45,
+    /// <summary><c>standing</c></summary>
+    Standing = 46,
+    /// <summary><c>place</c></summary>
+    Place = 47,
+    /// <summary><c>points</c></summary>
+    Points = 48,
+    /// <summary><c>kos</c></summary>
+    Kos = 49,
+    /// <summary><c>is_player</c></summary>
+    IsPlayer = 50,
+    /// <summary><c>ghost</c></summary>
+    Ghost = 51,
 }
 
 /// <summary>A read of the race (protocol/modes.toml).</summary>
@@ -198,6 +330,52 @@ public enum ModeAction : byte
     SeatSpeed = 0,
     /// <summary><c>eliminate</c></summary>
     Eliminate = 1,
+    /// <summary><c>retire</c></summary>
+    Retire = 2,
+    /// <summary><c>explode</c></summary>
+    Explode = 3,
+    /// <summary><c>respawns</c></summary>
+    Respawns = 4,
+    /// <summary><c>respawns off</c></summary>
+    RespawnsOff = 5,
+    /// <summary><c>hand_to_cpu</c></summary>
+    HandToCpu = 6,
+    /// <summary><c>pads_back</c></summary>
+    PadsBack = 7,
+    /// <summary><c>cpu_mode</c></summary>
+    CpuMode = 8,
+    /// <summary><c>seat.place</c></summary>
+    SeatPlace = 9,
+    /// <summary><c>end_race</c></summary>
+    EndRace = 10,
+    /// <summary><c>award</c></summary>
+    Award = 11,
+    /// <summary><c>stop_all</c></summary>
+    StopAll = 12,
+    /// <summary><c>seat.energy</c></summary>
+    SeatEnergy = 13,
+    /// <summary><c>boost</c></summary>
+    Boost = 14,
+    /// <summary><c>push</c></summary>
+    Push = 15,
+    /// <summary><c>seat.velocity</c></summary>
+    SeatVelocity = 16,
+    /// <summary><c>freeze</c></summary>
+    Freeze = 17,
+    /// <summary><c>release</c></summary>
+    Release = 18,
+    /// <summary><c>ghost</c></summary>
+    Ghost = 19,
+    /// <summary><c>ghost off</c></summary>
+    GhostOff = 20,
+    /// <summary><c>no contact</c></summary>
+    NoContact = 21,
+    /// <summary><c>team no contact</c></summary>
+    TeamNoContact = 22,
+    /// <summary><c>danger_zone</c></summary>
+    DangerZone = 23,
+    /// <summary><c>danger_zone off</c></summary>
+    DangerZoneOff = 24,
 }
 
 /// <summary>The vocabulary of one api, by the names a mode file writes (protocol/modes.toml).</summary>
@@ -208,7 +386,7 @@ public static partial class ModeWords
     /// <summary>The api's limit <c>budget</c>.</summary>
     public const int Budget = 65536;
     /// <summary>The api's limit <c>queue</c>.</summary>
-    public const int Queue = 64;
+    public const int Queue = 256;
     /// <summary>The api's limit <c>globals</c>.</summary>
     public const int Globals = 256;
     /// <summary>The api's limit <c>seat_words</c>.</summary>
@@ -308,12 +486,31 @@ public static partial class ModeWords
         _ => 0,
     };
 
-    /// <summary>The events: name, id, continuous, whether it binds a seat.</summary>
-    public static readonly IReadOnlyList<(string Name, ModeEvent Id, bool Continuous, bool BindsSeat)> Events =
+    /// <summary>The events: name, id, continuous, whether it binds a seat, and the type of the second name it
+    /// binds (null: none; <c>ko(v, by)</c> a seat, <c>out(s, cause)</c> an int).</summary>
+    public static readonly IReadOnlyList<(string Name, ModeEvent Id, bool Continuous, bool BindsSeat, ModeType? Second)> Events =
     [
-        ("every step", ModeEvent.EveryStep, true, false),
-        ("each seat", ModeEvent.EachSeat, true, true),
-        ("out", ModeEvent.Out, false, true),
+        ("every step", ModeEvent.EveryStep, true, false, null),
+        ("each seat", ModeEvent.EachSeat, true, true, null),
+        ("out", ModeEvent.Out, false, true, ModeType.Int),
+        ("race_start", ModeEvent.RaceStart, false, false, null),
+        ("go", ModeEvent.Go, false, false, null),
+        ("lap", ModeEvent.Lap, false, true, null),
+        ("checkpoint", ModeEvent.Checkpoint, false, true, null),
+        ("finish", ModeEvent.Finish, false, true, null),
+        ("fall", ModeEvent.Fall, false, true, null),
+        ("destroyed", ModeEvent.Destroyed, false, true, null),
+        ("ko", ModeEvent.Ko, false, true, ModeType.Seat),
+        ("hit", ModeEvent.Hit, false, true, ModeType.Seat),
+        ("damaged", ModeEvent.Damaged, false, true, null),
+        ("boost", ModeEvent.Boost, false, true, null),
+        ("wall", ModeEvent.Wall, false, true, null),
+        ("pit", ModeEvent.Pit, false, true, null),
+        ("overtake", ModeEvent.Overtake, false, true, ModeType.Seat),
+        ("respawned", ModeEvent.Respawned, false, true, null),
+        ("land", ModeEvent.Land, false, true, null),
+        ("boost_end", ModeEvent.BoostEnd, false, true, null),
+        ("wrong_way", ModeEvent.WrongWay, false, true, null),
     ];
 
     /// <summary>The setup words: name, id, arguments (name, type, least, most, default).</summary>
@@ -324,6 +521,15 @@ public static partial class ModeWords
         ("pedals locked", ModeSetup.PedalsLocked, [new ModeArgument("accel", ModeType.Real, 0.0f, 1.0f, 1.0f), new ModeArgument("brake", ModeType.Real, 0.0f, 1.0f, 0.0f)]),
         ("boost off", ModeSetup.BoostOff, []),
         ("laps by course", ModeSetup.LapsByCourse, [new ModeArgument("else", ModeType.Int, 0, 99, 3)]),
+        ("finish_limit", ModeSetup.FinishLimit, [new ModeArgument("", ModeType.Int, 0, 600, null)]),
+        ("mine_regen", ModeSetup.MineRegen, [new ModeArgument("", ModeType.Int, 50, 5000, null)]),
+        ("mine_regen off", ModeSetup.MineRegenOff, []),
+        ("cpu_level", ModeSetup.CpuLevel, [new ModeArgument("", ModeType.Int, 0, 3, null)]),
+        ("restore on", ModeSetup.RestoreOn, []),
+        ("restore off", ModeSetup.RestoreOff, []),
+        ("contact off", ModeSetup.ContactOff, []),
+        ("clock_limit", ModeSetup.ClockLimit, [new ModeArgument("", ModeType.Int, 60, 65535, null)]),
+        ("rolling_start", ModeSetup.RollingStart, [new ModeArgument("", ModeType.Real, 0.0f, 9000.0f, 1000.0f)]),
     ];
 
     /// <summary>The reads of a seat (<c>seat.NAME</c>): name, id, type.</summary>
@@ -342,6 +548,45 @@ public static partial class ModeWords
         ("team", ModeSeatRead.Team, ModeType.Int),
         ("position", ModeSeatRead.Position, ModeType.Vec),
         ("lap_length", ModeSeatRead.LapLength, ModeType.Real),
+        ("forward", ModeSeatRead.Forward, ModeType.Vec),
+        ("velocity", ModeSeatRead.Velocity, ModeType.Vec),
+        ("up", ModeSeatRead.Up, ModeType.Vec),
+        ("restoring", ModeSeatRead.Restoring, ModeType.Bool),
+        ("surface", ModeSeatRead.Surface, ModeType.Int),
+        ("input.accel", ModeSeatRead.InputAccel, ModeType.Real),
+        ("input.brake", ModeSeatRead.InputBrake, ModeType.Real),
+        ("input.steer", ModeSeatRead.InputSteer, ModeType.Real),
+        ("input.strafe", ModeSeatRead.InputStrafe, ModeType.Real),
+        ("input.pitch", ModeSeatRead.InputPitch, ModeType.Real),
+        ("race_time", ModeSeatRead.RaceTime, ModeType.Int),
+        ("lap_time", ModeSeatRead.LapTime, ModeType.Int),
+        ("best_lap", ModeSeatRead.BestLap, ModeType.Int),
+        ("machine", ModeSeatRead.Machine, ModeType.Int),
+        ("is_cpu", ModeSeatRead.IsCpu, ModeType.Bool),
+        ("hits", ModeSeatRead.Hits, ModeType.Int),
+        ("damage_taken", ModeSeatRead.DamageTaken, ModeType.Real),
+        ("touching", ModeSeatRead.Touching, ModeType.Seats),
+        ("lap_distance", ModeSeatRead.LapDistance, ModeType.Real),
+        ("checkpoint", ModeSeatRead.Checkpoint, ModeType.Int),
+        ("checkpoint_fraction", ModeSeatRead.CheckpointFraction, ModeType.Real),
+        ("lap_steps", ModeSeatRead.LapSteps, ModeType.Int),
+        ("wrong_way", ModeSeatRead.WrongWay, ModeType.Bool),
+        ("top_speed", ModeSeatRead.TopSpeed, ModeType.Real),
+        ("max_energy", ModeSeatRead.MaxEnergy, ModeType.Real),
+        ("last_hit_energy", ModeSeatRead.LastHitEnergy, ModeType.Real),
+        ("fallen", ModeSeatRead.Fallen, ModeType.Bool),
+        ("spinning", ModeSeatRead.Spinning, ModeType.Bool),
+        ("airborne", ModeSeatRead.Airborne, ModeType.Bool),
+        ("boosting", ModeSeatRead.Boosting, ModeType.Bool),
+        ("side_attack", ModeSeatRead.SideAttack, ModeType.Bool),
+        ("in_pit", ModeSeatRead.InPit, ModeType.Bool),
+        ("used_pit", ModeSeatRead.UsedPit, ModeType.Bool),
+        ("standing", ModeSeatRead.Standing, ModeType.Int),
+        ("place", ModeSeatRead.Place, ModeType.Int),
+        ("points", ModeSeatRead.Points, ModeType.Int),
+        ("kos", ModeSeatRead.Kos, ModeType.Int),
+        ("is_player", ModeSeatRead.IsPlayer, ModeType.Bool),
+        ("ghost", ModeSeatRead.Ghost, ModeType.Bool),
     ];
 
     /// <summary>The reads of the race (<c>race.NAME</c>): name, id, type.</summary>
@@ -358,5 +603,28 @@ public static partial class ModeWords
     [
         ("seat.speed", ModeAction.SeatSpeed, [ModeType.Seat, ModeType.Real]),
         ("eliminate", ModeAction.Eliminate, [ModeType.Seat]),
+        ("retire", ModeAction.Retire, [ModeType.Seat]),
+        ("explode", ModeAction.Explode, [ModeType.Seat]),
+        ("respawns", ModeAction.Respawns, [ModeType.Seat]),
+        ("respawns off", ModeAction.RespawnsOff, [ModeType.Seat]),
+        ("hand_to_cpu", ModeAction.HandToCpu, [ModeType.Seat]),
+        ("pads_back", ModeAction.PadsBack, []),
+        ("cpu_mode", ModeAction.CpuMode, [ModeType.Seat, ModeType.Int]),
+        ("seat.place", ModeAction.SeatPlace, [ModeType.Seat, ModeType.Int]),
+        ("end_race", ModeAction.EndRace, []),
+        ("award", ModeAction.Award, [ModeType.Seat, ModeType.Int]),
+        ("stop_all", ModeAction.StopAll, []),
+        ("seat.energy", ModeAction.SeatEnergy, [ModeType.Seat, ModeType.Real]),
+        ("boost", ModeAction.Boost, [ModeType.Seat]),
+        ("push", ModeAction.Push, [ModeType.Seat, ModeType.Vec]),
+        ("seat.velocity", ModeAction.SeatVelocity, [ModeType.Seat, ModeType.Vec]),
+        ("freeze", ModeAction.Freeze, [ModeType.Seat]),
+        ("release", ModeAction.Release, [ModeType.Seat]),
+        ("ghost", ModeAction.Ghost, [ModeType.Seat]),
+        ("ghost off", ModeAction.GhostOff, [ModeType.Seat]),
+        ("no contact", ModeAction.NoContact, [ModeType.Seats, ModeType.Seats]),
+        ("team no contact", ModeAction.TeamNoContact, [ModeType.Int]),
+        ("danger_zone", ModeAction.DangerZone, [ModeType.Seat, ModeType.Real, ModeType.Real, ModeType.Int]),
+        ("danger_zone off", ModeAction.DangerZoneOff, [ModeType.Seat]),
     ];
 }
