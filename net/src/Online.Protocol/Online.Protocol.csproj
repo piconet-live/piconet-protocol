@@ -24,6 +24,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Quick Play's rotation, quickplay.toml (QuickPlayRotation), which the service and the launcher's stand-in read:
+         Tomlyn, BSD-2-Clause. -->
+    <PackageReference Include="Tomlyn" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- The chat's word lists (Chat/ChatWords.cs): the server's always-blocked words and the launcher's swear words.
          Picked from an MIT-licensed list, whose licence goes along with them. -->
     <EmbeddedResource Include="Chat/blocked.txt" LogicalName="Online.Protocol.Chat.blocked.txt" />

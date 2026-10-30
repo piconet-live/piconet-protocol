@@ -1,0 +1,24 @@
+// Quick Play's normal rules: the game's own rules with the competitive scene's lap counts.
+// One file with a lap table, not one file per course: the rules are the same on every course and only the laps
+// differ, so a change to the rules is one edit and a vote card is (course, this mode).
+// Setup words left out take the lobby rules' Quick Play values (rules.toml defaults), but the finish limit: a mode
+// owns its ending, so this one states it.
+
+mode "Quick Play" {
+  api 1;
+  about "The game's own rules.";
+}
+
+cpus allowed;          // players may vote CPUs in, as today; none come without the vote
+finish_limit 90;       // the lobby's limit stops at a mode's door: Quick Play's own end, as today
+
+laps by course {
+  "Mute City: Sonic Oval": 8;
+  "Aeropolis: Screw Drive": 6;
+  "Big Blue: Drift Highway": 6;
+  "Casino Palace: Split Oval": 6;
+  "Mute City: Twist Road": 6;
+  "Green Plant: Mobius Ring": 4;
+  "Outer Space: Meteor Stream": 4;
+  else: 3;
+}

@@ -35,6 +35,25 @@ public static class VersionLine
             : null;
     }
 
+    /// <summary>The first line whose launchers and games race game modes (the owner, 2026-10-30): a launcher of an older
+    /// line is never matched into a mode's race, whatever its hello says.</summary>
+    public const string FirstWithModes = "0.6";
+
+    /// <summary>Whether a launcher of this line races modes: <see cref="FirstWithModes"/> and on, and a launcher that
+    /// names no line (a developer's build; what its hello's Modes says then stands).</summary>
+    public static bool RunsModes(string? line)
+    {
+        if (line is null || !IsLine(line))
+        {
+            return true;
+        }
+        var parts = line.Split('.');
+        var first = FirstWithModes.Split('.');
+        var (major, minor) = (int.Parse(parts[0], System.Globalization.CultureInfo.InvariantCulture), int.Parse(parts[1], System.Globalization.CultureInfo.InvariantCulture));
+        var (firstMajor, firstMinor) = (int.Parse(first[0], System.Globalization.CultureInfo.InvariantCulture), int.Parse(first[1], System.Globalization.CultureInfo.InvariantCulture));
+        return major > firstMajor || (major == firstMajor && minor >= firstMinor);
+    }
+
     private static bool IsNumber(string part) =>
         part is { Length: >= 1 and <= 4 } && part.All(char.IsAsciiDigit) && (part == "0" || part[0] != '0');
 }

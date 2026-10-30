@@ -27,6 +27,10 @@ public sealed record ModeParam(string Name, string Label, ModeParamKind Kind, Mo
     public bool Holds(int value) => Type == ModeType.Real
         ? BitConverter.Int32BitsToSingle(value) is var v && v >= BitConverter.Int32BitsToSingle(Least) && v <= BitConverter.Int32BitsToSingle(Most)
         : value >= Least && value <= Most;
+
+    /// <summary>Whether a host may set this value: within the range and, for whole numbers, on a step from the least.
+    /// (A real's step is the control's; the game's check is the range.)</summary>
+    public bool Fits(int value) => Holds(value) && (Type == ModeType.Real || Step <= 1 || ((long)value - Least) % Step == 0);
 }
 
 /// <summary>A setup word's argument: a constant cell, or the index of the parameter that gives it.</summary>
@@ -36,11 +40,28 @@ public sealed record ModeSetupValue(bool FromParam, int Value);
 /// left out at their defaults (so a reader needs no table of defaults).</summary>
 public sealed record ModeSetupWord(ModeSetup Id, IReadOnlyList<ModeSetupValue> Arguments);
 
+/// <summary>A setup word of the coordinator's (modes.toml's <c>lobby</c>), as the compiler read it from the file: its
+/// values in order (a range's ends, a course's or the machines' numbers), a stat pack's name. It is not in the
+/// package's <c>SETP</c>: the game sees what it sets as the match start's own fields. The content hash holds it all
+/// the same, through the file's text in <c>SRC </c>.</summary>
+public sealed record ModeLobbyWord(ModeSetup Id, IReadOnlyList<ModeSetupValue> Values, string? Text = null);
+
 /// <summary>A rule as the package keeps it: its conditions' and body's offsets in the code (<see cref="None"/>:
 /// none), and its locals, the event's binding (local 0) included.</summary>
 public sealed record ModeRule(string Label, ModeEvent Event, int Locals, uint When, uint While, uint Body)
 {
     public const uint None = 0xFFFFFFFF;
+}
+
+/// <summary>A <c>board</c> line as the package keeps it: its variable's scope, type and word, and its label.</summary>
+public sealed record ModeBoardLine(ModeScope Scope, ModeType Type, int Word, string Label)
+{
+    /// <summary>The words the line names: its variable's whole number picks one. None: it shows the number.</summary>
+    public IReadOnlyList<string> Words { get; init; } = [];
+
+    public bool Equals(ModeBoardLine? other) => other is not null && (Scope, Type, Word, Label) == (other.Scope, other.Type, other.Word, other.Label) && Words.SequenceEqual(other.Words);
+
+    public override int GetHashCode() => HashCode.Combine(Scope, Type, Word, Label, Words.Count);
 }
 
 /// <summary>The match start's <c>setup.mode</c> (formats.md section 9): the package, its hash, its api, the
@@ -66,6 +87,9 @@ public sealed class ModePackage
     public string About { get; init; } = "";
     public IReadOnlyList<ModeParam> Params { get; init; } = [];
     public IReadOnlyList<ModeSetupWord> Setups { get; init; } = [];
+    /// <summary>The words of the coordinator's, from the compile (not in the bytes: <see cref="Read"/> gives none;
+    /// everyone that uses them compiles the file).</summary>
+    public IReadOnlyList<ModeLobbyWord> LobbyWords { get; init; } = [];
     /// <summary>Each global's start value.</summary>
     public IReadOnlyList<int> Globals { get; init; } = [];
     /// <summary>Each seat word's start value.</summary>
@@ -73,6 +97,8 @@ public sealed class ModePackage
     /// <summary>Each team word's start value.</summary>
     public IReadOnlyList<int> TeamWords { get; init; } = [];
     public IReadOnlyList<ModeRule> Rules { get; init; } = [];
+    /// <summary>The file's <c>board</c> lines, in its order (the language's section 10): the status board's values.</summary>
+    public IReadOnlyList<ModeBoardLine> Board { get; init; } = [];
     public required byte[] Code { get; init; }
     public required string Source { get; init; }
 
@@ -157,6 +183,26 @@ public sealed class ModePackage
         });
         w.Section("CODE", s => s.Bytes(Code));
         w.Section("SRC ", s => s.Bytes(Encoding.UTF8.GetBytes(Source)));
+        // only in a mode with board lines, so a mode without keeps the bytes and the hash it had before the board
+        if (Board.Count > 0)
+        {
+            w.Section("BORD", s =>
+            {
+                s.U16(Board.Count);
+                foreach (var line in Board)
+                {
+                    s.U8((int)line.Scope);
+                    s.U8((int)line.Type);
+                    s.U16(line.Word);
+                    s.Text(line.Label);
+                    s.U8(line.Words.Count);
+                    foreach (var word in line.Words)
+                    {
+                        s.Text(word);
+                    }
+                }
+            });
+        }
         return w.ToArray();
     }
 
@@ -214,6 +260,25 @@ public sealed class ModePackage
         return null;
     }
 
+    /// <summary>Why a host's parameter values are not this mode's, in a line for them; null: they are. One value a
+    /// parameter in <c>PARM</c>'s order, each within its declared range and on its step.</summary>
+    public string? ValuesRefusal(IReadOnlyList<int> values)
+    {
+        ArgumentNullException.ThrowIfNull(values);
+        if (values.Count != Params.Count)
+        {
+            return $"the mode has {Params.Count} settings, not {values.Count}";
+        }
+        for (var i = 0; i < values.Count; i++)
+        {
+            if (!Params[i].Fits(values[i]))
+            {
+                return $"{Params[i].Label}: that value is outside what the mode allows";
+            }
+        }
+        return null;
+    }
+
     public ModeStart Start(IReadOnlyList<int>? values = null, IReadOnlyList<int>? teams = null)
     {
         if (teams is not null && (teams.Count > ModeWords.Seats || teams.Any(t => t is < 0 or >= ModeWords.Teams)))
@@ -260,6 +325,7 @@ public sealed class ModePackage
             throw new InvalidDataException($"the package is of api {api}, newer than this build's {ModeWords.Api}");
         }
         var sections = Sections.Select(tag => r.Section(tag)).ToArray();
+        var board = r.Left > 0 ? ReadBoard(r.Section("BORD")) : [];
         r.End();
         var head = sections[0];
         var (name, badge, about) = (head.Text(), head.Text(), head.Text());
@@ -278,11 +344,46 @@ public sealed class ModePackage
             SeatWords = seatWords,
             TeamWords = teamWords,
             Rules = ReadRules(sections[4], code.Length),
+            Board = board,
             Code = code,
             Source = sections[6].Utf8(sections[6].Left),
         };
         ModeCode.Check(result);
         return result;
+    }
+
+    private static List<ModeBoardLine> ReadBoard(ModeReader s)
+    {
+        var count = s.U16();
+        if (count == 0)
+        {
+            throw new InvalidDataException("a BORD section holds a line");
+        }
+        var list = new List<ModeBoardLine>();
+        for (var i = 0; i < count; i++)
+        {
+            var (scope, type, word, label) = (s.U8(), s.U8(), s.U16(), s.Text());
+            var words = new List<string>();
+            for (var left = s.U8(); left > 0; left--)
+            {
+                words.Add(s.Text());
+            }
+            if (words.Count > ModeWords.BoardWords || type == (int)ModeType.Real && words.Count > 0 || words.Any(w => Encoding.UTF8.GetByteCount(w) > ModeWords.BoardWord))
+            {
+                throw new InvalidDataException($"the board's line \"{label}\" names words not of api {ModeWords.Api}");
+            }
+            if (scope > (int)ModeScope.Team || type >= (int)ModeType.Vec || Encoding.UTF8.GetByteCount(label) is 0 or > ModeWords.BoardLabel)
+            {
+                throw new InvalidDataException($"the board's line \"{label}\" is not one of api {ModeWords.Api}");
+            }
+            list.Add(new ModeBoardLine((ModeScope)scope, (ModeType)type, word, label) { Words = words });
+        }
+        s.End();
+        if (list.GroupBy(l => l.Scope).Any(g => g.Count() > ModeWords.Board))
+        {
+            throw new InvalidDataException($"the board holds at most {ModeWords.Board} values a scope");
+        }
+        return list;
     }
 
     private static List<ModeParam> ReadParams(ModeReader s)

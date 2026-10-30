@@ -52,15 +52,16 @@ def emit(t):
     out += [f"        ({text(e['name'])}, ModeEvent.{e['pascal']}, {'true' if e['kind'] == 'continuous' else 'false'}, "
             f"{'true' if 'binds' in e else 'false'}, {second.get(e.get('binds', ''), 'null')})," for e in t["events"]]
     out += ["    ];", "",
-            "    /// <summary>The setup words: name, id, arguments (name, type, least, most, default).</summary>",
-            "    public static readonly IReadOnlyList<(string Name, ModeSetup Id, IReadOnlyList<ModeArgument> Args)> Setups =",
+            "    /// <summary>The setup words: name, id, arguments (name, type, least, most, default); Lobby: the coordinator's "
+            "alone, not in the package; Form: how the file writes it (range, text, list; empty: its arguments).</summary>",
+            "    public static readonly IReadOnlyList<(string Name, ModeSetup Id, IReadOnlyList<ModeArgument> Args, bool Lobby, string Form)> Setups =",
             "    ["]
     for s in t["setups"]:
         args = ", ".join(
             f"new ModeArgument({text(a.get('name', ''))}, {cs_type(a['type'])}, {number(a.get('least', 0), a['type'])}, "
             f"{number(a.get('most', 0), a['type'])}, {number(a['default'], a['type']) if 'default' in a else 'null'})"
             for a in s.get("args", []))
-        out.append(f"        ({text(s['name'])}, ModeSetup.{s['pascal']}, [{args}]),")
+        out.append(f"        ({text(s['name'])}, ModeSetup.{s['pascal']}, [{args}], {'true' if s.get('lobby') else 'false'}, {text(s.get('form', ''))}),")
     out += ["    ];", "",
             "    /// <summary>The reads of a seat (<c>seat.NAME</c>): name, id, type.</summary>",
             "    public static readonly IReadOnlyList<(string Name, ModeSeatRead Id, ModeType Type)> SeatReads =",

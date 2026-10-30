@@ -10,10 +10,10 @@ SCHEMA = os.path.join(here, "modes.toml")
 
 TOP_KEYS = {"codec", "api", "op", "event", "setup", "seat_read", "race_read", "action", "choice"}
 API_KEYS = {"number", "budget", "queue", "globals", "seat_words", "locals", "rules", "sorts", "package_bytes", "seats",
-            "team_words", "teams", "waits", "wait_locals", "subs"}
+            "team_words", "teams", "waits", "wait_locals", "subs", "board", "board_label", "board_words", "board_word", "fsqrt_cost"}
 OP_KEYS = {"name", "code", "operands", "doc"}
 EVENT_KEYS = {"name", "id", "kind", "binds", "doc"}
-SETUP_KEYS = {"name", "id", "args", "where", "doc", "table"}
+SETUP_KEYS = {"name", "id", "args", "where", "doc", "table", "lobby", "form"}
 ARG_KEYS = {"type", "name", "least", "most", "default"}
 READ_KEYS = {"name", "id", "type", "doc"}
 ACTION_KEYS = {"name", "id", "args", "where", "doc", "join"}
@@ -109,6 +109,10 @@ def load(path=SCHEMA):
             keys(a, ARG_KEYS, f"setup {s['name']}: an argument")
             if a.get("type") not in ("int", "real"):
                 raise SchemaError(f"setup {s['name']}: an argument is an int or a real")
+        if s.get("form", "") not in ("", "range", "text", "list"):
+            raise SchemaError(f"setup {s['name']}: form is range, text or list")
+        if s.get("form") and not s.get("lobby"):
+            raise SchemaError(f"setup {s['name']}: a form is a word of the coordinator's")
         if s.get("table", "course") != "course":
             raise SchemaError(f"setup {s['name']}: a table is of courses")
     reads = {}

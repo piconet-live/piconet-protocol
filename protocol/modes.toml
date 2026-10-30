@@ -11,13 +11,18 @@
 # the bytes after it, in order (u8, u16, u32, i32: big-endian), `doc` what it does. The stack holds 32-bit cells: an
 # int, a real's binary32 bits, a bool (0 or 1), a seat (0 to 29, or -1 none), a set of seats (bit i: seat i); a vec is
 # three cells, x then y then z (a read of type vec pushes all three). A binary operation pops b, then a, and pushes
-# a op b. Every operation costs one operation of the step's budget, but SortRun: 1 + 5 x entries x keys.
+# a op b. Every operation costs one operation of the step's budget, but SortRun: 1 + 5 x entries x keys, and FSqrt:
+# [api] fsqrt_cost (the owner, 2026-10-30: the game's square root is the dear one; `sqrt`, and `dist`, which calls it).
 #
 # A word: `name` as a mode file writes it, `id` its number in the bytecode (Action, SeatRead, RaceRead) or the package
 # (setup words, events), `type` what a read gives (int, real, bool, seat, seats, vec), `args` an action's or setup word's
 # arguments in order, `doc`, and `where`: the game's site or the part that applies it (vocabulary.md's). A setup word
 # with `table` takes a table of pairs after its arguments (the package: two more arguments a pair, `table`'s value
-# first): "course", a course's number (courses.toml).
+# first): "course", a course's number (courses.toml). A setup word with `lobby = true` is the coordinator's alone and
+# is not in the package's SETP (formats.md section 9): what it sets reaches the game as the match start's own fields,
+# so a game needs to know nothing of it; the compiler reads it from the file (ModePackage.LobbyWords, ModeTerms).
+# `form`: how the file writes it: "range" (`racers 2..8`: its two arguments, least and most), "text" (`stats "GX+"`),
+# "list" (`machines ["Blue Falcon", ...]`); none: its arguments.
 
 [codec.csharp]
 namespace = "Online.Protocol"
@@ -39,6 +44,11 @@ team_words = 32        # words per team
 teams = 30             # teams in a race at most (a team's number 0 to 29)
 waits = 64             # rule instances waiting at once (the compiler counts the most a mode can have)
 wait_locals = 8        # locals a waiting rule keeps, its event's binding included
+fsqrt_cost = 8         # what one FSqrt takes of the budget (the compiler's count and the interpreter's, in both its loops)
+board = 8              # `board` lines a scope (global, seat, team): what the status board holds (board.toml)
+board_label = 32       # a `board` line's label, in UTF-8 bytes
+board_words = 16       # the words a `board` line may name
+board_word = 16        # one of those words, in UTF-8 bytes
 package_bytes = 65536  # a package's whole size, the source included
 seats = 30
 
@@ -643,6 +653,123 @@ where = """the first step after the gate: every seat's speed written as fn_1_235
 M+0x224, flag 0x400, M+0x481 90, no start charge M+0xDC) and the frozen flag 0x8000 cleared; through the countdown the \
 CPU steers every seat (the stand-in's AI path) with the accelerator held at 0.6, no brake, no boost and no attacks; \
 every pad drives from GO. A seat the rejoin's autopilot drives stays its"""
+
+# --- the lobby-rule overhaul: every rule of rules.toml that shapes a race is a word; a mode's word wins. The coordinator's
+
+[[setup]]
+name = "course"
+id = 14
+lobby = true
+form = "text"
+where = "the coordinator, at match forming: the course, no vote (a course of the pool, \"Venue: Track\"). Not in Quick Play's rotation, whose cards name the courses"
+
+[[setup]]
+name = "racers"
+id = 15
+lobby = true
+form = "range"
+args = [{ type = "int", name = "least", least = 1, most = 30 }, { type = "int", name = "most", least = 1, most = 30 }]
+where = "the coordinator: the lobby's seats are `most`; below `least` racers the race is refused. Not in Quick Play's rotation"
+
+[[setup]]
+name = "machines all"
+id = 16
+lobby = true
+where = "the coordinator: every machine may be chosen"
+
+[[setup]]
+name = "machines"
+id = 17
+lobby = true
+form = "list"
+where = "the coordinator: the machines racers may choose, by name"
+
+[[setup]]
+name = "machine_setting"
+id = 18
+lobby = true
+form = "range"
+args = [{ type = "int", name = "least", least = 0, most = 100 }, { type = "int", name = "most", least = 0, most = 100 }]
+where = "the coordinator: the range each racer's own setting is brought into"
+
+[[setup]]
+name = "stats"
+id = 19
+lobby = true
+form = "text"
+where = "the coordinator: the race's stat pack, one of the server's by name, enforced (the host's row leaves the panel); a server without it refuses the mode. Left out: the lobby's rule stands"
+
+[[setup]]
+name = "stats stock"
+id = 20
+lobby = true
+where = "the coordinator: no stat pack, enforced: the disc's own stats"
+
+[[setup]]
+name = "mixed_packs on"
+id = 21
+lobby = true
+where = "the coordinator: each racer may race a pack of their own"
+
+[[setup]]
+name = "mixed_packs off"
+id = 22
+lobby = true
+where = "the coordinator: one pack for all"
+
+[[setup]]
+name = "boost_start on"
+id = 23
+lobby = true
+where = "the coordinator: the match start's rules (RACE_BOOST): boosting on the first lap"
+
+[[setup]]
+name = "boost_start off"
+id = 24
+lobby = true
+where = "the coordinator: the match start's rules (RACE_BOOST 0): no boosting on the first lap"
+
+[[setup]]
+name = "teams"
+id = 25
+lobby = true
+form = "range"
+args = [{ type = "int", name = "least", least = 2, most = 30 }, { type = "int", name = "most", least = 2, most = 30 }]
+where = "the coordinator: the teams a race of this mode has, set by the host and the racers and carried in setup.mode.teams; fewer than `least` holding racers and the race is refused"
+
+# --- a solo mode (Practice; time trials later): the words of a race raced alone, no relay. The compiler refuses them
+# without `solo`, and `solo` with CPUs, racers or teams; the coordinator and the game refuse a `solo` mode in a lobby.
+
+[[setup]]
+name = "solo"
+id = 26
+where = """the launcher starts it itself as a practice (the launch file's `practice`: one seat, seat 0, no relay, every step's \
+row the local pad's, port/core/src/practice_session.cpp). No lobby and no rotation races it; the game refuses it with a relay"""
+
+[[setup]]
+name = "rewind"
+id = 27
+args = [{ type = "int", least = 60, most = 3600 }]
+where = """the rolling buffer the player can go back through, a time or steps, at most a minute: every step inside it stays \
+in the undo log, the mode's block with the rest. Left out in a solo mode, no way back"""
+
+[[setup]]
+name = "pause"
+id = 28
+where = """Start stands the picture at the moment it shows; the stick and the replay's bar then move it inside `rewind`'s reach, \
+and Start again goes on from it (from an earlier moment: what came after is dropped). Left out, Start does nothing"""
+
+[[setup]]
+name = "save_state"
+id = 29
+where = """one saved moment, D-pad right saves and D-pad left loads: a mark on a step inside `rewind`'s reach, gone when the race \
+has run past the reach or gone on from before it. Needs `rewind`"""
+
+[[setup]]
+name = "resume_countdown"
+id = 30
+args = [{ type = "int", least = 0, most = 300 }]
+where = "the time between a resume or a load and the race running on, a time or steps. Left out: 0, at once"
 
 [[seat_read]]
 name = "racing"

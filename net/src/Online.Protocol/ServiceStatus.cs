@@ -17,14 +17,19 @@ namespace Online.Protocol;
 /// before the setting. The deploy tooling reads the four; no launcher does. LineBuilds: the released builds whose
 /// launchers name no line (<see cref="Hello.Line"/>), each with the line the server puts them in (the file the
 /// server holds beside its program); null: a server from before lines, or one that holds none. LineBuildsFault: why
-/// that file is not in force (those builds then race by their build alone); null: nothing is wrong.
+/// that file is not in force (those builds then race by their build alone); null: nothing is wrong. Motd: the message
+/// of the day while the operator has one set, as the notice the coordinator sends at each welcome (the same id, tier,
+/// text without the tier's word, and time), so that a launcher on its home screen, which says no hello, shows it
+/// too; null: none, or a server from before it (written only when set).
+/// PackNone: the server takes the setting FZGX_STAT_PACK=none as no pack, the one way to no pack where a deployment's
+/// configuration names one; false: a server from before that word, which would refuse to start on it (the deploy tooling asks).
 /// </summary>
 public sealed record ServiceStatus(
     string Name, DateTimeOffset Time, int PlayersOnline, IReadOnlyList<LobbyView> Lobbies,
     IReadOnlyList<FormingMatchView> Starting, IReadOnlyList<RaceView> Races, IReadOnlyList<RelayView> Relays,
     StatPackName? StatPack = null, string? PackSetting = null, TogetherView? Together = null, string? TogetherSetting = null,
     string? TogetherFault = null, IReadOnlyList<TogetherFileView>? TogetherFiles = null,
-    IReadOnlyList<LineBuildView>? LineBuilds = null, string? LineBuildsFault = null);
+    IReadOnlyList<LineBuildView>? LineBuilds = null, string? LineBuildsFault = null, RecentNotice? Motd = null, bool PackNone = false);
 
 /// <summary>A released build that names no line, and the line a server puts it in (<see cref="ServiceStatus.LineBuilds"/>):
 /// the build with each hash cut to eight characters, its line ("0.5") and what the file calls it ("0.5.1").</summary>

@@ -39,6 +39,8 @@ public sealed class ModeCompilerTests
     [InlineData("lives")]
     [InlineData("display")]
     [InlineData("wrecks")]
+    [InlineData("board")]
+    [InlineData("practice")]
     public void AVectorCompilesToItsPackage(string name)
     {
         var result = CompileVector(name);
@@ -128,15 +130,16 @@ public sealed class ModeCompilerTests
         Assert.All(ModeWords.RaceReads, r => Assert.Contains(code, l => l.EndsWith("RaceRead " + r.Name, StringComparison.Ordinal)));
         Assert.All(ModeWords.Actions, a => Assert.Contains(code.Concat(Code("display")), l => l.EndsWith("Action " + a.Name, StringComparison.Ordinal)));
         // every setup word but laps by course (the competitive vector's) and the off forms whose on form the vectors
-        // hold (mine_regen off, restore off: a mode states one of the two)
-        var setups = mode.Setups.Concat(race.Setups).Select(s => s.Id).ToList();
-        Assert.Equal(ModeWords.Setups.Select(s => s.Id).Where(id => id is not (ModeSetup.LapsByCourse or ModeSetup.MineRegen or ModeSetup.RestoreOff)).Order(),
+        // hold (mine_regen off, restore off: a mode states one of the two); the practice vector's are a solo mode's
+        var solo = CompileVector("practice").Mode!.Setups.Where(s => s.Id != ModeSetup.Laps);
+        var setups = mode.Setups.Concat(race.Setups).Concat(solo).Select(s => s.Id).ToList();
+        Assert.Equal(ModeWords.Setups.Where(s => !s.Lobby).Select(s => s.Id).Where(id => id is not (ModeSetup.LapsByCourse or ModeSetup.MineRegen or ModeSetup.RestoreOff)).Order(),
             setups.Order());
         Assert.Equal(ModeWords.Events.Select(e => e.Id).Order(), mode.Rules.Concat(race.Rules).Select(r => r.Event).Distinct().Order());
         Assert.Equal(Enum.GetValues<ModeParamKind>(), mode.Params.Select(p => p.Kind).Distinct().Order());
         Assert.Contains(mode.Params, p => p.Type == ModeType.Real);
         Assert.Contains(mode.Setups.SelectMany(s => s.Arguments), a => a.FromParam);
-        Assert.Equal(3845, result.Budget);
+        Assert.Equal(3852, result.Budget);
     }
 
     [Fact]

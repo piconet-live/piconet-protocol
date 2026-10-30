@@ -1,6 +1,6 @@
 namespace Online.Protocol;
 
-/// <summary>Reads a mode file's tokens into its tree (the language's grammar, section 13; no board yet). It knows the
+/// <summary>Reads a mode file's tokens into its tree (the language's grammar, section 13). It knows the
 /// syntax only; names and types are the compiler's. A use of a standard library macro (<see cref="ModeLibrary"/>:
 /// <c>every(10s) { }</c>, <c>lives 3;</c>) is expanded here into the items it stands for, its arguments' tokens put
 /// in for its parameters' names (the language's section 9).</summary>
@@ -228,7 +228,7 @@ internal sealed class ModeParser
         var token = Current;
         if (token.Kind != ModeTokenKind.Name)
         {
-            throw Error($"a parameter, a setup word, a variable, a sub or a rule is expected here, not {Describe(token)}");
+            throw Error($"a parameter, a setup word, a variable, a sub, a rule or a board line is expected here, not {Describe(token)}");
         }
         return token.Text switch
         {
@@ -237,9 +237,42 @@ internal sealed class ModeParser
             "global" or "seat" or "team" => Variable(),
             "sub" => Sub(),
             "rule" => Rule(),
+            "board" => Board(),
             "macro" => throw Error("macros are the standard library's (api 1): a mode file reuses its code with a sub"),
             _ => Setup(),
         };
+    }
+
+    /// <summary><c>board seat lives_left "Lives";</c>, or with its words: <c>board seat state "State" ["Racing", "Out"];</c>.</summary>
+    private ModeBoardItem Board()
+    {
+        var line = Take().Line;
+        var scopeToken = Take();
+        var scope = scopeToken.Text switch
+        {
+            "global" => ModeScope.Global,
+            "seat" => ModeScope.Seat,
+            "team" => ModeScope.Team,
+            _ => throw new ModeCompileException(scopeToken.Line, $"board names a global, seat or team variable, not {Describe(scopeToken)}"),
+        };
+        var nameToken = Take();
+        if (nameToken.Kind != ModeTokenKind.Name)
+        {
+            throw new ModeCompileException(nameToken.Line, $"board names a variable, not {Describe(nameToken)}");
+        }
+        var label = Text();
+        var words = new List<string>();
+        if (Accept("["))
+        {
+            words.Add(Text());
+            while (Accept(","))
+            {
+                words.Add(Text());
+            }
+            Expect("]");
+        }
+        Expect(";");
+        return new ModeBoardItem(line, scope, nameToken.Text, label, words);
     }
 
     private ModeParamItem Param()
@@ -484,6 +517,15 @@ internal sealed class ModeParser
         {
             return SetupTable(line, word);
         }
+        switch (ModeWords.Setups.Single(s => s.Name == word).Form)
+        {
+            case "range":
+                return SetupRange(line, word);
+            case "text":
+                return SetupText(line, word);
+            case "list":
+                return SetupList(line, word);
+        }
         var arguments = new List<ModeSetupArgument>();
         while (!Accept(";"))
         {
@@ -496,6 +538,46 @@ internal sealed class ModeParser
             arguments.Add(new ModeSetupArgument(argumentLine, name, SetupValue()));
         }
         return new ModeSetupItem(line, word, arguments);
+    }
+
+    /// <summary>A range, <c>racers 2..8</c>; one value alone is both ends.</summary>
+    private ModeSetupItem SetupRange(int line, string word)
+    {
+        var least = SetupValue();
+        var most = Accept("..") ? SetupValue() : least;
+        Expect(";");
+        return new ModeSetupItem(line, word, [new ModeSetupArgument(line, "least", least), new ModeSetupArgument(line, "most", most)]);
+    }
+
+    /// <summary>A name in quotes, <c>stats "GX+"</c>.</summary>
+    private ModeSetupItem SetupText(int line, string word)
+    {
+        if (Current.Kind != ModeTokenKind.Text)
+        {
+            throw Error($"{word} takes a name in quotes, not {Describe(Current)}");
+        }
+        var row = new ModeSetupRow(line, Take().Text, null);
+        Expect(";");
+        return new ModeSetupItem(line, word, [], [row]);
+    }
+
+    /// <summary>Names in quotes in brackets, <c>machines ["Blue Falcon", "Golden Fox"]</c>.</summary>
+    private ModeSetupItem SetupList(int line, string word)
+    {
+        Expect("[");
+        var rows = new List<ModeSetupRow>();
+        do
+        {
+            if (Current.Kind != ModeTokenKind.Text)
+            {
+                throw Error($"{word} takes names in quotes, not {Describe(Current)}");
+            }
+            rows.Add(new ModeSetupRow(Current.Line, Take().Text, null));
+        }
+        while (Accept(","));
+        Expect("]");
+        Expect(";");
+        return new ModeSetupItem(line, word, [], rows);
     }
 
     /// <summary>A setup word's table: <c>{ "Venue: Track": n; ...; else: n; }</c>, its <c>else</c> the word's

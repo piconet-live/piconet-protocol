@@ -8,7 +8,7 @@ A seat is a racer's place in a race, 0 to 29. A match is a lobby's next race fro
 
 | Message | Who to whom | When | What the receiver does |
 |---|---|---|---|
-| `hello` | L to C | first message | Checks version, key, name, build, line; refuses with `error` (`bad_version`, `bad_message`, `bad_name`, `bad_build`, `bad_line`, `tags_taken`); a `password` field (launchers before custom lobbies) is passed over or answers `welcome` (player id, server name, rules, `tag`). The rules (`ServerRules`) are the lobby's as the launcher shows them, among them (0.5.0) `latencyLimitMs`, the lobby's latency limit (`HostRules.LatencyLimit`: 30 to 300 ms, Quick Play 250); a launcher from before passes over it, and a rules message without it reads as 250. Optional `key`, `players` (players list) and `line` (the release line, below) One a connection: a second is `already_welcomed`. Test settings, the key, limits: below the table |
+| `hello` | L to C | first message | Checks version, key, name, build, line; refuses with `error` (`bad_version`, `bad_message`, `bad_name`, `bad_build`, `bad_line`, `tags_taken`); a `password` field (launchers before custom lobbies) is passed over or answers `welcome` (player id, server name, rules, `tag`). The rules (`ServerRules`) are the lobby's as the launcher shows them, among them (0.5.0) `latencyLimitMs`, the lobby's latency limit (`HostRules.LatencyLimit`: 30 to 300 ms, Quick Play 250); a launcher from before passes over it, and a rules message without it reads as 250. Optional `key`, `players` (players list), `line` (the release line, below) and `modes` (the newest game-mode api the launcher runs: a player is put in a mode's race only with that api or newer) One a connection: a second is `already_welcomed`. Test settings, the key, limits: below the table |
 | `queue` | L to C | RACE pressed (machine, colour, setting) | Puts the player in a lobby; `error` `machine_not_allowed`, or `not_ready` when already in one |
 | `leaveQueue` | L to C | the player leaves Quick Play | Takes them out of the lobby and any match; answers `leftLobby` |
 | `browseLobbies`, `lobbyList` | L to C, C to L | the lobby browser opens (`on` true) or closes | The custom lobbies of the player's build (`LobbySummary`: id, name, host's name, players, capacity, `locked`, rules whole, stage), on subscribe and then on changes, at most about twice a second; `quickPlay`: the server's own rules in the same form, to compare with |
@@ -26,7 +26,7 @@ A seat is a racer's place in a race, 0 to 29. A match is a lobby's next race fro
 | `playersChanged` | C to L | at most every 500 ms, when something changed | `joined`, `changed` (whole entries), `left` (ids), 50 entries at most a message; the rest go in the next |
 | `measureRelays` | C to L | a match forms; again for a relay started for it | The launcher pings each relay over UDP and answers `relayLatency` within 3 s |
 | `relayLatency` | L to C | the answer | Stored per player and relay for the choice of region (section 5) |
-| `courseVote`, `voteCourse` | C to L, L to C | with `measureRelays`, when the server's course mode is "vote" | Options and duration out; an option index back (it may be changed until the vote ends) |
+| `courseVote`, `voteCourse` | C to L, L to C | with `measureRelays`, when the server's course mode is "vote" | Options and duration out (with Quick Play's rotation, a card an option: its mode, laps, and a spicy mode's badge and line); an option index back (it may be changed until the vote ends) |
 | `courseChosen` | C to L | the vote ended | Votes per option, the option drawn, the course: the launcher's draw animation |
 | `chooseMachine`, `machineChoice` | C to L, L to C | after the course is decided | Course, allowed machines, duration out; the racer's machine back, kept from then on |
 | `statPack` | C to L | after `welcome`, to a launcher whose hello said `statPacks`, on a server with a stat pack | The pack whole, for the launcher's Garage (`handbook/stat-packs.md`); a race's pack is its `matchStart`'s |
@@ -100,6 +100,12 @@ numbers of one to four digits, no leading zero, and not `0.0` (`VersionLine.IsLi
 (`Hello.BadLine`). Like the build it is a claim the server cannot check; that the builds of a line compute the same
 race is the release's to show (the gate row `mixed`). The status page shows each lobby's `line`, and the released
 builds that name none with the line the server gives them (`lineBuilds`, `lineBuildsFault`).
+
+**The message of the day in the status** (`ServiceStatus.Motd`): while the operator has one set, GET /api/status
+carries it as one `RecentNotice` (`id`, `level`, `text` without the tier's word, `time`), the same notice the
+coordinator sends as a chat line at each welcome. A launcher on its home screen says no hello, so the status it asks
+every few seconds is how it sees the message there, and it goes when the field does. Written only when set: a reader
+from before passes over it.
 
 **The key in `hello`** (`Hello.Key`): the launcher's secret, 32 random bytes in base64url without padding (43
 characters, `PlayerTags.NewKey`), made once and kept in its settings (`LauncherSettings.PlayerKey`). The coordinator

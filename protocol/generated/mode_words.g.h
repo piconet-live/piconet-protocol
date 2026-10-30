@@ -22,6 +22,11 @@ inline constexpr int TEAM_WORDS = 32;
 inline constexpr int TEAMS = 30;
 inline constexpr int WAITS = 64;
 inline constexpr int WAIT_LOCALS = 8;
+inline constexpr int FSQRT_COST = 8;
+inline constexpr int BOARD = 8;
+inline constexpr int BOARD_LABEL = 32;
+inline constexpr int BOARD_WORDS = 16;
+inline constexpr int BOARD_WORD = 16;
 inline constexpr int PACKAGE_BYTES = 65536;
 inline constexpr int SEATS = 30;
 
@@ -219,7 +224,24 @@ enum Setup : std::uint8_t
   SETUP_CONTACTOFF = 11,  // contact off
   SETUP_CLOCKLIMIT = 12,  // clock_limit
   SETUP_ROLLINGSTART = 13,  // rolling_start
-  SETUP_COUNT = 14,
+  SETUP_COURSE = 14,  // course
+  SETUP_RACERS = 15,  // racers
+  SETUP_MACHINESALL = 16,  // machines all
+  SETUP_MACHINES = 17,  // machines
+  SETUP_MACHINESETTING = 18,  // machine_setting
+  SETUP_STATS = 19,  // stats
+  SETUP_STATSSTOCK = 20,  // stats stock
+  SETUP_MIXEDPACKSON = 21,  // mixed_packs on
+  SETUP_MIXEDPACKSOFF = 22,  // mixed_packs off
+  SETUP_BOOSTSTARTON = 23,  // boost_start on
+  SETUP_BOOSTSTARTOFF = 24,  // boost_start off
+  SETUP_TEAMS = 25,  // teams
+  SETUP_SOLO = 26,  // solo
+  SETUP_REWIND = 27,  // rewind
+  SETUP_PAUSE = 28,  // pause
+  SETUP_SAVESTATE = 29,  // save_state
+  SETUP_RESUMECOUNTDOWN = 30,  // resume_countdown
+  SETUP_COUNT = 31,
 };
 
 // a read of a seat (OP_SEATREAD)

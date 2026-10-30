@@ -1,0 +1,17 @@
+# Quick Play's rotation: the coordinator's list of mode files, not a mode file itself.
+# A vote card is (course, mode). Official modes only (custom lobbies may host their own).
+
+cards = 5                  # course cards a vote shows, plus Random
+spicy_cards = 1            # exactly one spicy card a vote
+random_spicy_chance = 0.15 # Random may land on a spicy option, biased toward normal [inf: to tune]
+leaderboards = false       # Quick Play never has leaderboards
+show_laps = true           # cards may show the lap count; never "normally N"
+
+[normal]
+mode = "competitive.fzmode"
+courses = "pool"           # the stack's vote pool (Online.Protocol CoursePool.Default)
+
+[[spicy]]
+mode = "knockout.fzmode"
+courses = [8]              # Lightning: Loop Cross, as in the vote mockup
+weight = 1
