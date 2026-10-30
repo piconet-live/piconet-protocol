@@ -43,6 +43,14 @@ rule "Cut the last racer" {
   }
 }
 
+rule "Out on its own" {
+  event out(s);
+  do {
+    // a machine, its energy or a fall: ranked by when it went out, just as a cut is; a cut seat has its order already
+    if (s.cut_order == 0) { cuts += 1; s.cut_order = cuts; }
+  }
+}
+
 rule "Seconds to the cut" {
   event every step;
   while race.started;
@@ -76,7 +84,7 @@ rule "Winner" {
   event every step;
   when race.started and count(seats where racing) <= keep;
   do {
-    // survivors first (end_race fills them in standing order), then the cut racers, last out first
+    // survivors first (end_race fills them in standing order), then the racers out, last out first
     int n = keep + 1;
     for each seat where seat.cut_order > 0 by seat.cut_order desc { seat.place = n; n += 1; }
     end_race;
