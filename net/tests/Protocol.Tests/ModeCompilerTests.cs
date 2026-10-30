@@ -42,6 +42,7 @@ public sealed class ModeCompilerTests
     [InlineData("board")]
     [InlineData("practice")]
     [InlineData("cuts")]
+    [InlineData("switches")]
     public void AVectorCompilesToItsPackage(string name)
     {
         var result = CompileVector(name);

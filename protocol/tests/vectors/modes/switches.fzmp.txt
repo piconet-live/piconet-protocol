@@ -1,0 +1,16 @@
+FZMP format 1 api 1, 568 bytes, hash 79c42975e345bf8700b111fc4256a21be70cd636c0ca878e3e2082f064e14057
+HEAD name "Switches" badge "" about "On and off by parameter."
+PARM 2
+  0 low "Low" switch int 0..1 step 1 default 0
+  1 high "High" switch int 0..1 step 1 default 1
+SETP 6
+  boost param 0 (low)
+  contact param 0 (low)
+  restore param 1 (high)
+  cpus param 1 (high)
+  mine_regen param 1 (high)
+  results_title "A B"
+VARS globals 0, seat words 0
+RULE 0
+CODE 0 bytes
+SRC  342 bytes
