@@ -27,6 +27,19 @@ public sealed class ModeLanguageTests
     private static int Cell(float value) => float.IsNaN(value) ? 0x7FC00000 : BitConverter.SingleToInt32Bits(value);
 
     [Fact]
+    public void ByNamesAnEventsSeatAndStaysTheSortWord()
+    {
+        const string body = "do { award by, 5; for each seat where seat != by by seat.distance { award seat, 1; } }";
+        var spelled = Compile("rule { event ko(v, by); " + body + " }\n");
+        var plain = Compile("rule { event ko(v, k); " + body.Replace("award by", "award k").Replace("!= by by", "!= k by") + " }\n");
+        Assert.Equal(plain.Mode!.Code, spelled.Mode!.Code);       // the same code as with any other name
+        Compile("rule { event hit(by, b); do { award by, 1; } }\n");
+        // only an event's names: everywhere else it is the language's word
+        Assert.Contains("'by' is a word of the language", Error("global int by;\n"));
+        Assert.Contains("'by' is a word of the language", Error("rule { event each seat; do { int by = 1; } }\n"));
+    }
+
+    [Fact]
     public void TheLibraryReadsAndHoldsItsMacrosAndSubs()
     {
         Assert.Equal(["at", "every", "lives", "pits_off", "time_limit"], ModeCompiler.Library.Macros);
