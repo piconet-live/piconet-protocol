@@ -33,11 +33,11 @@ class ReplaySchema(unittest.TestCase):
     def test_the_schema_loads(self):
         s = replay.load(record_size=6)
         self.assertEqual([v["number"] for v in s["versions"]], [2, 3, 4, 5, 6, 7, 9])
-        self.assertEqual((s["written"], s["head_size"], s["frames_size"], s["lineup_size"]), (7, 10, 12, 124))
+        self.assertEqual((s["written"], s["head_size"], s["frames_size"], s["lineup_size"]), (9, 10, 12, 124))
         self.assertEqual([m.key for m in s["result"]], ["seat", "rank", "finished", "out", "laps", "timeMs", "bestLapMs"])
 
     def test_broken_rules_are_named(self):
-        self.assertIn("written is one of the versions", self.error("written = 7", "written = 8"))
+        self.assertIn("written is one of the versions", self.error("written = 9", "written = 8"))
         self.assertIn("the first has no feature", self.error('name = "Stats"\nfeature = "stats"\n', 'name = "Stats"\n'))
         self.assertIn("rising order", self.error("number = 3", "number = 9"))
         self.assertIn("four ASCII", self.error('mark = "FZRF"', 'mark = "FZR"'))

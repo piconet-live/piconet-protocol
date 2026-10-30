@@ -25,10 +25,10 @@ public static class ReplayFormat
     public const int VersionSeats = 6;
     /// <summary>Version 7: 0.4.0's set-up: the race started on the coordinator's grid (match.setup.grid) or raced with no rubber band (the header's rubberBand false: every race and practice from 0.4.0).</summary>
     public const int VersionGrid = 7;
-    /// <summary>Version 9: a race of a game mode (the header's match.setup.mode: the package, its hash, its api and its parameters, formats.md section 9): one growable section, so a later mode word needs no version of its own. 8 is the compact file's, never a recording's.</summary>
+    /// <summary>Version 9: 0.6's set-up: the simulation's own generator (the header's simGenerator true: every race and practice from 0.6), which may be a race of a game mode (the header's match.setup.mode: the package, its hash, its api and its parameters, formats.md section 9): one growable section, so a later mode word needs no version of its own. A program from before would race it with the wrong draws, or on the host's rules alone. 8 is the compact file's, never a recording's.</summary>
     public const int VersionMode = 9;
     /// <summary>The version a recording is written as while its race runs.</summary>
-    public const int VersionWritten = 7;
+    public const int VersionWritten = 9;
 
     /// <summary>The compact file a recording becomes when it ends: the mark, the version, the recording's own
     /// version, the header (xz), frames, lineup, inputs (the steps, xz) and checksums (xz) parts, then the results.</summary>
