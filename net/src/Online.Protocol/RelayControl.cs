@@ -64,9 +64,11 @@ public sealed record RelayRefused(string Code, string Message) : RelayControlMes
 /// <summary>Coordinator to relay: a race to host, one token per player seat (hex, as in MatchStart). The later fields
 /// are the operator's live settings (null: the relay's own, from its command line): how long the race waits for a
 /// game it has not heard from, and for one still loading, before the AI takes the seat. A relay from before them
-/// passes over them and keeps its own.</summary>
+/// passes over them and keeps its own. NoRejoin: a seat that leaves does not come back: the race's mode does not say
+/// <c>cpus allowed</c>, and a CPU drives a seat while its game catches up (the owner, 2026-10-30).</summary>
 public sealed record CreateRace(string MatchId, IReadOnlyList<RaceSeatToken> Seats, int? StartTimeoutMs = null,
-    int? ReadyTimeoutMs = null) : RelayControlMessage;
+    int? ReadyTimeoutMs = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool NoRejoin = false) : RelayControlMessage;
 
 public sealed record RaceSeatToken(int Seat, string Token);
 
