@@ -81,7 +81,9 @@ internal sealed partial class ModeEmitter(ModeNames names, List<string> warnings
         var body = Here;
         Statements(item.Body);
         Op(ModeOp.End);
-        return (new ModeRule(item.Label, id, _high, when, during, body), _waits);
+        // at least one: formats.md's rule has local 0, and the interpreter refuses a rule without it (a rule on no seat
+        // that declares nothing, as `event go; do { n += 1; }`, needs none itself)
+        return (new ModeRule(item.Label, id, Math.Max(_high, 1), when, during, body), _waits);
     }
 
     private uint Condition(IReadOnlyList<ModeExpr> conditions)

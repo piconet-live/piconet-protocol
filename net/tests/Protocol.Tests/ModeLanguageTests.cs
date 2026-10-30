@@ -27,6 +27,13 @@ public sealed class ModeLanguageTests
     private static int Cell(float value) => float.IsNaN(value) ? 0x7FC00000 : BitConverter.SingleToInt32Bits(value);
 
     [Fact]
+    public void ARuleWithNothingToKeepStillHasItsLocal()
+    {
+        var rule = Assert.Single(Compile("global int n;\nrule { event go; do { n += 1; } }\n").Mode!.Rules);
+        Assert.Equal(1, rule.Locals);                             // the runner's reader refuses 0
+    }
+
+    [Fact]
     public void ByNamesAnEventsSeatAndStaysTheSortWord()
     {
         const string body = "do { award by, 5; for each seat where seat != by by seat.distance { award seat, 1; } }";
