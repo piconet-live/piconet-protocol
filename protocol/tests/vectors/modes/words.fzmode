@@ -1,0 +1,101 @@
+// Every word of api 1 and every operation its compiler writes, at least once: a vector for the compiler's tests and
+// the runner's interpreter tests (protocol/README.md), not a mode to race. Loops over the seats do not nest here: two
+// deep, they cost more than api 1's budget of a step allows (30 x 30 x 9 operations for the loops alone).
+
+mode "Words" {
+  api 1;
+  badge "WORDS";
+  about "Every word of api 1, and every operation its compiler writes.";
+}
+
+param rounds "Laps" number 1..9 default 3;
+param push "Accelerator" number 0.5..1.0 step 0.25 default 1.0;
+param interval "Cut every" delay 10s..2min step 5s default 30s;
+param strict "Strict cuts" switch default on;
+param shape "Order" choice ["Most KOs", "Last alive"] default "Last alive";
+
+laps rounds;
+cpus allowed;
+pedals locked accel push brake 25%;
+boost off;
+
+const int keep = 3;
+const real half = 0.5;
+
+global int cuts;
+global int tally = 0x10;
+global real pace = 1000 km/h;
+global bool flag = true;
+global seat leader = none;
+seat int out_step;
+seat real best = 300 m;
+
+// A sorted walk on two keys, a bool and a real, both descending; bare reads are the loop's seat's.
+every(10s) {
+  int place = 0;
+  for each s in seats where not out by racing desc, distance desc {
+    place += 1;
+    if (place > keep and strict) {
+      eliminate s;
+      cuts += 1;
+    } else if (place == 1) {
+      leader = s;
+    } else {
+      s.best = max(s.best, s.distance);
+    }
+  }
+}
+
+rule "Whole numbers" {
+  event every step;
+  when race.started;
+  do {
+    int a = race.steps % interval;
+    int b = race.seats - 1;
+    int c = a * b / 7 % 5 + -a;
+    c = min(c, b);
+    c = max(c, race.laps);
+    c = abs(c);
+    c -= 2;
+    c *= 3;
+    c /= 4;
+    repeat keep { tally += 1; }
+    repeat rounds { c += shape; }
+    flag = a == b or a != c;
+    flag = a < b and a <= c and a > b and a >= c;
+    flag = not flag;
+    if (leader != none) { tally = leader.index; }
+  }
+}
+
+rule "Reals" {
+  event every step;
+  while race.started;
+  while shape == 1;
+  do {
+    real x = pace;
+    real y = -x + 2. * half - x / 3.0;
+    y = min(y, x);
+    y = max(y, 0.25);
+    y = abs(y) + sqrt(y);
+    x = race.steps;
+    x += 1;
+    tally = floor(y) + ceil(y) + round(y) + trunc(y);
+    flag = x == y or x != y or x < y or x <= y or x > y or x >= y;
+    pace = y;
+  }
+}
+
+rule "Count" {
+  event every step;
+  when count(seats where finished or destroyed) <= 1;
+  do { cuts = 0; }
+}
+
+rule "Each seat" {
+  event each seat;
+  while seat.racing and not seat.broken;
+  do { seat.speed += seat.energy * seat.lap; }
+}
+
+rule "Out" { event out(s); do { s.out_step = race.steps; } }
