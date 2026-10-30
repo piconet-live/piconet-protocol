@@ -43,6 +43,7 @@ public sealed class ModeCompilerTests
     [InlineData("practice")]
     [InlineData("cuts")]
     [InlineData("switches")]
+    [InlineData("edges")]
     public void AVectorCompilesToItsPackage(string name)
     {
         var result = CompileVector(name);
@@ -333,9 +334,9 @@ public sealed class ModeCompilerTests
     [Fact]
     public void AWhenRuleWithPerStepWordsIsWarnedNotRefused()
     {
-        var result = ModeCompiler.Compile("mode \"X\" { api 1; }\nrule \"A\" { event each seat; when race.started; do { hide seat, RANK; } }\n");
+        var result = ModeCompiler.Compile("mode \"X\" { api 1; }\nrule \"A\" { event each seat; when race.started; do { seat.speed = 900; } }\n");
         Assert.True(result.Succeeded);
         Assert.Contains(result.Warnings, w => w.Contains("did you mean while"));
-        Assert.Empty(ModeCompiler.Compile("mode \"X\" { api 1; }\nrule \"A\" { event each seat; while race.started; do { hide seat, RANK; } }\n").Warnings);
+        Assert.Empty(ModeCompiler.Compile("mode \"X\" { api 1; }\nrule \"A\" { event each seat; while race.started; do { seat.speed = 900; } }\n").Warnings);
     }
 }

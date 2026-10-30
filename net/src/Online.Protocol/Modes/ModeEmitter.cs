@@ -111,16 +111,15 @@ internal sealed partial class ModeEmitter(ModeNames names, List<string> warnings
 
     // The operations, counted as they are written.
 
-    // What makes a `when` rule's body look meant for every step (the warning in the rule above).
+    // What makes a `when` rule's body look meant for every step (the warning in the rule above): a word whose effect
+    // lasts one step (seat.speed, seat.velocity) or whose value stops following the race when run once (show_clock,
+    // show_number). One-shot and latching words, as stock_banner and hide, and a body that only reads race.steps, are
+    // right under `when`.
     private string? _perStep;
 
     private void Op(ModeOp op, params long[] operands)
     {
-        if (op == ModeOp.RaceRead && (ModeRaceRead)operands[0] == ModeRaceRead.Steps)
-        {
-            _perStep ??= "race.steps";
-        }
-        else if (op == ModeOp.Action && (ModeAction)operands[0] is ModeAction.ShowClock or ModeAction.ShowNumber or ModeAction.StockBanner or ModeAction.Hide)
+        if (op == ModeOp.Action && (ModeAction)operands[0] is ModeAction.SeatSpeed or ModeAction.SeatVelocity or ModeAction.ShowClock or ModeAction.ShowNumber)
         {
             _perStep ??= ModeWords.Actions.First(a => a.Id == (ModeAction)operands[0]).Name;
         }

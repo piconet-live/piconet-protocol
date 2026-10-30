@@ -1,0 +1,9 @@
+// The edge of a word the runner's interpreter tests: cpu_mode 18, on the sim generator since race-map gap G5.
+mode "Edges" {
+  api 1;
+}
+
+laps unlimited;
+cpus on;
+
+rule "Scripted" { event race_start; do { for each seat where seat.is_cpu { cpu_mode seat, 18; } } }

@@ -1,4 +1,4 @@
-FZMP format 1 api 1, 584 bytes, hash 5b730d4ce2fca78034962331e670c1fc998fa5165e84d13e8ab89f8848e15900
+FZMP format 1 api 1, 686 bytes, hash 0b9b3eed698de1ab659dc1c6d273c102a3492ab36036ee5a936f48e9dc25fc1d
 HEAD name "Lives test" badge "LIVES" about "Three lives each. The last wreck is final."
 PARM 0
 SETP 2
@@ -6,11 +6,13 @@ SETP 2
   cpus on
 VARS globals 0, seat words 1
   seat 0 = 3
-RULE 3
+RULE 5
   0 "lives 3" event race_start, locals 1, when none, while none, body 0000
-  1 "lives 3" event each seat, locals 1, when 0035, while none, body 003a
-  2 "lives 3" event out, locals 1, when none, while none, body 005f
-CODE 106 bytes
+  1 "lives 3" event destroyed, locals 1, when none, while none, body 0035
+  2 "lives 3" event each seat, locals 1, when 0056, while none, body 006d
+  3 "lives 3" event out, locals 1, when none, while none, body 0072
+  4 "lives 3" event each seat, locals 1, when none, while none, body 007d
+CODE 158 bytes
   ; rule 0 body
   0000  Push 0
   0005  StoreLocal 0
@@ -31,28 +33,50 @@ CODE 106 bytes
   002d  StoreLocal 0
   002f  Jump 0007
   0034  End
-  ; rule 1 when
-  0035  LoadLocal 0
-  0037  SeatRead restoring
-  0039  Ret
   ; rule 1 body
-  003a  LoadLocal 0
-  003c  LoadLocal 0
-  003e  LoadSeatVar 0
-  0041  Push 1
-  0046  ISub
-  0047  StoreSeatVar 0
-  004a  LoadLocal 0
-  004c  LoadSeatVar 0
-  004f  Push 1
-  0054  ILe
-  0055  JumpIfZero 005e
-  005a  LoadLocal 0
-  005c  Action respawns off
-  005e  End
+  0035  LoadLocal 0
+  0037  LoadSeatVar 0
+  003a  Push 0
+  003f  IGt
+  0040  JumpIfZero 0055
+  0045  LoadLocal 0
+  0047  LoadLocal 0
+  0049  LoadSeatVar 0
+  004c  Push 1
+  0051  ISub
+  0052  StoreSeatVar 0
+  0055  End
+  ; rule 2 when
+  0056  LoadLocal 0
+  0058  SeatRead restoring
+  005a  Dup
+  005b  JumpIfZero 006c
+  0060  Pop
+  0061  LoadLocal 0
+  0063  LoadSeatVar 0
+  0066  Push 1
+  006b  ILe
+  006c  Ret
   ; rule 2 body
-  005f  LoadLocal 0
-  0061  Push 0
-  0066  StoreSeatVar 0
-  0069  End
+  006d  LoadLocal 0
+  006f  Action respawns off
+  0071  End
+  ; rule 3 body
+  0072  LoadLocal 0
+  0074  Push 0
+  0079  StoreSeatVar 0
+  007c  End
+  ; rule 4 body
+  007d  LoadLocal 0
+  007f  SeatRead racing
+  0081  JumpIfZero 0094
+  0086  LoadLocal 0
+  0088  LoadLocal 0
+  008a  LoadSeatVar 0
+  008d  Action show_number
+  008f  Jump 009d
+  0094  LoadLocal 0
+  0096  Push -1
+  009b  Action show_number
+  009d  End
 SRC  248 bytes

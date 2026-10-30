@@ -150,11 +150,16 @@ public sealed class ModeWordFormsTests
     }
 
     [Theory]
-    [InlineData("global int x; rule \"R\" { event every step; when race.started; do { x = race.steps; } }", true)]
+    [InlineData("rule \"R\" { event each seat; when seat.racing; do { seat.speed = 900; } }", true)]
+    [InlineData("rule \"R\" { event each seat; when seat.racing; do { seat.velocity = seat.forward; } }", true)]
     [InlineData("rule \"R\" { event each seat; when seat.racing; do { show_number seat, 3; } }", true)]
-    [InlineData("rule \"R\" { event each seat; when seat.racing; do { stock_banner seat, TICK; } }", true)]
     [InlineData("rule \"R\" { event every step; when race.started; do { show_clock 60; } }", true)]
-    [InlineData("rule \"R\" { event each seat; when seat.racing; do { hide seat, RANK; } }", true)]
+    [InlineData("global int x; rule \"R\" { event every step; when race.started; do { x = race.steps; } }", false)]
+    [InlineData("global int x; rule \"R\" { event every step; when race.started; do { x = race.steps + 60; } }", false)]
+    [InlineData("rule \"R\" { event each seat; when seat.racing; do { stock_banner seat, TICK; } }", false)]
+    [InlineData("rule \"R\" { event each seat; when seat.racing; do { hide seat, RANK; } }", false)]
+    [InlineData("rule \"R\" { event each seat; while seat.racing; do { seat.speed = 900; } }", false)]
+    [InlineData("rule \"R\" { event lap(s); when s.racing; do { s.speed = 900; } }", false)]
     [InlineData("rule \"R\" { event each seat; while seat.racing; do { show_number seat, 3; } }", false)]
     [InlineData("rule \"R\" { event each seat; when seat.racing; while seat.racing; do { show_number seat, 3; } }", false)]
     [InlineData("rule \"R\" { event each seat; when seat.racing; do { retire seat; } }", false)]
@@ -164,6 +169,26 @@ public sealed class ModeWordFormsTests
         var result = Compile(body);
         Assert.Empty(result.Errors);
         Assert.Equal(warns, result.Warnings.Any(w => w.Contains("did you mean while", StringComparison.Ordinal)));
+    }
+
+    /// <summary>The library's lives (design 9.6): it counts on destroyed, not on every restore, and carries the count on
+    /// the spare-machine icon. Its own file needs no show_number or destroyed rule.</summary>
+    [Fact]
+    public void LivesCountsDestroysAndShowsTheCount()
+    {
+        var listing = ModeDisassembler.List(Compile("lives 3;").Package!);
+        Assert.Contains("show_number", listing, StringComparison.Ordinal);
+        Assert.Contains("destroyed", listing, StringComparison.Ordinal);
+    }
+
+    /// <summary>The docs' <c>length</c> and <c>dot</c>, and a vec's arithmetic (language 4).</summary>
+    [Theory]
+    [InlineData("global real x; rule \"R\" { event each seat; do { x = length(seat.velocity); } }")]
+    [InlineData("global real x; rule \"R\" { event each seat; do { x = dot(seat.forward, seat.velocity); } }")]
+    [InlineData("global real x; rule \"R\" { event each seat; do { x = length(seat.position - seat.up * 2); } }")]
+    public void VecHelpersCompile(string body)
+    {
+        Assert.Empty(Compile(body).Errors);
     }
 
     /// <summary>Design 9.3, Chain reaction: the budget refuses it as written. The design says so; a change of the budget or

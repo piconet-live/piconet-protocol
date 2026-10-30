@@ -492,7 +492,8 @@ kind = "discrete"
 binds = "seat seat"
 doc = """ko(v, by): the game's own record. The victim v's contact KO began this step (flag 0x80 rose with M+0x593 = 60, \
 fn_1_24F10); by is the one seat whose skull count M+0x482 rose this step, or none when no skull or more than one \
-rose (two KOs in one step: none for both; a wall, a strip or a mine gives no skull). No new site (owner 2026-10-29)"""
+rose (two KOs in one step: none for both; a wall, a strip or a mine gives no skull). `break_down` writes the same record, \
+so it fires too; by is then none, unless another seat's skull rose that step. No new site (owner 2026-10-29)"""
 
 [[event]]
 name = "hit"
@@ -1164,7 +1165,7 @@ id = 8
 args = ["seat", "int"]
 where = """the mode point: story action 14 on a CPU seat's driver block CB = M+0x484: n 0, word 0 &= ~1 and CB+0x32 = 0 (the \
 normal driver); 1 to 33, word 0 |= 1 and CB+0x32 = n. The story's difficulty byte .bss 0x9C+1 is pinned to 0 at the \
-mode's first run. Modes 5 to 8 refused on courses 37, 38 and 41"""
+mode's first run. Modes 5 to 8 refused on courses 37, 38 and 41. Modes 17 and 18 draw the sim generator (sites_generator.py)"""
 doc = "a CPU seat drives one of the story's scripted drivers (mode-open-words 2.2); a player seat: nothing"
 
 [[action]]
@@ -1186,8 +1187,9 @@ doc = "the race ends for everyone at this step"
 name = "award"
 id = 11
 args = ["seat", "int"]
-where = "the block: the seat's points (read as seat.points); the end clause writes them into the record's +0x4"
-doc = "adds points to the seat"
+where = """the block: the seat's points (read as seat.points); the end clause writes them into the record's +0x4, an unsigned \
+16-bit field the results draw as digits: a negative total shows 0 and keeps its value in the block"""
+doc = "adds points to the seat; a negative total reads as it is and shows as 0 on the results"
 
 [[action]]
 name = "stop_all"
@@ -1305,7 +1307,7 @@ id = 34
 form = "text"
 where = """the results' title (fn_1_1461C8 0x146304): `results_title "TEXT"`, the string in the window for VS TOTAL RANKING (in the package \
 a value a byte), font 0x1D: A to Z and the space, api.results_title long at most (the core's window holds 24 bytes with the NUL, mode_hud.h); not all spaces, none at either end"""
-doc = "the points page's title reads TEXT"
+doc = "the points page's title reads TEXT; the results pass through that page, with award or without (every racer's points 0)"
 
 [[setup]]
 name = "tag_texts"
@@ -1358,7 +1360,7 @@ name = "show_number"
 id = 27
 args = ["seat", "int"]
 where = "the display record; drawn by the Grand Prix spare-machine icon (its getter's call, main.rel 0xCA920)"
-doc = "a whole number 0 to 99 beside the spare-machine icon, two digits (07); any other number hides it"
+doc = "a whole number beside the spare-machine icon, two digits (07); above 99 shows 99, a negative number hides it"
 
 [[action]]
 name = "stock_banner"
