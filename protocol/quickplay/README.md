@@ -11,5 +11,4 @@ it at its start (a file that does not load stops the start), and the launcher's 
 | `quickplay.toml` | The rotation: the cards, the normal option and the spicy options |
 | `competitive.fzmode` | The normal option: the game's own rules with the competitive scene's laps (`laps by course`) |
 | `knockout.fzmode` | A spicy option: a rolling start, then the last racer is out every interval |
-
-Knockout's `board` lines (language 10) are comments: the compiler has no `board` yet.
+| `practice.fzmode` | Not in the rotation: Play's Practice, raced alone (`solo`); the launcher starts it itself, beside the program in this folder |

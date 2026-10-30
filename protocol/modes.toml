@@ -43,6 +43,8 @@ team_words = 32        # words per team
 teams = 30             # teams in a race at most (a team's number 0 to 29)
 waits = 64             # rule instances waiting at once (the compiler counts the most a mode can have)
 wait_locals = 8        # locals a waiting rule keeps, its event's binding included
+board = 8              # `board` lines a scope (global, seat, team): what the status board holds (board.toml)
+board_label = 32       # a `board` line's label, in UTF-8 bytes
 package_bytes = 65536  # a package's whole size, the source included
 seats = 30
 
@@ -730,6 +732,40 @@ lobby = true
 form = "range"
 args = [{ type = "int", name = "least", least = 2, most = 30 }, { type = "int", name = "most", least = 2, most = 30 }]
 where = "the coordinator: the teams a race of this mode has, set by the host and the racers and carried in setup.mode.teams; fewer than `least` holding racers and the race is refused"
+
+# --- a solo mode (Practice; time trials later): the words of a race raced alone, no relay. The compiler refuses them
+# without `solo`, and `solo` with CPUs, racers or teams; the coordinator and the game refuse a `solo` mode in a lobby.
+
+[[setup]]
+name = "solo"
+id = 26
+where = """the launcher starts it itself as a practice (the launch file's `practice`: one seat, seat 0, no relay, every step's \
+row the local pad's, port/core/src/practice_session.cpp). No lobby and no rotation races it; the game refuses it with a relay"""
+
+[[setup]]
+name = "rewind"
+id = 27
+args = [{ type = "int", least = 60, most = 3600 }]
+where = """the rolling buffer the player can go back through, a time or steps, at most a minute: every step inside it stays \
+in the undo log, the mode's block with the rest. Left out in a solo mode, no way back"""
+
+[[setup]]
+name = "pause"
+id = 28
+where = """Start stands the picture at the moment it shows; the stick and the replay's bar then move it inside `rewind`'s reach, \
+and Start again goes on from it (from an earlier moment: what came after is dropped). Left out, Start does nothing"""
+
+[[setup]]
+name = "save_state"
+id = 29
+where = """one saved moment, D-pad right saves and D-pad left loads: a mark on a step inside `rewind`'s reach, gone when the race \
+has run past the reach or gone on from before it. Needs `rewind`"""
+
+[[setup]]
+name = "resume_countdown"
+id = 30
+args = [{ type = "int", least = 0, most = 300 }]
+where = "the time between a resume or a load and the race running on, a time or steps. Left out: 0, at once"
 
 [[seat_read]]
 name = "racing"

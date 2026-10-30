@@ -38,10 +38,11 @@ class Schema(unittest.TestCase):
 
     def test_the_layout(self):
         b, enums, flags, records, blocks = board.load()
-        self.assertEqual((b["magic_word"], b["version"], b["size"]), (0x42535A46, 1, 4096))
+        self.assertEqual((b["magic_word"], b["version"], b["size"]), (0x42535A46, 2, 7168))
         self.assertEqual([(x.name, x.offset, x.size) for x in blocks],
                          [("Header", 0, 32), ("Pulse", 64, 16), ("Status", 128, 24), ("Snapshot", 192, 1580),
-                          ("Events", 1792, 2056), ("Mailbox", 3904, 144)])
+                          ("ModeHead", 1792, 1048), ("ModeValues", 2880, 1964), ("Events", 4864, 2056),
+                          ("Mailbox", 6976, 144)])
         self.assertEqual((records["Racer"].size, records["Event"].size), (52, 32))
         self.assertTrue(all(x.offset % 64 == 0 for x in blocks))
 

@@ -58,5 +58,5 @@ rule "Winner" {
   }
 }
 
-// board seat cut_order "Out";     (language 10: back when the compiler has board)
-// board global next_cut "Next cut";
+board seat cut_order "Out";
+board global next_cut "Next cut";

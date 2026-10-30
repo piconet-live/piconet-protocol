@@ -87,7 +87,7 @@ internal sealed record ModeSetupItem(int Line, string Word, IReadOnlyList<ModeSe
 internal sealed record ModeConstItem(int Line, ModeType Type, string Name, ModeExpr Value) : ModeItem(Line);
 
 /// <summary>Where a variable is kept (the language's section 4): one for the race, one a seat, one a team.</summary>
-internal enum ModeScope
+public enum ModeScope
 {
     Global,
     Seat,
@@ -96,6 +96,10 @@ internal enum ModeScope
 
 /// <summary><c>global TYPE NAME [= const];</c>, <c>seat TYPE NAME [= const];</c> or <c>team TYPE NAME [= const];</c>.</summary>
 internal sealed record ModeVariableItem(int Line, ModeScope Scope, ModeType Type, string Name, ModeExpr? Value) : ModeItem(Line);
+
+/// <summary><c>board global|seat|team NAME "Label";</c> (the language's section 10): a variable's value on the status
+/// board.</summary>
+internal sealed record ModeBoardItem(int Line, ModeScope Scope, string Name, string Label) : ModeItem(Line);
 
 internal sealed record ModeSubParam(ModeType Type, string Name);
 

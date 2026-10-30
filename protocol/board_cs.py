@@ -103,7 +103,8 @@ def emit(board, enums, flags, records, blocks):
             out += [f"    /// <summary>{v['doc'].replace('&', 'and')}</summary>", f"    public const {TYPES[g['type']]} {v['name']} = {v['value']};"]
         out += ["}"]
     for r in records.values():
-        out += [""] + doc(r.doc) + [f"public struct {n(r.name)}", "{"] + [member(f, n) for f in r.fields] + ["}"]
+        out += [""] + doc(r.doc) + [f"public struct {n(r.name)}", "{"] + [member(f, n) for f in r.fields] + \
+            ([f"    public {n(r.name)}() {{ }}"] if any(f.type == "bytes" for f in r.fields) else []) + ["}"]
     for b in blocks:
         if b.kind == "seqlock":
             out += [""] + doc(b.doc) + [f"public sealed class {n(b.name)}", "{"] + [member(f, n) for f in b.fields] + ["}"]

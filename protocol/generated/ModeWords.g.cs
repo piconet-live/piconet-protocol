@@ -223,6 +223,16 @@ public enum ModeSetup : byte
     BoostStartOff = 24,
     /// <summary><c>teams</c></summary>
     Teams = 25,
+    /// <summary><c>solo</c></summary>
+    Solo = 26,
+    /// <summary><c>rewind</c></summary>
+    Rewind = 27,
+    /// <summary><c>pause</c></summary>
+    Pause = 28,
+    /// <summary><c>save_state</c></summary>
+    SaveState = 29,
+    /// <summary><c>resume_countdown</c></summary>
+    ResumeCountdown = 30,
 }
 
 /// <summary>A read of a seat (protocol/modes.toml).</summary>
@@ -449,6 +459,10 @@ public static partial class ModeWords
     public const int Waits = 64;
     /// <summary>The api's limit <c>wait_locals</c>.</summary>
     public const int WaitLocals = 8;
+    /// <summary>The api's limit <c>board</c>.</summary>
+    public const int Board = 8;
+    /// <summary>The api's limit <c>board_label</c>.</summary>
+    public const int BoardLabel = 32;
     /// <summary>The api's limit <c>package_bytes</c>.</summary>
     public const int PackageBytes = 65536;
     /// <summary>The api's limit <c>seats</c>.</summary>
@@ -584,6 +598,11 @@ public static partial class ModeWords
         ("boost_start on", ModeSetup.BoostStartOn, [], true, ""),
         ("boost_start off", ModeSetup.BoostStartOff, [], true, ""),
         ("teams", ModeSetup.Teams, [new ModeArgument("least", ModeType.Int, 2, 30, null), new ModeArgument("most", ModeType.Int, 2, 30, null)], true, "range"),
+        ("solo", ModeSetup.Solo, [], false, ""),
+        ("rewind", ModeSetup.Rewind, [new ModeArgument("", ModeType.Int, 60, 3600, null)], false, ""),
+        ("pause", ModeSetup.Pause, [], false, ""),
+        ("save_state", ModeSetup.SaveState, [], false, ""),
+        ("resume_countdown", ModeSetup.ResumeCountdown, [new ModeArgument("", ModeType.Int, 0, 300, null)], false, ""),
     ];
 
     /// <summary>The reads of a seat (<c>seat.NAME</c>): name, id, type.</summary>

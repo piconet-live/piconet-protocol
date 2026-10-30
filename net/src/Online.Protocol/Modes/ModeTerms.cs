@@ -9,6 +9,10 @@ namespace Online.Protocol;
 /// Lobby flow (the vote's and choice's times, the timeouts, the ping limit) is not a mode's.</summary>
 public sealed record ModeTerms
 {
+    /// <summary>The mode says <c>solo</c>: a race raced alone, which the launcher starts itself (Play's Practice). No
+    /// lobby and no rotation races it.</summary>
+    public bool Solo { get; init; }
+
     /// <summary>The mode says <c>cpus allowed</c>: players may vote CPUs into its race (it never forces them).</summary>
     public bool CpusAllowed { get; init; }
 
@@ -70,6 +74,7 @@ public sealed record ModeTerms
             terms = word.Id switch
             {
                 ModeSetup.CpusAllowed => terms with { CpusAllowed = true },
+                ModeSetup.Solo => terms with { Solo = true },
                 ModeSetup.Laps => terms with { LapsAll = Cell(a[0]) },
                 ModeSetup.LapsByCourse => terms with
                 {
@@ -160,6 +165,10 @@ public sealed record ModeTerms
     /// <summary>Why a race of so many racers (CPUs counted) on so many teams holding one is refused; null: it is not.</summary>
     public string? Refusal(int racers, int teamsHeld)
     {
+        if (Solo)
+        {
+            return "This mode is raced alone, from Play's Practice.";
+        }
         if (Racers is { } range && racers < range.Least)
         {
             return string.Create(CultureInfo.InvariantCulture, $"This mode needs at least {range.Least} racers.");

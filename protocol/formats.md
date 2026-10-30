@@ -961,7 +961,7 @@ has given its seat up and loses the race (a wait, a race that ends under it, `st
 The channel between the launcher and one running game (a file both map, never a localhost
 socket or a pipe). Defined once in `protocol/board.toml`, generated into the launcher's `BoardView`
 (`protocol/generated/StatusBoard.g.cs`, compiled into Launcher.Core) and the core's `View`
-(`protocol/generated/status_board.g.h`); `protocol/README.md` says how it is checked. **Version 1, 4,096 bytes**,
+(`protocol/generated/status_board.g.h`); `protocol/README.md` says how it is checked. **Version 2, 7,168 bytes** (version 1, 4,096 bytes, had no mode blocks),
 little-endian, every word naturally aligned, every block on a 64-byte line:
 
 | Block | At | Kind, writer | Holds |
@@ -970,8 +970,10 @@ little-endian, every word naturally aligned, every block on a 64-byte line:
 | Pulse | 64 | single words; game | `Heartbeat` (u64): one more each game frame begun in a race's or replay's start (the frame tick), each picture in a plain start and while a race's course loads; `WatchBeat`: the runner's watching thread, four times a second; `StopReason`: the first stop asked for |
 | Status | 128 | seqlock; game | `Phase` (None, Starting, Offline, Loading, Joining, Gate, Countdown, Racing, Finished, Playback, Left, Stopping), `Flags` (waits for the relay, practice, watching, rejoin), `Step`, `StopSeen`, `NoticeSeen` |
 | Snapshot | 192 | seqlock; game | the race every displayed race frame (not a replay's): `Serial`, `Frame` (the step), `LocalSeat`, `Count`, 30 racer records of 52 bytes (seat, state, rank, flags, lap, knockouts, maximum energy, lap time, race time, best lap, speed, energy, top speed, x, y, z, distance): what the UDP feed carried as JSON before |
-| Events | 1792 | ring of 64 records of 32 bytes; game (several threads) | `Head`, then events: Phase, Stop, Stands and Moves (the runner's freeze reports), Notice (taken), Desync, Camera (the local racer's chase camera view, 1 to 3, said at its first reading in a race and at each change while the racer races: the launcher keeps the last for the next race's `match.camera`); overwrite-oldest, the reader counts what it lost |
-| Mailbox | 3904 | seqlock; launcher | `StopSerial` (one more: stop gracefully), `NoticeSerial`, `NoticeLength`, `NoticeText` (128 bytes UTF-8) |
+| ModeHead | 1792 | seqlock; game | the race's game mode, once, at its first picture: `Serial` (1; 0 no mode), `NameLength`, `Name` (64 bytes UTF-8), `Hash` (the content hash's first 8 bytes), `Count`, 24 lines of 40 bytes: `Scope` (Global, Seat, Team), `Type` (Int, Real, Bool, Seat, Seats), `Column` (0 to 7), `LabelLength`, `Label` (32 bytes UTF-8), the file's `board` lines in its order |
+| ModeValues | 2880 | seqlock; game | the `board` lines' values every picture drawn, of a race, a practice, a watched race and a replay alike, from the mode's block: `Serial`, `Frame` (the step of the picture), `Globals[Column]`, `Seats[seat * 8 + Column]`, `Teams[team * 8 + Column]`, each a word read as its line's type. Not written for a mode with no line. Picture only: nothing a step reads |
+| Events | 4864 | ring of 64 records of 32 bytes; game (several threads) | `Head`, then events: Phase, Stop, Stands and Moves (the runner's freeze reports), Notice (taken), Desync, Camera (the local racer's chase camera view, 1 to 3, said at its first reading in a race and at each change while the racer races: the launcher keeps the last for the next race's `match.camera`); overwrite-oldest, the reader counts what it lost |
+| Mailbox | 6976 | seqlock; launcher | `StopSerial` (one more: stop gracefully), `NoticeSerial`, `NoticeLength`, `NoticeText` (128 bytes UTF-8) |
 
 A **seqlock** group starts with a sequence word: the writer makes it odd, writes, makes it even; a reader that saw it
 odd or changed reads again (as iRacing's and Assetto Corsa's shared memory). Neither side ever waits on the other.
@@ -980,7 +982,7 @@ odd or changed reads again (as iRacing's and Assetto Corsa's shared memory). Nei
 launcher that ended are removed when the next is made) and names it in the launch file (`board`). The core maps it at
 Init (`port/core/src/board.cpp`, `board_map.cpp`) and takes it: no magic, nothing written; another version, or too
 small a file: its own version, size and process id written, then nothing else, and the log says `fzgx: board:
-FILE refused: ...`; else `fzgx: board: taken (FILE, version 1)`. A launcher whose game refused goes without (no live
+FILE refused: ...`; else `fzgx: board: taken (FILE, version 2)`. A launcher whose game refused goes without (no live
 race, no freeze detection) and says so in its log; the exit code and the log's stop lines stay the floor.
 
 **What the launcher does with it** (`net/src/Launcher.Core/Board/`): looks every 15 ms; passes each new snapshot on
@@ -1004,12 +1006,13 @@ A game mode (piconet-docs `research/game-modes/`: the design, the vocabulary, th
 `.fzmode`, which one compiler (`Online.Protocol` `ModeCompiler`, D11) turns into a **package**, `.fzmp`: the bytes a
 match start carries and every game runs. The words and the bytecode's operations are defined once,
 `protocol/modes.toml` (generated: `generated/ModeWords.g.cs` for the compiler, `generated/mode_words.g.h` for the
-runner's interpreter, `port/core/src/mode.cpp`). Api 1: the first slice's words (Overdrive's) and the whole language
-but its board; the standard library (`net/src/Online.Protocol/Modes/std.fzmode`) is compiled with every file, so a
+runner's interpreter, `port/core/src/mode.cpp`). Api 1: the first slice's words (Overdrive's) and the whole language;
+the standard library (`net/src/Online.Protocol/Modes/std.fzmode`) is compiled with every file, so a
 package holds the code of every macro it used and every sub it called, and nothing of the library else.
 
 **The package.** Big-endian; a string is u16 its byte length and UTF-8. The mark `FZMP`, u16 the format (1), u16 the
-api; then seven sections in this order, each u32 its tag (four letters), u32 its length and its bytes:
+api; then seven sections in this order, and an eighth in a mode with `board` lines alone (so a mode without keeps the
+bytes and hash it had), each u32 its tag (four letters), u32 its length and its bytes:
 
 | Section | Content |
 |---|---|
@@ -1020,6 +1023,7 @@ api; then seven sections in this order, each u32 its tag (four letters), u32 its
 | `RULE` | u16 the rules, in the file's order; then each: its label (string), u8 its event (`[[event]]`), u8 0, u16 its locals (the event's binding is local 0), u32 its `when` condition, u32 its `while` condition (each an offset in `CODE`, 0xFFFFFFFF none: several `when`s are one condition, joined by `and`), u32 its body |
 | `CODE` | the bytecode (`[[op]]`): a condition ends with `Ret`, a body with `End` |
 | `SRC ` | the mode file's text, as it was compiled (a replay can show what was raced) |
+| `BORD` | only with `board` lines: u16 the lines (at most `[api] board` a scope), then each: u8 its scope (0 global, 1 seat, 2 team), u8 its type (0 int, 1 real, 2 bool, 3 seat, 4 seats), u16 its variable's word, its label (a string, 1 to `[api] board_label` bytes). The status board's (section 8) |
 
 The **content hash** is the SHA-256 of the package's bytes; its **share code** the first 8 characters of the hash's
 base32 (RFC 4648, upper case, no padding). At most 64 KiB, the source included.

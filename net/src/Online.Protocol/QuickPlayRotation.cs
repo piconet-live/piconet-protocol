@@ -285,6 +285,10 @@ public sealed class QuickPlayRotation
         {
             throw new InvalidDataException($"{file}: a mode of Quick Play's rotation says neither course nor racers: the rotation's cards name the courses, and its lobby the seats");
         }
+        if (terms.Solo)
+        {
+            throw new InvalidDataException($"{file}: a solo mode is raced alone, and no rotation holds it");
+        }
         return new RotationMode(file, compiled.Mode!, compiled.Hash!);
     }
 

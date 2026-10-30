@@ -22,6 +22,8 @@ inline constexpr int TEAM_WORDS = 32;
 inline constexpr int TEAMS = 30;
 inline constexpr int WAITS = 64;
 inline constexpr int WAIT_LOCALS = 8;
+inline constexpr int BOARD = 8;
+inline constexpr int BOARD_LABEL = 32;
 inline constexpr int PACKAGE_BYTES = 65536;
 inline constexpr int SEATS = 30;
 
@@ -231,7 +233,12 @@ enum Setup : std::uint8_t
   SETUP_BOOSTSTARTON = 23,  // boost_start on
   SETUP_BOOSTSTARTOFF = 24,  // boost_start off
   SETUP_TEAMS = 25,  // teams
-  SETUP_COUNT = 26,
+  SETUP_SOLO = 26,  // solo
+  SETUP_REWIND = 27,  // rewind
+  SETUP_PAUSE = 28,  // pause
+  SETUP_SAVESTATE = 29,  // save_state
+  SETUP_RESUMECOUNTDOWN = 30,  // resume_countdown
+  SETUP_COUNT = 31,
 };
 
 // a read of a seat (OP_SEATREAD)

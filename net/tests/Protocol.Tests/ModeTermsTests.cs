@@ -282,4 +282,12 @@ public sealed class ModeTermsTests
         Assert.Equal(mode.Package.Params.Select(p => (p.Label, p.Kind, p.Least, p.Most, p.Step)), back.Rules.Mode!.Params!.Select(p => (p.Label, p.Kind, p.Least, p.Most, p.Step)));
         Assert.Equal(["a", "b"], back.Rules.Mode.Params![3].Choices);
     }
+
+    [Fact]
+    public void ASoloModeIsRefusedARace()
+    {
+        var mode = ModeCompiler.Compile("mode \"S\" { api 1; }\nsolo;\n").Mode!;
+        Assert.True(ModeTerms.Of(mode).Solo);
+        Assert.Contains("raced alone", ModeTerms.Of(mode).Refusal(1, 0), StringComparison.Ordinal);
+    }
 }

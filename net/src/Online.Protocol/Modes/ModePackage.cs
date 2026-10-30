@@ -53,6 +53,9 @@ public sealed record ModeRule(string Label, ModeEvent Event, int Locals, uint Wh
     public const uint None = 0xFFFFFFFF;
 }
 
+/// <summary>A <c>board</c> line as the package keeps it: its variable's scope, type and word, and its label.</summary>
+public sealed record ModeBoardLine(ModeScope Scope, ModeType Type, int Word, string Label);
+
 /// <summary>The match start's <c>setup.mode</c> (formats.md section 9): the package, its hash, its api, the
 /// parameters' values in <c>PARM</c>'s order (a real's bits) and each seat's team, by seat (0 to 29; null: every seat
 /// its own, its number).</summary>
@@ -86,6 +89,8 @@ public sealed class ModePackage
     /// <summary>Each team word's start value.</summary>
     public IReadOnlyList<int> TeamWords { get; init; } = [];
     public IReadOnlyList<ModeRule> Rules { get; init; } = [];
+    /// <summary>The file's <c>board</c> lines, in its order (the language's section 10): the status board's values.</summary>
+    public IReadOnlyList<ModeBoardLine> Board { get; init; } = [];
     public required byte[] Code { get; init; }
     public required string Source { get; init; }
 
@@ -170,6 +175,21 @@ public sealed class ModePackage
         });
         w.Section("CODE", s => s.Bytes(Code));
         w.Section("SRC ", s => s.Bytes(Encoding.UTF8.GetBytes(Source)));
+        // only in a mode with board lines, so a mode without keeps the bytes and the hash it had before the board
+        if (Board.Count > 0)
+        {
+            w.Section("BORD", s =>
+            {
+                s.U16(Board.Count);
+                foreach (var line in Board)
+                {
+                    s.U8((int)line.Scope);
+                    s.U8((int)line.Type);
+                    s.U16(line.Word);
+                    s.Text(line.Label);
+                }
+            });
+        }
         return w.ToArray();
     }
 
@@ -292,6 +312,7 @@ public sealed class ModePackage
             throw new InvalidDataException($"the package is of api {api}, newer than this build's {ModeWords.Api}");
         }
         var sections = Sections.Select(tag => r.Section(tag)).ToArray();
+        var board = r.Left > 0 ? ReadBoard(r.Section("BORD")) : [];
         r.End();
         var head = sections[0];
         var (name, badge, about) = (head.Text(), head.Text(), head.Text());
@@ -310,11 +331,37 @@ public sealed class ModePackage
             SeatWords = seatWords,
             TeamWords = teamWords,
             Rules = ReadRules(sections[4], code.Length),
+            Board = board,
             Code = code,
             Source = sections[6].Utf8(sections[6].Left),
         };
         ModeCode.Check(result);
         return result;
+    }
+
+    private static List<ModeBoardLine> ReadBoard(ModeReader s)
+    {
+        var count = s.U16();
+        if (count == 0)
+        {
+            throw new InvalidDataException("a BORD section holds a line");
+        }
+        var list = new List<ModeBoardLine>();
+        for (var i = 0; i < count; i++)
+        {
+            var (scope, type, word, label) = (s.U8(), s.U8(), s.U16(), s.Text());
+            if (scope > (int)ModeScope.Team || type >= (int)ModeType.Vec || Encoding.UTF8.GetByteCount(label) is 0 or > ModeWords.BoardLabel)
+            {
+                throw new InvalidDataException($"the board's line \"{label}\" is not one of api {ModeWords.Api}");
+            }
+            list.Add(new ModeBoardLine((ModeScope)scope, (ModeType)type, word, label));
+        }
+        s.End();
+        if (list.GroupBy(l => l.Scope).Any(g => g.Count() > ModeWords.Board))
+        {
+            throw new InvalidDataException($"the board holds at most {ModeWords.Board} values a scope");
+        }
+        return list;
     }
 
     private static List<ModeParam> ReadParams(ModeReader s)

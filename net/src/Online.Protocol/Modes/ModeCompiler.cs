@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text;
 
 namespace Online.Protocol;
 
@@ -15,7 +16,7 @@ public sealed record ModeCompilation(byte[]? Package, ModePackage? Mode, string?
 /// file to its package (formats.md section 9), for the launcher (checks while writing, the lobby) and the service
 /// (uploads). The language is language.md's: the header, parameters, the setup words, constants, variables kept for
 /// the race, a seat or a team, subs, rules, waits, the set helpers, vecs, random numbers, and the standard library's
-/// macros and subs (<see cref="ModeLibrary"/>, compiled with every file); no board yet. The vocabulary is
+/// macros and subs (<see cref="ModeLibrary"/>, compiled with every file) and the board's lines. The vocabulary is
 /// protocol/modes.toml's, through the generated <see cref="ModeWords"/>. The first error stops the compile; warnings
 /// are gathered.</summary>
 public static class ModeCompiler
@@ -71,6 +72,7 @@ public static class ModeCompiler
         private readonly List<int> _seatWords = [];
         private readonly List<int> _teamWords = [];
         private readonly List<ModeRule> _rules = [];
+        private readonly List<ModeBoardLine> _board = [];
         private ModeEmitter? _emitter;
         // the rule instances that may wait at once, so far (the api's waits)
         private int _waiting;
@@ -95,6 +97,7 @@ public static class ModeCompiler
             {
                 throw new ModeCompileException(stopLine, "stop_all only brakes the machines: a mode with it needs end_race or clock_limit, or its race never ends");
             }
+            SoloWords(items);
             var mode = new ModePackage
             {
                 Api = api,
@@ -108,6 +111,7 @@ public static class ModeCompiler
                 SeatWords = _seatWords,
                 TeamWords = _teamWords,
                 Rules = _rules,
+                Board = _board,
                 Code = _emitter.Code,
                 Source = source,
             };
@@ -134,6 +138,9 @@ public static class ModeCompiler
                 case ModeRuleItem rule:
                     Rule(rule);
                     break;
+                case ModeBoardItem board:
+                    Board(board);
+                    break;
                 case ModeSubItem:
                     break;   // (declared before the items, Subs)
                 case ModeTimeArgument time:
@@ -141,6 +148,66 @@ public static class ModeCompiler
                     break;
                 default:
                     throw new ModeCompileException(item.Line, "this is not an item of api 1");
+            }
+        }
+
+        /// <summary>A board line: a variable already declared, of its scope, that one word holds; so many a scope.</summary>
+        private void Board(ModeBoardItem item)
+        {
+            var (kind, word) = item.Scope switch
+            {
+                ModeScope.Seat => (ModeNameKind.SeatVariable, "seat"),
+                ModeScope.Team => (ModeNameKind.TeamVariable, "team"),
+                _ => (ModeNameKind.Global, "global"),
+            };
+            var found = _names.Find(item.Name);
+            if (found is null || found.Kind != kind)
+            {
+                throw new ModeCompileException(item.Line, $"board {word} {item.Name}: {item.Name} is no {word} variable declared before this line");
+            }
+            if (found.Type == ModeType.Vec)
+            {
+                throw new ModeCompileException(item.Line, $"board {word} {item.Name}: a vec is three values, and a board line shows one");
+            }
+            if (_board.Any(b => b.Scope == item.Scope && b.Word == found.Index))
+            {
+                throw new ModeCompileException(item.Line, $"board {word} {item.Name}: it is on the board already");
+            }
+            if (_board.Count(b => b.Scope == item.Scope) >= ModeWords.Board)
+            {
+                throw new ModeCompileException(item.Line, $"the board holds at most {ModeWords.Board} {word} values");
+            }
+            if (Encoding.UTF8.GetByteCount(item.Label) is 0 or > ModeWords.BoardLabel)
+            {
+                throw new ModeCompileException(item.Line, $"a board line's label is 1 to {ModeWords.BoardLabel} bytes");
+            }
+            _board.Add(new ModeBoardLine(item.Scope, found.Type, found.Index, item.Label));
+        }
+
+        /// <summary>The words of a race raced alone need <c>solo</c>; and <c>solo</c> is one seat.</summary>
+        private static void SoloWords(List<ModeItem> items)
+        {
+            int? Line(ModeSetup id) => items.OfType<ModeSetupItem>().FirstOrDefault(s => ModeWords.Setups.Single(w => w.Name == s.Word).Id == id)?.Line;
+            foreach (var (id, name) in new[] { (ModeSetup.Rewind, "rewind"), (ModeSetup.Pause, "pause"), (ModeSetup.SaveState, "save_state"), (ModeSetup.ResumeCountdown, "resume_countdown") })
+            {
+                if (Line(id) is { } line && Line(ModeSetup.Solo) is null)
+                {
+                    throw new ModeCompileException(line, $"{name} is a word of a race raced alone: a mode with it says solo");
+                }
+            }
+            if (Line(ModeSetup.SaveState) is { } saved && Line(ModeSetup.Rewind) is null)
+            {
+                throw new ModeCompileException(saved, "save_state keeps a moment inside the rewind's reach: a mode with it says rewind");
+            }
+            if (Line(ModeSetup.Solo) is not null)
+            {
+                foreach (var (id, name) in new[] { (ModeSetup.CpusAllowed, "cpus allowed"), (ModeSetup.Racers, "racers"), (ModeSetup.Teams, "teams") })
+                {
+                    if (Line(id) is { } line)
+                    {
+                        throw new ModeCompileException(line, $"{name}: a solo mode is one seat");
+                    }
+                }
             }
         }
 

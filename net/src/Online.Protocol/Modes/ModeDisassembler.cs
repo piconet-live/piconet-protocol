@@ -58,6 +58,14 @@ public static class ModeDisassembler
             Line(Invariant($"  {instruction.Offset:x4}  {Instruction(instruction, mode)}"));
         }
         Line(Invariant($"SRC  {Encoding.UTF8.GetByteCount(mode.Source)} bytes"));
+        if (mode.Board.Count > 0)
+        {
+            Line(Invariant($"BORD {mode.Board.Count}"));
+            foreach (var line in mode.Board)
+            {
+                Line(Invariant($"  {line.Scope} {line.Type} word {line.Word} {Quote(line.Label)}"));
+            }
+        }
         return text.ToString();
     }
 
