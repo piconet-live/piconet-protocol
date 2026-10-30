@@ -278,7 +278,7 @@ COMPACT = """
         {
             return;
         }
-        RaceVersion = race is >= @P@Format.VersionPlain and < @P@Format.CompactVersion ? race : 0;
+        RaceVersion = race != @P@Format.CompactVersion && @P@Format.Plays(race) ? race : 0;   // a recording's version (9 too)
         compactSteps = steps;
         compactWhole = at == end && Seats != 0 && steps > 0 && steps <= @P@Format.MaxSteps && RaceVersion != 0;
     }
