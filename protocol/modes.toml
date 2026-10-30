@@ -407,9 +407,10 @@ id = 2
 kind = "discrete"
 binds = "seat int"
 doc = """the game's out verdict became true for the seat this step (the image's outtest.py); its second name, the \
-cause (an int, in the order modes.toml's out causes give: 1 energy (broken down), 2 destroyed (an explosion: contact, \
-a death surface, `explode`), 3 fall (out of the course), 4 retired (`retire`, `eliminate`, a CPU at rest), 5 time \
-over; 0 none of these)"""
+cause (an int, what the machine's state says at that step; the first that holds: 5 time over; 2 exploded (the event \
+`destroyed` below: contact, a strip, a death surface, the skip limit, `explode`); 3 fell (flag 0x800 with no explosion: \
+lost course, out of bounds, under the fall planes); 1 energy (broken down, flag 0x80, at rest; a CPU at rest too: it \
+comes to rest broken down); 4 retired (`retire`, `eliminate`); 0 none of these)"""
 
 # --- wave 2A, the race side: events (each found at the mode point by comparing a seat's state with the last step's,
 # kept in the block's engine page; language 6 gives their order in a step)
@@ -452,14 +453,19 @@ name = "fall"
 id = 8
 kind = "discrete"
 binds = "seat"
-doc = "machine flag 0x800 (out of the course) rose this step without the destruction (0x40000000)"
+doc = """machine flag 0x800 (out of the course) rose with no explosion (`destroyed`): lost course, out of bounds, or a \
+machine that reached the fall planes (fn_1_24A4C: y < -5000 or 900 under the course's floor) with no flag before"""
 
 [[event]]
 name = "destroyed"
 id = 9
 kind = "discrete"
 binds = "seat"
-doc = "machine flag 0x40000000 rose this step: the explosion path (fn_1_25004: contact, a death surface, explode)"
+doc = """the machine exploded: +0x58C 0x10, the game's record of its destroy routine (fn_1_25004 and its copies in fn_1_2A694, \
+fn_1_2A8D0: contact, a strip, a death surface, the skip limit, `explode`), rose; once for each life. Not when the \
+routine ran under the fall planes (that only ends a fall). May come after the seat's `out`: a wreck at rest explodes when \
+another machine touches it. Flag 0x40000000 is not read: it lasts until that machine's next step start, so `explode` \
+never shows it"""
 
 [[event]]
 name = "ko"
@@ -582,8 +588,11 @@ Never with `laps`"""
 name = "finish_limit"
 id = 5
 args = [{ type = "int", least = 0, most = 600 }]
-where = """the race block's RACE_FINISH_LIMIT (the image's raceend.py): the race ends for everyone so many seconds after the \
-first finish (0: no such end). In a mode left out, 0: the mode owns its ending (the lobby's rule does not reach it)"""
+where = """the race block's RACE_FINISH_LIMIT in steps (seconds x 60; the image's raceend.py): so many seconds after the first \
+finish the race stops waiting for the machines still racing (0: no such end). The results then begin when the last player \
+seat that finished by then has had its 480 steps of FINISH! (at once if none has), so at most limit + 8 s after the first \
+finish; a machine that crosses the line during that wait still finishes. In a mode left out, 0: the mode owns its ending \
+(the lobby's rule does not reach it)"""
 
 [[setup]]
 name = "mine_regen"
@@ -687,7 +696,7 @@ doc = "broken down, machine flag 0x80"
 name = "destroyed"
 id = 8
 type = "bool"
-doc = "machine flag 0x40000000 (the destruction; 0x800, out of the course, follows it)"
+doc = "this life of the machine ended in an explosion (the event `destroyed` has fired; a fall under the planes: false)"
 
 [[seat_read]]
 name = "distance"
@@ -1092,14 +1101,16 @@ name = "push"
 id = 15
 args = ["seat", "vec"]
 where = "site L (main.rel 0x23854) in the next machine step: the momentum M+0x94.. += v x W / 216"
-doc = "an impulse of v km/h, a vector, added to the seat's motion"
+doc = "an impulse of v km/h, a vector, added to the seat's motion in the next step; the game's forces act on it from then on"
 
 [[action]]
 name = "seat.velocity"
 id = 16
 args = ["seat", "vec"]
 where = "site L (main.rel 0x23854) in the next machine step: the momentum M+0x94.. = v x W / 216"
-doc = "sets the seat's motion to v km/h, a vector (direction and speed), for that step's travel"
+doc = """sets the seat's motion to v km/h, a vector (direction and speed), for that one step's travel: the seat moves v / 216 \
+m and reads v. It is not held: from the next step the game's forces act on it (2000 km/h on a 1000 km/h seat: 1780, 1631, \
+1529, about 1400 after 8 steps). To keep it, run the word every step (each seat), or use `seat.speed`"""
 
 [[action]]
 name = "freeze"

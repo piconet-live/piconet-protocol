@@ -37,6 +37,7 @@ public sealed class ModeCompilerTests
     [InlineData("race")]
     [InlineData("knockout")]
     [InlineData("lives")]
+    [InlineData("wrecks")]
     public void AVectorCompilesToItsPackage(string name)
     {
         var result = CompileVector(name);
@@ -73,6 +74,7 @@ public sealed class ModeCompilerTests
     [InlineData("race")]
     [InlineData("knockout")]
     [InlineData("lives")]
+    [InlineData("wrecks")]
     public void APackageReadsBackAsItWasWritten(string name)
     {
         var result = CompileVector(name);
