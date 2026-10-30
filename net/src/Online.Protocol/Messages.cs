@@ -67,11 +67,15 @@ public sealed record Rgb(byte R, byte G, byte B)
 /// <summary>A lobby member (Watching: they watch the lobby's races instead of racing, <see cref="WatchRace"/>; a
 /// launcher from before it passes over it): StockColor as in <see cref="EnterQuickPlay"/>; Racing: in the lobby's race now (otherwise
 /// waiting for the next); Chosen: while the lobby is choosing machines, this player has chosen theirs. Tag: the
-/// player's tag (<see cref="PlayerTags"/>), shown after the name; a launcher from before tags passes over it.</summary>
+/// player's tag (<see cref="PlayerTags"/>), shown after the name; a launcher from before tags passes over it.
+/// Custom: the garage-built machine the player races in place of Machine (<see cref="CustomMachine"/>, as their
+/// <see cref="SeatSetup.Custom"/> will carry it), so the other members see it; null: Machine. A launcher from before
+/// it passes over it.</summary>
 public sealed record PlayerInfo(string Id, string Name, int Machine, Rgb Color, int? StockColor = null, bool Racing = false,
     bool Chosen = false, string? Tag = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool Watching = false,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Pack = null);
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Pack = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] CustomMachine? Custom = null);
 
 /// <summary>A relay the players measure. An empty host means the coordinator's own host.</summary>
 public sealed record RelayEndpoint(string Id, string Host, int Port);
@@ -111,15 +115,8 @@ public sealed record RaceSetup(
     public const int MostSeatPacks = 4;
 }
 
-/// <summary>The race's rules the games apply. CpuLevel: 0 Novice, 1 Standard, 2 Expert, 3 Master. BoostFromStart:
-/// boosting allowed on the first lap (the game's Practice rule; Grand Prix waits for the second). Restore: a machine
-/// that falls or is wrecked is put back instead of being out. FinishLimitSeconds: the race ends for everyone this
-/// long after the first machine finishes (0, and a match start without it: it ends when the last has finished or is
-/// out); the games count it in steps of the race, no clock of a server's. MineRegenMs: a mine that went off comes
-/// back this long after (0, and a match start without it: it stays gone, the game's own way); 50 to 5,000 in steps
-/// of 50, whole steps of the race (50 ms is 3).</summary>
-public sealed record RaceRules(int CpuLevel = 3, bool BoostFromStart = false, bool Restore = false, int FinishLimitSeconds = 0,
-    int MineRegenMs = 0);
+// RaceRules, the race's rules the games apply, is generated from protocol/rules.toml (protocol/generated/
+// HostRules.g.cs).
 
 [JsonConverter(typeof(JsonStringEnumConverter<CpuFillMode>))]
 public enum CpuFillMode
