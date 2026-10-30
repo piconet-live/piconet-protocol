@@ -1,0 +1,47 @@
+// Every display word of api 1 (vocabulary 5), at least once: a vector for the compiler's tests and the runner's
+// interpreter tests (protocol/README.md), not a mode to race. Presentation only: none of these changes the race.
+
+mode "Displays" {
+  api 1;
+  about "Every display word of api 1.";
+}
+
+seat int lives = 3;
+
+rule "Parts" {
+  event every step;
+  when race.started;
+  do {
+    for each seat {
+      show seat, TIMER;
+      show seat, DISTANCE;
+      hide seat, DISTANCE;
+    }
+  }
+}
+
+rule "The number" {
+  event each seat;
+  do { show_number seat, max(0, seat.lives); }
+}
+
+rule "Looks" {
+  event each seat;
+  when seat.index % 3 == 1;
+  do {
+    seat.look = ghost;
+    seat.own_look = normal;
+    map_hide seat from seats - seat;
+  }
+}
+
+rule "Out of sight" {
+  event out(s);
+  do {
+    s.look = invisible;
+    s.colour = 0xFF2020FF;
+    map_mark s, 0xFF0000;
+    stock_banner s, FINAL_LAP;
+    show_number s, -1;
+  }
+}

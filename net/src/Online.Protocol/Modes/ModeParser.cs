@@ -640,10 +640,10 @@ internal sealed class ModeParser
         string? bound = null, second = null;
         if (Accept("("))
         {
-            bound = NewName("the event's seat");
+            bound = EventName("the event's seat");
             if (Accept(","))
             {
-                second = NewName("the event's second name");
+                second = EventName("the event's second name");
                 if (Current.Is(","))
                 {
                     throw Error("an event of api 1 binds at most two names");
@@ -654,6 +654,10 @@ internal sealed class ModeParser
         Expect(";");
         return (string.Join(' ', words), bound, second);
     }
+
+    /// <summary>A name an event binds. <c>by</c> may be one, as the vocabulary's <c>event ko(v, by)</c> spells it: the
+    /// word is a keyword only after a set's condition, where a bound <c>by</c> can still be a sort key.</summary>
+    private string EventName(string what) => Current.Is("by") && Current.Kind == ModeTokenKind.Name ? Take().Text : NewName(what);
 
     private List<ModeStatement> Block()
     {
@@ -773,6 +777,8 @@ internal sealed class ModeParser
         {
             throw Error($"'{name}' is not an action of api {ModeWords.Api}");
         }
+        // a word between the first two arguments in place of the comma (map_hide s from seats)
+        var join = ModeWords.ActionJoins.GetValueOrDefault(ModeWords.Actions.First(a => a.Name == name).Id);
         var arguments = new List<ModeExpr>();
         while (!Current.Is(";"))
         {
@@ -782,7 +788,14 @@ internal sealed class ModeParser
                 name += " off";
                 break;
             }
-            if (arguments.Count > 0)
+            if (arguments.Count == 1 && join is not null)
+            {
+                if (!Accept(join))
+                {
+                    throw Error($"{name} writes '{join}' before its second argument: {name} s {join} seats;");
+                }
+            }
+            else if (arguments.Count > 0)
             {
                 Accept(",");
             }
