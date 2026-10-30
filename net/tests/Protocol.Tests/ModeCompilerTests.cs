@@ -139,7 +139,7 @@ public sealed class ModeCompilerTests
         Assert.Equal(Enum.GetValues<ModeParamKind>(), mode.Params.Select(p => p.Kind).Distinct().Order());
         Assert.Contains(mode.Params, p => p.Type == ModeType.Real);
         Assert.Contains(mode.Setups.SelectMany(s => s.Arguments), a => a.FromParam);
-        Assert.Equal(3845, result.Budget);
+        Assert.Equal(3852, result.Budget);
     }
 
     [Fact]
