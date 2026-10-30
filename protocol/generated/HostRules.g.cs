@@ -41,14 +41,7 @@ public static partial class HostRules
     /// <summary>A range the racers' own settings are brought into; Quick Play: top speed, fixed.</summary>
     public static HostRule MachineSetting { get; } = new("machine-setting", "Machine setting", RuleReach.Alone, RuleKind.Range, 0, GameFacts.Limits.SettingMax, Default: GameFacts.Limits.SettingMax, SetupWord: "machine_setting");
 
-    /// <summary>The race's stat pack. Its default, a pack's own name, is what a server, a new lobby, Quick Play and a
-    /// practice run on when nothing states another; `stats stock`, the host's Stock and the server's setting stock ask
-    /// for the disc's own.</summary>
     public static HostRule StatPack { get; } = new("stat-pack", "Stats", RuleReach.Alone, RuleKind.Pack, SetupWord: "stats");
-
-    /// <summary>The stat pack a race runs on when nothing states another, by the pack's own name: rules.toml's default,
-    /// its one place. A file of protocol/packs carries the name (a protocol test holds it).</summary>
-    public const string DefaultStatPack = "GX Unleashed";
 
     /// <summary>Each racer may race a pack of their own for their machine (handbook/stat-pack-constants.md, "A pack a
     /// seat"); Quick Play: off, one pack for all (mixed packs only in lobbies).</summary>

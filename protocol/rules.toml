@@ -18,7 +18,7 @@
 #   kind      course, courses, number, switch, range, choice, delay, machines, pack, text (Online.Protocol RuleKind)
 #   least, most, step, default
 #             its range and Quick Play's value (a switch: 0 to 1, 1 on); each a whole number or a C# constant by name
-#             ("GameFacts.Limits.Seats"); left out: 0 (step 1). A pack's default is a pack's own name.
+#             ("GameFacts.Limits.Seats"); left out: 0 (step 1)
 #   unit      what its number counts, as a refusal and the dashboard say it ("s", "ms"); none: a plain number
 #   takes     what it may be, as a refusal says it: {range} is "LEAST to MOST", {least}, {most}, {step} the numbers;
 #             none: "on or off" for a switch, {range} for a number
@@ -205,9 +205,6 @@ label = "Stats"
 cs = "StatPack"
 reach = "alone"
 kind = "pack"
-default = "GX Unleashed"
-doc = """The race's stat pack. Its default, a pack's own name, is what a server, a new lobby, Quick Play and a practice \
-run on when nothing states another; `stats stock`, the host's Stock and the server's setting stock ask for the disc's own."""
 
 [[rule]]
 name = "mixed-packs"

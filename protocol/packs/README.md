@@ -14,6 +14,6 @@ committed: the asset scan refuses it, and the import writes the differences only
 tests as a server reads it (`Online.Tests`, `RepositoryPacksTests`; `Protocol.Tests`, `StatPackConstantsTests` reads GX Unleashed's), so a pack the game would refuse fails a commit's
 landing, not a deployment.
 
-GX Unleashed is the default: `rules.toml`'s stat-pack `default` names it, the one place to change it. A server with
-no setting runs on it and does not start without its file; `--stat-pack stock` or `FZGX_STAT_PACK=stock` runs the
-disc's own stats.
+No pack is the unmodified game: nothing in this repository makes a pack a default. A server runs a pack only when it
+is told to (`--stat-pack FILE` or `FZGX_STAT_PACK`); the service's deployment tells its stacks to, and the launcher
+chooses one for a fresh Practice, each in its own repository.

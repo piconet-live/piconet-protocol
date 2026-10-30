@@ -695,13 +695,13 @@ name = "stats"
 id = 19
 lobby = true
 form = "text"
-where = "the coordinator: the race's stat pack, one of the server's by name, enforced (the host's row leaves the panel); a server without it refuses the mode. Left out: the host's choice, rules.toml's default until they make one"
+where = "the coordinator: the race's stat pack, one of the server's by name, enforced (the host's row leaves the panel); a server without it refuses the mode. Left out: the lobby's rule stands"
 
 [[setup]]
 name = "stats stock"
 id = 20
 lobby = true
-where = "the coordinator: the disc's own stats, enforced"
+where = "the coordinator: no stat pack, enforced: the disc's own stats"
 
 [[setup]]
 name = "mixed_packs on"
