@@ -12,7 +12,7 @@ namespace Online.Protocol;
 /// sight), its body, its returns jumps to its end with the value in a local. A <c>wait</c> keeps the slots in use
 /// (at most the api's wait_locals) and leaves the stack empty: the compiler allows one only where a statement may
 /// stand, outside a sorted loop.</para>
-/// <para>The count: one an operation, a SortRun 1 + 5 × 30 × its keys; a loop's test once more than its
+/// <para>The count: one an operation, a SortRun 1 + 5 × 30 × its keys, an FSqrt its <c>fsqrt_cost</c>; a loop's test once more than its
 /// iterations (30 for the seats, a repeat's most), its body once each; an <c>each seat</c> or <c>out</c> rule 30
 /// times; a rule that waits twice (ModeCompiler). Both arms of an <c>if</c> are counted, so the count is an upper
 /// bound.</para></summary>
@@ -122,7 +122,7 @@ internal sealed partial class ModeEmitter(ModeNames names, List<string> warnings
                     break;
             }
         }
-        Cost += _multiplier * (op == ModeOp.SortRun ? 1 + (5L * ModeWords.Seats * operands[1]) : 1);
+        Cost += _multiplier * (op == ModeOp.SortRun ? 1 + (5L * ModeWords.Seats * operands[1]) : op == ModeOp.FSqrt ? ModeWords.FsqrtCost : 1);
     }
 
     private void Push(int cell) => Op(ModeOp.Push, cell);

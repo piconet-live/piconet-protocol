@@ -22,6 +22,7 @@ inline constexpr int TEAM_WORDS = 32;
 inline constexpr int TEAMS = 30;
 inline constexpr int WAITS = 64;
 inline constexpr int WAIT_LOCALS = 8;
+inline constexpr int FSQRT_COST = 8;
 inline constexpr int BOARD = 8;
 inline constexpr int BOARD_LABEL = 32;
 inline constexpr int PACKAGE_BYTES = 65536;

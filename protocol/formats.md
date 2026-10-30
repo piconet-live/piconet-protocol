@@ -1046,7 +1046,7 @@ instance (a rule, and its seat for a rule on a seat) that waits neither fires no
 its condition holds; `when` on the step it becomes true (an edge, kept a rule and seat in the block); a discrete
 event's `when` is tested at each occurrence. Reads of the game see the step as it stood at the mode point; actions
 are queued and applied after the run in their order (the last write to a field wins). The operations of a step are
-counted (`[[op]]`'s cost); past `[api] budget`, a full queue, or a non-finite real for a game field is a **fault**:
+counted (`[[op]]`'s cost; an `FSqrt` takes `[api] fsqrt_cost`); past `[api] budget`, a full queue, or a non-finite real for a game field is a **fault**:
 the race ends for everyone at that step with the results as they stand, and the log says `mode error` (D6).
 
 **Waits.** `Wait` (its operands: the live locals, the kind, the condition) pops the steps; more than 0, the instance

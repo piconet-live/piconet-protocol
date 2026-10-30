@@ -89,6 +89,15 @@ public sealed class ModeBoardTests
         Assert.Equal("restore_on", practice.Mode!.Params.Single().Name);
     }
 
+    [Fact]
+    public void ASquareRootCountsItsCost()
+    {
+        var plain = Compile("global real a;\nrule \"R\" { event every step; do { a = abs(a); } }\n");
+        var root = Compile("global real a;\nrule \"R\" { event every step; do { a = sqrt(a); } }\n");
+        Assert.Equal(plain.Budget + ModeWords.FsqrtCost - 1, root.Budget);
+        Assert.Equal(8, ModeWords.FsqrtCost);
+    }
+
     private static string ProtocolFolder()
     {
         var at = new DirectoryInfo(AppContext.BaseDirectory);

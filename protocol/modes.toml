@@ -11,7 +11,8 @@
 # the bytes after it, in order (u8, u16, u32, i32: big-endian), `doc` what it does. The stack holds 32-bit cells: an
 # int, a real's binary32 bits, a bool (0 or 1), a seat (0 to 29, or -1 none), a set of seats (bit i: seat i); a vec is
 # three cells, x then y then z (a read of type vec pushes all three). A binary operation pops b, then a, and pushes
-# a op b. Every operation costs one operation of the step's budget, but SortRun: 1 + 5 x entries x keys.
+# a op b. Every operation costs one operation of the step's budget, but SortRun: 1 + 5 x entries x keys, and FSqrt:
+# [api] fsqrt_cost (the owner, 2026-10-30: the game's square root is the dear one; `sqrt`, and `dist`, which calls it).
 #
 # A word: `name` as a mode file writes it, `id` its number in the bytecode (Action, SeatRead, RaceRead) or the package
 # (setup words, events), `type` what a read gives (int, real, bool, seat, seats, vec), `args` an action's or setup word's
@@ -43,6 +44,7 @@ team_words = 32        # words per team
 teams = 30             # teams in a race at most (a team's number 0 to 29)
 waits = 64             # rule instances waiting at once (the compiler counts the most a mode can have)
 wait_locals = 8        # locals a waiting rule keeps, its event's binding included
+fsqrt_cost = 8         # what one FSqrt takes of the budget (the compiler's count and the interpreter's, in both its loops)
 board = 8              # `board` lines a scope (global, seat, team): what the status board holds (board.toml)
 board_label = 32       # a `board` line's label, in UTF-8 bytes
 package_bytes = 65536  # a package's whole size, the source included

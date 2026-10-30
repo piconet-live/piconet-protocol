@@ -459,6 +459,8 @@ public static partial class ModeWords
     public const int Waits = 64;
     /// <summary>The api's limit <c>wait_locals</c>.</summary>
     public const int WaitLocals = 8;
+    /// <summary>The api's limit <c>fsqrt_cost</c>.</summary>
+    public const int FsqrtCost = 8;
     /// <summary>The api's limit <c>board</c>.</summary>
     public const int Board = 8;
     /// <summary>The api's limit <c>board_label</c>.</summary>
