@@ -161,7 +161,7 @@ public sealed class ModeCompilerTests
         "line 5: the int n takes an int, not a real: floor, ceil, round or trunc make an int of a real")]
     [InlineData(Head + "rule \"R\" {\n  event out(s);\n  while race.started;\n  do { eliminate s; }\n}\n",
         "line 4: while is for the events that go on (every step, each seat): out happens once, so its rule takes when")]
-    [InlineData("mode \"Test\" {\n  api 2;\n}\n", "line 1: api 2 is not one this build knows: its newest is api 1")]
+    [InlineData("mode \"Test\" {\n  api 2;\n}\n", "line 2: api 2 is not one this build knows: its newest is api 1")]
     [InlineData(Head + "param rise \"Rise\" number 5..50 step 5 default 60;\n", "line 2: rise's default 60 is outside 5..50")]
     [InlineData(Head + "param rise \"Rise\" number 50..5;\n", "line 2: rise's range 50..5 is empty: the least comes first")]
     [InlineData(Head + "laps 100;\n", "line 2: laps is 0..99")]

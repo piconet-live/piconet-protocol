@@ -51,7 +51,8 @@ internal sealed record ModeActionStatement(int Line, string Action, IReadOnlyLis
 
 internal abstract record ModeItem(int Line);
 
-internal sealed record ModeHeaderItem(int Line, string Name, int? Api, string Badge, string About) : ModeItem(Line);
+/// <summary>The header; <see cref="ApiLine"/> is the line of its api.</summary>
+internal sealed record ModeHeaderItem(int Line, string Name, int? Api, int ApiLine, string Badge, string About) : ModeItem(Line);
 
 /// <summary>A parameter. <see cref="Least"/>, <see cref="Most"/>, <see cref="Step"/>, <see cref="Default"/> are
 /// literals (null when left out); a choice's default is the name it names, in <see cref="DefaultChoice"/>.</summary>

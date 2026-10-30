@@ -62,7 +62,7 @@ public static class ModeCompiler
             var api = header.Api ?? throw new ModeCompileException(header.Line, "the header names no api: api 1;");
             if (api > ModeWords.Api || api < 1)
             {
-                throw new ModeCompileException(header.Line, $"api {api} is not one this build knows: its newest is api {ModeWords.Api}");
+                throw new ModeCompileException(header.ApiLine, $"api {api} is not one this build knows: its newest is api {ModeWords.Api}");
             }
             _emitter = new ModeEmitter(_names, warnings);
             foreach (var item in items.Skip(1))

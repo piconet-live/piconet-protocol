@@ -130,11 +130,13 @@ internal sealed class ModeParser
         var name = Text();
         Expect("{");
         int? api = null;
+        var apiLine = line;
         string badge = "", about = "";
         while (!Accept("}"))
         {
             if (Accept("api"))
             {
+                apiLine = Current.Line;
                 api = (int)WholeLiteral("the api");
             }
             else if (Accept("badge"))
@@ -151,7 +153,7 @@ internal sealed class ModeParser
             }
             Expect(";");
         }
-        return new ModeHeaderItem(line, name, api, badge, about);
+        return new ModeHeaderItem(line, name, api, apiLine, badge, about);
     }
 
     private long WholeLiteral(string what)
