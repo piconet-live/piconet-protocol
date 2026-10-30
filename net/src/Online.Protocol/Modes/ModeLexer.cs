@@ -41,7 +41,7 @@ internal sealed class ModeLexer
     // The symbols, the longest first, so that ".." is not read as "." twice.
     private static readonly string[] Symbols =
         ["..", "==", "!=", "<=", ">=", "+=", "-=", "*=", "/=", "{", "}", "(", ")", "[", "]", ";", ",", ".", "=", "<", ">",
-         "+", "-", "*", "×", "/", "%", "&"];
+         ":", "+", "-", "*", "×", "/", "%", "&"];
 
     private readonly string _text;
     private readonly List<string> _warnings;

@@ -87,7 +87,12 @@ public static class ModeDisassembler
     {
         var table = ModeWords.Setups.First(s => s.Id == word.Id);
         var parts = new List<string> { table.Name };
-        for (var i = 0; i < word.Arguments.Count; i++)
+        for (var i = table.Args.Count; i + 1 < word.Arguments.Count; i += 2)  // a table's rows (laps by course)
+        {
+            var course = CourseTable.Courses.FirstOrDefault(c => c.Course == word.Arguments[i].Value);
+            parts.Add(Invariant($"course {word.Arguments[i].Value} ({course.Place}: {course.Track}) {word.Arguments[i + 1].Value}"));
+        }
+        for (var i = 0; i < table.Args.Count; i++)
         {
             var a = word.Arguments[i];
             var name = table.Args[i].Name.Length > 0 ? table.Args[i].Name + " " : "";

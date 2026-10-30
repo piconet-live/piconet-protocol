@@ -14,7 +14,9 @@
 #
 # A word: `name` as a mode file writes it, `id` its number in the bytecode (Action, SeatRead, RaceRead) or the package
 # (setup words, events), `type` what a read gives (int, real, bool, seat), `args` an action's or setup word's
-# arguments in order, `doc`, and `where`: the game's site or the part that applies it (vocabulary.md's).
+# arguments in order, `doc`, and `where`: the game's site or the part that applies it (vocabulary.md's). A setup word
+# with `table` takes a table of pairs after its arguments (the package: two more arguments a pair, `table`'s value
+# first): "course", a course's number (courses.toml).
 
 [codec.csharp]
 namespace = "Online.Protocol"
@@ -365,6 +367,16 @@ where = "the stand-in routine, before the game's rule hook fn_1_331EC: every sea
 name = "boost off"
 id = 3
 where = "the stand-in routine, after the game's rule hook fn_1_331EC: every seat's boost request (flag 0x40) cleared"
+
+[[setup]]
+name = "laps by course"
+id = 4
+args = [{ type = "int", name = "else", least = 0, most = 99, default = 3 }]
+table = "course"
+where = "the coordinator and the game: the race's laps on its course (0, `unlimited`: the game's free run)"
+doc = """`laps by course { "Venue: Track": n; ...; else: n; }`: a table after the arguments, a pair a course (the \
+game's course number, courses.toml, then its laps, as `else`'s range); a course the table leaves out takes `else`. \
+Never with `laps`"""
 
 [[seat_read]]
 name = "racing"
