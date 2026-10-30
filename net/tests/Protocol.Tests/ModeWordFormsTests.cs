@@ -1,0 +1,178 @@
+using Online.Protocol;
+
+namespace Protocol.Tests;
+
+/// <summary>The written forms of piconet-docs research/game-modes/ (vocabulary.md, language.md) against the compiler,
+/// word by word: each form the documents give compiles, each they refuse is refused, and a word they mark "not built" is
+/// refused, so building one fails here until the documents say so too.</summary>
+public sealed class ModeWordFormsTests
+{
+    private static ModeCompilation Compile(string body) => ModeCompiler.Compile($"mode \"X\" {{ api 1; }}\n{body}\n");
+
+    private static string Rule(string body) => $"rule \"R\" {{ event each seat; while race.started; do {{ {body} }} }}";
+
+    [Theory]
+    [InlineData("course \"Mute City: Sonic Oval\";")]
+    [InlineData("laps unlimited;")]
+    [InlineData("racers 2..8;")]
+    [InlineData("machines all;")]
+    [InlineData("machines [\"Blue Falcon\"];")]
+    [InlineData("machine_setting 20..80;")]
+    [InlineData("stats \"GX+\";")]
+    [InlineData("stats stock;")]
+    [InlineData("mixed_packs on;")]
+    [InlineData("boost_start off;")]
+    [InlineData("teams 2..4;")]
+    [InlineData("customs off;")]
+    [InlineData("contact off;")]
+    [InlineData("restore on;")]
+    [InlineData("finish_limit 90;")]
+    [InlineData("mine_regen 200;")]
+    [InlineData("mine_regen on;")]
+    [InlineData("mine_regen off;")]
+    [InlineData("cpu_level 2;")]
+    [InlineData("pedals locked accel 0.6 brake 0.0;")]
+    [InlineData("clock_limit 5min;")]
+    [InlineData("rolling_start 1000 km/h;")]
+    [InlineData("param c \"C\" switch default on; cpus c;")]
+    [InlineData("param l \"L\" delay 1min..10min step 30s default 3min; clock_limit l;")]
+    [InlineData("results_title \"ABCDEFGHIJKLMNOPQRSTUVW\";")]
+    [InlineData("pause off;")]
+    [InlineData("solo on; rewind 1min; pause on; save_state on; resume_countdown 1s;")]
+    [InlineData("lives 3;")]
+    [InlineData("pits_off;")]
+    [InlineData("every(10s) { end_race; }")]
+    [InlineData("at(4min) { end_race; }")]
+    public void ASetupFormTheDocumentsGiveCompiles(string body)
+    {
+        var result = Compile(body);
+        Assert.Empty(result.Errors);
+    }
+
+    [Theory]
+    [InlineData("seat.place = 1;")]
+    [InlineData("show_number seat, -1;")]
+    [InlineData("danger_zone seat, 500.0, 800.0, 3;")]
+    [InlineData("danger_zone seat off;")]
+    [InlineData("respawns seat off;")]
+    [InlineData("ghost seat off;")]
+    [InlineData("no contact seats, seats;")]
+    [InlineData("team seat.team no contact;")]
+    [InlineData("map_hide seat from seats - seat;")]
+    [InlineData("map_mark seat, -1;")]
+    [InlineData("stock_banner seat, TICK;")]
+    [InlineData("show seat, TIME_OVER;")]
+    [InlineData("hide seat, FACES;")]
+    [InlineData("seat.look = ghost;")]
+    [InlineData("seat.own_look = normal;")]
+    [InlineData("seat.colour = 0xFF0000FF;")]
+    [InlineData("push seat, seat.forward;")]
+    [InlineData("seat.velocity = seat.forward;")]
+    [InlineData("seat.energy -= 1.0;")]
+    [InlineData("show_clock 600;")]
+    [InlineData("break_down seat;")]
+    [InlineData("int a = random(5); real b = random_real();")]
+    [InlineData("int a = 2 × 3;")]
+    [InlineData("real a = 2.;")]
+    [InlineData("for each s in seats by standing desc { retire s; }")]
+    [InlineData("seat s = nth(seat.touching, 0); bool b = seat in seat.touching;")]
+    public void AnActionFormTheDocumentsGiveCompiles(string body)
+    {
+        var result = Compile(Rule(body));
+        Assert.Empty(result.Errors);
+    }
+
+    [Theory]
+    [InlineData("overtake(a, b)")]
+    [InlineData("respawned(s)")]
+    [InlineData("land(s)")]
+    [InlineData("boost_end(s)")]
+    [InlineData("wrong_way(s)")]
+    [InlineData("out(s, cause)")]
+    [InlineData("ko(v, by)")]
+    [InlineData("hit(a, b)")]
+    public void AnEventBindsItsNames(string form)
+    {
+        Assert.Empty(Compile($"rule \"R\" {{ event {form}; do {{ }} }}").Errors);
+    }
+
+    [Theory]
+    [InlineData("boost;")]
+    [InlineData("boost 1;")]
+    [InlineData("boost true;")]
+    [InlineData("finish_limit 90s;")]
+    [InlineData("mine_regen 200ms;")]
+    [InlineData("laps 100;")]
+    [InlineData("racers 0..8;")]
+    [InlineData("laps 3; laps by course { else: 3; }")]
+    [InlineData("pause on;")]
+    [InlineData("solo on; cpus on;")]
+    [InlineData("solo on; save_state on;")]
+    [InlineData("results points;")]
+    [InlineData("race_waits everyone;")]
+    [InlineData("results_title \"ABCDEFGHIJKLMNOPQRSTUVWX\";")]
+    [InlineData("results_title \"Low\";")]
+    [InlineData("results_title \" A\";")]
+    [InlineData("clock_limit 600; rule \"R\" { event go; do { show_clock 5; } }")]
+    [InlineData("rule \"R\" { event go; while race.started; do { } }")]
+    [InlineData("global vec v;")]
+    [InlineData("global int series;")]
+    [InlineData("global int race;")]
+    [InlineData("macro m() { }")]
+    [InlineData("seat int z; rule \"R\" { event go; do { for each seat by z { retire seat; } } }")]
+    [InlineData("rule \"R\" { event each seat; do { int a = 2 − 3; } }")]
+    public void AFormTheDocumentsRefuseIsRefused(string body)
+    {
+        Assert.NotEmpty(Compile(body).Errors);
+    }
+
+    [Theory]
+    [InlineData("points_table game;")]
+    [InlineData("time_bonus off;")]
+    [InlineData("knockback 50%;")]
+    [InlineData("wall_damage 50%;")]
+    [InlineData("wall_bounce 50%;")]
+    [InlineData("spin_attacks off;")]
+    [InlineData("side_attacks off;")]
+    [InlineData("spin_immunity off;")]
+    [InlineData("rule \"R\" { event each seat; do { damage seat, 5.0; } }")]
+    [InlineData("rule \"R\" { event each seat; do { boost seat off; } }")]
+    [InlineData("rule \"R\" { event each seat; do { show_number seat off; } }")]
+    [InlineData("rule \"R\" { event each seat; do { real a = seat.stat.max_speed; } }")]
+    [InlineData("rule \"R\" { event each seat; do { seat.stat.max_speed = 1.0; } }")]
+    [InlineData("rule \"R\" { event go; do { int a = race.course; } }")]
+    [InlineData("rule \"R\" { event go; do { int a = race.humans_left; } }")]
+    public void AWordTheDocumentsMarkNotBuiltIsRefused(string body)
+    {
+        Assert.NotEmpty(Compile(body).Errors);
+    }
+
+    [Theory]
+    [InlineData("global int x; rule \"R\" { event every step; when race.started; do { x = race.steps; } }", true)]
+    [InlineData("rule \"R\" { event each seat; when seat.racing; do { show_number seat, 3; } }", true)]
+    [InlineData("rule \"R\" { event each seat; when seat.racing; do { stock_banner seat, TICK; } }", true)]
+    [InlineData("rule \"R\" { event every step; when race.started; do { show_clock 60; } }", true)]
+    [InlineData("rule \"R\" { event each seat; when seat.racing; do { hide seat, RANK; } }", true)]
+    [InlineData("rule \"R\" { event each seat; while seat.racing; do { show_number seat, 3; } }", false)]
+    [InlineData("rule \"R\" { event each seat; when seat.racing; while seat.racing; do { show_number seat, 3; } }", false)]
+    [InlineData("rule \"R\" { event each seat; when seat.racing; do { retire seat; } }", false)]
+    [InlineData("rule \"R\" { event out(s); when s.racing; do { show_number s, 3; } }", false)]
+    public void AWhenWithAPerStepWordWarns(string body, bool warns)
+    {
+        var result = Compile(body);
+        Assert.Empty(result.Errors);
+        Assert.Equal(warns, result.Warnings.Any(w => w.Contains("did you mean while", StringComparison.Ordinal)));
+    }
+
+    /// <summary>Design 9.3, Chain reaction: the budget refuses it as written. The design says so; a change of the budget or
+    /// the costs fails here until it does not.</summary>
+    [Fact]
+    public void TheDesignsChainReactionIsPastTheBudget()
+    {
+        var result = Compile("""
+            param radius "Blast radius" number 10..200 default 60;
+            rule "Blast" { event destroyed(s); do { for each seat where racing and seat != s and dist(seat, s) <= radius { explode seat; } } }
+            """);
+        Assert.Contains(result.Errors, e => e.Contains("past api 1's 65536", StringComparison.Ordinal));
+    }
+}
