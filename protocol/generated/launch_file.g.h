@@ -11,6 +11,7 @@ namespace fzgx::launch_file
 {
 inline constexpr std::size_t MAX_BYTES = 1048576;
 inline constexpr std::size_t WINDOW_NAME_MOST_BYTES = 64;
+inline constexpr std::uint32_t MATCH_CAMERA_LOW = 1u, MATCH_CAMERA_HIGH = 3u;
 inline constexpr std::uint32_t WINDOW_NAME_PICTURE_WIDTH_LOW = 1u, WINDOW_NAME_PICTURE_WIDTH_HIGH = 512u;
 inline constexpr std::uint32_t WINDOW_NAME_PICTURE_HEIGHT_LOW = 1u, WINDOW_NAME_PICTURE_HEIGHT_HIGH = 64u;
 inline constexpr std::size_t TASKBAR_ID_MOST_BYTES = 128;
@@ -42,7 +43,7 @@ void ReadFile([[maybe_unused]] P& p, [[maybe_unused]] T* t)
 }
 
 // Match ("match"): a race: the match file the launcher wrote, with where the race is recorded. Takes relayHost, delay,
-// overclock, otherSounds, record, rejoin, spectate, practice; by hand: match.
+// overclock, otherSounds, record, rejoin, spectate, practice, camera; by hand: match.
 template <typename P, typename T>
 void ReadMatch([[maybe_unused]] P& p, [[maybe_unused]] T* t)
 {
@@ -56,6 +57,7 @@ void ReadMatch([[maybe_unused]] P& p, [[maybe_unused]] T* t)
   p.Flag("rejoin", &t->rejoin);
   p.Flag("spectate", &t->spectate);
   p.Flag("practice", &t->practice);
+  p.Whole("camera", &t->camera, 1u, 3u);
 }
 
 // Replay ("replay"): a replay's playback, as the race. Takes scrubber, file, otherSounds.

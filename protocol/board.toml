@@ -85,6 +85,7 @@ values = [
     { name = "Moves", value = 4, doc = "the game moves again after a reported freeze: A milliseconds it stood" },
     { name = "Notice", value = 5, doc = "the game took a notice from the mailbox: A its serial" },
     { name = "Desync", value = 6, doc = "a step's checksum differed from the relay's: A the step" },
+    { name = "Camera", value = 7, doc = "the view of the local racer's chase camera changed while it races (the player's camera button, or the start): A the view (1 to 3), B the one before (0: none said yet in this start)" },
 ]
 
 [[enum]]

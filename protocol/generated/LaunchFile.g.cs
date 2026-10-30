@@ -12,6 +12,8 @@ public static class LaunchFormat
     public const int MaxBytes = 1048576;
     /// <summary>The most bytes of "windowName" (UTF-8) the game's reader takes.</summary>
     public const int WindowNameMostBytes = 64;
+    /// <summary>The range of "camera" the game's reader takes.</summary>
+    public const int MatchCameraLow = 1, MatchCameraHigh = 3;
     /// <summary>The range of "width" the game's reader takes.</summary>
     public const int WindowNamePictureWidthLow = 1, WindowNamePictureWidthHigh = 512;
     /// <summary>The range of "height" the game's reader takes.</summary>
@@ -127,11 +129,12 @@ public sealed record LaunchFile(
 }
 
 /// <summary>The launch file's part Match ("match"): a race: the match file the launcher wrote, with where the race is recorded.
-/// The launcher writes "record", "rejoin", after the members of <c>Base</c> as they are.</summary>
+/// The launcher writes "record", "rejoin", "camera", after the members of <c>Base</c> as they are.</summary>
 public sealed record LaunchMatch(
     JsonObject? Base = null,
     string? Record = null,
-    bool Rejoin = false)
+    bool Rejoin = false,
+    int Camera = 0)
 {
     /// <summary>The part as JSON, its members in the file's order.</summary>
     public JsonObject ToJson()
@@ -144,6 +147,10 @@ public sealed record LaunchMatch(
         if (Rejoin)
         {
             o["rejoin"] = true;
+        }
+        if (Camera > 0)
+        {
+            o["camera"] = Camera;
         }
         return o;
     }

@@ -83,6 +83,7 @@ member = [
     { key = "rejoin", type = "bool", to = "rejoin", cs = { name = "Rejoin", write = "true" } },
     { key = "spectate", type = "bool", to = "spectate" },
     { key = "practice", type = "bool", to = "practice" },
+    { key = "camera", type = "whole", to = "camera", low = 1, high = 3, cs = { name = "Camera", write = "positive" } },
 ]
 
 [[part]]

@@ -1,0 +1,34 @@
+{
+  "about": "Piconet Launcher: a race (match practice-19700101-000000)",
+  "bundle": "b",
+  "widescreen": true,
+  "lanes": 0,
+  "match": {
+    "match": {
+      "matchId": "practice-19700101-000000",
+      "setup": {
+        "course": 1,
+        "laps": 3,
+        "seats": [
+          {
+            "seat": 0,
+            "machine": 0,
+            "setting": 100,
+            "playerId": "practice",
+            "name": "P"
+          }
+        ],
+        "rules": {
+          "cpuLevel": 3,
+          "boostFromStart": false,
+          "restore": false,
+          "finishLimitSeconds": 0,
+          "mineRegenMs": 200
+        }
+      }
+    },
+    "practice": true,
+    "record": "practice.fzrp",
+    "camera": 2
+  }
+}

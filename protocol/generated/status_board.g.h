@@ -56,6 +56,7 @@ enum class EventKind : std::uint32_t
   Moves = 4,  // the game moves again after a reported freeze: A milliseconds it stood
   Notice = 5,  // the game took a notice from the mailbox: A its serial
   Desync = 6,  // a step's checksum differed from the relay's: A the step
+  Camera = 7,  // the view of the local racer's chase camera changed while it races (the player's camera button, or th
 };
 
 // A racer at the snapshot's moment.
