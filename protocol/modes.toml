@@ -606,12 +606,12 @@ where = "the race block's RACE_CPULEVEL: 0 Novice, 1 Standard, 2 Expert, 3 Maste
 name = "restore on"
 id = 9
 where = """every seat respawns (machine flag 0x1, the mode's respawns on each seat at its first run), never the lobby's rule \
-0x8000, so `respawns s off` may take one seat out of it. Left out in a mode, the lobby's restore rule gives the same"""
+0x8000, so `respawns s off` may take one seat out of it. Left out in a mode, no seat respawns unless a rule says `respawns s`: the lobby's restore rule never reaches a mode's race"""
 
 [[setup]]
 name = "restore off"
 id = 10
-where = "no seat respawns unless a rule says `respawns s`; the lobby's restore rule does not reach the race"
+where = "no seat respawns unless a rule says `respawns s`, as when left out"
 
 [[setup]]
 name = "contact off"
