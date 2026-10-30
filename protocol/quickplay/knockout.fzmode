@@ -1,36 +1,42 @@
-// A spicy Quick Play option: a rolling start, then the last racer is out every interval.
+// A spicy Quick Play option: a rolling start, then the last racer is out at every cut.
 
 mode "Knockout" {
   api 1;
   badge "KNOCKOUT";
-  about "Every 30 seconds the racer in last place is out.";
+  about "The racer in last place is out at every cut.";
 }
 
-param interval  "Cut every"   delay 10s..120s step 5s default 30s;
+param length    "Race length" delay 4min..10min step 30s default 7min;
 param first_cut "First cut"   delay 20s..120s step 5s default 45s;   // a 30-machine grid is 374 m long
 param keep      "Racers left" number 1..29 default 1;
+param warn_from "Warn from"   number 3..9 default 5;                  // seconds before the cut
 
 cpus allowed;
 laps unlimited;
 rolling_start 1000 km/h;       // speed at the gate, CPU steers through the countdown at 60% accelerator, control at GO
+race_waits everyone;           // the race goes on until the mode ends it, not until the last player is out
+results_title knockout;
 
+global int interval;           // steps between cuts, worked out once at go
 global int next_cut;
-global int cut_in;              // seconds to the next cut, for the board
+global int cut_in;             // seconds to the next cut
 global int cuts;
 seat   int cut_order;          // 0: never cut; 1: first out
 
 rule "Arm" {
   event go;
-  do { next_cut = first_cut; }
+  do {
+    next_cut = first_cut;
+    interval = max(10s, (length - first_cut) / max(1, count(seats where racing) - keep - 1));
+  }
 }
 
 rule "Cut the last racer" {
   event every step;
-  while race.started and race.steps >= next_cut and count(seats where racing) > keep;
+  while race.started and race.steps >= next_cut and count(seats where racing and seat.cut_order == 0) > keep;
   do {
-    seat v = last(seats where racing by standing);
-    explode v;                 // the game's explosion, as story chapter 6
-    eliminate v;               // the game's own out verdict (D5)
+    seat v = last(seats where racing and seat.cut_order == 0 by standing);
+    break_down v;              // out of energy, as a last hit: it tumbles, comes to rest or explodes, and is out
     cuts += 1;
     v.cut_order = cuts;
     next_cut = race.steps + interval;
@@ -40,16 +46,28 @@ rule "Cut the last racer" {
 rule "Seconds to the cut" {
   event every step;
   when race.started;
-  do { cut_in = ceil((next_cut - race.steps) / 60.0); }
+  do {
+    cut_in = ceil((next_cut - race.steps) / 60.0);
+    show_clock next_cut - race.steps;
+  }
+}
+
+rule "Everyone sees the clock" {
+  event each seat;
+  when race.started;
+  do { show seat, TIMER; }
 }
 
 rule "Warn the last racer" {
   event each seat;
+  when race.started;
   do {
-    if (seat.racing and seat == last(seats where racing by standing)) {
-      show_number seat, ceil((next_cut - race.steps) / 60.0);    // seconds to the cut
+    if (seat.racing and seat.cut_order == 0 and cut_in <= warn_from
+        and seat == last(seats where racing and seat.cut_order == 0 by standing)) {
+      show seat, WARNING;
+      if ((next_cut - race.steps) % 60 == 0) { stock_banner seat, TICK; }
     } else {
-      show_number seat, -1;
+      hide seat, WARNING;
     }
   }
 }

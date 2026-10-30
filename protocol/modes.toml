@@ -1304,6 +1304,57 @@ args = ["seat"]
 where = "the block: the seat's danger zone cleared (a count under way stops)"
 doc = "the seat carries no bomb"
 
+[[setup]]
+name = "race_waits everyone"
+id = 32
+where = """the race-over test (raceend.py, one text with the frame routine's): with the race's flow, every seat counts as \
+a player seat, so the race waits for every machine finished or out and goes on when the last player is out. The block's word; \
+needs end_race or clock_limit"""
+doc = "the race goes on until the mode ends it or every machine is finished or out, not until the last player is out"
+
+[[setup]]
+name = "results points"
+id = 33
+where = """the results' first page's A (main.rel 0x14A368) taken as pressed under the window's flag, once its gate 0x14A358 opens: \
+straight on to the points page. Drawing only. Needs award"""
+doc = "the VS RESULTS times page is passed on its own; the race's results are the points page"
+
+[[setup]]
+name = "results_title knockout"
+id = 34
+where = "the results' title (fn_1_1461C8 0x146304): the core's fixed string in the window for VS TOTAL RANKING, font 0x1D (A to Z and the space)"
+doc = "the points page's title reads KNOCKOUT"
+
+[[setup]]
+name = "results_title lives"
+id = 35
+where = "the results' title (fn_1_1461C8 0x146304): the core's fixed string in the window for VS TOTAL RANKING, font 0x1D (A to Z and the space)"
+doc = "the points page's title reads LIVES"
+
+[[setup]]
+name = "results_title overdrive"
+id = 36
+where = "the results' title (fn_1_1461C8 0x146304): the core's fixed string in the window for VS TOTAL RANKING, font 0x1D (A to Z and the space)"
+doc = "the points page's title reads OVERDRIVE"
+
+[[setup]]
+name = "results_title teams"
+id = 37
+where = "the results' title (fn_1_1461C8 0x146304): the core's fixed string in the window for VS TOTAL RANKING, font 0x1D (A to Z and the space)"
+doc = "the points page's title reads TEAMS"
+
+[[setup]]
+name = "results_title survivors"
+id = 38
+where = "the results' title (fn_1_1461C8 0x146304): the core's fixed string in the window for VS TOTAL RANKING, font 0x1D (A to Z and the space)"
+doc = "the points page's title reads SURVIVORS"
+
+[[setup]]
+name = "results_title points"
+id = 39
+where = "the results' title (fn_1_1461C8 0x146304): the core's fixed string in the window for VS TOTAL RANKING, font 0x1D (A to Z and the space)"
+doc = "the points page's title reads POINTS"
+
 # ---- The displays (vocabulary 5): presentation only. An action writes the seat's display record in the block (the
 # runner's port/core/src/mode_hud.h), at the mode point like every action; the drawing reads it, every frame, from
 # what the step left (a rollback redraws). Nothing a step reads is written, and nothing draws from a generator.
@@ -1320,8 +1371,8 @@ WARNING, SUCCESS, FAILED, TIME_OVER, SPEED_GAUGE, OBJECTS the story's pictures""
 
 [[choice]]
 name = "banner"
-values = ["FINAL_LAP", "BOOST_POWER", "TIME_BONUS", "GAP", "WRONG_WAY"]
-doc = "a banner of the game's own race HUD, shown once, as the game shows it"
+values = ["FINAL_LAP", "BOOST_POWER", "TIME_BONUS", "GAP", "WRONG_WAY", "TICK"]
+doc = "a banner of the game's own race HUD, shown once, as the game shows it; TICK the timed mode's countdown beep, heard by that seat's player"
 
 [[choice]]
 name = "look"
@@ -1391,3 +1442,19 @@ id = 33
 args = ["seat", "int"]
 where = "the display record; read by our own course map"
 doc = "the seat's dot in 0xRRGGBB on every course map; -1 gives it its machine's colour back"
+
+[[action]]
+name = "show_clock"
+id = 34
+args = ["int"]
+where = """the timed-mode clock's word R+0xA4, at once, held to 1 .. 65,535 (the game's zero paths never run); from the race's \
+start rule 0x40000 with the game's own count and bonus off, as clock_limit: no time over and no beeps"""
+doc = "the clock `show s, TIMER` draws reads these steps as seconds, rounded up (red below 10). Ends nothing. Not with clock_limit"
+
+[[action]]
+name = "break_down"
+id = 35
+args = ["seat"]
+where = """the mode point: what fn_1_24F10 does when damage takes the last energy (energy 0, base speed 0, flag 0x80, M+0x593 60 \
+unless 0x10080). The next step's fn_1_24A4C starts the wreck (fn_1_2B684), fn_1_2BA48 rests it after 240 steps"""
+doc = "the seat runs out of energy, as a last hit does: it tumbles, and is out by the game's own verdict when it comes to rest, explodes or falls"

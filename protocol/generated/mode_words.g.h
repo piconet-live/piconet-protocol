@@ -242,7 +242,15 @@ enum Setup : std::uint8_t
   SETUP_SAVESTATE = 29,  // save_state
   SETUP_RESUMECOUNTDOWN = 30,  // resume_countdown
   SETUP_CUSTOMSOFF = 31,  // customs off
-  SETUP_COUNT = 32,
+  SETUP_RACEWAITSEVERYONE = 32,  // race_waits everyone
+  SETUP_RESULTSPOINTS = 33,  // results points
+  SETUP_RESULTSTITLEKNOCKOUT = 34,  // results_title knockout
+  SETUP_RESULTSTITLELIVES = 35,  // results_title lives
+  SETUP_RESULTSTITLEOVERDRIVE = 36,  // results_title overdrive
+  SETUP_RESULTSTITLETEAMS = 37,  // results_title teams
+  SETUP_RESULTSTITLESURVIVORS = 38,  // results_title survivors
+  SETUP_RESULTSTITLEPOINTS = 39,  // results_title points
+  SETUP_COUNT = 40,
 };
 
 // a read of a seat (OP_SEATREAD)
@@ -350,7 +358,9 @@ enum Action : std::uint8_t
   ACTION_SEATCOLOUR = 31,  // seat.colour
   ACTION_MAPHIDE = 32,  // map_hide
   ACTION_MAPMARK = 33,  // map_mark
-  ACTION_COUNT = 34,
+  ACTION_SHOWCLOCK = 34,  // show_clock
+  ACTION_BREAKDOWN = 35,  // break_down
+  ACTION_COUNT = 36,
 };
 
 // the choice `part`: a part of the game's own race HUD: TIMER the timed mode's clock (clock_limit's time, R+0xA4: seconds, 0 to 999); DISTANCE the metres to the finish (the seat's own); DIGIT the story's big digit (danger_zone's seconds, 3 2 1); WARNING, SUCCESS, FAILED, TIME_OVER, SPEED_GAUGE, OBJECTS the story's pictures
@@ -368,7 +378,7 @@ enum Part : std::uint8_t
   PART_COUNT = 9,
 };
 
-// the choice `banner`: a banner of the game's own race HUD, shown once, as the game shows it
+// the choice `banner`: a banner of the game's own race HUD, shown once, as the game shows it; TICK the timed mode's countdown beep, heard by that seat's player
 enum Banner : std::uint8_t
 {
   BANNER_FINAL_LAP = 0,
@@ -376,7 +386,8 @@ enum Banner : std::uint8_t
   BANNER_TIME_BONUS = 2,
   BANNER_GAP = 3,
   BANNER_WRONG_WAY = 4,
-  BANNER_COUNT = 5,
+  BANNER_TICK = 5,
+  BANNER_COUNT = 6,
 };
 
 // the choice `look`: how a machine is drawn: as the game draws it; as Time Attack draws its ghost (a blue hologram); not at all
@@ -427,6 +438,8 @@ constexpr int ActionArguments(std::uint8_t action)
     case ACTION_SEATCOLOUR: return 2;
     case ACTION_MAPHIDE: return 2;
     case ACTION_MAPMARK: return 2;
+    case ACTION_SHOWCLOCK: return 1;
+    case ACTION_BREAKDOWN: return 1;
     default: return -1;
   }
 }

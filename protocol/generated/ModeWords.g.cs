@@ -235,6 +235,22 @@ public enum ModeSetup : byte
     ResumeCountdown = 30,
     /// <summary><c>customs off</c></summary>
     CustomsOff = 31,
+    /// <summary><c>race_waits everyone</c></summary>
+    RaceWaitsEveryone = 32,
+    /// <summary><c>results points</c></summary>
+    ResultsPoints = 33,
+    /// <summary><c>results_title knockout</c></summary>
+    ResultsTitleKnockout = 34,
+    /// <summary><c>results_title lives</c></summary>
+    ResultsTitleLives = 35,
+    /// <summary><c>results_title overdrive</c></summary>
+    ResultsTitleOverdrive = 36,
+    /// <summary><c>results_title teams</c></summary>
+    ResultsTitleTeams = 37,
+    /// <summary><c>results_title survivors</c></summary>
+    ResultsTitleSurvivors = 38,
+    /// <summary><c>results_title points</c></summary>
+    ResultsTitlePoints = 39,
 }
 
 /// <summary>A read of a seat (protocol/modes.toml).</summary>
@@ -430,6 +446,10 @@ public enum ModeAction : byte
     MapHide = 32,
     /// <summary><c>map_mark</c></summary>
     MapMark = 33,
+    /// <summary><c>show_clock</c></summary>
+    ShowClock = 34,
+    /// <summary><c>break_down</c></summary>
+    BreakDown = 35,
 }
 
 /// <summary>The vocabulary of one api, by the names a mode file writes (protocol/modes.toml).</summary>
@@ -612,6 +632,14 @@ public static partial class ModeWords
         ("save_state", ModeSetup.SaveState, [], false, ""),
         ("resume_countdown", ModeSetup.ResumeCountdown, [new ModeArgument("", ModeType.Int, 0, 300, null)], false, ""),
         ("customs off", ModeSetup.CustomsOff, [], true, ""),
+        ("race_waits everyone", ModeSetup.RaceWaitsEveryone, [], false, ""),
+        ("results points", ModeSetup.ResultsPoints, [], false, ""),
+        ("results_title knockout", ModeSetup.ResultsTitleKnockout, [], false, ""),
+        ("results_title lives", ModeSetup.ResultsTitleLives, [], false, ""),
+        ("results_title overdrive", ModeSetup.ResultsTitleOverdrive, [], false, ""),
+        ("results_title teams", ModeSetup.ResultsTitleTeams, [], false, ""),
+        ("results_title survivors", ModeSetup.ResultsTitleSurvivors, [], false, ""),
+        ("results_title points", ModeSetup.ResultsTitlePoints, [], false, ""),
     ];
 
     /// <summary>The reads of a seat (<c>seat.NAME</c>): name, id, type.</summary>
@@ -717,6 +745,8 @@ public static partial class ModeWords
         ("seat.colour", ModeAction.SeatColour, [ModeType.Seat, ModeType.Int]),
         ("map_hide", ModeAction.MapHide, [ModeType.Seat, ModeType.Seats]),
         ("map_mark", ModeAction.MapMark, [ModeType.Seat, ModeType.Int]),
+        ("show_clock", ModeAction.ShowClock, [ModeType.Int]),
+        ("break_down", ModeAction.BreakDown, [ModeType.Seat]),
     ];
 
     /// <summary>The choices: an argument of one takes one of its names, its value the name's place.</summary>
@@ -724,7 +754,7 @@ public static partial class ModeWords
         new Dictionary<string, IReadOnlyList<string>>
         {
             ["part"] = ["TIMER", "DISTANCE", "DIGIT", "WARNING", "SUCCESS", "FAILED", "TIME_OVER", "SPEED_GAUGE", "OBJECTS"],
-            ["banner"] = ["FINAL_LAP", "BOOST_POWER", "TIME_BONUS", "GAP", "WRONG_WAY"],
+            ["banner"] = ["FINAL_LAP", "BOOST_POWER", "TIME_BONUS", "GAP", "WRONG_WAY", "TICK"],
             ["look"] = ["normal", "ghost", "invisible"],
         };
 

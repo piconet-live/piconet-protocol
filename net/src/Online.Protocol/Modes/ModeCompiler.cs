@@ -97,6 +97,20 @@ public static class ModeCompiler
             {
                 throw new ModeCompileException(stopLine, "stop_all only brakes the machines: a mode with it needs end_race or clock_limit, or its race never ends");
             }
+            if (items.OfType<ModeSetupItem>().FirstOrDefault(s => s.Word == "race_waits everyone") is { } waits
+                && !_emitter.Used.ContainsKey(ModeAction.EndRace) && !_setups.Any(s => s.Id == ModeSetup.ClockLimit))
+            {
+                throw new ModeCompileException(waits.Line, "race_waits everyone waits for every machine: a mode with it needs end_race or clock_limit, or its race may never end");
+            }
+            if (items.OfType<ModeSetupItem>().FirstOrDefault(s => s.Word == "results points") is { } points
+                && !_emitter.Used.ContainsKey(ModeAction.Award))
+            {
+                throw new ModeCompileException(points.Line, "results points shows the points page: a mode with it needs award");
+            }
+            if (_emitter.Used.TryGetValue(ModeAction.ShowClock, out var clockLine) && _setups.Any(s => s.Id == ModeSetup.ClockLimit))
+            {
+                throw new ModeCompileException(clockLine, "show_clock and clock_limit both write the game's clock: a mode has one or the other");
+            }
             SoloWords(items);
             var mode = new ModePackage
             {
