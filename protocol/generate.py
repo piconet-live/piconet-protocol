@@ -35,6 +35,10 @@ import stats
 import stats_cs
 import stats_cxx
 import stats_md
+import theme
+import theme_axaml
+import theme_css
+import theme_cxx
 
 here = os.path.dirname(os.path.abspath(__file__))
 SCHEMA = os.path.join(here, "relay.toml")
@@ -47,7 +51,9 @@ OUTPUTS = {"csharp": "generated/RelayPackets.g.cs", "cxx": "generated/relay_pack
            "replay_python": "generated/replay_file.py",
            "launch_csharp": "generated/LaunchFile.g.cs", "launch_cxx": "generated/launch_file.g.h",
            "stats_csharp": "generated/StatTables.g.cs", "stats_ranges_cxx": "generated/stat_ranges.g.h",
-           "stats_constants_cxx": "generated/const_ranges.g.h"}
+           "stats_constants_cxx": "generated/const_ranges.g.h",
+           "theme_axaml": "generated/Theme.g.axaml", "theme_cxx": "generated/theme_palette.g.h",
+           "theme_css": "generated/theme.g.css"}
 # The pages whose tables are generated (between their marker lines, stats_md.py), from the repository's root: the
 # folder above this one.
 ROOT = os.path.dirname(here)
@@ -221,12 +227,13 @@ def flags(raw):
 
 
 def generated(path=SCHEMA, board_path=board.SCHEMA, replay_path=replay.SCHEMA, launch_path=launch.SCHEMA,
-              stats_path=stats.SCHEMA):
+              stats_path=stats.SCHEMA, theme_path=theme.SCHEMA):
     protocol, packets = load(path)
     laid = board.load(board_path)
     file = replay.load(replay_path, protocol["record_size"])   # a step's records are the relay's
     started = launch.load(launch_path)
     tables = stats.load(stats_path)
+    tokens = theme.load(theme_path)
     return {OUTPUTS["csharp"]: codec_cs.emit(protocol, packets), OUTPUTS["cxx"]: codec_cxx.emit(protocol, packets),
             OUTPUTS["cxx_describe"]: codec_cxx.emit_describe(protocol, packets),
             OUTPUTS["board_csharp"]: board_cs.emit(*laid), OUTPUTS["board_cxx"]: board_cxx.emit(*laid),
@@ -235,7 +242,9 @@ def generated(path=SCHEMA, board_path=board.SCHEMA, replay_path=replay.SCHEMA, l
             OUTPUTS["replay_python"]: replay_py.emit(file),
             OUTPUTS["launch_csharp"]: launch_cs.emit(started), OUTPUTS["launch_cxx"]: launch_cxx.emit(started),
             OUTPUTS["stats_csharp"]: stats_cs.emit(tables), OUTPUTS["stats_ranges_cxx"]: stats_cxx.emit_ranges(tables),
-            OUTPUTS["stats_constants_cxx"]: stats_cxx.emit_constants(tables)}
+            OUTPUTS["stats_constants_cxx"]: stats_cxx.emit_constants(tables),
+            OUTPUTS["theme_axaml"]: theme_axaml.emit(tokens), OUTPUTS["theme_cxx"]: theme_cxx.emit(tokens),
+            OUTPUTS["theme_css"]: theme_css.emit(tokens)}
 
 
 def pages(root=ROOT, stats_path=stats.SCHEMA):
@@ -257,7 +266,8 @@ def main(args, folder=here, path=SCHEMA, root=ROOT):
     try:
         files = {os.path.join(folder, name): text for name, text in generated(path).items()}
         files.update({os.path.join(root, name): text for name, text in pages(root).items()})
-    except (SchemaError, board.SchemaError, replay.SchemaError, launch.SchemaError, stats.SchemaError) as e:
+    except (SchemaError, board.SchemaError, replay.SchemaError, launch.SchemaError, stats.SchemaError,
+            theme.SchemaError) as e:
         print(f"generate.py: {e}", file=sys.stderr)
         return 1
     stale = []
