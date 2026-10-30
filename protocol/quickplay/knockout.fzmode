@@ -60,7 +60,7 @@ rule "Everyone sees the clock" {
 
 rule "Warn the last racer" {
   event each seat;
-  when race.started;
+  while race.started;
   do {
     if (seat.racing and seat.cut_order == 0 and cut_in <= warn_from
         and seat == last(seats where racing and seat.cut_order == 0 by standing)) {
