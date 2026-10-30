@@ -101,6 +101,12 @@ numbers of one to four digits, no leading zero, and not `0.0` (`VersionLine.IsLi
 race is the release's to show (the gate row `mixed`). The status page shows each lobby's `line`, and the released
 builds that name none with the line the server gives them (`lineBuilds`, `lineBuildsFault`).
 
+**The message of the day in the status** (`ServiceStatus.Motd`): while the operator has one set, GET /api/status
+carries it as one `RecentNotice` (`id`, `level`, `text` without the tier's word, `time`), the same notice the
+coordinator sends as a chat line at each welcome. A launcher on its home screen says no hello, so the status it asks
+every few seconds is how it sees the message there, and it goes when the field does. Written only when set: a reader
+from before passes over it.
+
 **The key in `hello`** (`Hello.Key`): the launcher's secret, 32 random bytes in base64url without padding (43
 characters, `PlayerTags.NewKey`), made once and kept in its settings (`LauncherSettings.PlayerKey`). The coordinator
 works the player's tag out from it with its own tag key (a launcher cannot
