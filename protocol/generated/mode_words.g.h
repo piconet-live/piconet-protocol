@@ -16,7 +16,12 @@ inline constexpr int GLOBALS = 256;
 inline constexpr int SEAT_WORDS = 64;
 inline constexpr int LOCALS = 64;
 inline constexpr int RULES = 256;
+inline constexpr int SUBS = 128;
 inline constexpr int SORTS = 2;
+inline constexpr int TEAM_WORDS = 32;
+inline constexpr int TEAMS = 30;
+inline constexpr int WAITS = 64;
+inline constexpr int WAIT_LOCALS = 8;
 inline constexpr int PACKAGE_BYTES = 65536;
 inline constexpr int SEATS = 30;
 
@@ -37,6 +42,8 @@ enum Op : std::uint8_t
   OP_PARAM = 0x0b,  // pushes a parameter's value, as the match start gave it
   OP_SEATREAD = 0x0c,  // pops a seat, pushes a read of the game ([[seat_read]]; none: 0)
   OP_RACEREAD = 0x0d,  // pushes a read of the race ([[race_read]])
+  OP_LOADTEAMVAR = 0x0e,  // pops a seat, pushes its team's word (none: 0)
+  OP_STORETEAMVAR = 0x0f,  // pops a value, then a seat, and stores the value in the seat's team's word (none: nothing)
   OP_IADD = 0x10,  // whole numbers wrap
   OP_ISUB = 0x11,
   OP_IMUL = 0x12,
@@ -48,7 +55,7 @@ enum Op : std::uint8_t
   OP_FMUL = 0x1a,
   OP_FDIV = 0x1b,
   OP_FNEG = 0x1c,  // the sign bit flipped
-  OP_FSQRT = 0x1d,  // correctly rounded; of a negative number: 0x7FC00000
+  OP_FSQRT = 0x1d,  // the game's square root (main.dol 0x8006D0B4: x times two Newton steps from the estimate frsqrte, in the processor's single-precision operations): a NaN 0x7FC00000, infinity itself; zero, a negative number or a denormal 0
   OP_ITOF = 0x20,  // an int as the nearest binary32 (ties to even)
   OP_FLOOR = 0x21,  // a real to an int, saturating at the int's ends; NaN: 0
   OP_CEIL = 0x22,
@@ -76,11 +83,19 @@ enum Op : std::uint8_t
   OP_JUMP = 0x41,  // to the operand: an offset in the package's code
   OP_JUMPIFZERO = 0x42,  // pops; jumps when it is 0
   OP_JUMPIFNOTZERO = 0x43,  // pops; jumps when it is not 0
+  OP_WAIT = 0x45,  // live locals, kind (0 plain, 1 abort, 2 restart), condition (an offset in the code, 0xFFFFFFFF none): pops the steps; more than 0, the rule instance waits that many steps in a wait record of the block, keeping its first `live` locals, and the run of its code ends here; 0 or fewer, nothing
   OP_SORTBEGIN = 0x48,  // empties a sort buffer
   OP_SORTADD = 0x49,  // buffer, keys: pops a seat, then its keys (the last key first), and adds the entry
   OP_SORTRUN = 0x4a,  // buffer, keys, the descending keys' mask, the real keys' mask (bit k: key k): sorts the entries by the keys (ints and bools as signed numbers, reals as FLt says, a NaN last), ties to the next key and finally to the seat, and starts the buffer's walk
   OP_SORTNEXT = 0x4b,  // pushes the walk's next seat, or -1 when it is done
   OP_ACTION = 0x50,  // pops the action's arguments (the last first) and queues it ([[action]])
+  OP_SEATBIT = 0x58,  // pops a seat, pushes its set: the bit 1 << seat (none, or a seat not in the race: 0)
+  OP_ALLSEATS = 0x59,  // pushes the race's seats as a set (bit i: seat i)
+  OP_BITAND = 0x5a,  // a & b: sets' intersection
+  OP_BITOR = 0x5b,  // a | b: sets' union
+  OP_BITANDNOT = 0x5c,  // a & ~b: sets' difference
+  OP_RANDOM = 0x60,  // pops n; n more than 0: draws the mode's generator (xoshiro128**, formats.md section 9) and pushes (draw x n) >> 32 in 64 bits, 0 to n - 1; else pushes 0 and draws nothing
+  OP_RANDOMREAL = 0x61,  // draws the mode's generator and pushes (draw >> 8) x 2^-24, a real 0 to below 1
 };
 
 // an operation's size in bytes, operands included; 0: no such operation
@@ -102,6 +117,8 @@ constexpr int OpSize(std::uint8_t op)
     case OP_PARAM: return 2;
     case OP_SEATREAD: return 2;
     case OP_RACEREAD: return 2;
+    case OP_LOADTEAMVAR: return 3;
+    case OP_STORETEAMVAR: return 3;
     case OP_IADD: return 1;
     case OP_ISUB: return 1;
     case OP_IMUL: return 1;
@@ -141,11 +158,19 @@ constexpr int OpSize(std::uint8_t op)
     case OP_JUMP: return 5;
     case OP_JUMPIFZERO: return 5;
     case OP_JUMPIFNOTZERO: return 5;
+    case OP_WAIT: return 7;
     case OP_SORTBEGIN: return 2;
     case OP_SORTADD: return 3;
     case OP_SORTRUN: return 5;
     case OP_SORTNEXT: return 2;
     case OP_ACTION: return 2;
+    case OP_SEATBIT: return 1;
+    case OP_ALLSEATS: return 1;
+    case OP_BITAND: return 1;
+    case OP_BITOR: return 1;
+    case OP_BITANDNOT: return 1;
+    case OP_RANDOM: return 1;
+    case OP_RANDOMREAL: return 1;
     default: return 0;
   }
 }
@@ -183,7 +208,10 @@ enum Seat : std::uint8_t
   SEAT_BROKEN = 7,  // broken
   SEAT_DESTROYED = 8,  // destroyed
   SEAT_DISTANCE = 9,  // distance
-  SEAT_COUNT = 10,
+  SEAT_TEAM = 10,  // team
+  SEAT_POSITION = 11,  // position
+  SEAT_LAPLENGTH = 12,  // lap_length
+  SEAT_COUNT = 13,
 };
 
 // a read of the race (OP_RACEREAD)

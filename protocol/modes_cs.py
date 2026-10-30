@@ -13,7 +13,8 @@ def xml(s):
 
 
 def cs_type(t):
-    return {"int": "ModeType.Int", "real": "ModeType.Real", "bool": "ModeType.Bool", "seat": "ModeType.Seat"}[t]
+    return {"int": "ModeType.Int", "real": "ModeType.Real", "bool": "ModeType.Bool", "seat": "ModeType.Seat",
+            "seats": "ModeType.Seats", "vec": "ModeType.Vec"}[t]
 
 
 def number(v, t):

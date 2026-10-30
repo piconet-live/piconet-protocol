@@ -32,6 +32,8 @@ public sealed class ModeCompilerTests
     [InlineData("words")]
     [InlineData("competitive")]
     [InlineData("pairs")]
+    [InlineData("language")]
+    [InlineData("waits")]
     public void AVectorCompilesToItsPackage(string name)
     {
         var result = CompileVector(name);
@@ -63,6 +65,8 @@ public sealed class ModeCompilerTests
     [InlineData("words")]
     [InlineData("competitive")]
     [InlineData("pairs")]
+    [InlineData("language")]
+    [InlineData("waits")]
     public void APackageReadsBackAsItWasWritten(string name)
     {
         var result = CompileVector(name);
@@ -94,17 +98,21 @@ public sealed class ModeCompilerTests
         Assert.Equal(720, result.Budget);
     }
 
+    /// <summary>A vector's listing's code lines: "  OFFSET  Op operands".</summary>
+    private static List<string> Code(string name) =>
+        ModeDisassembler.List(CompileVector(name).Package!).Split('\n').Select(l => Regex.Match(l, "^  [0-9a-f]{4}  (.*)$"))
+            .Where(m => m.Success).Select(m => m.Groups[1].Value).ToList();
+
     [Fact]
     public void TheWordsVectorHoldsEveryOperationAndWord()
     {
         var result = CompileVector("words");
         var mode = result.Mode!;
-        var listing = ModeDisassembler.List(result.Package!);
-        // The listing's code lines: "  OFFSET  Op operands".
-        var code = listing.Split('\n').Select(l => Regex.Match(l, "^  [0-9a-f]{4}  (.*)$")).Where(m => m.Success).Select(m => m.Groups[1].Value).ToList();
-        var ops = code.Select(l => l.Split(' ')[0]).ToHashSet();
+        // every word, and with the language vector every operation (the words vector's are the first slice's)
+        var code = Code("words");
+        var ops = code.Concat(Code("language")).Select(l => l.Split(' ')[0]).ToHashSet();
         Assert.Equal(Enum.GetNames<ModeOp>().Order(), ops.Order());
-        Assert.All(ModeWords.SeatReads, r => Assert.Contains(code, l => l.EndsWith("SeatRead " + r.Name, StringComparison.Ordinal)));
+        Assert.All(ModeWords.SeatReads, r => Assert.Contains(code.Concat(Code("language")), l => l.EndsWith("SeatRead " + r.Name, StringComparison.Ordinal)));
         Assert.All(ModeWords.RaceReads, r => Assert.Contains(code, l => l.EndsWith("RaceRead " + r.Name, StringComparison.Ordinal)));
         Assert.All(ModeWords.Actions, a => Assert.Contains(code, l => l.EndsWith("Action " + a.Name, StringComparison.Ordinal)));
         // every setup word but laps by course (one of the two laps words: the competitive vector has the other)

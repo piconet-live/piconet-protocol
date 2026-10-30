@@ -6,11 +6,16 @@ namespace Online.Protocol;
 /// <para>The conventions the interpreter is written to: a stack of 32-bit cells; a condition ends with Ret, a body with
 /// End; jumps are offsets in the package's code. Local 0 is the seat an <c>each seat</c> or <c>out</c> rule is on;
 /// declared locals and the compiler's own (a loop's counter, a helper's sum) follow, each block's freed when it
-/// ends. A local is given its value when declared (0, false or none when none is written): nothing rests on the
-/// interpreter clearing them.</para>
+/// ends (a vec takes three slots, x, y, z). A local is given its value when declared (0, false or none when none is
+/// written): nothing rests on the interpreter clearing them, nor on the slots past a wait's live ones.</para>
+/// <para>A sub is written where it is called: its arguments into locals of its own (the caller's are out of its
+/// sight), its body, its returns jumps to its end with the value in a local. A <c>wait</c> keeps the slots in use
+/// (at most the api's wait_locals) and leaves the stack empty: the compiler allows one only where a statement may
+/// stand, outside a sorted loop.</para>
 /// <para>The count: one an operation, a SortRun 1 + 5 × 30 × its keys; a loop's test once more than its
 /// iterations (30 for the seats, a repeat's most), its body once each; an <c>each seat</c> or <c>out</c> rule 30
-/// times. Both arms of an <c>if</c> are counted, so the count is an upper bound.</para></summary>
+/// times; a rule that waits twice (ModeCompiler). Both arms of an <c>if</c> are counted, so the count is an upper
+/// bound.</para></summary>
 internal sealed partial class ModeEmitter(ModeNames names, List<string> warnings)
 {
     private sealed record Local(string Name, ModeType Type, int Slot, bool Fixed);
@@ -23,20 +28,32 @@ internal sealed partial class ModeEmitter(ModeNames names, List<string> warnings
     private long _multiplier = 1;
     private int _seatLoops;
     private int _sorts;
+    // the first local a name may find: a sub's own, past its caller's
+    private int _scope;
+    // inside an expression's sub or a condition: no wait
+    private int _noWait;
+    private bool _waits;
+    // the subs being written, the innermost last: their returns' jumps and value
+    private readonly List<(string Name, ModeType? Type, Local? Value, List<int> Jumps)> _subs = [];
 
     /// <summary>The operations a step at worst of the rules written so far.</summary>
     public long Cost { get; private set; }
+
+    /// <summary>Counts operations more (a rule that waits, ModeCompiler).</summary>
+    public void Count(long operations) => Cost += operations;
 
     public byte[] Code => _code.ToArray();
 
     private uint Here => (uint)_code.Count;
 
-    /// <summary>Writes a rule: its conditions and its body, after the code written before it.</summary>
-    public ModeRule Rule(ModeRuleItem item, ModeEvent id, bool bindsSeat)
+    /// <summary>Writes a rule: its conditions and its body, after the code written before it; and whether it waits.</summary>
+    public (ModeRule Rule, bool Waits) Rule(ModeRuleItem item, ModeEvent id, bool bindsSeat)
     {
         _locals.Clear();
         _implicit.Clear();
         _high = 0;
+        _scope = 0;
+        _waits = false;
         _multiplier = bindsSeat ? ModeWords.Seats : 1;
         if (bindsSeat)
         {
@@ -47,7 +64,7 @@ internal sealed partial class ModeEmitter(ModeNames names, List<string> warnings
         var body = Here;
         Statements(item.Body);
         Op(ModeOp.End);
-        return new ModeRule(item.Label, id, _high, when, during, body);
+        return (new ModeRule(item.Label, id, _high, when, during, body), _waits);
     }
 
     private uint Condition(IReadOnlyList<ModeExpr> conditions)
@@ -58,7 +75,9 @@ internal sealed partial class ModeEmitter(ModeNames names, List<string> warnings
         }
         var start = Here;
         var joined = conditions.Skip(1).Aggregate(conditions[0], (a, b) => new ModeBinary(b.Line, "and", a, b));
+        _noWait++;
         Value(joined, ModeType.Bool, "a condition");
+        _noWait--;
         Op(ModeOp.Ret);
         return start;
     }
@@ -102,24 +121,55 @@ internal sealed partial class ModeEmitter(ModeNames names, List<string> warnings
 
     private Local Declare(int line, string name, ModeType type, bool isFixed = false)
     {
-        if (_locals.Any(l => l.Name == name) || names.Find(name) is not null)
+        if (_locals.Skip(_scope).Any(l => l.Name == name) || names.Find(name) is not null)
         {
             throw new ModeCompileException(line, $"'{name}' is already declared");
         }
         return Temporary(line, type, name, isFixed);
     }
 
+    /// <summary>The slots a value of the type takes: a vec three, anything else one.</summary>
+    private static int Width(ModeType type) => type == ModeType.Vec ? 3 : 1;
+
+    /// <summary>The slots in use: past the last local's.</summary>
+    private int Slots => _locals.Count == 0 ? 0 : _locals[^1].Slot + Width(_locals[^1].Type);
+
     /// <summary>A local slot; a compiler's own has a name no file can write.</summary>
     private Local Temporary(int line, ModeType type, string name = "", bool isFixed = true)
     {
-        var slot = _locals.Count == 0 ? 0 : _locals[^1].Slot + 1;
-        if (slot >= ModeWords.Locals)
+        var slot = Slots;
+        if (slot + Width(type) > ModeWords.Locals)
         {
             throw new ModeCompileException(line, $"a rule has at most {ModeWords.Locals} locals, the loops' and helpers' included");
         }
         var local = new Local(name, type, slot, isFixed);
         _locals.Add(local);
-        _high = Math.Max(_high, slot + 1);
+        _high = Math.Max(_high, slot + Width(type));
+        return local;
+    }
+
+    /// <summary>Pops a value (a vec's three cells, z first) into a local.</summary>
+    private void StoreTo(Local local)
+    {
+        for (var k = Width(local.Type) - 1; k >= 0; k--)
+        {
+            Op(ModeOp.StoreLocal, local.Slot + k);
+        }
+    }
+
+    private void LoadFrom(Local local)
+    {
+        for (var k = 0; k < Width(local.Type); k++)
+        {
+            Op(ModeOp.LoadLocal, local.Slot + k);
+        }
+    }
+
+    /// <summary>The value on the stack into a new local of the compiler's.</summary>
+    private Local Spill(int line, ModeType type)
+    {
+        var local = Temporary(line, type);
+        StoreTo(local);
         return local;
     }
 
@@ -131,7 +181,7 @@ internal sealed partial class ModeEmitter(ModeNames names, List<string> warnings
     /// <summary>Frees the locals declared after a mark (a block's end).</summary>
     private void Free(int mark) => _locals.RemoveRange(mark, _locals.Count - mark);
 
-    private Local? FindLocal(string name) => _locals.LastOrDefault(l => l.Name == name && l.Name.Length > 0);
+    private Local? FindLocal(string name) => _locals.Skip(_scope).LastOrDefault(l => l.Name == name && l.Name.Length > 0);
 
     // Loops.
 
@@ -154,16 +204,23 @@ internal sealed partial class ModeEmitter(ModeNames names, List<string> warnings
     }
 
     /// <summary>The race's seats in seat order: one local is the counter and the seat, from 0 while below
-    /// <c>race.seats</c>; a seat that fails <paramref name="where"/> is skipped. <paramref name="body"/> sees the seat
-    /// as <paramref name="bound"/>, and bare reads (<c>racing</c>) in the condition and in the body given
+    /// <c>race.seats</c>; a seat not in <paramref name="set"/> (null: every seat; worked out once, before the loop) or
+    /// that fails <paramref name="where"/> is skipped. <paramref name="body"/> sees the seat as
+    /// <paramref name="bound"/>, and bare reads (<c>racing</c>) in the condition and in the body given
     /// <paramref name="implicitReads"/> are of it.</summary>
-    private void Seats(int line, string bound, ModeExpr? where, Action<Local> body, bool implicitReads)
+    private void Seats(int line, string bound, ModeExpr? where, Action<Local> body, bool implicitReads, ModeExpr? set = null)
     {
         if (_seatLoops >= 2)
         {
             throw new ModeCompileException(line, "loops over the seats nest at most two deep (30 × 30)");
         }
         var mark = _locals.Count;
+        Local? members = null;
+        if (set is not null)
+        {
+            Value(set, ModeType.Seats, "for each ... in");
+            members = Spill(line, ModeType.Seats);
+        }
         var seat = Bind(line, bound);
         _seatLoops++;
         Push(0);
@@ -177,11 +234,19 @@ internal sealed partial class ModeEmitter(ModeNames names, List<string> warnings
         }, () =>
         {
             _implicit.Add(seat);
-            var skip = -1;
+            var skips = new List<int>();
+            if (members is not null)
+            {
+                Op(ModeOp.LoadLocal, seat.Slot);
+                Op(ModeOp.SeatBit);
+                Op(ModeOp.LoadLocal, members.Slot);
+                Op(ModeOp.BitAnd);
+                skips.Add(JumpAhead(ModeOp.JumpIfZero));
+            }
             if (where is not null)
             {
                 Value(where, ModeType.Bool, "where");
-                skip = JumpAhead(ModeOp.JumpIfZero);
+                skips.Add(JumpAhead(ModeOp.JumpIfZero));
             }
             if (!implicitReads)
             {
@@ -192,7 +257,7 @@ internal sealed partial class ModeEmitter(ModeNames names, List<string> warnings
             {
                 _implicit.RemoveAt(_implicit.Count - 1);
             }
-            if (skip >= 0)
+            foreach (var skip in skips)
             {
                 Land(skip);
             }
