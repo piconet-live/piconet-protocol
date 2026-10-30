@@ -223,6 +223,8 @@ public enum ModeSetup : byte
     BoostStartOff = 24,
     /// <summary><c>teams</c></summary>
     Teams = 25,
+    /// <summary><c>customs off</c></summary>
+    CustomsOff = 26,
 }
 
 /// <summary>A read of a seat (protocol/modes.toml).</summary>
@@ -584,6 +586,7 @@ public static partial class ModeWords
         ("boost_start on", ModeSetup.BoostStartOn, [], true, ""),
         ("boost_start off", ModeSetup.BoostStartOff, [], true, ""),
         ("teams", ModeSetup.Teams, [new ModeArgument("least", ModeType.Int, 2, 30, null), new ModeArgument("most", ModeType.Int, 2, 30, null)], true, "range"),
+        ("customs off", ModeSetup.CustomsOff, [], true, ""),
     ];
 
     /// <summary>The reads of a seat (<c>seat.NAME</c>): name, id, type.</summary>

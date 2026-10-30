@@ -231,7 +231,8 @@ enum Setup : std::uint8_t
   SETUP_BOOSTSTARTON = 23,  // boost_start on
   SETUP_BOOSTSTARTOFF = 24,  // boost_start off
   SETUP_TEAMS = 25,  // teams
-  SETUP_COUNT = 26,
+  SETUP_CUSTOMSOFF = 26,  // customs off
+  SETUP_COUNT = 27,
 };
 
 // a read of a seat (OP_SEATREAD)

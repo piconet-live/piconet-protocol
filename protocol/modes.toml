@@ -731,6 +731,12 @@ form = "range"
 args = [{ type = "int", name = "least", least = 2, most = 30 }, { type = "int", name = "most", least = 2, most = 30 }]
 where = "the coordinator: the teams a race of this mode has, set by the host and the racers and carried in setup.mode.teams; fewer than `least` holding racers and the race is refused"
 
+[[setup]]
+name = "customs off"
+id = 26
+lobby = true
+where = "the coordinator: no custom machines in this mode's races, whatever the machines word says; a choice of one is refused and the racer races their stock machine. Left out: custom machines are allowed, a machines list holds the stock machines only"
+
 [[seat_read]]
 name = "racing"
 id = 0

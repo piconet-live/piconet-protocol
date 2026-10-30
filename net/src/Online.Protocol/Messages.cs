@@ -498,8 +498,10 @@ public sealed record CourseChosen(string MatchId, IReadOnlyList<int> Options, IR
 /// <summary>The match's machine choice, its own step after the course is decided: the course,
 /// the machines racers may take, and how long the choice lasts. It ends when every racer has chosen
 /// (<see cref="MachineChoice"/>) or the time is up; a racer who has not chosen races the machine they last raced or
-/// queued with.</summary>
-public sealed record ChooseMachine(string MatchId, int Course, IReadOnlyList<int> Machines, int DurationMs) : ServerMessage;
+/// queued with. CustomsOff: the race's mode takes no custom machines (<c>customs off</c>): one sent back is refused, and
+/// the racer races their stock machine; a reader from before passes over it.</summary>
+public sealed record ChooseMachine(string MatchId, int Course, IReadOnlyList<int> Machines, int DurationMs,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool CustomsOff = false) : ServerMessage;
 
 /// <summary>The lobby's race as a racer's game sees it, for the players waiting in the lobby.</summary>
 public sealed record LiveRace(string MatchId, RaceSnapshot Snapshot) : ServerMessage;

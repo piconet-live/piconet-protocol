@@ -57,6 +57,27 @@ public sealed class ModeTermsTests
         Assert.Equal(new Dictionary<string, int> { ["finish-limit"] = 0, ["cpu-fill"] = (int)CpuFillMode.Never }, terms.Rules());
     }
 
+    [Theory]
+    [InlineData("customs off;", true, null)]
+    [InlineData("", false, null)]
+    [InlineData("machines [\"Blue Falcon\"];\ncustoms off;", true, 6)]
+    [InlineData("machines [\"Blue Falcon\"];", false, 6)]
+    public void CustomsAreAllowedUnlessTheModeSaysOffAListOrNot(string words, bool off, int? listed)
+    {
+        var terms = Terms(words);
+        Assert.Equal(off, terms.CustomsOff);
+        Assert.Equal(listed is { } machine ? [machine] : null, terms.Machines);
+        Assert.DoesNotContain(terms.Rules().Keys, k => k.Contains("custom", StringComparison.Ordinal));   // (no number a host's value could change)
+    }
+
+    [Fact]
+    public void CustomsOffIsTheCoordinatorsWordNotTheGames()
+    {
+        var mode = ModeCompiler.Compile("mode \"M\" { api 1; }\ncustoms off;\n").Mode!;
+        Assert.Contains(mode.LobbyWords, w => w.Id == ModeSetup.CustomsOff);
+        Assert.DoesNotContain(mode.Setups, w => w.Id == ModeSetup.CustomsOff);
+    }
+
     [Fact]
     public void EveryWordSetsItsRule()
     {
@@ -139,6 +160,7 @@ public sealed class ModeTermsTests
     [InlineData("machines [\"Nope\"];", "\"Nope\" is no machine of the game's")]
     [InlineData("machines [\"Blue Falcon\", \"Blue Falcon\"];", "\"Blue Falcon\" is in the list twice")]
     [InlineData("machines all;\nmachines [\"Blue Falcon\"];", "machines all and machines: one of them")]
+    [InlineData("customs off;\ncustoms off;", "customs off is set twice")]
     [InlineData("course \"Nowhere\";", "\"Nowhere\" is no course of the pool")]
     [InlineData("stats 3;", "stats takes a name in quotes")]
     [InlineData("boost_start on;\nboost_start off;", "boost_start on and boost_start off: one of them")]
