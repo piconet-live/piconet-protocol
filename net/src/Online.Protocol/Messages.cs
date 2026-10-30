@@ -67,11 +67,15 @@ public sealed record Rgb(byte R, byte G, byte B)
 /// <summary>A lobby member (Watching: they watch the lobby's races instead of racing, <see cref="WatchRace"/>; a
 /// launcher from before it passes over it): StockColor as in <see cref="EnterQuickPlay"/>; Racing: in the lobby's race now (otherwise
 /// waiting for the next); Chosen: while the lobby is choosing machines, this player has chosen theirs. Tag: the
-/// player's tag (<see cref="PlayerTags"/>), shown after the name; a launcher from before tags passes over it.</summary>
+/// player's tag (<see cref="PlayerTags"/>), shown after the name; a launcher from before tags passes over it.
+/// Custom: the garage-built machine the player races in place of Machine (<see cref="CustomMachine"/>, as their
+/// <see cref="SeatSetup.Custom"/> will carry it), so the other members see it; null: Machine. A launcher from before
+/// it passes over it.</summary>
 public sealed record PlayerInfo(string Id, string Name, int Machine, Rgb Color, int? StockColor = null, bool Racing = false,
     bool Chosen = false, string? Tag = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool Watching = false,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Pack = null);
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Pack = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] CustomMachine? Custom = null);
 
 /// <summary>A relay the players measure. An empty host means the coordinator's own host.</summary>
 public sealed record RelayEndpoint(string Id, string Host, int Port);
