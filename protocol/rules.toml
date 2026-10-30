@@ -1,0 +1,297 @@
+# A host's rules, defined once: generate.py writes the C# list and the race's rules record (generated/HostRules.g.cs:
+# Online.Protocol's HostRules, RaceRules and RaceWords: the service, the launcher) and the game's reader of a match
+# start's "rules" with the race block's words (generated/race_rules.g.h: the game's core, port/core/src/files_match.cpp)
+# from this file (README.md). piconet-runner's port/facts/game.tsv takes its rows of the race's rules (the words'
+# offsets, the limits) from here, by the names rule_at_NAME, rule_least_NAME, rule_most_NAME, rule_step_NAME (NAME the
+# rule's name in snake case: mine_regen).
+#
+# A rule ([[rule]]), in the operator's order (the order of HostRules.All, of the server's rule list, of a practice's
+# rows):
+#   name      the operator's name of it (the server's live rules, a custom lobby's key): lower-case words and dashes
+#   label     what a player's panel shows
+#   cs        its member of HostRules (PascalCase); none: it is in HostRules.All alone
+#   reach     alone (it means something in a race alone: a practice shows it), together (it needs other racers: a
+#             lobby's only), server (the server's own running: the operator's only)
+#   kind      course, courses, number, switch, range, choice, delay, machines, pack, text (Online.Protocol RuleKind)
+#   least, most, step, default
+#             its range and Quick Play's value (a switch: 0 to 1, 1 on); each a whole number or a C# constant by name
+#             ("GameFacts.Limits.Seats"); left out: 0 (step 1)
+#   unit      what its number counts, as a refusal and the dashboard say it ("s", "ms"); none: a plain number
+#   takes     what it may be, as a refusal says it: {range} is "LEAST to MOST", {least}, {most}, {step} the numbers;
+#             none: "on or off" for a switch, {range} for a number
+#   doc       the summary of its HostRules member
+#
+# A rule the games apply (`[rule.race]`) is a member of RaceRules, the match start's setup.rules, and a word of the
+# race block the game reads:
+#   key       the member's JSON name (camelCase; RaceRules' member is the same in PascalCase)
+#   absent    the value of a match start without it: every recording made before the rule, which must play as it
+#             was raced, so it is the game's own way (a switch: false)
+#   word      the race block's word (RACE_NAME), `at` its offset: a word, inside the block, clear of its other parts
+#             ([race_block]) and of every other rule's
+#   steps     "seconds" or "ms": the word holds the value in steps of the race (STEPS_A_SECOND a second); none: the
+#             value itself (a switch: 1 on)
+#   flag      the server's command-line option ("--cpu-level N"; a switch's option takes no value: on)
+#   replay    the replay file's version feature (replay.toml) a race with the word not 0 holds; none: no version of
+#             its own
+#   doc       what it does, for RaceRules' summary
+# The game takes a number in its range or brings it to the nearer end (a delay: 0 to its most), never refuses it:
+# the word is the clamped value, as whole steps.
+#
+# To add a rule the games apply: a [[rule]] with its [rule.race], a word in the block's free room, then the game's
+# site that reads the word (piconet-runner's port/image/sites_*.py: sites_mines.py is the model), which does what the
+# game did when the word is 0.
+
+[codec.csharp]
+namespace = "Online.Protocol"
+
+[codec.cxx]
+namespace = "fzgx::race_rules"
+
+[race_block]
+size = 1280              # bytes of the race block ('FZRC', the runner's port/core/src/files.h RACE_SIZE)
+steps_a_second = 60
+# the block's parts that are no rule's word (the runner's port/image/routines/memmap.py says each)
+others = [
+    { at = 0, end = 100, what = "the mark, the set-up's words, the seats' machines, the start grid" },
+    { at = 100, end = 104, what = "the rubber band (RACE_RUBBER_BAND_ON)" },
+    { at = 268, end = 298, what = "every seat's machine setting (RACE_SETTINGS)" },
+    { at = 304, end = 308, what = "the race's flow (RACE_FLOW)" },
+    { at = 320, end = 1280, what = "the seats' custom machines (RACE_CUSTOM)" },
+]
+
+[[rule]]
+name = "course-select"
+label = "Course"
+cs = "CourseSelect"
+reach = "together"
+kind = "course"
+
+[[rule]]
+name = "course-pool"
+label = "Course pool"
+cs = "CoursePool"
+reach = "together"
+kind = "courses"
+
+[[rule]]
+name = "racers"
+label = "Racers"
+cs = "Racers"
+reach = "together"
+kind = "number"
+least = "GameFacts.Limits.RacersMin"
+most = "GameFacts.Limits.Seats"
+default = "GameFacts.Limits.Seats"
+
+[[rule]]
+name = "laps"
+label = "Laps"
+cs = "Laps"
+reach = "alone"
+kind = "number"
+least = "GameFacts.Limits.LapsMin"
+most = "GameFacts.Limits.LapsMax"
+default = 3
+
+[[rule]]
+name = "cpu-level"
+label = "CPU level"
+cs = "CpuLevel"
+reach = "together"
+kind = "number"
+least = 0
+most = 3
+default = 3
+doc = "The CPU racers' level: 0 Novice, 1 Standard, 2 Expert, 3 Master."
+race = { key = "cpuLevel", absent = 3, word = "RACE_CPULEVEL", at = 256, flag = "--cpu-level", doc = "0 Novice, 1 Standard, 2 Expert, 3 Master" }
+
+[[rule]]
+name = "cpu-fill"
+label = "CPU racers"
+cs = "CpuFill"
+reach = "together"
+kind = "choice"
+
+[[rule]]
+name = "boost-start"
+label = "Boost from the start"
+cs = "BoostStart"
+reach = "alone"
+kind = "switch"
+most = 1
+doc = """Boosting on the first lap: alone too (the game's Practice leaves it off here unless the rule is on, \
+piconet-runner's port/image/routines/direct.py)."""
+race = { key = "boostFromStart", absent = false, word = "RACE_BOOST", at = 260, flag = "--boost-start", doc = "boosting allowed on the first lap (the game's Practice rule; Grand Prix waits for the second)" }
+
+[[rule]]
+name = "restore"
+label = "Restore"
+cs = "Restore"
+reach = "alone"
+kind = "switch"
+most = 1
+race = { key = "restore", absent = false, word = "RACE_RESTORE", at = 264, flag = "--restore", doc = "a machine that falls or is wrecked is put back instead of being out" }
+
+[[rule]]
+name = "finish-limit"
+label = "Finish limit"
+cs = "FinishLimit"
+reach = "together"
+kind = "number"
+most = 600
+default = 90
+unit = "s"
+takes = "{range} seconds (0: none)"
+doc = "The race's end this long after the first finish: with one racer the first finish is the last."
+race = { key = "finishLimitSeconds", absent = 0, word = "RACE_FINISH_LIMIT", at = 300, steps = "seconds", flag = "--finish-limit-seconds", doc = """the race ends for everyone this long after the first machine finishes (0, and a match start \
+without it: it ends when the last has finished or is out); the games count it in steps of the race, no clock of a server's""" }
+
+[[rule]]
+name = "mine-regen"
+label = "Mines return"
+cs = "MinesReturn"
+reach = "alone"
+kind = "delay"
+least = 50
+most = 5000
+step = 50
+default = 200
+unit = "ms"
+takes = "0 (mines stay gone) or {least} to {most} ms, in steps of {step}"
+doc = """A mine comes back this many milliseconds after it went off (0: it stays gone, the game's own way); Quick \
+Play: 200."""
+race = { key = "mineRegenMs", absent = 0, word = "RACE_MINE_REGEN", at = 308, steps = "ms", flag = "--mine-regen-ms", replay = "mines", doc = """a mine that went off comes back this long after (0, and a match start without it: it stays gone, \
+the game's own way); 50 to 5,000 in steps of 50, whole steps of the race (50 ms is 3)""" }
+
+[[rule]]
+name = "machines"
+label = "Machines"
+cs = "Machines"
+reach = "together"
+kind = "machines"
+
+[[rule]]
+name = "machine-setting"
+label = "Machine setting"
+cs = "MachineSetting"
+reach = "alone"
+kind = "range"
+most = "GameFacts.Limits.SettingMax"
+default = "GameFacts.Limits.SettingMax"
+doc = "A range the racers' own settings are brought into; Quick Play: top speed, fixed."
+
+[[rule]]
+name = "stat-pack"
+label = "Stats"
+cs = "StatPack"
+reach = "alone"
+kind = "pack"
+
+[[rule]]
+name = "mixed-packs"
+label = "Mixed packs"
+cs = "MixedPacks"
+reach = "together"
+kind = "switch"
+most = 1
+doc = """Each racer may race a pack of their own for their machine (handbook/stat-pack-constants.md, "A pack a \
+seat"); Quick Play: off, one pack for all (mixed packs only in lobbies)."""
+
+[[rule]]
+name = "vote-seconds"
+label = "Course vote"
+cs = "VoteSeconds"
+reach = "together"
+kind = "text"
+least = 5
+most = 120
+doc = "The course vote's length, in seconds."
+
+[[rule]]
+name = "choose-seconds"
+label = "Machine choice"
+cs = "ChooseSeconds"
+reach = "together"
+kind = "text"
+least = 5
+most = 120
+doc = "The machine choice's length, in seconds."
+
+[[rule]]
+name = "voting-minimum"
+label = "Voting minimum"
+cs = "VotingMinimum"
+reach = "together"
+kind = "text"
+least = 1
+most = "GameFacts.Limits.Seats"
+doc = """The players a lobby needs before its race starts by vote; one above the lobby's racers \
+(<see cref="Racers"/>) is taken, and such a lobby never starts by vote."""
+
+[[rule]]
+name = "start-countdown"
+label = "Start countdown"
+cs = "StartCountdown"
+reach = "server"
+kind = "text"
+most = 600
+doc = """A Quick Play lobby's start countdown, in seconds: it runs once the lobby has its voting minimum \
+(<see cref="VotingMinimum"/>) and lasts this long at that many players, shorter with every player more, down to \
+<see cref="StartCountdownLeast"/> seconds when one seat is left; a full lobby starts at once, and the start vote \
+still starts it sooner. 0: no countdown, the vote alone (as before 0.5.2). Custom lobbies never count down: their \
+host or their vote starts them."""
+
+[[rule]]
+name = "start-timeout"
+label = "Start timeout"
+cs = "StartTimeout"
+reach = "server"
+kind = "text"
+least = 10
+most = 600
+doc = "How long the relay waits for every game of a race to join, in seconds."
+
+[[rule]]
+name = "ready-timeout"
+label = "Ready timeout"
+cs = "ReadyTimeout"
+reach = "server"
+kind = "text"
+least = 10
+most = 600
+doc = "How long the relay waits for every game of a race to be ready, in seconds."
+
+[[rule]]
+name = "straggler-wait"
+label = "Straggler wait"
+cs = "StragglerWait"
+reach = "server"
+kind = "text"
+most = 600
+doc = """How long a lobby waits for the last racers of its race once half are back, in seconds; -1 (a number \
+below the range, which <see cref="HostRule.Takes"/> refuses): until the last is back."""
+
+[[rule]]
+name = "latency-limit"
+label = "Latency limit"
+cs = "LatencyLimit"
+reach = "together"
+kind = "number"
+least = 30
+most = 300
+default = "ServerRules.QuickPlayLatencyLimitMs"
+doc = """The round trip to the race's relay a player may have to race, in milliseconds; a player above it watches \
+that race from the lobby. A lobby's rule, which its rules line shows (<see cref="ServerRules.LatencyLimitMs"/>); \
+Quick Play: 250. The range is 30 to 300; 30 is the least, for a host whose players are all close (a LAN, one city)."""
+
+[[rule]]
+name = "together"
+label = "Builds together"
+reach = "server"
+kind = "text"
+
+[[rule]]
+name = "relay-ceiling"
+label = "Relay ceiling"
+reach = "server"
+kind = "text"

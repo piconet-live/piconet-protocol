@@ -115,15 +115,8 @@ public sealed record RaceSetup(
     public const int MostSeatPacks = 4;
 }
 
-/// <summary>The race's rules the games apply. CpuLevel: 0 Novice, 1 Standard, 2 Expert, 3 Master. BoostFromStart:
-/// boosting allowed on the first lap (the game's Practice rule; Grand Prix waits for the second). Restore: a machine
-/// that falls or is wrecked is put back instead of being out. FinishLimitSeconds: the race ends for everyone this
-/// long after the first machine finishes (0, and a match start without it: it ends when the last has finished or is
-/// out); the games count it in steps of the race, no clock of a server's. MineRegenMs: a mine that went off comes
-/// back this long after (0, and a match start without it: it stays gone, the game's own way); 50 to 5,000 in steps
-/// of 50, whole steps of the race (50 ms is 3).</summary>
-public sealed record RaceRules(int CpuLevel = 3, bool BoostFromStart = false, bool Restore = false, int FinishLimitSeconds = 0,
-    int MineRegenMs = 0);
+// RaceRules, the race's rules the games apply, is generated from protocol/rules.toml (protocol/generated/
+// HostRules.g.cs).
 
 [JsonConverter(typeof(JsonStringEnumConverter<CpuFillMode>))]
 public enum CpuFillMode
