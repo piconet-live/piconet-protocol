@@ -31,6 +31,18 @@ public sealed class StatPackConstantsTests
 
     private static string Number(double value) => value.ToString("R", CultureInfo.InvariantCulture);
 
+    /// <summary>rules.toml's default names a pack the repository holds, by the pack's own name: the name a server
+    /// looks for, and a launcher's rows and a practice choose by.</summary>
+    [Fact]
+    public void TheDefaultPackIsAFileOfTheRepository()
+    {
+        var names = Directory.EnumerateFiles(Repository("protocol", "packs"), "*" + StatPackText.Extension)
+            .Select(f => StatPackText.Read(File.ReadAllText(f)).Pack?.Name).ToList();
+        Assert.Contains(HostRules.DefaultStatPack, names);
+        Assert.Equal("stat-pack", HostRules.StatPack.Name);
+        Assert.Equal(0, HostRules.StatPack.Default);   // (the rule's number stays none: the pack goes by its name)
+    }
+
     [Fact]
     public void TheListIsTheHandbooksRowForRow()
     {

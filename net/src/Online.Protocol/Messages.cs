@@ -447,9 +447,11 @@ public sealed record MeasureRelays(string MatchId, IReadOnlyList<RelayEndpoint> 
 
 /// <summary>The race: join the relay with the token, as this seat. The relay's host is an address when the
 /// coordinator started the relay itself (it changes from one start to the next); a name otherwise. ReportLive: send the race as the game sees it
-/// (<see cref="RaceReport"/>) for the lobby's waiting players.</summary>
+/// (<see cref="RaceReport"/>) for the lobby's waiting players. NoRejoin: a game that leaves this race does not come
+/// back and no Rejoin is offered: its mode does not say <c>cpus allowed</c>, and a CPU drives a seat meanwhile.</summary>
 public sealed record MatchStart(string MatchId, RelayEndpoint Relay, string Token, int Seat, RaceSetup Setup,
-    bool ReportLive = false) : ServerMessage;
+    bool ReportLive = false,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool NoRejoin = false) : ServerMessage;
 
 /// <summary>Taken out of a forming match; the player stays in the lobby for the next one. Reasons: latency (too slow
 /// to the chosen relay), no_relay (none connected), relay_failed (the race server could not be started, in any region).</summary>

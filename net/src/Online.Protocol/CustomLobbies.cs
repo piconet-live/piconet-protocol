@@ -15,7 +15,7 @@ namespace Online.Protocol;
 /// <see cref="CourseSelectMode"/>, with the fixed course under <see cref="FixedCourseKey"/>, a course of
 /// <see cref="CoursePool.Default"/>); the machine setting's range its low end under "machine-setting" and its high
 /// end under <see cref="SettingHighKey"/>. StatPack: the race's stat pack by its name, one of the server's packs;
-/// null: the disc's own stats. PackFile: the host's own pack instead, the whole text of a <c>.fzstats</c> file
+/// null: the disc's own stats, the host's Stock (a new lobby starts on Quick Play's pack, by name). PackFile: the host's own pack instead, the whole text of a <c>.fzstats</c> file
 /// (<see cref="StatPackText"/>), which the server reads and checks as it would a pack file of its own; StatPack then
 /// holds that pack's own name (a server from before PackFile looks for a pack of that name, and refuses the rules
 /// when it has none). A launcher sends PackFile with a lobby's rules (<see cref="CreateLobby"/>,
@@ -204,12 +204,14 @@ public sealed record LobbyList(IReadOnlyList<LobbySummary> Lobbies,
 /// the lobby's own; Pack: the stat pack it names ("" the disc's own stats; null: it names none). CpusAllowed is in Terms
 /// (cpu-fill). Null Terms: a server from before them. Params: the mode's parameters as its package declares them, and
 /// Values their values now, in the same order: the lobby's rule controls and what its panel shows. Null: it has none,
-/// or a server from before them.</summary>
+/// or a server from before them. Machines: the machine ids it allows when it states a list, so a Garage shows them
+/// before the machine choice opens; null: it states none (the lobby's machines stand).</summary>
 public sealed record LobbyMode(string Hash, string ShareCode, string Name, int Api, string Badge = "", string About = "",
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyDictionary<string, int>? Terms = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Pack = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<ModeParam>? Params = null,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<int>? Values = null);
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<int>? Values = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<int>? Machines = null);
 
 /// <summary>The player's team in a custom lobby with teams: their own, or (from the host) another member's
 /// (<paramref name="PlayerId"/>); null Team: none, the race gives them one. A race's seats get their teams from these
