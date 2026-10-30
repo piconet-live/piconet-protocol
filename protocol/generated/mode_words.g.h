@@ -318,7 +318,51 @@ enum Action : std::uint8_t
   ACTION_TEAMNOCONTACT = 22,  // team no contact
   ACTION_DANGERZONE = 23,  // danger_zone
   ACTION_DANGERZONEOFF = 24,  // danger_zone off
-  ACTION_COUNT = 25,
+  ACTION_SHOW = 25,  // show
+  ACTION_HIDE = 26,  // hide
+  ACTION_SHOWNUMBER = 27,  // show_number
+  ACTION_STOCKBANNER = 28,  // stock_banner
+  ACTION_SEATLOOK = 29,  // seat.look
+  ACTION_SEATOWNLOOK = 30,  // seat.own_look
+  ACTION_SEATCOLOUR = 31,  // seat.colour
+  ACTION_MAPHIDE = 32,  // map_hide
+  ACTION_MAPMARK = 33,  // map_mark
+  ACTION_COUNT = 34,
+};
+
+// the choice `part`: a part of the game's own race HUD: TIMER the timed mode's clock (clock_limit's time, R+0xA4: seconds, 0 to 999); DISTANCE the metres to the finish (the seat's own); DIGIT the story's big digit (danger_zone's seconds, 3 2 1); WARNING, SUCCESS, FAILED, TIME_OVER, SPEED_GAUGE, OBJECTS the story's pictures
+enum Part : std::uint8_t
+{
+  PART_TIMER = 0,
+  PART_DISTANCE = 1,
+  PART_DIGIT = 2,
+  PART_WARNING = 3,
+  PART_SUCCESS = 4,
+  PART_FAILED = 5,
+  PART_TIME_OVER = 6,
+  PART_SPEED_GAUGE = 7,
+  PART_OBJECTS = 8,
+  PART_COUNT = 9,
+};
+
+// the choice `banner`: a banner of the game's own race HUD, shown once, as the game shows it
+enum Banner : std::uint8_t
+{
+  BANNER_FINAL_LAP = 0,
+  BANNER_BOOST_POWER = 1,
+  BANNER_TIME_BONUS = 2,
+  BANNER_GAP = 3,
+  BANNER_WRONG_WAY = 4,
+  BANNER_COUNT = 5,
+};
+
+// the choice `look`: how a machine is drawn: as the game draws it; as Time Attack draws its ghost (a blue hologram); not at all
+enum Look : std::uint8_t
+{
+  LOOK_NORMAL = 0,
+  LOOK_GHOST = 1,
+  LOOK_INVISIBLE = 2,
+  LOOK_COUNT = 3,
 };
 
 // the arguments an action pops
@@ -351,6 +395,15 @@ constexpr int ActionArguments(std::uint8_t action)
     case ACTION_TEAMNOCONTACT: return 1;
     case ACTION_DANGERZONE: return 4;
     case ACTION_DANGERZONEOFF: return 1;
+    case ACTION_SHOW: return 2;
+    case ACTION_HIDE: return 2;
+    case ACTION_SHOWNUMBER: return 2;
+    case ACTION_STOCKBANNER: return 2;
+    case ACTION_SEATLOOK: return 2;
+    case ACTION_SEATOWNLOOK: return 2;
+    case ACTION_SEATCOLOUR: return 2;
+    case ACTION_MAPHIDE: return 2;
+    case ACTION_MAPMARK: return 2;
     default: return -1;
   }
 }

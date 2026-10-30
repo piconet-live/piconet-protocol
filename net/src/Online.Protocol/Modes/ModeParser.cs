@@ -728,6 +728,8 @@ internal sealed class ModeParser
         {
             throw Error($"'{name}' is not an action of api {ModeWords.Api}");
         }
+        // a word between the first two arguments in place of the comma (map_hide s from seats)
+        var join = ModeWords.ActionJoins.GetValueOrDefault(ModeWords.Actions.First(a => a.Name == name).Id);
         var arguments = new List<ModeExpr>();
         while (!Current.Is(";"))
         {
@@ -737,7 +739,14 @@ internal sealed class ModeParser
                 name += " off";
                 break;
             }
-            if (arguments.Count > 0)
+            if (arguments.Count == 1 && join is not null)
+            {
+                if (!Accept(join))
+                {
+                    throw Error($"{name} writes '{join}' before its second argument: {name} s {join} seats;");
+                }
+            }
+            else if (arguments.Count > 0)
             {
                 Accept(",");
             }

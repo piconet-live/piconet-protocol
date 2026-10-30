@@ -1170,3 +1170,91 @@ id = 24
 args = ["seat"]
 where = "the block: the seat's danger zone cleared (a count under way stops)"
 doc = "the seat carries no bomb"
+
+# ---- The displays (vocabulary 5): presentation only. An action writes the seat's display record in the block (the
+# runner's port/core/src/mode_hud.h), at the mode point like every action; the drawing reads it, every frame, from
+# what the step left (a rollback redraws). Nothing a step reads is written, and nothing draws from a generator.
+#
+# A choice ([[choice]]): the names an argument of that kind takes, its value the name's place in `values` (from 0).
+# An action's argument of a choice's name takes one of those names, never a number.
+
+[[choice]]
+name = "part"
+values = ["TIMER", "DISTANCE", "DIGIT", "WARNING", "SUCCESS", "FAILED", "TIME_OVER", "SPEED_GAUGE", "OBJECTS"]
+doc = """a part of the game's own race HUD: TIMER the timed mode's clock (clock_limit's time, R+0xA4: seconds, 0 to \
+999); DISTANCE the metres to the finish (the seat's own); DIGIT the story's big digit (danger_zone's seconds, 3 2 1); \
+WARNING, SUCCESS, FAILED, TIME_OVER, SPEED_GAUGE, OBJECTS the story's pictures"""
+
+[[choice]]
+name = "banner"
+values = ["FINAL_LAP", "BOOST_POWER", "TIME_BONUS", "GAP", "WRONG_WAY"]
+doc = "a banner of the game's own race HUD, shown once, as the game shows it"
+
+[[choice]]
+name = "look"
+values = ["normal", "ghost", "invisible"]
+doc = "how a machine is drawn: as the game draws it; as Time Attack draws its ghost (a blue hologram); not at all"
+
+[[action]]
+name = "show"
+id = 25
+args = ["seat", "part"]
+where = "the display record; drawn by the mode's HUD pass (port/core/src/mode_hud.cpp) into the HUD part mask and its source"
+doc = "the seat's player sees the part, from the next step on, until `hide`"
+
+[[action]]
+name = "hide"
+id = 26
+args = ["seat", "part"]
+where = "the display record"
+doc = "the part shown with `show` is no longer shown"
+
+[[action]]
+name = "show_number"
+id = 27
+args = ["seat", "int"]
+where = "the display record; drawn by the Grand Prix spare-machine icon (its getter's call, main.rel 0xCA920)"
+doc = "a whole number 0 to 99 beside the spare-machine icon, two digits (07); any other number hides it"
+
+[[action]]
+name = "stock_banner"
+id = 28
+args = ["seat", "banner"]
+where = "the display record's banner for this step; raised for the local seat by the image after the mode point"
+doc = "the seat's player sees the banner once, as the game raises it"
+
+[[action]]
+name = "seat.look"
+id = 29
+args = ["seat", "look"]
+where = "the display record; drawn by the machine's draw (main.rel 0x84F9C)"
+doc = "how everyone sees the seat's machine; its own driver too, unless seat.own_look says otherwise"
+
+[[action]]
+name = "seat.own_look"
+id = 30
+args = ["seat", "look"]
+where = "the display record"
+doc = "how the seat's own driver sees its machine (left unset: seat.look)"
+
+[[action]]
+name = "seat.colour"
+id = 31
+args = ["seat", "int"]
+where = "the display record; the machine's body colour (the car object's +0x3BC, story action 11), every drawn frame"
+doc = "the machine's body colour as 0xRRGGBBAA; 0 gives the machine its own back"
+
+[[action]]
+name = "map_hide"
+id = 32
+args = ["seat", "seats"]
+join = "from"
+where = "the display record; read by our own course map (port/core/src/minimap_frame.cpp), never the game's"
+doc = "`map_hide s from <seats>`: s's dot is left off those seats' course maps (an empty set shows it to everyone)"
+
+[[action]]
+name = "map_mark"
+id = 33
+args = ["seat", "int"]
+where = "the display record; read by our own course map"
+doc = "the seat's dot in 0xRRGGBB on every course map; -1 gives it its machine's colour back"
