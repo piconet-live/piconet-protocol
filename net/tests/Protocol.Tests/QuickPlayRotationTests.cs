@@ -152,6 +152,18 @@ public sealed class QuickPlayRotationTests : IDisposable
         Assert.StartsWith("knockout.fzmode line 43: ", error.Message, StringComparison.Ordinal);
     }
 
+    /// <summary>Quick Play's own end stays: a mode's race has no finish limit unless it states it.</summary>
+    [Fact]
+    public void TheOfficialNormalModeStatesTheFinishLimit()
+    {
+        var compiled = ModeCompiler.Compile(File.ReadAllText(RepositoryFolder.Protocol("protocol", "quickplay", "competitive.fzmode")));
+        Assert.True(compiled.Succeeded, string.Join("; ", compiled.Errors));
+        var terms = ModeTerms.Of(compiled.Mode!);
+        Assert.Equal(90, terms.FinishLimit);
+        Assert.True(terms.CpusAllowed);
+        Assert.Equal(8, terms.Laps(CourseTable.Courses.First(c => c.Track == "Sonic Oval").Course));
+    }
+
     [Fact]
     public void AModeTravelsInTheMessagesAndAnOlderEndReadsNone()
     {
