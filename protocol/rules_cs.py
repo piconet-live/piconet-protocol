@@ -56,10 +56,6 @@ def host_rules(s):
         if r.doc:
             out += doc(r.doc)
         out += [f"    public static HostRule {r.cs} {{ get; }} = {rule_new(r)};", ""]
-        if r.default_pack:
-            out += doc("The stat pack a race runs on when nothing states another, by the pack's own name: rules.toml's "
-                       "default, its one place. A file of protocol/packs carries the name (a protocol test holds it).")
-            out += [f"    public const string DefaultStatPack = {text(r.default_pack)};", ""]
     out += doc("Every rule, in the operator's order: the race's, the lobbies' times and limits, the server's own.")
     out += ["    public static IReadOnlyList<HostRule> All { get; } =", "    ["]
     out += [f"        {r.cs if r.cs else rule_new(r)}," for r in s["rules"] if r.reach != "practice"]

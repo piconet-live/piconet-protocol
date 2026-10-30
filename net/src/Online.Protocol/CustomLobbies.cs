@@ -15,7 +15,7 @@ namespace Online.Protocol;
 /// <see cref="CourseSelectMode"/>, with the fixed course under <see cref="FixedCourseKey"/>, a course of
 /// <see cref="CoursePool.Default"/>); the machine setting's range its low end under "machine-setting" and its high
 /// end under <see cref="SettingHighKey"/>. StatPack: the race's stat pack by its name, one of the server's packs;
-/// null: the disc's own stats, the host's Stock (a new lobby starts on Quick Play's pack, by name). PackFile: the host's own pack instead, the whole text of a <c>.fzstats</c> file
+/// null: no pack, the disc's own stats, the row's Stock (a new lobby starts on Quick Play's pack, the server's own: LobbyList.QuickPlay's). PackFile: the host's own pack instead, the whole text of a <c>.fzstats</c> file
 /// (<see cref="StatPackText"/>), which the server reads and checks as it would a pack file of its own; StatPack then
 /// holds that pack's own name (a server from before PackFile looks for a pack of that name, and refuses the rules
 /// when it has none). A launcher sends PackFile with a lobby's rules (<see cref="CreateLobby"/>,

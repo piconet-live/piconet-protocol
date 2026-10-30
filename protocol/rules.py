@@ -106,13 +106,8 @@ class Rule:
             fail(f"reach is one of {sorted(REACHES)}")
         if self.kind not in KINDS:
             fail(f"kind is one of {sorted(KINDS)}")
-        self.default_pack = None
         for key, fallback in (("least", 0), ("most", 0), ("step", 1), ("default", 0)):
             v = raw.get(key, fallback)
-            if key == "default" and self.kind == "pack":   # (a pack's default is a pack's own name, not a number)
-                if not isinstance(v, str) or not v:
-                    fail("a stat pack's default is a pack's own name")
-                self.default_pack, v = v, 0
             if not (type(v) is int or (isinstance(v, str) and CONSTANT.match(v))):
                 fail(f"{key} is a whole number or a C# constant by name (\"GameFacts.Limits.Seats\")")
             setattr(self, key, v)
