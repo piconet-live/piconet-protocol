@@ -42,7 +42,7 @@ rule "Warn the last racer" {
     if (seat.racing and seat == last(seats where racing by standing)) {
       show_number seat, ceil((next_cut - race.steps) / 60.0);    // seconds to the cut
     } else {
-      show_number seat off;
+      show_number seat, -1;
     }
   }
 }
@@ -53,10 +53,10 @@ rule "Winner" {
   do {
     // survivors first (end_race fills them in standing order), then the cut racers, last out first
     int n = keep + 1;
-    for each seat where cut_order > 0 by cut_order desc { seat.place = n; n += 1; }
+    for each seat where seat.cut_order > 0 by seat.cut_order desc { seat.place = n; n += 1; }
     end_race;
   }
 }
 
-board seat cut_order "Out";
-board global next_cut "Next cut";
+// board seat cut_order "Out";     (language 10: back when the compiler has board)
+// board global next_cut "Next cut";

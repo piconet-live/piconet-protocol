@@ -142,14 +142,113 @@ public sealed class QuickPlayRotationTests : IDisposable
         Assert.StartsWith("broken.fzmode line 5: ", error.Message, StringComparison.Ordinal);
     }
 
-    /// <summary>The official rotation is the target, not yet loadable: its first refusal is the compiler's, knockout's
-    /// show_number (a display word, feat/mode-words-display). When this fails, the compiler took it: the official
-    /// rotation's tests take this one's place.</summary>
+    private static QuickPlayRotation Official() => QuickPlayRotation.Read(RepositoryFolder.Protocol("protocol", "quickplay"));
+
     [Fact]
-    public void TheOfficialRotationWaitsForShowNumber()
+    public void TheOfficialRotationLoads()
     {
-        var error = Assert.Throws<InvalidDataException>(() => QuickPlayRotation.Read(RepositoryFolder.Protocol("protocol", "quickplay")));
-        Assert.StartsWith("knockout.fzmode line 43: ", error.Message, StringComparison.Ordinal);
+        var rotation = Official();
+        Assert.Equal((5, 1, 0.15, true), (rotation.Cards, rotation.SpicyCards, rotation.RandomSpicyChance, rotation.ShowLaps));
+        Assert.Equal("Quick Play", rotation.Normal.Package.Name);
+        var spicy = Assert.Single(rotation.Spicy);
+        Assert.Equal("Knockout", spicy.Mode.Package.Name);
+        Assert.Equal([8], spicy.Courses!);
+        Assert.True(rotation.CpusAllowed);
+    }
+
+    /// <summary>Every (course, mode) of the rotation compiles to a package every game can read, its match start's
+    /// hash the package's, on the parameters' defaults.</summary>
+    [Fact]
+    public void EveryOfficialCardCompiles()
+    {
+        var rotation = Official();
+        var random = new Random(9);
+        var seen = new HashSet<(int, string)>();
+        for (var round = 0; round < 300; round++)
+        {
+            foreach (var option in rotation.Vote(CoursePool.Default, random.Next))
+            {
+                seen.Add((option.Course, option.Mode.File));
+            }
+        }
+        Assert.Equal(CoursePool.Default.Count + 1, seen.Count);   // every course of the pool (the spicy one spicy), Random
+        foreach (var mode in rotation.Modes)
+        {
+            var again = ModeCompiler.Compile(File.ReadAllText(RepositoryFolder.Protocol("protocol", "quickplay", mode.File)));
+            Assert.True(again.Succeeded, string.Join("; ", again.Errors));
+            Assert.Equal(mode.Hash, again.Hash);
+            var start = mode.Start();
+            var package = Convert.FromBase64String(start.Package);
+            Assert.Equal(mode.Hash, ModePackage.Hash(package));
+            Assert.Equal(mode.Package.Params.Select(p => p.Default), start.Params);
+            Assert.Equal(mode.Package.Name, ModePackage.Read(package).Name);
+        }
+    }
+
+    /// <summary>Design 6's table, course by course: the scene's laps where it has them, else 3.</summary>
+    [Fact]
+    public void TheOfficialCardsLapsGoByCourse()
+    {
+        var table = new Dictionary<string, int>
+        {
+            ["Sonic Oval"] = 8,
+            ["Screw Drive"] = 6,
+            ["Drift Highway"] = 6,
+            ["Split Oval"] = 6,
+            ["Twist Road"] = 6,
+            ["Mobius Ring"] = 4,
+            ["Meteor Stream"] = 4,
+        };
+        var normal = Official().Normal;
+        foreach (var course in CourseTable.Courses)
+        {
+            var laps = table.GetValueOrDefault(course.Track, 3);
+            Assert.Equal(laps, normal.Laps(course.Course));
+            Assert.Equal((laps, (string?)null, (string?)null), (normal.Card(course.Course, spicy: false).Laps!.Value,
+                normal.Card(course.Course, spicy: false).Badge, normal.Card(course.Course, spicy: false).About));
+        }
+        Assert.Null(normal.Card(CourseVote.RandomCourse, spicy: false).Laps);
+    }
+
+    [Fact]
+    public void TheOfficialVoteHasOneKnockoutCardOnItsCourse()
+    {
+        var rotation = Official();
+        var random = new Random(13);
+        var places = new HashSet<int>();
+        for (var round = 0; round < 300; round++)
+        {
+            var vote = rotation.Vote(CoursePool.Default, random.Next);
+            Assert.Equal(6, vote.Count);
+            Assert.Equal(CourseVote.RandomCourse, vote[^1].Course);
+            var spicy = Assert.Single(vote, o => o.Spicy);
+            places.Add(vote.ToList().IndexOf(spicy));
+            Assert.Equal((8, "Knockout", "KNOCKOUT", 0), (spicy.Course, spicy.Mode.Package.Name, spicy.Card.Badge, spicy.Card.Laps!.Value));
+            Assert.NotNull(spicy.Card.About);
+            Assert.All(vote.Where(o => !o.Spicy), o => Assert.Equal(("Quick Play", (string?)null), (o.Mode.Package.Name, o.Card.Badge)));
+            Assert.All(vote.Take(5).Where(o => !o.Spicy), o => Assert.Equal(rotation.Normal.Laps(o.Course), o.Card.Laps));
+        }
+        Assert.Equal([0, 1, 2, 3, 4], places.Order());
+    }
+
+    [Fact]
+    public void TheOfficialRandomLandsOnKnockoutAtItsChance()
+    {
+        var rotation = Official();
+        var random = new Random(17);
+        var draws = Enumerable.Range(0, 20_000).Select(_ => rotation.Random(CoursePool.Default, random.Next)).ToList();
+        Assert.InRange(draws.Count(d => d.Spicy) / (double)draws.Count, 0.13, 0.17);
+        Assert.All(draws.Where(d => d.Spicy), d => Assert.Equal((8, "Knockout"), (d.Course, d.Mode.Package.Name)));
+    }
+
+    /// <summary>Its terms: no lap count, a race the mode ends, CPUs only by the vote.</summary>
+    [Fact]
+    public void KnockoutsTermsAreItsWords()
+    {
+        var terms = Official().Spicy[0].Mode.Terms;
+        Assert.Equal(0, terms.Laps(8));
+        Assert.Equal(0, terms.FinishLimit);
+        Assert.True(terms.CpusAllowed);
     }
 
     /// <summary>Quick Play's own end stays: a mode's race has no finish limit unless it states it.</summary>
