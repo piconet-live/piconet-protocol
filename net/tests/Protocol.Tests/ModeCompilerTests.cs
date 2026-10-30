@@ -126,7 +126,7 @@ public sealed class ModeCompilerTests
         // every setup word but laps by course (the competitive vector's) and the off forms whose on form the vectors
         // hold (mine_regen off, restore off: a mode states one of the two)
         var setups = mode.Setups.Concat(race.Setups).Select(s => s.Id).ToList();
-        Assert.Equal(ModeWords.Setups.Select(s => s.Id).Where(id => id is not (ModeSetup.LapsByCourse or ModeSetup.MineRegen or ModeSetup.RestoreOff)).Order(),
+        Assert.Equal(ModeWords.Setups.Where(s => !s.Lobby).Select(s => s.Id).Where(id => id is not (ModeSetup.LapsByCourse or ModeSetup.MineRegen or ModeSetup.RestoreOff)).Order(),
             setups.Order());
         Assert.Equal(ModeWords.Events.Select(e => e.Id).Order(), mode.Rules.Concat(race.Rules).Select(r => r.Event).Distinct().Order());
         Assert.Equal(Enum.GetValues<ModeParamKind>(), mode.Params.Select(p => p.Kind).Distinct().Order());

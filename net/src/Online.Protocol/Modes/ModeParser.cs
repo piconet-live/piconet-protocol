@@ -484,6 +484,15 @@ internal sealed class ModeParser
         {
             return SetupTable(line, word);
         }
+        switch (ModeWords.Setups.Single(s => s.Name == word).Form)
+        {
+            case "range":
+                return SetupRange(line, word);
+            case "text":
+                return SetupText(line, word);
+            case "list":
+                return SetupList(line, word);
+        }
         var arguments = new List<ModeSetupArgument>();
         while (!Accept(";"))
         {
@@ -496,6 +505,46 @@ internal sealed class ModeParser
             arguments.Add(new ModeSetupArgument(argumentLine, name, SetupValue()));
         }
         return new ModeSetupItem(line, word, arguments);
+    }
+
+    /// <summary>A range, <c>racers 2..8</c>; one value alone is both ends.</summary>
+    private ModeSetupItem SetupRange(int line, string word)
+    {
+        var least = SetupValue();
+        var most = Accept("..") ? SetupValue() : least;
+        Expect(";");
+        return new ModeSetupItem(line, word, [new ModeSetupArgument(line, "least", least), new ModeSetupArgument(line, "most", most)]);
+    }
+
+    /// <summary>A name in quotes, <c>stats "GX+"</c>.</summary>
+    private ModeSetupItem SetupText(int line, string word)
+    {
+        if (Current.Kind != ModeTokenKind.Text)
+        {
+            throw Error($"{word} takes a name in quotes, not {Describe(Current)}");
+        }
+        var row = new ModeSetupRow(line, Take().Text, null);
+        Expect(";");
+        return new ModeSetupItem(line, word, [], [row]);
+    }
+
+    /// <summary>Names in quotes in brackets, <c>machines ["Blue Falcon", "Golden Fox"]</c>.</summary>
+    private ModeSetupItem SetupList(int line, string word)
+    {
+        Expect("[");
+        var rows = new List<ModeSetupRow>();
+        do
+        {
+            if (Current.Kind != ModeTokenKind.Text)
+            {
+                throw Error($"{word} takes names in quotes, not {Describe(Current)}");
+            }
+            rows.Add(new ModeSetupRow(Current.Line, Take().Text, null));
+        }
+        while (Accept(","));
+        Expect("]");
+        Expect(";");
+        return new ModeSetupItem(line, word, [], rows);
     }
 
     /// <summary>A setup word's table: <c>{ "Venue: Track": n; ...; else: n; }</c>, its <c>else</c> the word's

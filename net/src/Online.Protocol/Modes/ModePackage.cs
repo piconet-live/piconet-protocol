@@ -36,6 +36,12 @@ public sealed record ModeSetupValue(bool FromParam, int Value);
 /// left out at their defaults (so a reader needs no table of defaults).</summary>
 public sealed record ModeSetupWord(ModeSetup Id, IReadOnlyList<ModeSetupValue> Arguments);
 
+/// <summary>A setup word of the coordinator's (modes.toml's <c>lobby</c>), as the compiler read it from the file: its
+/// values in order (a range's ends, a course's or the machines' numbers), a stat pack's name. It is not in the
+/// package's <c>SETP</c>: the game sees what it sets as the match start's own fields. The content hash holds it all
+/// the same, through the file's text in <c>SRC </c>.</summary>
+public sealed record ModeLobbyWord(ModeSetup Id, IReadOnlyList<ModeSetupValue> Values, string? Text = null);
+
 /// <summary>A rule as the package keeps it: its conditions' and body's offsets in the code (<see cref="None"/>:
 /// none), and its locals, the event's binding (local 0) included.</summary>
 public sealed record ModeRule(string Label, ModeEvent Event, int Locals, uint When, uint While, uint Body)
@@ -66,6 +72,9 @@ public sealed class ModePackage
     public string About { get; init; } = "";
     public IReadOnlyList<ModeParam> Params { get; init; } = [];
     public IReadOnlyList<ModeSetupWord> Setups { get; init; } = [];
+    /// <summary>The words of the coordinator's, from the compile (not in the bytes: <see cref="Read"/> gives none;
+    /// everyone that uses them compiles the file).</summary>
+    public IReadOnlyList<ModeLobbyWord> LobbyWords { get; init; } = [];
     /// <summary>Each global's start value.</summary>
     public IReadOnlyList<int> Globals { get; init; } = [];
     /// <summary>Each seat word's start value.</summary>

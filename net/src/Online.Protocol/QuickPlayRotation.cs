@@ -8,31 +8,28 @@ namespace Online.Protocol;
 /// the package's content hash.</summary>
 public sealed record RotationMode(string File, ModePackage Package, string Hash)
 {
-    /// <summary>The race's laps on a course: the mode's <c>laps</c> word (a parameter's default where it names one:
-    /// Quick Play races every mode on its defaults); a mode that says none races the lobby rules' Quick Play laps
-    /// (<see cref="HostRules.Laps"/>), as a setup word left out takes (the design's section 5). 0: unlimited.</summary>
-    public int Laps(int course)
-    {
-        _ = course;   // (the `laps by course` table reads it, once the compiler keeps one)
-        return Package.Setups.FirstOrDefault(s => s.Id == ModeSetup.Laps) is { } laps
-            ? Value(laps.Arguments[0])
-            : HostRules.Laps.Default;
-    }
+    /// <summary>What the mode states of the race, on its parameters' defaults.</summary>
+    public ModeTerms Terms { get; } = ModeTerms.Of(Package);
+
+    /// <summary>The race's laps on a course as the mode states them (<c>laps</c>, or its <c>laps by course</c>); null:
+    /// it states none, so the lobby's laps. 0: unlimited.</summary>
+    public int? Laps(int course) => Terms.Laps(course);
 
     /// <summary>The mode says <c>cpus allowed</c>: players may vote CPUs into its race (left out, they may not).</summary>
-    public bool CpusAllowed => Package.Setups.Any(s => s.Id == ModeSetup.CpusAllowed);
+    public bool CpusAllowed => Terms.CpusAllowed;
 
     /// <summary>The match start's <c>setup.mode</c>: the package on its parameters' defaults.</summary>
     public ModeStart Start() => Package.Start();
 
     /// <summary>The vote card of this mode on a course (<see cref="CourseVote.RandomCourse"/>: laps not known); a spicy
     /// mode's carries its badge and its line.</summary>
-    public VoteCard Card(int course, bool spicy) => new(Package.Name,
-        course == CourseVote.RandomCourse ? null : Laps(course),
+    /// <param name="course">The card's course.</param>
+    /// <param name="spicy">A spicy option's: its badge and its line.</param>
+    /// <param name="lobbyLaps">The lobby's laps, for a mode that states none.</param>
+    public VoteCard Card(int course, bool spicy, int lobbyLaps = 3) => new(Package.Name,
+        course == CourseVote.RandomCourse ? null : Laps(course) ?? lobbyLaps,
         spicy && Package.Badge.Length > 0 ? Package.Badge : null,
         spicy && Package.About.Length > 0 ? Package.About : null);
-
-    private int Value(ModeSetupValue value) => value.FromParam ? Package.Params[value.Value].Default : value.Value;
 }
 
 /// <summary>A spicy option of the rotation: its mode, the courses it is raced on (null: the pool) and its weight in
@@ -280,6 +277,12 @@ public sealed class QuickPlayRotation
         if (!compiled.Succeeded)
         {
             throw new InvalidDataException($"{file} {compiled.Errors[0]}");
+        }
+        // the rotation's cards name the courses, and a Quick Play lobby's seats are its own
+        var terms = ModeTerms.Of(compiled.Mode!);
+        if (terms.Course is not null || terms.Racers is not null)
+        {
+            throw new InvalidDataException($"{file}: a mode of Quick Play's rotation says neither course nor racers: the rotation's cards name the courses, and its lobby the seats");
         }
         return new RotationMode(file, compiled.Mode!, compiled.Hash!);
     }

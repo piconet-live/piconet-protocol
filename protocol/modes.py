@@ -13,7 +13,7 @@ API_KEYS = {"number", "budget", "queue", "globals", "seat_words", "locals", "rul
             "team_words", "teams", "waits", "wait_locals", "subs"}
 OP_KEYS = {"name", "code", "operands", "doc"}
 EVENT_KEYS = {"name", "id", "kind", "binds", "doc"}
-SETUP_KEYS = {"name", "id", "args", "where", "doc", "table"}
+SETUP_KEYS = {"name", "id", "args", "where", "doc", "table", "lobby", "form"}
 ARG_KEYS = {"type", "name", "least", "most", "default"}
 READ_KEYS = {"name", "id", "type", "doc"}
 ACTION_KEYS = {"name", "id", "args", "where", "doc"}
@@ -108,6 +108,10 @@ def load(path=SCHEMA):
             keys(a, ARG_KEYS, f"setup {s['name']}: an argument")
             if a.get("type") not in ("int", "real"):
                 raise SchemaError(f"setup {s['name']}: an argument is an int or a real")
+        if s.get("form", "") not in ("", "range", "text", "list"):
+            raise SchemaError(f"setup {s['name']}: form is range, text or list")
+        if s.get("form") and not s.get("lobby"):
+            raise SchemaError(f"setup {s['name']}: a form is a word of the coordinator's")
         if s.get("table", "course") != "course":
             raise SchemaError(f"setup {s['name']}: a table is of courses")
     reads = {}

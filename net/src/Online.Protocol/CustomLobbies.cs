@@ -46,6 +46,10 @@ public sealed record LobbyRules(IReadOnlyDictionary<string, int> Values,
     /// <summary>The key of the machine setting's high end ("machine-setting" holds the low end).</summary>
     public const string SettingHighKey = "machine-setting-high";
 
+    /// <summary>The key of the lobby's teams under a mode: 0 none (every seat its own), or 2 to
+    /// <see cref="ModeTeams.Most"/>. No rule of the table: only a mode's race has teams, in its <c>setup.mode.teams</c>.</summary>
+    public const string TeamsKey = "teams";
+
     /// <summary>The key of the fixed course, with <see cref="HostRules.CourseSelect"/> at
     /// <see cref="CourseSelectMode.Fixed"/>.</summary>
     public const string FixedCourseKey = "course-select-course";
@@ -61,7 +65,7 @@ public sealed record LobbyRules(IReadOnlyDictionary<string, int> Values,
     /// <summary>The keys <see cref="Values"/> may hold: the settable rules' names but the stat pack's (its own
     /// member), and the two extra keys.</summary>
     public static IReadOnlyList<string> Keys { get; } =
-        [.. Settable.Where(r => r.Kind != RuleKind.Pack).Select(r => r.Name), SettingHighKey, FixedCourseKey];
+        [.. Settable.Where(r => r.Kind != RuleKind.Pack).Select(r => r.Name), SettingHighKey, FixedCourseKey, TeamsKey];
 
     /// <summary>The value under a key; null: Quick Play's.</summary>
     public int? Value(string key) => Values is not null && Values.TryGetValue(key, out var v) ? v : null;
@@ -79,7 +83,8 @@ public sealed record LobbyRules(IReadOnlyDictionary<string, int> Values,
     {
         ArgumentNullException.ThrowIfNull(quickPlay);
         bool Differs(string key) => Value(key) is { } v && v != quickPlay.Value(key);
-        return [.. Settable.Where(rule => rule.Kind switch
+        // (what the lobby's mode states is the mode's, not the host's, and is not news beside its name)
+        return [.. Settable.Where(rule => Mode?.Terms?.ContainsKey(rule.Name) != true && !(rule == HostRules.StatPack && Mode?.Pack is not null)).Where(rule => rule.Kind switch
         {
             RuleKind.Pack => StatPack != quickPlay.StatPack,
             RuleKind.Range => Differs(rule.Name) || Differs(SettingHighKey),
@@ -134,6 +139,10 @@ public static class CustomLobby
     /// does not hold.</summary>
     public const string BadMode = "bad_mode";
 
+    /// <summary>The lobby's mode cannot race now: fewer racers or teams than it says (<c>racers</c>, <c>teams</c>); the
+    /// error's message says what it needs. The lobby stays as it is.</summary>
+    public const string ModeRefuses = "mode_refuses";
+
     /// <summary>A lobby name that is empty, too long, or holds characters a name does not.</summary>
     public const string BadName = "bad_lobby_name";
 
@@ -187,5 +196,16 @@ public sealed record LobbyList(IReadOnlyList<LobbySummary> Lobbies,
 
 /// <summary>A custom lobby's game mode as the server names it (<see cref="LobbyRules.Mode"/>): the package's content
 /// hash (<see cref="ModePackage.Hash"/>) and share code, the mode's name, its badge and its line of what it changes
-/// (the header's; "" when it has none), and the api it needs (<see cref="Hello.Modes"/>).</summary>
-public sealed record LobbyMode(string Hash, string ShareCode, string Name, int Api, string Badge = "", string About = "");
+/// (the header's; "" when it has none), and the api it needs (<see cref="Hello.Modes"/>). Terms: the rules the mode
+/// owns, by the rule's key as <see cref="LobbyRules.Values"/> holds them (<see cref="ModeTerms.Rules"/>), which win over
+/// the lobby's own; Pack: the stat pack it names ("" the disc's own stats; null: it names none). CpusAllowed is in Terms
+/// (cpu-fill). Null Terms: a server from before them.</summary>
+public sealed record LobbyMode(string Hash, string ShareCode, string Name, int Api, string Badge = "", string About = "",
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyDictionary<string, int>? Terms = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Pack = null);
+
+/// <summary>The player's team in a custom lobby with teams: their own, or (from the host) another member's
+/// (<paramref name="PlayerId"/>); null Team: none, the race gives them one. A race's seats get their teams from these
+/// (<see cref="ModeTeams.Assign"/>). Refused: <see cref="CustomLobby.NotHost"/> for another's, or a team outside the
+/// lobby's. A launcher from before it never sends it.</summary>
+public sealed record ChooseTeam(int? Team, string? PlayerId = null) : ClientMessage;

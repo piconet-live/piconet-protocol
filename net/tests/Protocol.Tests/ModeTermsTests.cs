@@ -1,0 +1,215 @@
+using Online.Protocol;
+using Xunit;
+
+namespace Protocol.Tests;
+
+/// <summary>Every lobby rule as a setup word (design 5), and a mode's words over a lobby's: <see cref="ModeTerms"/>.</summary>
+public sealed class ModeTermsTests
+{
+    private const string Header = "mode \"T\" { api 1; }\n";
+
+    private static ModeCompilation Compile(string body) => ModeCompiler.Compile(Header + body);
+
+    private static ModeTerms Terms(string body)
+    {
+        var compiled = Compile(body);
+        Assert.True(compiled.Succeeded, string.Join("; ", compiled.Errors));
+        return ModeTerms.Of(compiled.Mode!);
+    }
+
+    private static string Error(string body) => Assert.Single(Compile(body).Errors);
+
+    /// <summary>The table says which word sets each rule, and every word it names is one; only flow and the practice's
+    /// rule have none (the owner: lobby flow stays out of mode files).</summary>
+    [Fact]
+    public void EveryRuleThatShapesARaceHasItsWord()
+    {
+        var flow = new[] { "course-pool", "vote-seconds", "choose-seconds", "voting-minimum", "start-countdown", "start-timeout",
+            "ready-timeout", "straggler-wait", "latency-limit", "together", "relay-ceiling" };
+        Assert.Equal(flow.Order(), HostRules.All.Where(r => r.SetupWord is null).Select(r => r.Name).Order());
+        foreach (var rule in HostRules.All.Where(r => r.SetupWord is not null))
+        {
+            Assert.Contains(ModeWords.Setups, s => s.Name == rule.SetupWord || s.Name.StartsWith(rule.SetupWord + " ", StringComparison.Ordinal));
+        }
+    }
+
+    [Fact]
+    public void RestoreIsNoLobbyRule()
+    {
+        Assert.Null(HostRules.Named("restore"));
+        Assert.DoesNotContain(HostRules.All, r => r.Name == "restore");
+        Assert.DoesNotContain(HostRules.Race, r => r.Name == "restore");
+        Assert.DoesNotContain(LobbyRules.Keys, k => k == "restore");
+        Assert.DoesNotContain(LobbyRules.Settable, r => r.Name == "restore");
+        Assert.Equal(RuleReach.Practice, HostRules.Restore.Reach);
+        Assert.Null(HostRules.Restore.Flag);
+        Assert.Contains(HostRules.Restore, HostRules.Alone);   // (a practice keeps it)
+        Assert.True(new RaceRules(Restore: true).Value(HostRules.Restore) == 1);   // (old recordings keep it)
+    }
+
+    [Fact]
+    public void AModeThatSaysNothingOwnsOnlyItsEnding()
+    {
+        var terms = Terms("");
+        Assert.False(terms.CpusAllowed);
+        Assert.Equal(0, terms.FinishLimit);
+        Assert.Null(terms.Laps(3));
+        Assert.Equal(new Dictionary<string, int> { ["finish-limit"] = 0, ["cpu-fill"] = (int)CpuFillMode.Never }, terms.Rules());
+    }
+
+    [Fact]
+    public void EveryWordSetsItsRule()
+    {
+        var terms = Terms("""
+            cpus allowed;
+            laps 7;
+            cpu_level 1;
+            boost_start on;
+            finish_limit 120;
+            mine_regen 1000;
+            course "Mute City: Sonic Oval";
+            racers 2..8;
+            machines ["Blue Falcon", "Golden Fox"];
+            machine_setting 80..100;
+            stats "GX+";
+            mixed_packs on;
+            teams 2..4;
+            """);
+        Assert.True(terms.CpusAllowed);
+        Assert.Equal(7, terms.Laps(1));
+        Assert.Equal((2, 8), terms.Racers);
+        Assert.Equal([2, 6], terms.Machines);
+        Assert.Equal(new SettingRange(80, 100), terms.Setting);
+        Assert.Equal("GX+", terms.Pack);
+        Assert.Equal((2, 4), terms.Teams);
+        var rules = terms.Rules();
+        Assert.Equal(7, rules["laps"]);
+        Assert.Equal(1, rules["cpu-level"]);
+        Assert.Equal(1, rules["boost-start"]);
+        Assert.Equal(120, rules["finish-limit"]);
+        Assert.Equal(1000, rules["mine-regen"]);
+        Assert.Equal((int)CourseSelectMode.Fixed, rules["course-select"]);
+        Assert.Equal(8, rules["racers"]);
+        Assert.Equal(80, rules["machine-setting"]);
+        Assert.Equal(100, rules[LobbyRules.SettingHighKey]);
+        Assert.Equal(1, rules["mixed-packs"]);
+        Assert.False(rules.ContainsKey("cpu-fill"));   // (allowed: the lobby's vote stands)
+    }
+
+    [Fact]
+    public void TheLapsTableIsNoOneNumber()
+    {
+        var terms = Terms("""laps by course { "Mute City: Sonic Oval": 8; else: 3; };""");
+        Assert.Equal(8, terms.Laps(CourseTable.Courses.First(c => c.Track == "Sonic Oval").Course));
+        Assert.Equal(3, terms.Laps(8));
+        Assert.Equal(ModeTerms.LapsByCourse, terms.Rules()["laps"]);
+    }
+
+    [Fact]
+    public void AWordTakesAParameter()
+    {
+        var compiled = Compile("""
+            param most "Racers" number 2..30 default 12;
+            racers 2..most;
+            """);
+        Assert.True(compiled.Succeeded, string.Join("; ", compiled.Errors));
+        Assert.Equal((2, 12), ModeTerms.Of(compiled.Mode!).Racers);
+        Assert.Equal((2, 6), ModeTerms.Of(compiled.Mode!, [6]).Racers);
+    }
+
+    /// <summary>The coordinator's words are in the file's text, never the package's SETP: a game of today reads such a
+    /// package, and the hash still tells two files apart.</summary>
+    [Fact]
+    public void TheCoordinatorsWordsStayOutOfThePackage()
+    {
+        var with = Compile("racers 2..8;\nstats \"GX+\";");
+        var without = Compile("");
+        Assert.Empty(with.Mode!.Setups);
+        Assert.Equal(2, with.Mode.LobbyWords.Count);
+        Assert.NotEqual(with.Hash, without.Hash);
+        Assert.Empty(ModePackage.Read(with.Package!).Setups);
+    }
+
+    [Theory]
+    [InlineData("racers 8..2;", "racers: its least is above its most")]
+    [InlineData("racers 0..2;", "racers's least is 1..30")]
+    [InlineData("teams 1..2;", "teams's least is 2..30")]
+    [InlineData("teams 2..31;", "teams's most is 2..30")]
+    [InlineData("machine_setting 50..101;", "machine_setting's most is 0..100")]
+    [InlineData("machines [\"Nope\"];", "\"Nope\" is no machine of the game's")]
+    [InlineData("machines [\"Blue Falcon\", \"Blue Falcon\"];", "\"Blue Falcon\" is in the list twice")]
+    [InlineData("machines all;\nmachines [\"Blue Falcon\"];", "machines all and machines: one of them")]
+    [InlineData("course \"Nowhere\";", "\"Nowhere\" is no course of the pool")]
+    [InlineData("stats 3;", "stats takes a name in quotes")]
+    [InlineData("boost_start on;\nboost_start off;", "boost_start on and boost_start off: one of them")]
+    [InlineData("mixed_packs on;\nmixed_packs on;", "mixed_packs on is set twice")]
+    public void AWordOutOfItsLimitsIsRefusedWithItsLine(string body, string says)
+    {
+        var error = Error(body);
+        Assert.StartsWith("line ", error, StringComparison.Ordinal);
+        Assert.Contains(says, error, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void TeamsAreGivenOutEvenly()
+    {
+        Assert.Null(ModeTeams.Assign([null, null], 0));
+        Assert.Equal([0, 1, 0, 1], ModeTeams.Assign([null, null, null, null], 2));
+        Assert.Equal([1, 1, 0, 0], ModeTeams.Assign([1, 1, null, null], 2));
+        Assert.Equal([0, 1, 2, 0], ModeTeams.Assign([0, null, null, null], 3));
+        Assert.Equal([0, 1], ModeTeams.Assign([7, null], 2));   // (a team outside the race's: as none)
+        Assert.Equal(Enumerable.Range(0, 30), ModeTeams.Assign([.. Enumerable.Repeat<int?>(null, 30)], 30));
+        Assert.Equal(0, ModeTeams.Kept(-3));
+        Assert.Equal(2, ModeTeams.Kept(1));
+        Assert.Equal(30, ModeTeams.Kept(99));
+    }
+
+    [Fact]
+    public void TheTeamsOfARaceFollowTheModesWord()
+    {
+        var limited = Terms("teams 3..4;");
+        Assert.Equal(3, limited.TeamCount(0));
+        Assert.Equal(3, limited.TeamCount(2));
+        Assert.Equal(4, limited.TeamCount(9));
+        Assert.Equal(0, Terms("").TeamCount(0));
+        Assert.Equal(5, Terms("").TeamCount(5));
+    }
+
+    [Fact]
+    public void ARaceTooSmallForTheModeIsRefused()
+    {
+        var terms = Terms("racers 4..8;\nteams 2..2;");
+        Assert.Null(terms.Refusal(4, 2));
+        Assert.Contains("at least 4 racers", terms.Refusal(3, 2), StringComparison.Ordinal);
+        Assert.Contains("at least 2 teams", terms.Refusal(4, 1), StringComparison.Ordinal);
+        Assert.Null(Terms("").Refusal(1, 0));
+    }
+
+    [Fact]
+    public void AnOlderLineNeverRacesModes()
+    {
+        Assert.False(VersionLine.RunsModes("0.5"));
+        Assert.True(VersionLine.RunsModes("0.6"));
+        Assert.True(VersionLine.RunsModes("0.10"));
+        Assert.True(VersionLine.RunsModes("1.0"));
+        Assert.True(VersionLine.RunsModes(null));
+    }
+
+    [Fact]
+    public void ChoosingATeamTravels()
+    {
+        var text = ControlProtocol.Encode(new ChooseTeam(3, "p2"));
+        Assert.Equal(new ChooseTeam(3, "p2"), Assert.IsType<ChooseTeam>(ControlProtocol.DecodeClient(text)));
+        Assert.DoesNotContain("\"team\"", System.Text.Json.JsonSerializer.Serialize(new PlayerInfo("p", "n", 1, new Rgb(1, 2, 3)), ControlProtocol.Json), StringComparison.Ordinal);
+    }
+
+    /// <summary>A mode's terms are not news beside its name: <see cref="LobbyRules.Differing"/> leaves them out.</summary>
+    [Fact]
+    public void WhatTheModeOwnsIsNotAmongTheRulesThatDiffer()
+    {
+        var quickPlay = new LobbyRules(new Dictionary<string, int> { ["finish-limit"] = 90, ["laps"] = 3 });
+        var rules = new LobbyRules(new Dictionary<string, int> { ["finish-limit"] = 0, ["laps"] = 5 },
+            Mode: new LobbyMode("h", "s", "M", 1, Terms: new Dictionary<string, int> { ["finish-limit"] = 0 }));
+        Assert.Equal(["laps"], rules.Differing(quickPlay));
+    }
+}

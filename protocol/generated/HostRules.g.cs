@@ -7,42 +7,45 @@ namespace Online.Protocol;
 
 public static partial class HostRules
 {
-    public static HostRule CourseSelect { get; } = new("course-select", "Course", RuleReach.Together, RuleKind.Course);
+    public static HostRule CourseSelect { get; } = new("course-select", "Course", RuleReach.Together, RuleKind.Course, SetupWord: "course");
 
     public static HostRule CoursePool { get; } = new("course-pool", "Course pool", RuleReach.Together, RuleKind.Courses);
 
-    public static HostRule Racers { get; } = new("racers", "Racers", RuleReach.Together, RuleKind.Number, GameFacts.Limits.RacersMin, GameFacts.Limits.Seats, Default: GameFacts.Limits.Seats);
+    public static HostRule Racers { get; } = new("racers", "Racers", RuleReach.Together, RuleKind.Number, GameFacts.Limits.RacersMin, GameFacts.Limits.Seats, Default: GameFacts.Limits.Seats, SetupWord: "racers");
 
-    public static HostRule Laps { get; } = new("laps", "Laps", RuleReach.Alone, RuleKind.Number, GameFacts.Limits.LapsMin, GameFacts.Limits.LapsMax, Default: 3);
+    public static HostRule Laps { get; } = new("laps", "Laps", RuleReach.Alone, RuleKind.Number, GameFacts.Limits.LapsMin, GameFacts.Limits.LapsMax, Default: 3, SetupWord: "laps");
 
     /// <summary>The CPU racers' level: 0 Novice, 1 Standard, 2 Expert, 3 Master.</summary>
-    public static HostRule CpuLevel { get; } = new("cpu-level", "CPU level", RuleReach.Together, RuleKind.Number, 0, 3, Default: 3, Taken: "0 to 3", Flag: "--cpu-level");
+    public static HostRule CpuLevel { get; } = new("cpu-level", "CPU level", RuleReach.Together, RuleKind.Number, 0, 3, Default: 3, Taken: "0 to 3", Flag: "--cpu-level", SetupWord: "cpu_level");
 
-    public static HostRule CpuFill { get; } = new("cpu-fill", "CPU racers", RuleReach.Together, RuleKind.Choice);
+    public static HostRule CpuFill { get; } = new("cpu-fill", "CPU racers", RuleReach.Together, RuleKind.Choice, SetupWord: "cpus allowed");
 
     /// <summary>Boosting on the first lap: alone too (the game's Practice leaves it off here unless the rule is on,
     /// piconet-runner's port/image/routines/direct.py).</summary>
-    public static HostRule BoostStart { get; } = new("boost-start", "Boost from the start", RuleReach.Alone, RuleKind.Switch, 0, 1, Taken: "on or off", Flag: "--boost-start");
+    public static HostRule BoostStart { get; } = new("boost-start", "Boost from the start", RuleReach.Alone, RuleKind.Switch, 0, 1, Taken: "on or off", Flag: "--boost-start", SetupWord: "boost_start");
 
-    public static HostRule Restore { get; } = new("restore", "Restore", RuleReach.Alone, RuleKind.Switch, 0, 1, Taken: "on or off", Flag: "--restore");
+    /// <summary>A practice's rule alone (the owner, 2026-10-30): no lobby and no server sets it; a mode's race has the
+    /// per-seat `respawns` and `restore on`. Its member of RaceRules stays: a practice's match file, and every
+    /// recording raced with it, must play as they were.</summary>
+    public static HostRule Restore { get; } = new("restore", "Restore", RuleReach.Practice, RuleKind.Switch, 0, 1, Taken: "on or off");
 
     /// <summary>The race's end this long after the first finish: with one racer the first finish is the last.</summary>
-    public static HostRule FinishLimit { get; } = new("finish-limit", "Finish limit", RuleReach.Together, RuleKind.Number, 0, 600, Default: 90, Unit: "s", Taken: "0 to 600 seconds (0: none)", Flag: "--finish-limit-seconds");
+    public static HostRule FinishLimit { get; } = new("finish-limit", "Finish limit", RuleReach.Together, RuleKind.Number, 0, 600, Default: 90, Unit: "s", Taken: "0 to 600 seconds (0: none)", Flag: "--finish-limit-seconds", SetupWord: "finish_limit");
 
     /// <summary>A mine comes back this many milliseconds after it went off (0: it stays gone, the game's own way);
     /// Quick Play: 200.</summary>
-    public static HostRule MinesReturn { get; } = new("mine-regen", "Mines return", RuleReach.Alone, RuleKind.Delay, 50, 5000, 50, Default: 200, Unit: "ms", Taken: "0 (mines stay gone) or 50 to 5000 ms, in steps of 50", Flag: "--mine-regen-ms");
+    public static HostRule MinesReturn { get; } = new("mine-regen", "Mines return", RuleReach.Alone, RuleKind.Delay, 50, 5000, 50, Default: 200, Unit: "ms", Taken: "0 (mines stay gone) or 50 to 5000 ms, in steps of 50", Flag: "--mine-regen-ms", SetupWord: "mine_regen");
 
-    public static HostRule Machines { get; } = new("machines", "Machines", RuleReach.Together, RuleKind.Machines);
+    public static HostRule Machines { get; } = new("machines", "Machines", RuleReach.Together, RuleKind.Machines, SetupWord: "machines");
 
     /// <summary>A range the racers' own settings are brought into; Quick Play: top speed, fixed.</summary>
-    public static HostRule MachineSetting { get; } = new("machine-setting", "Machine setting", RuleReach.Alone, RuleKind.Range, 0, GameFacts.Limits.SettingMax, Default: GameFacts.Limits.SettingMax);
+    public static HostRule MachineSetting { get; } = new("machine-setting", "Machine setting", RuleReach.Alone, RuleKind.Range, 0, GameFacts.Limits.SettingMax, Default: GameFacts.Limits.SettingMax, SetupWord: "machine_setting");
 
-    public static HostRule StatPack { get; } = new("stat-pack", "Stats", RuleReach.Alone, RuleKind.Pack);
+    public static HostRule StatPack { get; } = new("stat-pack", "Stats", RuleReach.Alone, RuleKind.Pack, SetupWord: "stats");
 
     /// <summary>Each racer may race a pack of their own for their machine (handbook/stat-pack-constants.md, "A pack a
     /// seat"); Quick Play: off, one pack for all (mixed packs only in lobbies).</summary>
-    public static HostRule MixedPacks { get; } = new("mixed-packs", "Mixed packs", RuleReach.Together, RuleKind.Switch, 0, 1, Taken: "on or off");
+    public static HostRule MixedPacks { get; } = new("mixed-packs", "Mixed packs", RuleReach.Together, RuleKind.Switch, 0, 1, Taken: "on or off", SetupWord: "mixed_packs");
 
     /// <summary>The course vote's length, in seconds.</summary>
     public static HostRule VoteSeconds { get; } = new("vote-seconds", "Course vote", RuleReach.Together, RuleKind.Text, 5, 120);
@@ -87,7 +90,6 @@ public static partial class HostRules
         CpuLevel,
         CpuFill,
         BoostStart,
-        Restore,
         FinishLimit,
         MinesReturn,
         Machines,
@@ -107,11 +109,11 @@ public static partial class HostRules
     ];
 
     /// <summary>The rules that mean something in a race alone, in order: what a practice shows.</summary>
-    public static IReadOnlyList<HostRule> Alone { get; } = [.. All.Where(r => r.Reach == RuleReach.Alone)];
+    public static IReadOnlyList<HostRule> Alone { get; } = [Laps, BoostStart, Restore, MinesReturn, MachineSetting, StatPack];
 
     /// <summary>The rules the games apply, in the operator's order: the members of <see cref="RaceRules"/>, each a word
-    /// of the game's race block.</summary>
-    public static IReadOnlyList<HostRule> Race { get; } = [CpuLevel, BoostStart, Restore, FinishLimit, MinesReturn];
+    /// of the game's race block; a practice's rule is not among them (no server sets it).</summary>
+    public static IReadOnlyList<HostRule> Race { get; } = [CpuLevel, BoostStart, FinishLimit, MinesReturn];
 
     /// <summary>A rule by its name; null: no such rule.</summary>
     public static HostRule? Named(string name) => All.FirstOrDefault(r => r.Name == name);
@@ -131,7 +133,7 @@ public sealed record RaceRules(int CpuLevel = 3, bool BoostFromStart = false, bo
     public static RaceRules QuickPlay { get; } = new(HostRules.CpuLevel.Default, HostRules.BoostStart.Default != 0, HostRules.Restore.Default != 0, HostRules.FinishLimit.Default, HostRules.MinesReturn.Default);
 
     /// <summary>A rule's value as a whole number (a switch: 1 on); <paramref name="rule"/> is one of <see
-    /// cref="HostRules.Race"/>.</summary>
+    /// cref="HostRules.Race"/> (or a practice's).</summary>
     public int Value(HostRule rule) => rule?.Name switch
     {
         "cpu-level" => CpuLevel,

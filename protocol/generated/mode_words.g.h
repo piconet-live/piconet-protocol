@@ -219,7 +219,19 @@ enum Setup : std::uint8_t
   SETUP_CONTACTOFF = 11,  // contact off
   SETUP_CLOCKLIMIT = 12,  // clock_limit
   SETUP_ROLLINGSTART = 13,  // rolling_start
-  SETUP_COUNT = 14,
+  SETUP_COURSE = 14,  // course
+  SETUP_RACERS = 15,  // racers
+  SETUP_MACHINESALL = 16,  // machines all
+  SETUP_MACHINES = 17,  // machines
+  SETUP_MACHINESETTING = 18,  // machine_setting
+  SETUP_STATS = 19,  // stats
+  SETUP_STATSSTOCK = 20,  // stats stock
+  SETUP_MIXEDPACKSON = 21,  // mixed_packs on
+  SETUP_MIXEDPACKSOFF = 22,  // mixed_packs off
+  SETUP_BOOSTSTARTON = 23,  // boost_start on
+  SETUP_BOOSTSTARTOFF = 24,  // boost_start off
+  SETUP_TEAMS = 25,  // teams
+  SETUP_COUNT = 26,
 };
 
 // a read of a seat (OP_SEATREAD)

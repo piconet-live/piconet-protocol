@@ -17,7 +17,11 @@
 # (setup words, events), `type` what a read gives (int, real, bool, seat, seats, vec), `args` an action's or setup word's
 # arguments in order, `doc`, and `where`: the game's site or the part that applies it (vocabulary.md's). A setup word
 # with `table` takes a table of pairs after its arguments (the package: two more arguments a pair, `table`'s value
-# first): "course", a course's number (courses.toml).
+# first): "course", a course's number (courses.toml). A setup word with `lobby = true` is the coordinator's alone and
+# is not in the package's SETP (formats.md section 9): what it sets reaches the game as the match start's own fields,
+# so a game needs to know nothing of it; the compiler reads it from the file (ModePackage.LobbyWords, ModeTerms).
+# `form`: how the file writes it: "range" (`racers 2..8`: its two arguments, least and most), "text" (`stats "GX+"`),
+# "list" (`machines ["Blue Falcon", ...]`); none: its arguments.
 
 [codec.csharp]
 namespace = "Online.Protocol"
@@ -634,6 +638,89 @@ where = """the first step after the gate: every seat's speed written as fn_1_235
 M+0x224, flag 0x400, M+0x481 90, no start charge M+0xDC) and the frozen flag 0x8000 cleared; through the countdown the \
 CPU steers every seat (the stand-in's AI path) with the accelerator held at 0.6, no brake, no boost and no attacks; \
 every pad drives from GO. A seat the rejoin's autopilot drives stays its"""
+
+# --- the lobby-rule overhaul: every rule of rules.toml that shapes a race is a word; a mode's word wins. The coordinator's
+
+[[setup]]
+name = "course"
+id = 14
+lobby = true
+form = "text"
+where = "the coordinator, at match forming: the course, no vote (a course of the pool, \"Venue: Track\"). Not in Quick Play's rotation, whose cards name the courses"
+
+[[setup]]
+name = "racers"
+id = 15
+lobby = true
+form = "range"
+args = [{ type = "int", name = "least", least = 1, most = 30 }, { type = "int", name = "most", least = 1, most = 30 }]
+where = "the coordinator: the lobby's seats are `most`; below `least` racers the race is refused. Not in Quick Play's rotation"
+
+[[setup]]
+name = "machines all"
+id = 16
+lobby = true
+where = "the coordinator: every machine may be chosen"
+
+[[setup]]
+name = "machines"
+id = 17
+lobby = true
+form = "list"
+where = "the coordinator: the machines racers may choose, by name"
+
+[[setup]]
+name = "machine_setting"
+id = 18
+lobby = true
+form = "range"
+args = [{ type = "int", name = "least", least = 0, most = 100 }, { type = "int", name = "most", least = 0, most = 100 }]
+where = "the coordinator: the range each racer's own setting is brought into"
+
+[[setup]]
+name = "stats"
+id = 19
+lobby = true
+form = "text"
+where = "the coordinator: the race's stat pack, one of the server's by name; a server without it refuses the mode"
+
+[[setup]]
+name = "stats stock"
+id = 20
+lobby = true
+where = "the coordinator: the disc's own stats"
+
+[[setup]]
+name = "mixed_packs on"
+id = 21
+lobby = true
+where = "the coordinator: each racer may race a pack of their own"
+
+[[setup]]
+name = "mixed_packs off"
+id = 22
+lobby = true
+where = "the coordinator: one pack for all"
+
+[[setup]]
+name = "boost_start on"
+id = 23
+lobby = true
+where = "the coordinator: the match start's rules (RACE_BOOST): boosting on the first lap"
+
+[[setup]]
+name = "boost_start off"
+id = 24
+lobby = true
+where = "the coordinator: the match start's rules (RACE_BOOST 0): no boosting on the first lap"
+
+[[setup]]
+name = "teams"
+id = 25
+lobby = true
+form = "range"
+args = [{ type = "int", name = "least", least = 2, most = 30 }, { type = "int", name = "most", least = 2, most = 30 }]
+where = "the coordinator: the teams a race of this mode has, set by the host and the racers and carried in setup.mode.teams; fewer than `least` holding racers and the race is refused"
 
 [[seat_read]]
 name = "racing"

@@ -143,13 +143,13 @@ public sealed class QuickPlayRotationTests : IDisposable
     }
 
     /// <summary>The official rotation is the target, not yet loadable: its first refusal is the compiler's, knockout's
-    /// rolling start (a display word of a later branch; the slice's lap table is taken). When this fails, the compiler
-    /// took it: the official rotation's tests take this one's place.</summary>
+    /// show_number (a display word, feat/mode-words-display). When this fails, the compiler took it: the official
+    /// rotation's tests take this one's place.</summary>
     [Fact]
-    public void TheOfficialRotationWaitsForTheRollingStart()
+    public void TheOfficialRotationWaitsForShowNumber()
     {
         var error = Assert.Throws<InvalidDataException>(() => QuickPlayRotation.Read(RepositoryFolder.Protocol("protocol", "quickplay")));
-        Assert.StartsWith("knockout.fzmode line 15: ", error.Message, StringComparison.Ordinal);
+        Assert.StartsWith("knockout.fzmode line 43: ", error.Message, StringComparison.Ordinal);
     }
 
     [Fact]
