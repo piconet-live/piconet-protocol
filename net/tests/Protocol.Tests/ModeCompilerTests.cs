@@ -122,6 +122,7 @@ public sealed class ModeCompilerTests
         var result = CompileVector("words");
         var mode = result.Mode!;
         var race = CompileVector("race").Mode!;
+        var cuts = CompileVector("cuts").Mode!;
         // every word, and with the language vector every operation (the words vector's are the first slice's, the
         // race vector's the race side's of wave 2A)
         var code = Code("words").Concat(Code("race")).Concat(Code("cuts")).ToList();
@@ -133,8 +134,8 @@ public sealed class ModeCompilerTests
         // every setup word but laps by course (the competitive vector's) and the off forms whose on form the vectors
         // hold (mine_regen off, restore off: a mode states one of the two); the practice vector's are a solo mode's
         var solo = CompileVector("practice").Mode!.Setups.Where(s => s.Id != ModeSetup.Laps);
-        var setups = mode.Setups.Concat(race.Setups).Concat(solo).Select(s => s.Id).ToList();
-        Assert.Equal(ModeWords.Setups.Where(s => !s.Lobby).Select(s => s.Id).Where(id => id is not (ModeSetup.LapsByCourse or ModeSetup.MineRegen or ModeSetup.RestoreOff)).Order(),
+        var setups = mode.Setups.Concat(cuts.Setups).Concat(race.Setups).Concat(solo).Select(s => s.Id).ToList();
+        Assert.Equal(ModeWords.Setups.Where(s => !s.Lobby).Select(s => s.Id).Where(id => id is not (ModeSetup.LapsByCourse or ModeSetup.MineRegen or ModeSetup.RestoreOff or ModeSetup.ResultsTitleLives or ModeSetup.ResultsTitleOverdrive or ModeSetup.ResultsTitleTeams or ModeSetup.ResultsTitleSurvivors or ModeSetup.ResultsTitlePoints)).Order(),
             setups.Order());
         Assert.Equal(ModeWords.Events.Select(e => e.Id).Order(), mode.Rules.Concat(race.Rules).Select(r => r.Event).Distinct().Order());
         Assert.Equal(Enum.GetValues<ModeParamKind>(), mode.Params.Select(p => p.Kind).Distinct().Order());
