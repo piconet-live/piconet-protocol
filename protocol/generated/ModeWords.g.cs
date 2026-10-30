@@ -233,6 +233,8 @@ public enum ModeSetup : byte
     ResultsPoints = 33,
     /// <summary><c>results_title</c></summary>
     ResultsTitle = 34,
+    /// <summary><c>tag_texts</c></summary>
+    TagTexts = 35,
 }
 
 /// <summary>A read of a seat (protocol/modes.toml).</summary>
@@ -430,6 +432,10 @@ public enum ModeAction : byte
     ShowClock = 34,
     /// <summary><c>break_down</c></summary>
     BreakDown = 35,
+    /// <summary><c>tag</c></summary>
+    Tag = 36,
+    /// <summary><c>tag off</c></summary>
+    TagOff = 37,
 }
 
 /// <summary>The vocabulary of one api, by the names a mode file writes (protocol/modes.toml).</summary>
@@ -465,6 +471,10 @@ public static partial class ModeWords
     public const int FsqrtCost = 8;
     /// <summary>The api's limit <c>results_title</c>.</summary>
     public const int ResultsTitle = 23;
+    /// <summary>The api's limit <c>tag_text</c>.</summary>
+    public const int TagText = 10;
+    /// <summary>The api's limit <c>tag_texts</c>.</summary>
+    public const int TagTexts = 8;
     /// <summary>The api's limit <c>board</c>.</summary>
     public const int Board = 8;
     /// <summary>The api's limit <c>board_label</c>.</summary>
@@ -613,6 +623,7 @@ public static partial class ModeWords
         ("race_waits everyone", ModeSetup.RaceWaitsEveryone, [], false, ""),
         ("results points", ModeSetup.ResultsPoints, [], false, ""),
         ("results_title", ModeSetup.ResultsTitle, [], false, "text"),
+        ("tag_texts", ModeSetup.TagTexts, [], false, "text"),
     ];
 
     /// <summary>The reads of a seat (<c>seat.NAME</c>): name, id, type.</summary>
@@ -719,6 +730,8 @@ public static partial class ModeWords
         ("map_mark", ModeAction.MapMark, [ModeType.Seat, ModeType.Int]),
         ("show_clock", ModeAction.ShowClock, [ModeType.Int]),
         ("break_down", ModeAction.BreakDown, [ModeType.Seat]),
+        ("tag", ModeAction.Tag, [ModeType.Seat, ModeType.Int]),
+        ("tag off", ModeAction.TagOff, [ModeType.Seat]),
     ];
 
     /// <summary>The choices: an argument of one takes one of its names, its value the name's place.</summary>

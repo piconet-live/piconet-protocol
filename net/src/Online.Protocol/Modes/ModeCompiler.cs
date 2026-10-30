@@ -112,6 +112,10 @@ public static class ModeCompiler
                 throw new ModeCompileException(clockLine, "show_clock and clock_limit both write the game's clock: a mode has one or the other");
             }
             SoloWords(items);
+            if (_emitter.TagTexts.Count > 0)
+            {
+                _setups.Add(new ModeSetupWord(ModeSetup.TagTexts, ModeTagTexts.Cells(_emitter.TagTexts)));
+            }
             var mode = new ModePackage
             {
                 Api = api,
@@ -270,6 +274,10 @@ public static class ModeCompiler
                 (_setups.Any(w => w.Id == s.Id) || _lobbyWords.Any(w => w.Id == s.Id))) is { Name: not null } other)
             {
                 throw new ModeCompileException(item.Line, $"{other.Name} and {word.Name}: one of them");
+            }
+            if (word.Id == ModeSetup.TagTexts)
+            {
+                throw new ModeCompileException(item.Line, "tag_texts is the compiler's own: a rule writes tag s, \"TEXT\"; and the text is kept");
             }
             if (word.Id == ModeSetup.ResultsTitle)
             {

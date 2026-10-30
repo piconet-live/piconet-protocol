@@ -71,6 +71,39 @@ public static class ModeResultsTitle
     public static string Text(IEnumerable<ModeSetupValue> cells) => new([.. cells.Select(c => (char)c.Value)]);
 }
 
+/// <summary>The texts the <c>tag</c> word draws, which the package carries in the setup word <c>tag_texts</c>: a value a
+/// character, a 0 between texts; a <c>tag</c> names one by its place, from 1. They are drawn by the game's font 5 as the
+/// name tags are (the characters tested in piconet-docs archive/research/spike-names.md): A to Z, 0 to 9, the space,
+/// <c>.</c> and <c>-</c>; it draws a small letter as a capital, a comma as an ampersand, the rest as blanks, so those are
+/// refused. At the tags' largest a character takes about 22 of the screen's 640: the longest text is about 220 wide.</summary>
+public static class ModeTagTexts
+{
+    /// <summary>Why a text cannot be drawn; null: it can.</summary>
+    public static string? Refusal(string text)
+    {
+        ArgumentNullException.ThrowIfNull(text);
+        if (text.Length > ModeWords.TagText)
+        {
+            return $"tag: a text is at most {ModeWords.TagText} characters: \"{text}\" has {text.Length}";
+        }
+        if (text.FirstOrDefault(c => c is not ((>= 'A' and <= 'Z') or (>= '0' and <= '9') or ' ' or '.' or '-')) is var bad and not '\0')
+        {
+            return $"tag: the game's font 5 draws A to Z, 0 to 9, the space, . and -, not '{bad}'";
+        }
+        return text.Trim(' ').Length != text.Length || text.Length == 0
+            ? "tag needs a text, with no space at either end: the tag is centred over the machine"
+            : null;
+    }
+
+    /// <summary>The texts as the word's arguments.</summary>
+    public static List<ModeSetupValue> Cells(IEnumerable<string> texts) =>
+        [.. string.Join('\0', texts).Select(c => new ModeSetupValue(false, c))];
+
+    /// <summary>The word's arguments as its texts.</summary>
+    public static string[] Texts(IEnumerable<ModeSetupValue> cells) =>
+        new string([.. cells.Select(c => (char)c.Value)]).Split('\0');
+}
+
 /// <summary>A setup word as the package keeps it: every argument of the word, in the table's order, the ones the file
 /// left out at their defaults (so a reader needs no table of defaults).</summary>
 public sealed record ModeSetupWord(ModeSetup Id, IReadOnlyList<ModeSetupValue> Arguments);
@@ -467,6 +500,16 @@ public sealed class ModePackage
             if (word.Id == ModeSetup.ResultsTitle)
             {
                 if (arguments.Any(a => a.FromParam || a.Value is < 0 or > 127) || ModeResultsTitle.Refusal(ModeResultsTitle.Text(arguments)) is not null)
+                {
+                    throw new InvalidDataException($"the setup word {word.Name}'s arguments are not its own");
+                }
+                list.Add(new ModeSetupWord(word.Id, arguments));
+                continue;
+            }
+            if (word.Id == ModeSetup.TagTexts)
+            {
+                if (arguments.Any(a => a.FromParam || a.Value is < 0 or > 127) || ModeTagTexts.Texts(arguments) is var texts
+                    && (texts.Length > ModeWords.TagTexts || texts.Distinct().Count() != texts.Length || texts.Any(t => ModeTagTexts.Refusal(t) is not null)))
                 {
                     throw new InvalidDataException($"the setup word {word.Name}'s arguments are not its own");
                 }

@@ -103,6 +103,10 @@ public static class ModeDisassembler
         {
             return table.Name + " " + Quote(ModeResultsTitle.Text(word.Arguments));
         }
+        if (word.Id == ModeSetup.TagTexts)
+        {
+            return table.Name + " " + string.Join(' ', ModeTagTexts.Texts(word.Arguments).Select(Quote));
+        }
         var parts = new List<string> { table.Name };
         for (var i = table.Args.Count; i + 1 < word.Arguments.Count; i += 2)  // a table's rows (laps by course)
         {

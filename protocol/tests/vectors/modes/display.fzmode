@@ -41,6 +41,8 @@ rule "Out of sight" {
     s.look = invisible;
     s.colour = 0xFF2020FF;
     map_mark s, 0xFF0000;
+    tag s off;
+    tag s, "OUT";
     stock_banner s, FINAL_LAP;
     show_number s, -1;
   }

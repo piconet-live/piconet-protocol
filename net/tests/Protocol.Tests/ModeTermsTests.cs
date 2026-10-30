@@ -404,6 +404,64 @@ public sealed class ModeTermsTests
         Assert.Contains($"results_title \"{title}\"", ModeDisassembler.List(mode.Package!), StringComparison.Ordinal);
     }
 
+    private static string TagRule(string body) => "rule \"R\" { event each seat; do { " + body + " } }\n";
+
+    [Fact]
+    public void TagsTextsTravelInThePackageOnceEach()
+    {
+        var body = TagRule("tag seat, \"BOMB\"; tag seat, \"IT 2\"; tag seat, \"BOMB\"; tag seat off;");
+        var mode = ModeCompiler.Compile($"mode \"S\" {{ api 1; }}\n{body}");
+        Assert.Empty(mode.Errors);
+        var word = Assert.Single(ModePackage.Read(mode.Package!).Setups);
+        Assert.Equal(ModeSetup.TagTexts, word.Id);
+        Assert.Equal(["BOMB", "IT 2"], ModeTagTexts.Texts(word.Arguments));
+        var listing = ModeDisassembler.List(mode.Package!);
+        Assert.Contains("tag_texts \"BOMB\" \"IT 2\"", listing, StringComparison.Ordinal);
+        Assert.Contains("tag off", listing, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AModeWithoutTagsHasNoTagTexts()
+    {
+        var mode = ModeCompiler.Compile("mode \"S\" { api 1; }\nrule \"R\" { event go; do { } }\n");
+        Assert.DoesNotContain(ModePackage.Read(mode.Package!).Setups, s => s.Id == ModeSetup.TagTexts);
+    }
+
+    [Fact]
+    public void EightTagTextsAreAllowed()
+    {
+        var tags = string.Concat(Enumerable.Range(0, ModeWords.TagTexts).Select(i => $"tag seat, \"T{i}\"; "));
+        Assert.Empty(ModeCompiler.Compile(Sw + TagRule(tags)).Errors);
+    }
+
+    [Theory]
+    [InlineData("tag seat, \"\";", "tag needs a text")]
+    [InlineData("tag seat, \" A\";", "no space at either end")]
+    [InlineData("tag seat, \"A \";", "no space at either end")]
+    [InlineData("tag seat, \"Bomb\";", "not 'o'")]
+    [InlineData("tag seat, \"A,B\";", "not ','")]
+    [InlineData("tag seat, \"GO!\";", "not '!'")]
+    [InlineData("tag seat, \"\u00C9\";", "font 5 draws")]
+    [InlineData("tag seat, \"ABCDEFGHIJK\";", "at most 10 characters")]
+    [InlineData("tag seat, 1;", "tag takes its text in quotes")]
+    [InlineData("tag seat, BOMB;", "tag takes its text in quotes")]
+    [InlineData("tag seat;", "tag takes 2 arguments")]
+    [InlineData("show_number seat, \"A\";", "")]
+    [InlineData("tag seat, \"T0\"; tag seat, \"T1\"; tag seat, \"T2\"; tag seat, \"T3\"; tag seat, \"T4\"; tag seat, \"T5\"; tag seat, \"T6\"; tag seat, \"T7\"; tag seat, \"T8\";", "at most 8 different texts")]
+    public void ATagTheGameCannotDrawIsRefused(string body, string says)
+    {
+        var result = ModeCompiler.Compile(Sw + TagRule(body));
+        Assert.Null(result.Mode);
+        Assert.Contains(says, Assert.Single(result.Errors), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AFileCannotWriteTheTagTextsItself()
+    {
+        var result = ModeCompiler.Compile(Sw + "tag_texts \"BOMB\";\n");
+        Assert.Contains("the compiler's own", Assert.Single(result.Errors), StringComparison.Ordinal);
+    }
+
     [Theory]
     [InlineData("results_title knockout;", "takes a name in quotes")]
     [InlineData("results_title p;", "takes a name in quotes")]

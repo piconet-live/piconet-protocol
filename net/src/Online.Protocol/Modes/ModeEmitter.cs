@@ -39,6 +39,9 @@ internal sealed partial class ModeEmitter(ModeNames names, List<string> warnings
     /// <summary>The actions the rules written so far use, each with the line of its first use.</summary>
     public Dictionary<ModeAction, int> Used { get; } = [];
 
+    /// <summary>The different texts the file's <c>tag</c> words use, in the order they came: the package's <c>tag_texts</c>.</summary>
+    public List<string> TagTexts { get; } = [];
+
     /// <summary>The operations a step at worst of the rules written so far.</summary>
     public long Cost { get; private set; }
 

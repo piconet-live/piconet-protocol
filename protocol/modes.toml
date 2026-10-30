@@ -26,7 +26,7 @@
 # first): "course", a course's number (courses.toml). A setup word with `lobby = true` is the coordinator's alone and
 # is not in the package's SETP (formats.md section 9): what it sets reaches the game as the match start's own fields,
 # so a game needs to know nothing of it; the compiler reads it from the file (ModePackage.LobbyWords, ModeTerms).
-# `form`: how the file writes it: "range" (`racers 2..8`: its two arguments, least and most), "text" (`stats "GX+"`, `results_title "TEXT"`, in the package a value a byte),
+# `form`: how the file writes it: "range" (`racers 2..8`: its two arguments, least and most), "text" (`stats "GX+"`, `results_title "TEXT"`, in the package a value a byte; `tag_texts`, the compiler's own, likewise),
 # "list" (`machines ["Blue Falcon", ...]`); none: its arguments.
 
 [codec.csharp]
@@ -51,6 +51,8 @@ waits = 64             # rule instances waiting at once (the compiler counts the
 wait_locals = 8        # locals a waiting rule keeps, its event's binding included
 fsqrt_cost = 8         # what one FSqrt takes of the budget (the compiler's count and the interpreter's, in both its loops)
 results_title = 23     # a results title's characters: the window's 24 bytes with the NUL (runner mode_hud.h)
+tag_text = 10          # a `tag` text's characters: at the tags' largest, 22 of the screen's 640 pixels a character, 220 in all
+tag_texts = 8          # the different texts of `tag` a mode may use (the window holds them, runner mode_hud.h)
 board = 8              # `board` lines a scope (global, seat, team): what the status board holds (board.toml)
 board_label = 32       # a `board` line's label, in UTF-8 bytes
 board_words = 16       # the words a `board` line may name
@@ -1304,6 +1306,14 @@ form = "text"
 where = """the results' title (fn_1_1461C8 0x146304): `results_title "TEXT"`, the string in the window for VS TOTAL RANKING (in the package \
 a value a byte), font 0x1D: A to Z and the space, api.results_title long at most (the core's window holds 24 bytes with the NUL, mode_hud.h); not all spaces, none at either end"""
 doc = "the points page's title reads TEXT"
+
+[[setup]]
+name = "tag_texts"
+id = 35
+form = "text"
+where = """the mode's floating tags' texts, which the compiler writes from the file's `tag` words and a file never writes itself (in the package \
+a value a byte, a 0 between texts): the core copies them to the window for port/image/routines/nametags.py"""
+doc = "the texts `tag` draws, the first being text 1"
 # ---- The displays (vocabulary 5): presentation only. An action writes the seat's display record in the block (the
 # runner's port/core/src/mode_hud.h), at the mode point like every action; the drawing reads it, every frame, from
 # what the step left (a rollback redraws). Nothing a step reads is written, and nothing draws from a generator.
@@ -1393,6 +1403,7 @@ args = ["seat", "int"]
 where = "the display record; read by our own course map"
 doc = "the seat's dot in 0xRRGGBB on every course map; -1 gives it its machine's colour back"
 
+
 [[action]]
 name = "show_clock"
 id = 34
@@ -1408,3 +1419,19 @@ args = ["seat"]
 where = """the mode point: what fn_1_24F10 does when damage takes the last energy (energy 0, base speed 0, flag 0x80, M+0x593 60 \
 unless 0x10080). The next step's fn_1_24A4C starts the wreck (fn_1_2B684), fn_1_2BA48 rests it after 240 steps"""
 doc = "the seat runs out of energy, as a last hit does: it tumbles, and is out by the game's own verdict when it comes to rest, explodes or falls"
+
+[[action]]
+name = "tag"
+id = 36
+args = ["seat", "int"]
+where = """the display page's tag bytes (mode_hud.h); drawn by the name tags (port/image/routines/nametags.py). The file writes `tag s, "TEXT";`: \
+the compiler pushes the text's number in tag_texts, from 1. Font 5: A to Z, 0 to 9, the space, `.` and `-`, api.tag_text long at most, api.tag_texts texts a mode"""
+doc = "TEXT floats over the seat's machine in place of its name, for everyone else, on any seat, until `tag s off`"
+
+[[action]]
+name = "tag off"
+id = 37
+args = ["seat"]
+where = "the display page's tag bytes"
+doc = "the seat's tag goes (its ordinary name tag, if it has one, comes back)"
+

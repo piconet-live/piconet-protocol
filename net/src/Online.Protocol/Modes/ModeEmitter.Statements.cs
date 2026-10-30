@@ -318,10 +318,40 @@ internal sealed partial class ModeEmitter
                 Choice(statement.Arguments[i], choice, action.Name);
                 continue;
             }
+            if (action.Id == ModeAction.Tag && i == 1)
+            {
+                Push(TagText(statement.Arguments[i]));
+                continue;
+            }
             Value(statement.Arguments[i], action.Args[i], action.Name);
         }
         Op(ModeOp.Action, (long)action.Id);
         Used.TryAdd(action.Id, statement.Line);
+    }
+
+    /// <summary>The number <c>tag</c> names its text by, from 1: its place among the mode's texts, which a text joins the
+    /// first time it is used. Always a constant: the package holds every text a race can draw.</summary>
+    private int TagText(ModeExpr expr)
+    {
+        if (expr is not ModeTagText text)
+        {
+            throw new ModeCompileException(expr.Line, "tag takes its text in quotes: tag s, \"BOMB\";");
+        }
+        if (ModeTagTexts.Refusal(text.Text) is { } refused)
+        {
+            throw new ModeCompileException(text.Line, refused);
+        }
+        var known = TagTexts.IndexOf(text.Text);
+        if (known >= 0)
+        {
+            return known + 1;
+        }
+        if (TagTexts.Count == ModeWords.TagTexts)
+        {
+            throw new ModeCompileException(text.Line, $"tag: a mode uses at most {ModeWords.TagTexts} different texts: \"{text.Text}\" is one more");
+        }
+        TagTexts.Add(text.Text);
+        return TagTexts.Count;
     }
 
     /// <summary>An argument of a choice (protocol/modes.toml's <c>[[choice]]</c>): one of its names, pushed as its

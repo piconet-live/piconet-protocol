@@ -18,6 +18,8 @@ rule "Cut" {
     stock_banner seat, TICK;
     break_down seat;
     award seat, 1;
+    tag seat, "CUT";
+    tag seat off;
   }
 }
 

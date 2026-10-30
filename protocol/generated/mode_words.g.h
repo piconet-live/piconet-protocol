@@ -24,6 +24,8 @@ inline constexpr int WAITS = 64;
 inline constexpr int WAIT_LOCALS = 8;
 inline constexpr int FSQRT_COST = 8;
 inline constexpr int RESULTS_TITLE = 23;
+inline constexpr int TAG_TEXT = 10;
+inline constexpr int TAG_TEXTS = 8;
 inline constexpr int BOARD = 8;
 inline constexpr int BOARD_LABEL = 32;
 inline constexpr int BOARD_WORDS = 16;
@@ -242,7 +244,8 @@ enum Setup : std::uint8_t
   SETUP_RACEWAITSEVERYONE = 32,  // race_waits everyone
   SETUP_RESULTSPOINTS = 33,  // results points
   SETUP_RESULTSTITLE = 34,  // results_title
-  SETUP_COUNT = 35,
+  SETUP_TAGTEXTS = 35,  // tag_texts
+  SETUP_COUNT = 36,
 };
 
 // a read of a seat (OP_SEATREAD)
@@ -351,7 +354,9 @@ enum Action : std::uint8_t
   ACTION_MAPMARK = 33,  // map_mark
   ACTION_SHOWCLOCK = 34,  // show_clock
   ACTION_BREAKDOWN = 35,  // break_down
-  ACTION_COUNT = 36,
+  ACTION_TAG = 36,  // tag
+  ACTION_TAGOFF = 37,  // tag off
+  ACTION_COUNT = 38,
 };
 
 // the choice `part`: a part of the game's own race HUD: TIMER the timed mode's clock (clock_limit's time, R+0xA4: seconds, 0 to 999); DISTANCE the metres to the finish (the seat's own); DIGIT the story's big digit (danger_zone's seconds, 3 2 1); WARNING, SUCCESS, FAILED, TIME_OVER, SPEED_GAUGE, OBJECTS the story's pictures, off until shown; RANK, LAPS, SPEED, ENERGY, LAP_TIMES, RACE_TIME, FACES the standard HUD (the mask .data 0x3D544; FACES the board fn_1_D27B8), on until hidden
@@ -440,6 +445,8 @@ constexpr int ActionArguments(std::uint8_t action)
     case ACTION_MAPMARK: return 2;
     case ACTION_SHOWCLOCK: return 1;
     case ACTION_BREAKDOWN: return 1;
+    case ACTION_TAG: return 2;
+    case ACTION_TAGOFF: return 1;
     default: return -1;
   }
 }

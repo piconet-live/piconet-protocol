@@ -60,6 +60,8 @@ public sealed class ModeWordFormsTests
     [InlineData("team seat.team no contact;")]
     [InlineData("map_hide seat from seats - seat;")]
     [InlineData("map_mark seat, -1;")]
+    [InlineData("tag seat, \"BOMB\";")]
+    [InlineData("tag seat off;")]
     [InlineData("stock_banner seat, TICK;")]
     [InlineData("show seat, TIME_OVER;")]
     [InlineData("hide seat, FACES;")]

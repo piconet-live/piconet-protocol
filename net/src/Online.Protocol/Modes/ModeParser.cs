@@ -832,7 +832,9 @@ internal sealed class ModeParser
             {
                 Accept(",");
             }
-            arguments.Add(Expression());
+            arguments.Add(name == "tag" && Current.Kind == ModeTokenKind.Text
+                ? new ModeTagText(Current.Line, Take().Text)
+                : Expression());
         }
         Expect(";");
         return new ModeActionStatement(token.Line, name, arguments);

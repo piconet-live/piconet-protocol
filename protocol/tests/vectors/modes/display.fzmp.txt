@@ -1,7 +1,8 @@
-FZMP format 1 api 1, 1322 bytes, hash e69880e89a0566c8590ee9197ce178aa3f3cb6332fc77a03221599958bc1bb3a
+FZMP format 1 api 1, 1385 bytes, hash 3eb0888f6d0945362be569e656c8e2dd0f63f556ce3d29fb7ecb0b6300f93402
 HEAD name "Displays" badge "" about "Every display word of api 1."
 PARM 0
-SETP 0
+SETP 1
+  tag_texts "OUT"
 VARS globals 0, seat words 1
   seat 0 = 3
 RULE 4
@@ -9,7 +10,7 @@ RULE 4
   1 "The number" event each seat, locals 1, when none, while none, body 003f
   2 "Looks" event each seat, locals 1, when 004f, while none, body 0060
   3 "Out of sight" event out, locals 1, when none, while none, body 007c
-CODE 170 bytes
+CODE 183 bytes
   ; rule 0 when
   0000  RaceRead started
   0002  Ret
@@ -76,10 +77,15 @@ CODE 170 bytes
   0090  Push 16711680 (0x00ff0000, real 2.3418052E-38)
   0095  Action map_mark
   0097  LoadLocal 0
-  0099  Push 0
-  009e  Action stock_banner
-  00a0  LoadLocal 0
-  00a2  Push -1
-  00a7  Action show_number
-  00a9  End
-SRC  928 bytes
+  0099  Action tag off
+  009b  LoadLocal 0
+  009d  Push 1
+  00a2  Action tag
+  00a4  LoadLocal 0
+  00a6  Push 0
+  00ab  Action stock_banner
+  00ad  LoadLocal 0
+  00af  Push -1
+  00b4  Action show_number
+  00b6  End
+SRC  961 bytes
