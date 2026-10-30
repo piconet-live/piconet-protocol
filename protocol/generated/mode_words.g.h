@@ -363,7 +363,7 @@ enum Action : std::uint8_t
   ACTION_COUNT = 36,
 };
 
-// the choice `part`: a part of the game's own race HUD: TIMER the timed mode's clock (clock_limit's time, R+0xA4: seconds, 0 to 999); DISTANCE the metres to the finish (the seat's own); DIGIT the story's big digit (danger_zone's seconds, 3 2 1); WARNING, SUCCESS, FAILED, TIME_OVER, SPEED_GAUGE, OBJECTS the story's pictures
+// the choice `part`: a part of the game's own race HUD: TIMER the timed mode's clock (clock_limit's time, R+0xA4: seconds, 0 to 999); DISTANCE the metres to the finish (the seat's own); DIGIT the story's big digit (danger_zone's seconds, 3 2 1); WARNING, SUCCESS, FAILED, TIME_OVER, SPEED_GAUGE, OBJECTS the story's pictures, off until shown; RANK, LAPS, SPEED, ENERGY, LAP_TIMES, RACE_TIME, FACES the standard HUD (the mask .data 0x3D544; FACES the board fn_1_D27B8), on until hidden
 enum Part : std::uint8_t
 {
   PART_TIMER = 0,
@@ -375,7 +375,14 @@ enum Part : std::uint8_t
   PART_TIME_OVER = 6,
   PART_SPEED_GAUGE = 7,
   PART_OBJECTS = 8,
-  PART_COUNT = 9,
+  PART_RANK = 9,
+  PART_LAPS = 10,
+  PART_SPEED = 11,
+  PART_ENERGY = 12,
+  PART_LAP_TIMES = 13,
+  PART_RACE_TIME = 14,
+  PART_FACES = 15,
+  PART_COUNT = 16,
 };
 
 // the choice `banner`: a banner of the game's own race HUD, shown once, as the game shows it; TICK the timed mode's countdown beep, heard by that seat's player

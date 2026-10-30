@@ -1364,10 +1364,11 @@ doc = "the points page's title reads POINTS"
 
 [[choice]]
 name = "part"
-values = ["TIMER", "DISTANCE", "DIGIT", "WARNING", "SUCCESS", "FAILED", "TIME_OVER", "SPEED_GAUGE", "OBJECTS"]
+values = ["TIMER", "DISTANCE", "DIGIT", "WARNING", "SUCCESS", "FAILED", "TIME_OVER", "SPEED_GAUGE", "OBJECTS", "RANK", "LAPS", "SPEED", "ENERGY", "LAP_TIMES", "RACE_TIME", "FACES"]
 doc = """a part of the game's own race HUD: TIMER the timed mode's clock (clock_limit's time, R+0xA4: seconds, 0 to \
 999); DISTANCE the metres to the finish (the seat's own); DIGIT the story's big digit (danger_zone's seconds, 3 2 1); \
-WARNING, SUCCESS, FAILED, TIME_OVER, SPEED_GAUGE, OBJECTS the story's pictures"""
+WARNING, SUCCESS, FAILED, TIME_OVER, SPEED_GAUGE, OBJECTS the story's pictures, off until shown; RANK, LAPS, SPEED, ENERGY, \
+LAP_TIMES, RACE_TIME, FACES the standard HUD (the mask .data 0x3D544; FACES the board fn_1_D27B8), on until hidden"""
 
 [[choice]]
 name = "banner"

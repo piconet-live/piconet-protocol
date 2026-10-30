@@ -79,8 +79,13 @@ internal sealed partial class ModeEmitter(ModeNames names, List<string> warnings
         var when = Condition(item.Whens);
         var during = Condition(item.Whiles);
         var body = Here;
+        _perStep = null;
         Statements(item.Body);
         Op(ModeOp.End);
+        if (item.Whens.Count > 0 && item.Whiles.Count == 0 && id is ModeEvent.EveryStep or ModeEvent.EachSeat && _perStep is { } word)
+        {
+            warnings.Add(ModeCompiler.Message(item.Line, $"rule \"{item.Label}\" has when, which runs it once, and uses {word}, which is meant for every step: did you mean while?"));
+        }
         // at least one: formats.md's rule has local 0, and the interpreter refuses a rule without it (a rule on no seat
         // that declares nothing, as `event go; do { n += 1; }`, needs none itself)
         return (new ModeRule(item.Label, id, Math.Max(_high, 1), when, during, body), _waits);
@@ -103,8 +108,19 @@ internal sealed partial class ModeEmitter(ModeNames names, List<string> warnings
 
     // The operations, counted as they are written.
 
+    // What makes a `when` rule's body look meant for every step (the warning in the rule above).
+    private string? _perStep;
+
     private void Op(ModeOp op, params long[] operands)
     {
+        if (op == ModeOp.RaceRead && (ModeRaceRead)operands[0] == ModeRaceRead.Steps)
+        {
+            _perStep ??= "race.steps";
+        }
+        else if (op == ModeOp.Action && (ModeAction)operands[0] is ModeAction.ShowClock or ModeAction.ShowNumber or ModeAction.StockBanner or ModeAction.Hide)
+        {
+            _perStep ??= ModeWords.Actions.First(a => a.Id == (ModeAction)operands[0]).Name;
+        }
         _code.U8((int)op);
         var kinds = ModeCode.Operands.GetValueOrDefault(op, []);
         for (var i = 0; i < kinds.Length; i++)

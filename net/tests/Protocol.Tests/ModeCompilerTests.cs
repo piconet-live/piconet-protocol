@@ -63,7 +63,7 @@ public sealed class ModeCompilerTests
         {
             Assert.Equal(File.ReadAllText(Vector(file)), text);
         }
-        Assert.Empty(result.Warnings);
+        Assert.DoesNotContain(result.Warnings, w => !w.Contains("did you mean while"));
         Assert.InRange(package.Length, 1, ModeWords.PackageBytes);
         Assert.InRange(result.Budget, 0, ModeWords.Budget);   // (0: a mode of setup words only, as Quick Play)
     }
@@ -268,8 +268,8 @@ public sealed class ModeCompilerTests
     [InlineData("rule \"R\" { event every step; do { int x = 3 % 1.5; } }\n", "line 2: '%' takes whole numbers: use floor, ceil, round or trunc first")]
     [InlineData("param p \"P\" number 1..3;\nevery(p) { }\n", "line 3: every takes a time of at least one step (every(10s)) or a delay parameter")]
     [InlineData("pedals locked accel 1.5;\n", "line 2: pedals locked's accel is 0..1")]
-    [InlineData("rule \"R\" { event each seat; do { show seat, 3; } }\n", "line 2: show takes one of TIMER, DISTANCE, DIGIT, WARNING, SUCCESS, FAILED, TIME_OVER, SPEED_GAUGE, OBJECTS")]
-    [InlineData("rule \"R\" { event each seat; do { show seat, ghost; } }\n", "line 2: show takes one of TIMER, DISTANCE, DIGIT, WARNING, SUCCESS, FAILED, TIME_OVER, SPEED_GAUGE, OBJECTS")]
+    [InlineData("rule \"R\" { event each seat; do { show seat, 3; } }\n", "line 2: show takes one of TIMER, DISTANCE, DIGIT, WARNING, SUCCESS, FAILED, TIME_OVER, SPEED_GAUGE, OBJECTS, RANK, LAPS, SPEED, ENERGY, LAP_TIMES, RACE_TIME, FACES")]
+    [InlineData("rule \"R\" { event each seat; do { show seat, ghost; } }\n", "line 2: show takes one of TIMER, DISTANCE, DIGIT, WARNING, SUCCESS, FAILED, TIME_OVER, SPEED_GAUGE, OBJECTS, RANK, LAPS, SPEED, ENERGY, LAP_TIMES, RACE_TIME, FACES")]
     [InlineData("rule \"R\" { event each seat; do { seat.look = TIMER; } }\n", "line 2: seat.look takes one of normal, ghost, invisible")]
     [InlineData("rule \"R\" { event each seat; do { seat.look += ghost; } }\n", "line 2: seat.look takes a name: write seat.look = normal;")]
     [InlineData("rule \"R\" { event each seat; do { map_hide seat, seats; } }\n", "line 2: map_hide writes 'from' before its second argument: map_hide s from seats;")]
@@ -328,5 +328,14 @@ public sealed class ModeCompilerTests
         var result = ModeCompiler.Compile(source);
         Assert.False(result.Succeeded);
         Assert.Contains(result.Errors, e => e.Contains(expected));
+    }
+
+    [Fact]
+    public void AWhenRuleWithPerStepWordsIsWarnedNotRefused()
+    {
+        var result = ModeCompiler.Compile("mode \"X\" { api 1; }\nrule \"A\" { event each seat; when race.started; do { hide seat, RANK; } }\n");
+        Assert.True(result.Succeeded);
+        Assert.Contains(result.Warnings, w => w.Contains("did you mean while"));
+        Assert.Empty(ModeCompiler.Compile("mode \"X\" { api 1; }\nrule \"A\" { event each seat; while race.started; do { hide seat, RANK; } }\n").Warnings);
     }
 }

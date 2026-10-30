@@ -753,7 +753,7 @@ public static partial class ModeWords
     public static readonly IReadOnlyDictionary<string, IReadOnlyList<string>> Choices =
         new Dictionary<string, IReadOnlyList<string>>
         {
-            ["part"] = ["TIMER", "DISTANCE", "DIGIT", "WARNING", "SUCCESS", "FAILED", "TIME_OVER", "SPEED_GAUGE", "OBJECTS"],
+            ["part"] = ["TIMER", "DISTANCE", "DIGIT", "WARNING", "SUCCESS", "FAILED", "TIME_OVER", "SPEED_GAUGE", "OBJECTS", "RANK", "LAPS", "SPEED", "ENERGY", "LAP_TIMES", "RACE_TIME", "FACES"],
             ["banner"] = ["FINAL_LAP", "BOOST_POWER", "TIME_BONUS", "GAP", "WRONG_WAY", "TICK"],
             ["look"] = ["normal", "ghost", "invisible"],
         };
