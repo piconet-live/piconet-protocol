@@ -1,0 +1,466 @@
+# The game mode system's vocabulary and bytecode, defined once (D11 of the game modes' design, piconet-docs
+# research/game-modes/): generate.py writes the C# tables the compiler reads (generated/ModeWords.g.cs: Online.Protocol's
+# ModeWords, for net/src/Online.Protocol/Modes) and the game's C++ header (generated/mode_words.g.h: fzgx::modes, for
+# the runner's interpreter, port/core/src/mode.cpp) from this file (README.md). The package's layout and the
+# interpreter's rules are formats.md section 9; the language is the design's language.md.
+#
+# [api]: the vocabulary's number and its limits (language 11.1), the same on both sides. A build refuses a package
+# whose api is newer than its own; a new build adds words and never changes an existing one's meaning.
+#
+# An operation ([[op]]): `name` (PascalCase, the C# enum's and the C++ constant's name), `code` its byte, `operands`
+# the bytes after it, in order (u8, u16, u32, i32: big-endian), `doc` what it does. The stack holds 32-bit cells: an
+# int, a real's binary32 bits, a bool (0 or 1), a seat (0 to 29, or -1 none). A binary operation pops b, then a, and
+# pushes a op b. Every operation costs one operation of the step's budget, but SortRun: 1 + 5 x entries x keys.
+#
+# A word: `name` as a mode file writes it, `id` its number in the bytecode (Action, SeatRead, RaceRead) or the package
+# (setup words, events), `type` what a read gives (int, real, bool, seat), `args` an action's or setup word's
+# arguments in order, `doc`, and `where`: the game's site or the part that applies it (vocabulary.md's).
+
+[codec.csharp]
+namespace = "Online.Protocol"
+
+[codec.cxx]
+namespace = "fzgx::modes"
+
+[api]
+number = 1
+budget = 4096          # operations a step at worst: the compiler's static count, and the interpreter's backstop
+queue = 64             # queued actions a step (a full queue is a fault)
+globals = 256          # global words
+seat_words = 64        # words per seat
+locals = 64            # a rule's locals, its event's binding included
+rules = 256
+sorts = 2              # sort buffers: a `for each ... by` inside another
+package_bytes = 65536  # a package's whole size, the source included
+seats = 30
+
+[[op]]
+name = "End"
+code = 0x00
+doc = "the end of a rule's body"
+
+[[op]]
+name = "Ret"
+code = 0x01
+doc = "the end of a condition: pops its value (0 false)"
+
+[[op]]
+name = "Push"
+code = 0x02
+operands = ["i32"]
+doc = "pushes the operand"
+
+[[op]]
+name = "Pop"
+code = 0x03
+doc = "drops the top"
+
+[[op]]
+name = "Dup"
+code = 0x04
+doc = "pushes the top again"
+
+[[op]]
+name = "LoadLocal"
+code = 0x05
+operands = ["u8"]
+doc = "pushes a local"
+
+[[op]]
+name = "StoreLocal"
+code = 0x06
+operands = ["u8"]
+doc = "pops into a local"
+
+[[op]]
+name = "LoadGlobal"
+code = 0x07
+operands = ["u16"]
+doc = "pushes a global"
+
+[[op]]
+name = "StoreGlobal"
+code = 0x08
+operands = ["u16"]
+doc = "pops into a global"
+
+[[op]]
+name = "LoadSeatVar"
+code = 0x09
+operands = ["u16"]
+doc = "pops a seat, pushes its word (none: 0)"
+
+[[op]]
+name = "StoreSeatVar"
+code = 0x0A
+operands = ["u16"]
+doc = "pops a value, then a seat, and stores the value in the seat's word (none: nothing)"
+
+[[op]]
+name = "Param"
+code = 0x0B
+operands = ["u8"]
+doc = "pushes a parameter's value, as the match start gave it"
+
+[[op]]
+name = "SeatRead"
+code = 0x0C
+operands = ["u8"]
+doc = "pops a seat, pushes a read of the game ([[seat_read]]; none: 0)"
+
+[[op]]
+name = "RaceRead"
+code = 0x0D
+operands = ["u8"]
+doc = "pushes a read of the race ([[race_read]])"
+
+[[op]]
+name = "IAdd"
+code = 0x10
+doc = "whole numbers wrap"
+
+[[op]]
+name = "ISub"
+code = 0x11
+
+[[op]]
+name = "IMul"
+code = 0x12
+
+[[op]]
+name = "IDiv"
+code = 0x13
+doc = "truncates toward zero; by 0: 0; the least number by -1: itself"
+
+[[op]]
+name = "IMod"
+code = 0x14
+doc = "the sign of a; by 0: 0"
+
+[[op]]
+name = "INeg"
+code = 0x15
+
+[[op]]
+name = "FAdd"
+code = 0x18
+doc = "binary32, correctly rounded, to nearest even; a NaN result is 0x7FC00000"
+
+[[op]]
+name = "FSub"
+code = 0x19
+
+[[op]]
+name = "FMul"
+code = 0x1A
+
+[[op]]
+name = "FDiv"
+code = 0x1B
+
+[[op]]
+name = "FNeg"
+code = 0x1C
+doc = "the sign bit flipped"
+
+[[op]]
+name = "FSqrt"
+code = 0x1D
+doc = "correctly rounded; of a negative number: 0x7FC00000"
+
+[[op]]
+name = "IToF"
+code = 0x20
+doc = "an int as the nearest binary32 (ties to even)"
+
+[[op]]
+name = "Floor"
+code = 0x21
+doc = "a real to an int, saturating at the int's ends; NaN: 0"
+
+[[op]]
+name = "Ceil"
+code = 0x22
+
+[[op]]
+name = "Round"
+code = 0x23
+doc = "a half away from zero"
+
+[[op]]
+name = "Trunc"
+code = 0x24
+
+[[op]]
+name = "IMin"
+code = 0x28
+
+[[op]]
+name = "IMax"
+code = 0x29
+
+[[op]]
+name = "IAbs"
+code = 0x2A
+doc = "the least number: itself"
+
+[[op]]
+name = "FMin"
+code = 0x2B
+doc = "b when b < a, else a (a NaN b: a)"
+
+[[op]]
+name = "FMax"
+code = 0x2C
+doc = "b when b > a, else a"
+
+[[op]]
+name = "FAbs"
+code = 0x2D
+doc = "the sign bit cleared"
+
+[[op]]
+name = "IEq"
+code = 0x30
+
+[[op]]
+name = "INe"
+code = 0x31
+
+[[op]]
+name = "ILt"
+code = 0x32
+
+[[op]]
+name = "ILe"
+code = 0x33
+
+[[op]]
+name = "IGt"
+code = 0x34
+
+[[op]]
+name = "IGe"
+code = 0x35
+
+[[op]]
+name = "FEq"
+code = 0x38
+doc = "false when either is a NaN (FNe: true)"
+
+[[op]]
+name = "FNe"
+code = 0x39
+
+[[op]]
+name = "FLt"
+code = 0x3A
+
+[[op]]
+name = "FLe"
+code = 0x3B
+
+[[op]]
+name = "FGt"
+code = 0x3C
+
+[[op]]
+name = "FGe"
+code = 0x3D
+
+[[op]]
+name = "Not"
+code = 0x40
+doc = "1 for 0, else 0"
+
+[[op]]
+name = "Jump"
+code = 0x41
+operands = ["u32"]
+doc = "to the operand: an offset in the package's code"
+
+[[op]]
+name = "JumpIfZero"
+code = 0x42
+operands = ["u32"]
+doc = "pops; jumps when it is 0"
+
+[[op]]
+name = "JumpIfNotZero"
+code = 0x43
+operands = ["u32"]
+doc = "pops; jumps when it is not 0"
+
+[[op]]
+name = "SortBegin"
+code = 0x48
+operands = ["u8"]
+doc = "empties a sort buffer"
+
+[[op]]
+name = "SortAdd"
+code = 0x49
+operands = ["u8", "u8"]
+doc = "buffer, keys: pops a seat, then its keys (the last key first), and adds the entry"
+
+[[op]]
+name = "SortRun"
+code = 0x4A
+operands = ["u8", "u8", "u8", "u8"]
+doc = """buffer, keys, the descending keys' mask, the real keys' mask (bit k: key k): sorts the entries by the keys \
+(ints and bools as signed numbers, reals as FLt says, a NaN last), ties to the next key and finally to the seat, \
+and starts the buffer's walk"""
+
+[[op]]
+name = "SortNext"
+code = 0x4B
+operands = ["u8"]
+doc = "pushes the walk's next seat, or -1 when it is done"
+
+[[op]]
+name = "Action"
+code = 0x50
+operands = ["u8"]
+doc = "pops the action's arguments (the last first) and queues it ([[action]])"
+
+[[event]]
+name = "every step"
+id = 0
+kind = "continuous"
+doc = "every step"
+
+[[event]]
+name = "each seat"
+id = 1
+kind = "continuous"
+binds = "seat"
+doc = "every step, for each seat of the race in seat order"
+
+[[event]]
+name = "out"
+id = 2
+kind = "discrete"
+binds = "seat"
+doc = "the game's out verdict became true for the seat this step (the image's outtest.py)"
+
+[[setup]]
+name = "laps"
+id = 0
+args = [{ type = "int", least = 0, most = 99 }]
+where = "the coordinator, at match forming: the match start's laps (0, `unlimited`: the game's free run)"
+
+[[setup]]
+name = "cpus allowed"
+id = 1
+where = "the coordinator: players may vote CPUs into the mode's race; left out, they may not"
+
+[[setup]]
+name = "pedals locked"
+id = 2
+args = [{ type = "real", name = "accel", least = 0.0, most = 1.0, default = 1.0 },
+        { type = "real", name = "brake", least = 0.0, most = 1.0, default = 0.0 }]
+where = "the stand-in routine, before the game's rule hook fn_1_331EC: every seat's accelerator M+0x200 and brake M+0x204, flag 0x2000 cleared"
+
+[[setup]]
+name = "boost off"
+id = 3
+where = "the stand-in routine, after the game's rule hook fn_1_331EC: every seat's boost request (flag 0x40) cleared"
+
+[[seat_read]]
+name = "racing"
+id = 0
+type = "bool"
+doc = "not finished and not out"
+
+[[seat_read]]
+name = "out"
+id = 1
+type = "bool"
+doc = "the game's out verdict (the image's outtest.py)"
+
+[[seat_read]]
+name = "finished"
+id = 2
+type = "bool"
+doc = "machine flag 0x10000"
+
+[[seat_read]]
+name = "speed"
+id = 3
+type = "real"
+doc = "km/h, M+0x17C"
+
+[[seat_read]]
+name = "energy"
+id = 4
+type = "real"
+doc = "M+0x184"
+
+[[seat_read]]
+name = "lap"
+id = 5
+type = "int"
+doc = "laps completed, P+0x118"
+
+[[seat_read]]
+name = "index"
+id = 6
+type = "int"
+doc = "the seat's number, 0 to 29"
+
+[[seat_read]]
+name = "broken"
+id = 7
+type = "bool"
+doc = "broken down, machine flag 0x80"
+
+[[seat_read]]
+name = "destroyed"
+id = 8
+type = "bool"
+doc = "machine flag 0x800"
+
+[[seat_read]]
+name = "distance"
+id = 9
+type = "real"
+doc = "course distance over all laps, P+0xF8"
+
+[[race_read]]
+name = "steps"
+id = 0
+type = "int"
+doc = "the race clock from GO, 60 a second (.bss 0x50A4)"
+
+[[race_read]]
+name = "started"
+id = 1
+type = "bool"
+doc = "GO has happened: the phase (.bss 0x3C2A) is 0x29 or later"
+
+[[race_read]]
+name = "seats"
+id = 2
+type = "int"
+doc = "the race's machines"
+
+[[race_read]]
+name = "laps"
+id = 3
+type = "int"
+doc = "the race's laps (0: unlimited)"
+
+[[action]]
+name = "seat.speed"
+id = 0
+args = ["seat", "real"]
+where = "site L (main.rel 0x23854, after the air drag) in the next step's machine step, and the rescale at the mode point"
+doc = """holds the seat's speed at v km/h for the step: a written seat.speed. v is held to 0 to 9000; a seat frozen, broken \
+down, destroyed, finished, retired or restoring is not held"""
+
+[[action]]
+name = "eliminate"
+id = 1
+args = ["seat"]
+where = "the mode point: flag 0x08000000 (retired) and flag 0x1 cleared; the game's own verdict books it out at the next step"
+doc = "the seat is out of the race, by the game's own verdict"

@@ -997,3 +997,43 @@ publishes under a fixed name, read-only for others, with the same header and the
 from the game's board (a version of its own, so that a tool can refuse cleanly), never this board itself: this one
 is the launcher's private channel, in its own data folder, and the mailbox stays the launcher's alone.
 
+
+## 9. The mode package
+
+A game mode (piconet-docs `research/game-modes/`: the design, the vocabulary, the language) is a text file,
+`.fzmode`, which one compiler (`Online.Protocol` `ModeCompiler`, D11) turns into a **package**, `.fzmp`: the bytes a
+match start carries and every game runs. The words and the bytecode's operations are defined once,
+`protocol/modes.toml` (generated: `generated/ModeWords.g.cs` for the compiler, `generated/mode_words.g.h` for the
+runner's interpreter, `port/core/src/mode.cpp`). Api 1, the first slice: the words Overdrive needs.
+
+**The package.** Big-endian; a string is u16 its byte length and UTF-8. The mark `FZMP`, u16 the format (1), u16 the
+api; then seven sections in this order, each u32 its tag (four letters), u32 its length and its bytes:
+
+| Section | Content |
+|---|---|
+| `HEAD` | the header: name, badge, about (strings; an empty string when left out) |
+| `PARM` | u16 the parameters, then each: name, label (strings), u8 its kind (0 number, 1 delay, 2 switch, 3 choice), u8 its type (0 int, 1 real), i32 least, i32 most, i32 step, i32 default (a real's binary32 bits; a delay in steps; a switch 0 or 1; a choice its index), u16 the choices, each a string |
+| `SETP` | u16 the setup words, then each: u8 its id (`[[setup]]`), u8 its arguments, each u8 its source (0 a constant, 1 a parameter) and i32 the constant or the parameter's index |
+| `VARS` | u16 the globals, u16 the words a seat; then each global's start value, then each seat word's (i32) |
+| `RULE` | u16 the rules, in the file's order; then each: its label (string), u8 its event (`[[event]]`), u8 0, u16 its locals (the event's binding is local 0), u32 its `when` condition, u32 its `while` condition (each an offset in `CODE`, 0xFFFFFFFF none: several `when`s are one condition, joined by `and`), u32 its body |
+| `CODE` | the bytecode (`[[op]]`): a condition ends with `Ret`, a body with `End` |
+| `SRC ` | the mode file's text, as it was compiled (a replay can show what was raced) |
+
+The **content hash** is the SHA-256 of the package's bytes; its **share code** the first 8 characters of the hash's
+base32 (RFC 4648, upper case, no padding). At most 64 KiB, the source included.
+
+**In a match start**: `setup.mode` = `{"package": BASE64, "hash": HEX, "api": N, "params": [i32, ...]}`, the
+parameters in `PARM`'s order (a real's bits). The game refuses the race (section 2's refusals) when the hash is not
+the package's, its api is newer than the build's, a parameter is missing or outside its range, or the package does
+not read. A replay carries it in its header's match as it came (section 1, version 9), so a replay plays with no
+download.
+
+**The run** (the language's section 6), once a step at the mode point (main.rel 0x8548C, every step, re-run ones
+too): every state the mode keeps is in its block in the game's main heap, under the undo log and in the checksum;
+nothing is kept outside it. The rules run in this order: the discrete events (`out`, by seat), each rule on it in the
+file's order; then the continuous rules in the file's order (`each seat`: by seat). `while` runs the body every step
+its condition holds; `when` on the step it becomes true (an edge, kept a rule and seat in the block); a discrete
+event's `when` is tested at each occurrence. Reads of the game see the step as it stood at the mode point; actions
+are queued and applied after the run in their order (the last write to a field wins). The operations of a step are
+counted (`[[op]]`'s cost); past `[api] budget`, a full queue, or a non-finite real for a game field is a **fault**:
+the race ends for everyone at that step with the results as they stand, and the log says `mode error` (D6).
