@@ -13,3 +13,7 @@ A pack here is somebody's work: it is added only with its author's permission, w
 committed: the asset scan refuses it, and the import writes the differences only. Every pack here is read by the
 tests as a server reads it (`Online.Tests`, `RepositoryPacksTests`; `Protocol.Tests`, `StatPackConstantsTests` reads GX Unleashed's), so a pack the game would refuse fails a commit's
 landing, not a deployment.
+
+GX Unleashed is the default: `rules.toml`'s stat-pack `default` names it, the one place to change it. A server with
+no setting runs on it and does not start without its file; `--stat-pack stock` or `FZGX_STAT_PACK=stock` runs the
+disc's own stats.
