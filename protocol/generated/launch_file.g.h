@@ -101,8 +101,8 @@ void ReadTaskbar([[maybe_unused]] P& p, [[maybe_unused]] T* t)
 // testLagMs, jitterMs, autopilot, blackoutStep, blackoutSeconds, handbackAt, rollbackLog, alterStep, forcePatches,
 // drawnFrames, lateSteps, lateSeats, lateNoise, skipDraws, trace, keepScratch, bufferShare, bufferSteps, replayMemory,
 // replayNear, replayScript, replayEndQuits, hitLog, undoLog, fullScreenWithoutFocus, singleCore, jit, cheats, mods,
-// automation, loadState, userSettings, renderer, auroraShots, auroraLog; by hand: forceRollback, clock, redraw,
-// traceStates, dump, slowSteps, undoTrace, standStill, partialRollback.
+// automation, loadState, userSettings, renderer, auroraShots, auroraScale, auroraLog; by hand: forceRollback, clock,
+// redraw, traceStates, dump, slowSteps, undoTrace, standStill, partialRollback.
 template <typename P, typename T>
 void ReadDebug([[maybe_unused]] P& p, [[maybe_unused]] T* t)
 {
@@ -140,6 +140,7 @@ void ReadDebug([[maybe_unused]] P& p, [[maybe_unused]] T* t)
   p.Flag("userSettings", &t->user_settings);
   p.OneOf("renderer", &t->renderer, {"dolphin", "aurora"});
   p.Wholes("auroraShots", &t->aurora_shots, 1u, 4294967295u, 1, 32);
+  p.Whole("auroraScale", &t->aurora_scale, 1u, 8u);
   p.Words("auroraLog", &t->aurora_log);
 }
 
