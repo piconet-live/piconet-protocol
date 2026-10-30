@@ -1,0 +1,28 @@
+// The words of the cut race: break_down, show_clock, TICK, race_waits, results points and results_title.
+mode "Cuts" { api 1; about "Every word of the cut race."; }
+race_waits everyone;
+results points;
+results_title knockout;
+
+rule "Clock" {
+  event every step;
+  while race.started;
+  do { show_clock 3600 - race.steps % 600; }
+}
+
+rule "Cut" {
+  event each seat;
+  when race.started and race.steps == 1200 and seat.index == 0;
+  do {
+    show seat, TIMER;
+    stock_banner seat, TICK;
+    break_down seat;
+    award seat, 1;
+  }
+}
+
+rule "End" {
+  event every step;
+  when race.started and race.steps == 3000;
+  do { end_race; }
+}

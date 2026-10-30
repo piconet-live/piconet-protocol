@@ -1,0 +1,66 @@
+FZMP format 1 api 1, 922 bytes, hash e4a964ddcd9cee1992a3247f4e258b76999046a7f8401b5b4452594d551058b9
+HEAD name "Cuts" badge "" about "Every word of the cut race."
+PARM 0
+SETP 3
+  race_waits everyone
+  results points
+  results_title knockout
+VARS globals 0, seat words 0
+RULE 3
+  0 "Clock" event every step, locals 1, when none, while 0000, body 0003
+  1 "Cut" event each seat, locals 1, when 0014, while none, body 0037
+  2 "End" event every step, locals 1, when 0057, while none, body 0069
+CODE 108 bytes
+  ; rule 0 while
+  0000  RaceRead started
+  0002  Ret
+  ; rule 0 body
+  0003  Push 3600
+  0008  RaceRead steps
+  000a  Push 600
+  000f  IMod
+  0010  ISub
+  0011  Action show_clock
+  0013  End
+  ; rule 1 when
+  0014  RaceRead started
+  0016  Dup
+  0017  JumpIfZero 0025
+  001c  Pop
+  001d  RaceRead steps
+  001f  Push 1200
+  0024  IEq
+  0025  Dup
+  0026  JumpIfZero 0036
+  002b  Pop
+  002c  LoadLocal 0
+  002e  SeatRead index
+  0030  Push 0
+  0035  IEq
+  0036  Ret
+  ; rule 1 body
+  0037  LoadLocal 0
+  0039  Push 0
+  003e  Action show
+  0040  LoadLocal 0
+  0042  Push 5
+  0047  Action stock_banner
+  0049  LoadLocal 0
+  004b  Action break_down
+  004d  LoadLocal 0
+  004f  Push 1
+  0054  Action award
+  0056  End
+  ; rule 2 when
+  0057  RaceRead started
+  0059  Dup
+  005a  JumpIfZero 0068
+  005f  Pop
+  0060  RaceRead steps
+  0062  Push 3000
+  0067  IEq
+  0068  Ret
+  ; rule 2 body
+  0069  Action end_race
+  006b  End
+SRC  632 bytes

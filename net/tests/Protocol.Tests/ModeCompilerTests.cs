@@ -41,6 +41,7 @@ public sealed class ModeCompilerTests
     [InlineData("wrecks")]
     [InlineData("board")]
     [InlineData("practice")]
+    [InlineData("cuts")]
     public void AVectorCompilesToItsPackage(string name)
     {
         var result = CompileVector(name);
@@ -315,5 +316,16 @@ public sealed class ModeCompilerTests
         Assert.Equal(written.Mode!.Rules, every.Mode!.Rules);
         Assert.Equal(written.Mode.Code, every.Mode.Code);
         Assert.Equal("every 10s", every.Mode.Rules[0].Label);
+    }
+
+    [Theory]
+    [InlineData("mode \"X\" { api 1; }\nrace_waits everyone;\n", "needs end_race or clock_limit")]
+    [InlineData("mode \"X\" { api 1; }\nresults points;\n", "needs award")]
+    [InlineData("mode \"X\" { api 1; }\nclock_limit 60s;\nrule \"A\" { event every step; do { show_clock 60; } }\n", "one or the other")]
+    public void TheCutRaceWordsAreRefusedWithoutWhatTheyNeed(string source, string expected)
+    {
+        var result = ModeCompiler.Compile(source);
+        Assert.False(result.Succeeded);
+        Assert.Contains(result.Errors, e => e.Contains(expected));
     }
 }
