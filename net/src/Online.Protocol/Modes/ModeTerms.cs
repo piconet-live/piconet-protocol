@@ -181,6 +181,13 @@ public static class ModeTeams
     /// <summary>The most, the seats of a race.</summary>
     public const int Most = ModeWords.Teams;
 
+    /// <summary>A team as players read it: "Team 1".</summary>
+    public static string Word(int team) => string.Create(CultureInfo.InvariantCulture, $"Team {team + 1}");
+
+    /// <summary>A seat's team in a race's <c>setup.mode.teams</c>, in words: "" when the race has no teams. A seat past
+    /// the list's end is a team of its own, its number (formats.md section 9).</summary>
+    public static string Said(IReadOnlyList<int>? teams, int seat) => teams is null ? "" : Word(seat < teams.Count ? teams[seat] : seat);
+
     /// <summary>A lobby's teams rule as it applies: 0 none, else in range (a stray 1 is 2).</summary>
     public static int Kept(int value) => value <= 0 ? 0 : Math.Clamp(value, Least, Most);
 
