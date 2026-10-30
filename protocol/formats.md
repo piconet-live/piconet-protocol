@@ -1004,7 +1004,9 @@ A game mode (piconet-docs `research/game-modes/`: the design, the vocabulary, th
 `.fzmode`, which one compiler (`Online.Protocol` `ModeCompiler`, D11) turns into a **package**, `.fzmp`: the bytes a
 match start carries and every game runs. The words and the bytecode's operations are defined once,
 `protocol/modes.toml` (generated: `generated/ModeWords.g.cs` for the compiler, `generated/mode_words.g.h` for the
-runner's interpreter, `port/core/src/mode.cpp`). Api 1, the first slice: the words Overdrive needs.
+runner's interpreter, `port/core/src/mode.cpp`). Api 1: the first slice's words (Overdrive's) and the whole language
+but its board; the standard library (`net/src/Online.Protocol/Modes/std.fzmode`) is compiled with every file, so a
+package holds the code of every macro it used and every sub it called, and nothing of the library else.
 
 **The package.** Big-endian; a string is u16 its byte length and UTF-8. The mark `FZMP`, u16 the format (1), u16 the
 api; then seven sections in this order, each u32 its tag (four letters), u32 its length and its bytes:
@@ -1014,7 +1016,7 @@ api; then seven sections in this order, each u32 its tag (four letters), u32 its
 | `HEAD` | the header: name, badge, about (strings; an empty string when left out) |
 | `PARM` | u16 the parameters, then each: name, label (strings), u8 its kind (0 number, 1 delay, 2 switch, 3 choice), u8 its type (0 int, 1 real), i32 least, i32 most, i32 step, i32 default (a real's binary32 bits; a delay in steps; a switch 0 or 1; a choice its index), u16 the choices, each a string |
 | `SETP` | u16 the setup words, then each: u8 its id (`[[setup]]`), u8 its arguments, each u8 its source (0 a constant, 1 a parameter) and i32 the constant or the parameter's index; a word with a table (`laps by course`) has two constants more a row after its own arguments, the course's number and its value |
-| `VARS` | u16 the globals, u16 the words a seat; then each global's start value, then each seat word's (i32) |
+| `VARS` | u16 the globals, u16 the words a seat; then each global's start value, then each seat word's (i32); then, only in a mode that keeps words a team, u16 those (1 to `[api] team_words`) and each one's start value |
 | `RULE` | u16 the rules, in the file's order; then each: its label (string), u8 its event (`[[event]]`), u8 0, u16 its locals (the event's binding is local 0), u32 its `when` condition, u32 its `while` condition (each an offset in `CODE`, 0xFFFFFFFF none: several `when`s are one condition, joined by `and`), u32 its body |
 | `CODE` | the bytecode (`[[op]]`): a condition ends with `Ret`, a body with `End` |
 | `SRC ` | the mode file's text, as it was compiled (a replay can show what was raced) |
@@ -1022,18 +1024,52 @@ api; then seven sections in this order, each u32 its tag (four letters), u32 its
 The **content hash** is the SHA-256 of the package's bytes; its **share code** the first 8 characters of the hash's
 base32 (RFC 4648, upper case, no padding). At most 64 KiB, the source included.
 
-**In a match start**: `setup.mode` = `{"package": BASE64, "hash": HEX, "api": N, "params": [i32, ...]}`, the
-parameters in `PARM`'s order (a real's bits). The game refuses the race (section 2's refusals) when the hash is not
-the package's, its api is newer than the build's, a parameter is missing or outside its range, or the package does
-not read. A replay carries it in its header's match as it came (section 1, version 9), so a replay plays with no
+**In a match start**: `setup.mode` = `{"package": BASE64, "hash": HEX, "api": N, "params": [i32, ...], "teams":
+[team, ...]}`, the parameters in `PARM`'s order (a real's bits); `teams` each seat's team by seat, 0 to 29, set by
+the launcher or the host (left out, or a seat past its end: the seat's own number, every seat a team of one). The
+game refuses the race (section 2's refusals) when the hash is not the package's, its api is newer than the build's,
+a parameter is missing or outside its range, a team is not 0 to 29, or the package does not read. A replay carries it in its header's match as it came (section 1, version 9), so a replay plays with no
 download.
 
 **The run** (the language's section 6), once a step at the mode point (main.rel 0x8548C, every step, re-run ones
-too): every state the mode keeps is in its block in the game's main heap, under the undo log and in the checksum;
+too): every state the mode keeps is in its block in the game's main heap, under the undo log and in the checksum:
+the variables (global, a seat's, a team's), the edges, the waiting rules with the locals they keep, the generator;
 nothing is kept outside it. The rules run in this order: the discrete events (`out`, by seat), each rule on it in the
-file's order; then the continuous rules in the file's order (`each seat`: by seat). `while` runs the body every step
+file's order; then the waits (below); then the continuous rules in the file's order (`each seat`: by seat). A rule
+instance (a rule, and its seat for a rule on a seat) that waits neither fires nor has its conditions tested. `while` runs the body every step
 its condition holds; `when` on the step it becomes true (an edge, kept a rule and seat in the block); a discrete
 event's `when` is tested at each occurrence. Reads of the game see the step as it stood at the mode point; actions
 are queued and applied after the run in their order (the last write to a field wins). The operations of a step are
 counted (`[[op]]`'s cost); past `[api] budget`, a full queue, or a non-finite real for a game field is a **fault**:
 the race ends for everyone at that step with the results as they stand, and the log says `mode error` (D6).
+
+**Waits.** `Wait` (its operands: the live locals, the kind, the condition) pops the steps; more than 0, the instance
+takes a free wait record of the block (at most `[api] waits`; none free is a fault), with its first locals (at most
+`[api] wait_locals`; the compiler allows a wait only where the stack is empty and outside a sorted walk), the step it
+ends at and where its code goes on, and its run ends there. Every step, after the discrete events, the waiting
+instances in rule order, then seat order: from the step after a wait began, its condition (run with the kept locals)
+is tested every step: `abort when` true ends the instance there (the rest of its code is dropped); `restart when`
+true begins the wait again from this step. Then a wait whose step has come is freed and its instance goes on from it,
+the kept locals put back (the others 0). The compiler counts a rule that waits twice in the step's budget (it may go
+on from its wait and fire again in one step), and refuses a mode that could have more waiting instances than the api
+allows (a rule on a seat counted 30 times).
+
+**Sets and vecs.** A set of seats is one cell, bit i seat i (`SeatBit`, `AllSeats`, `BitAnd`, `BitOr`,
+`BitAndNot`); a vec three, x, y, z (a read of type vec pushes the three; the compiler works them one by one, so a vec
+is never more than its reals).
+
+**The square root** (`FSqrt`) is the game's own, main.dol 0x8006D0B4: a NaN stays one, +infinity itself, zero, a
+negative number, a denormal or -infinity 0; else, the processor's way, in its single-precision operations: h =
+fmuls(0.5, x); y = frsqrte(x) (Dolphin's table, `Common::ApproximateReciprocalSquareRoot`); twice: y = fmuls(y,
+fnmsubs(fmuls(y, y), h, 1.5)); then fmuls(y, x). fmuls rounds its second operand's mantissa to 25 bits before the
+multiply; fnmsubs is fused, rounded once to single. The compiler folds with the same steps (`ModeMaths.GameSqrt`);
+`tests/vectors/modes/sqrt.tsv` holds both sides to the same bits.
+
+**Random numbers** (`Random`, `RandomReal`): the mode's own generator, xoshiro128** (four words in the block),
+never the game's. Its first state, written with the start values at the race's first run: SHA-256 of the match
+start's `matchId` (its UTF-8 bytes) followed by the package's hash (its 32 bytes); the digest's first 16 bytes as
+four big-endian words w0 to w3; word k of the state is one step of SplitMix32 from wk (z = wk + 0x9E3779B9; z = (z ^
+z >> 16) × 0x85EBCA6B; z = (z ^ z >> 13) × 0xC2B2AE35; z ^ z >> 16, in 32 bits), and a state of four zeros has its
+first word 1. A draw is the generator's next(): `random(n)` gives (next() × n) >> 32 in 64 bits for n above 0 and 0,
+with no draw, for any other n; `random_real()` (next() >> 8) × 2^-24. `tests/vectors/modes/random.json` holds first
+states and draws from an independent reference.

@@ -1,16 +1,19 @@
 namespace Online.Protocol;
 
-/// <summary>What a name declared at the file's level is: a constant (its cell), a parameter, a global or a seat's
-/// variable (their index).</summary>
+/// <summary>What a name declared at the file's level is: a constant (its cell), a parameter, a global, a seat's or a
+/// team's variable (their index), or a sub.</summary>
 internal enum ModeNameKind
 {
     Const,
     Param,
     Global,
     SeatVariable,
+    TeamVariable,
+    Sub,
 }
 
-internal sealed record ModeDeclared(ModeNameKind Kind, ModeType Type, int Index, int Cell = 0, ModeParam? Param = null);
+internal sealed record ModeDeclared(ModeNameKind Kind, ModeType Type, int Index, int Cell = 0, ModeParam? Param = null,
+    ModeSubItem? Sub = null);
 
 /// <summary>The names a file declares at its level, in one table: a name names one thing, and is declared before it
 /// is used (the language's section 2).</summary>
@@ -22,11 +25,17 @@ internal sealed class ModeNames
 
     public ModeDeclared? Find(string name) => _names.GetValueOrDefault(name);
 
+    /// <summary>The variable kept per seat or per team named so (a field <c>s.name</c>, <c>s.team.name</c>).</summary>
+    public ModeDeclared? Variable(string name, ModeNameKind kind) =>
+        Find(name) is { } found && found.Kind == kind ? found : null;
+
     public void Declare(int line, string name, ModeDeclared declared)
     {
         if (!_names.TryAdd(name, declared))
         {
-            throw new ModeCompileException(line, $"'{name}' is already declared");
+            throw new ModeCompileException(line, _names[name] is { Kind: ModeNameKind.Sub, Index: -1 }
+                ? $"'{name}' is a sub of the standard library's: name yours otherwise"
+                : $"'{name}' is already declared");
         }
     }
 
@@ -54,6 +63,10 @@ internal sealed class ModeNames
         {
             return ModeOperators.Cell(cell);
         }
+        if (type == ModeType.Seat && wanted == ModeType.Seats)
+        {
+            return ModeOperators.SeatBit(cell);
+        }
         throw new ModeCompileException(expr.Line, $"{what} is {ModeTypes.Name(wanted)}, not {ModeTypes.Name(type)}");
     }
 
@@ -77,6 +90,10 @@ internal sealed class ModeNames
         if (Fold(b.Left) is not var (ta, a) || Fold(b.Right) is not var (tb, c))
         {
             return null;
+        }
+        if (b.Operator is "in" || ta == ModeType.Seats || tb == ModeType.Seats)
+        {
+            return null;   // (the sets' operations are written as code, never folded)
         }
         if (b.Operator is "and" or "or")
         {
@@ -105,6 +122,10 @@ internal sealed class ModeNames
 
     private (ModeType, int)? FoldCall(ModeCall c)
     {
+        if (c.Function is not ("min" or "max") && !ModeOperators.Functions.ContainsKey(c.Function))
+        {
+            return null;   // a sub, random, dot, length: not a constant
+        }
         var arguments = c.Arguments.Select(Fold).ToList();
         if (arguments.Any(a => a is null))
         {
@@ -137,7 +158,9 @@ internal static class ModeTypes
         ModeType.Int => "an int",
         ModeType.Real => "a real",
         ModeType.Bool => "a bool",
-        _ => "a seat",
+        ModeType.Seat => "a seat",
+        ModeType.Seats => "a set of seats",
+        _ => "a vec",
     };
 
     public static bool IsNumber(ModeType type) => type is ModeType.Int or ModeType.Real;

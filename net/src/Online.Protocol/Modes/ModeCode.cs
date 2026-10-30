@@ -24,9 +24,12 @@ internal static class ModeCode
         [ModeOp.Param] = [(1, false)],
         [ModeOp.SeatRead] = [(1, false)],
         [ModeOp.RaceRead] = [(1, false)],
+        [ModeOp.LoadTeamVar] = [(2, false)],
+        [ModeOp.StoreTeamVar] = [(2, false)],
         [ModeOp.Jump] = [(4, false)],
         [ModeOp.JumpIfZero] = [(4, false)],
         [ModeOp.JumpIfNotZero] = [(4, false)],
+        [ModeOp.Wait] = [(1, false), (1, false), (4, false)],
         [ModeOp.SortBegin] = [(1, false)],
         [ModeOp.SortAdd] = [(1, false), (1, false)],
         [ModeOp.SortRun] = [(1, false), (1, false), (1, false), (1, false)],
@@ -102,6 +105,10 @@ internal static class ModeCode
             {
                 throw new InvalidDataException($"{i.Op} at {i.Offset} jumps inside an operation");
             }
+            if (i.Op == ModeOp.Wait && (i.Operands[1] > 2 || (i.Operands[2] != ModeRule.None && !starts.Contains((uint)i.Operands[2]))))
+            {
+                throw new InvalidDataException($"the wait at {i.Offset} is of no kind, or its condition starts inside an operation");
+            }
         }
     }
 
@@ -111,6 +118,8 @@ internal static class ModeCode
         ModeOp.LoadLocal or ModeOp.StoreLocal => locals,
         ModeOp.LoadGlobal or ModeOp.StoreGlobal => package.Globals.Count,
         ModeOp.LoadSeatVar or ModeOp.StoreSeatVar => package.SeatWords.Count,
+        ModeOp.LoadTeamVar or ModeOp.StoreTeamVar => package.TeamWords.Count,
+        ModeOp.Wait => Math.Min(locals, ModeWords.WaitLocals) + 1,
         ModeOp.Param => package.Params.Count,
         ModeOp.SeatRead => ModeWords.SeatReads.Count,
         ModeOp.RaceRead => ModeWords.RaceReads.Count,

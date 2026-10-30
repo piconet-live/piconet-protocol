@@ -11,12 +11,17 @@ namespace fzgx::modes
 // the api this build runs, and its limits (language 11.1)
 inline constexpr int API = 1;
 inline constexpr int BUDGET = 65536;
-inline constexpr int QUEUE = 64;
+inline constexpr int QUEUE = 256;
 inline constexpr int GLOBALS = 256;
 inline constexpr int SEAT_WORDS = 64;
 inline constexpr int LOCALS = 64;
 inline constexpr int RULES = 256;
+inline constexpr int SUBS = 128;
 inline constexpr int SORTS = 2;
+inline constexpr int TEAM_WORDS = 32;
+inline constexpr int TEAMS = 30;
+inline constexpr int WAITS = 64;
+inline constexpr int WAIT_LOCALS = 8;
 inline constexpr int PACKAGE_BYTES = 65536;
 inline constexpr int SEATS = 30;
 
@@ -37,6 +42,8 @@ enum Op : std::uint8_t
   OP_PARAM = 0x0b,  // pushes a parameter's value, as the match start gave it
   OP_SEATREAD = 0x0c,  // pops a seat, pushes a read of the game ([[seat_read]]; none: 0)
   OP_RACEREAD = 0x0d,  // pushes a read of the race ([[race_read]])
+  OP_LOADTEAMVAR = 0x0e,  // pops a seat, pushes its team's word (none: 0)
+  OP_STORETEAMVAR = 0x0f,  // pops a value, then a seat, and stores the value in the seat's team's word (none: nothing)
   OP_IADD = 0x10,  // whole numbers wrap
   OP_ISUB = 0x11,
   OP_IMUL = 0x12,
@@ -48,7 +55,7 @@ enum Op : std::uint8_t
   OP_FMUL = 0x1a,
   OP_FDIV = 0x1b,
   OP_FNEG = 0x1c,  // the sign bit flipped
-  OP_FSQRT = 0x1d,  // correctly rounded; of a negative number: 0x7FC00000
+  OP_FSQRT = 0x1d,  // the game's square root (main.dol 0x8006D0B4: x times two Newton steps from the estimate frsqrte, in the processor's single-precision operations): a NaN 0x7FC00000, infinity itself; zero, a negative number or a denormal 0
   OP_ITOF = 0x20,  // an int as the nearest binary32 (ties to even)
   OP_FLOOR = 0x21,  // a real to an int, saturating at the int's ends; NaN: 0
   OP_CEIL = 0x22,
@@ -76,11 +83,19 @@ enum Op : std::uint8_t
   OP_JUMP = 0x41,  // to the operand: an offset in the package's code
   OP_JUMPIFZERO = 0x42,  // pops; jumps when it is 0
   OP_JUMPIFNOTZERO = 0x43,  // pops; jumps when it is not 0
+  OP_WAIT = 0x45,  // live locals, kind (0 plain, 1 abort, 2 restart), condition (an offset in the code, 0xFFFFFFFF none): pops the steps; more than 0, the rule instance waits that many steps in a wait record of the block, keeping its first `live` locals, and the run of its code ends here; 0 or fewer, nothing
   OP_SORTBEGIN = 0x48,  // empties a sort buffer
   OP_SORTADD = 0x49,  // buffer, keys: pops a seat, then its keys (the last key first), and adds the entry
   OP_SORTRUN = 0x4a,  // buffer, keys, the descending keys' mask, the real keys' mask (bit k: key k): sorts the entries by the keys (ints and bools as signed numbers, reals as FLt says, a NaN last), ties to the next key and finally to the seat, and starts the buffer's walk
   OP_SORTNEXT = 0x4b,  // pushes the walk's next seat, or -1 when it is done
   OP_ACTION = 0x50,  // pops the action's arguments (the last first) and queues it ([[action]])
+  OP_SEATBIT = 0x58,  // pops a seat, pushes its set: the bit 1 << seat (none, or a seat not in the race: 0)
+  OP_ALLSEATS = 0x59,  // pushes the race's seats as a set (bit i: seat i)
+  OP_BITAND = 0x5a,  // a & b: sets' intersection
+  OP_BITOR = 0x5b,  // a | b: sets' union
+  OP_BITANDNOT = 0x5c,  // a & ~b: sets' difference
+  OP_RANDOM = 0x60,  // pops n; n more than 0: draws the mode's generator (xoshiro128**, formats.md section 9) and pushes (draw x n) >> 32 in 64 bits, 0 to n - 1; else pushes 0 and draws nothing
+  OP_RANDOMREAL = 0x61,  // draws the mode's generator and pushes (draw >> 8) x 2^-24, a real 0 to below 1
 };
 
 // an operation's size in bytes, operands included; 0: no such operation
@@ -102,6 +117,8 @@ constexpr int OpSize(std::uint8_t op)
     case OP_PARAM: return 2;
     case OP_SEATREAD: return 2;
     case OP_RACEREAD: return 2;
+    case OP_LOADTEAMVAR: return 3;
+    case OP_STORETEAMVAR: return 3;
     case OP_IADD: return 1;
     case OP_ISUB: return 1;
     case OP_IMUL: return 1;
@@ -141,11 +158,19 @@ constexpr int OpSize(std::uint8_t op)
     case OP_JUMP: return 5;
     case OP_JUMPIFZERO: return 5;
     case OP_JUMPIFNOTZERO: return 5;
+    case OP_WAIT: return 7;
     case OP_SORTBEGIN: return 2;
     case OP_SORTADD: return 3;
     case OP_SORTRUN: return 5;
     case OP_SORTNEXT: return 2;
     case OP_ACTION: return 2;
+    case OP_SEATBIT: return 1;
+    case OP_ALLSEATS: return 1;
+    case OP_BITAND: return 1;
+    case OP_BITOR: return 1;
+    case OP_BITANDNOT: return 1;
+    case OP_RANDOM: return 1;
+    case OP_RANDOMREAL: return 1;
     default: return 0;
   }
 }
@@ -156,7 +181,25 @@ enum Event : std::uint8_t
   EVENT_EVERYSTEP = 0,  // every step
   EVENT_EACHSEAT = 1,  // each seat
   EVENT_OUT = 2,  // out
-  EVENT_COUNT = 3,
+  EVENT_RACESTART = 3,  // race_start
+  EVENT_GO = 4,  // go
+  EVENT_LAP = 5,  // lap
+  EVENT_CHECKPOINT = 6,  // checkpoint
+  EVENT_FINISH = 7,  // finish
+  EVENT_FALL = 8,  // fall
+  EVENT_DESTROYED = 9,  // destroyed
+  EVENT_KO = 10,  // ko
+  EVENT_HIT = 11,  // hit
+  EVENT_DAMAGED = 12,  // damaged
+  EVENT_BOOST = 13,  // boost
+  EVENT_WALL = 14,  // wall
+  EVENT_PIT = 15,  // pit
+  EVENT_OVERTAKE = 16,  // overtake
+  EVENT_RESPAWNED = 17,  // respawned
+  EVENT_LAND = 18,  // land
+  EVENT_BOOSTEND = 19,  // boost_end
+  EVENT_WRONGWAY = 20,  // wrong_way
+  EVENT_COUNT = 21,
 };
 
 // a setup word
@@ -167,7 +210,16 @@ enum Setup : std::uint8_t
   SETUP_PEDALSLOCKED = 2,  // pedals locked
   SETUP_BOOSTOFF = 3,  // boost off
   SETUP_LAPSBYCOURSE = 4,  // laps by course
-  SETUP_COUNT = 5,
+  SETUP_FINISHLIMIT = 5,  // finish_limit
+  SETUP_MINEREGEN = 6,  // mine_regen
+  SETUP_MINEREGENOFF = 7,  // mine_regen off
+  SETUP_CPULEVEL = 8,  // cpu_level
+  SETUP_RESTOREON = 9,  // restore on
+  SETUP_RESTOREOFF = 10,  // restore off
+  SETUP_CONTACTOFF = 11,  // contact off
+  SETUP_CLOCKLIMIT = 12,  // clock_limit
+  SETUP_ROLLINGSTART = 13,  // rolling_start
+  SETUP_COUNT = 14,
 };
 
 // a read of a seat (OP_SEATREAD)
@@ -183,7 +235,49 @@ enum Seat : std::uint8_t
   SEAT_BROKEN = 7,  // broken
   SEAT_DESTROYED = 8,  // destroyed
   SEAT_DISTANCE = 9,  // distance
-  SEAT_COUNT = 10,
+  SEAT_TEAM = 10,  // team
+  SEAT_POSITION = 11,  // position
+  SEAT_LAPLENGTH = 12,  // lap_length
+  SEAT_FORWARD = 13,  // forward
+  SEAT_VELOCITY = 14,  // velocity
+  SEAT_UP = 15,  // up
+  SEAT_RESTORING = 16,  // restoring
+  SEAT_SURFACE = 17,  // surface
+  SEAT_INPUTACCEL = 18,  // input.accel
+  SEAT_INPUTBRAKE = 19,  // input.brake
+  SEAT_INPUTSTEER = 20,  // input.steer
+  SEAT_INPUTSTRAFE = 21,  // input.strafe
+  SEAT_INPUTPITCH = 22,  // input.pitch
+  SEAT_RACETIME = 23,  // race_time
+  SEAT_LAPTIME = 24,  // lap_time
+  SEAT_BESTLAP = 25,  // best_lap
+  SEAT_MACHINE = 26,  // machine
+  SEAT_ISCPU = 27,  // is_cpu
+  SEAT_HITS = 28,  // hits
+  SEAT_DAMAGETAKEN = 29,  // damage_taken
+  SEAT_TOUCHING = 30,  // touching
+  SEAT_LAPDISTANCE = 31,  // lap_distance
+  SEAT_CHECKPOINT = 32,  // checkpoint
+  SEAT_CHECKPOINTFRACTION = 33,  // checkpoint_fraction
+  SEAT_LAPSTEPS = 34,  // lap_steps
+  SEAT_WRONGWAY = 35,  // wrong_way
+  SEAT_TOPSPEED = 36,  // top_speed
+  SEAT_MAXENERGY = 37,  // max_energy
+  SEAT_LASTHITENERGY = 38,  // last_hit_energy
+  SEAT_FALLEN = 39,  // fallen
+  SEAT_SPINNING = 40,  // spinning
+  SEAT_AIRBORNE = 41,  // airborne
+  SEAT_BOOSTING = 42,  // boosting
+  SEAT_SIDEATTACK = 43,  // side_attack
+  SEAT_INPIT = 44,  // in_pit
+  SEAT_USEDPIT = 45,  // used_pit
+  SEAT_STANDING = 46,  // standing
+  SEAT_PLACE = 47,  // place
+  SEAT_POINTS = 48,  // points
+  SEAT_KOS = 49,  // kos
+  SEAT_ISPLAYER = 50,  // is_player
+  SEAT_GHOST = 51,  // ghost
+  SEAT_COUNT = 52,
 };
 
 // a read of the race (OP_RACEREAD)
@@ -201,7 +295,30 @@ enum Action : std::uint8_t
 {
   ACTION_SEATSPEED = 0,  // seat.speed
   ACTION_ELIMINATE = 1,  // eliminate
-  ACTION_COUNT = 2,
+  ACTION_RETIRE = 2,  // retire
+  ACTION_EXPLODE = 3,  // explode
+  ACTION_RESPAWNS = 4,  // respawns
+  ACTION_RESPAWNSOFF = 5,  // respawns off
+  ACTION_HANDTOCPU = 6,  // hand_to_cpu
+  ACTION_PADSBACK = 7,  // pads_back
+  ACTION_CPUMODE = 8,  // cpu_mode
+  ACTION_SEATPLACE = 9,  // seat.place
+  ACTION_ENDRACE = 10,  // end_race
+  ACTION_AWARD = 11,  // award
+  ACTION_STOPALL = 12,  // stop_all
+  ACTION_SEATENERGY = 13,  // seat.energy
+  ACTION_BOOST = 14,  // boost
+  ACTION_PUSH = 15,  // push
+  ACTION_SEATVELOCITY = 16,  // seat.velocity
+  ACTION_FREEZE = 17,  // freeze
+  ACTION_RELEASE = 18,  // release
+  ACTION_GHOST = 19,  // ghost
+  ACTION_GHOSTOFF = 20,  // ghost off
+  ACTION_NOCONTACT = 21,  // no contact
+  ACTION_TEAMNOCONTACT = 22,  // team no contact
+  ACTION_DANGERZONE = 23,  // danger_zone
+  ACTION_DANGERZONEOFF = 24,  // danger_zone off
+  ACTION_COUNT = 25,
 };
 
 // the arguments an action pops
@@ -211,6 +328,29 @@ constexpr int ActionArguments(std::uint8_t action)
   {
     case ACTION_SEATSPEED: return 2;
     case ACTION_ELIMINATE: return 1;
+    case ACTION_RETIRE: return 1;
+    case ACTION_EXPLODE: return 1;
+    case ACTION_RESPAWNS: return 1;
+    case ACTION_RESPAWNSOFF: return 1;
+    case ACTION_HANDTOCPU: return 1;
+    case ACTION_PADSBACK: return 0;
+    case ACTION_CPUMODE: return 2;
+    case ACTION_SEATPLACE: return 2;
+    case ACTION_ENDRACE: return 0;
+    case ACTION_AWARD: return 2;
+    case ACTION_STOPALL: return 0;
+    case ACTION_SEATENERGY: return 2;
+    case ACTION_BOOST: return 1;
+    case ACTION_PUSH: return 2;
+    case ACTION_SEATVELOCITY: return 2;
+    case ACTION_FREEZE: return 1;
+    case ACTION_RELEASE: return 1;
+    case ACTION_GHOST: return 1;
+    case ACTION_GHOSTOFF: return 1;
+    case ACTION_NOCONTACT: return 2;
+    case ACTION_TEAMNOCONTACT: return 1;
+    case ACTION_DANGERZONE: return 4;
+    case ACTION_DANGERZONEOFF: return 1;
     default: return -1;
   }
 }
@@ -223,7 +363,55 @@ constexpr bool Continuous(std::uint8_t event)
     case EVENT_EVERYSTEP: return true;
     case EVENT_EACHSEAT: return true;
     case EVENT_OUT: return false;
+    case EVENT_RACESTART: return false;
+    case EVENT_GO: return false;
+    case EVENT_LAP: return false;
+    case EVENT_CHECKPOINT: return false;
+    case EVENT_FINISH: return false;
+    case EVENT_FALL: return false;
+    case EVENT_DESTROYED: return false;
+    case EVENT_KO: return false;
+    case EVENT_HIT: return false;
+    case EVENT_DAMAGED: return false;
+    case EVENT_BOOST: return false;
+    case EVENT_WALL: return false;
+    case EVENT_PIT: return false;
+    case EVENT_OVERTAKE: return false;
+    case EVENT_RESPAWNED: return false;
+    case EVENT_LAND: return false;
+    case EVENT_BOOSTEND: return false;
+    case EVENT_WRONGWAY: return false;
     default: return false;
+  }
+}
+
+// the names a discrete event binds: 0 none, 1 its seat, 2 its seat and a second value (a seat or an int)
+constexpr int EventBinds(std::uint8_t event)
+{
+  switch (event)
+  {
+    case EVENT_EVERYSTEP: return 0;
+    case EVENT_EACHSEAT: return 1;
+    case EVENT_OUT: return 2;
+    case EVENT_RACESTART: return 0;
+    case EVENT_GO: return 0;
+    case EVENT_LAP: return 1;
+    case EVENT_CHECKPOINT: return 1;
+    case EVENT_FINISH: return 1;
+    case EVENT_FALL: return 1;
+    case EVENT_DESTROYED: return 1;
+    case EVENT_KO: return 2;
+    case EVENT_HIT: return 2;
+    case EVENT_DAMAGED: return 1;
+    case EVENT_BOOST: return 1;
+    case EVENT_WALL: return 1;
+    case EVENT_PIT: return 1;
+    case EVENT_OVERTAKE: return 2;
+    case EVENT_RESPAWNED: return 1;
+    case EVENT_LAND: return 1;
+    case EVENT_BOOSTEND: return 1;
+    case EVENT_WRONGWAY: return 1;
+    default: return 0;
   }
 }
 

@@ -9,7 +9,8 @@ here = os.path.dirname(os.path.abspath(__file__))
 SCHEMA = os.path.join(here, "modes.toml")
 
 TOP_KEYS = {"codec", "api", "op", "event", "setup", "seat_read", "race_read", "action"}
-API_KEYS = {"number", "budget", "queue", "globals", "seat_words", "locals", "rules", "sorts", "package_bytes", "seats"}
+API_KEYS = {"number", "budget", "queue", "globals", "seat_words", "locals", "rules", "sorts", "package_bytes", "seats",
+            "team_words", "teams", "waits", "wait_locals", "subs"}
 OP_KEYS = {"name", "code", "operands", "doc"}
 EVENT_KEYS = {"name", "id", "kind", "binds", "doc"}
 SETUP_KEYS = {"name", "id", "args", "where", "doc", "table"}
@@ -17,7 +18,7 @@ ARG_KEYS = {"type", "name", "least", "most", "default"}
 READ_KEYS = {"name", "id", "type", "doc"}
 ACTION_KEYS = {"name", "id", "args", "where", "doc"}
 OPERANDS = {"u8": 1, "u16": 2, "u32": 4, "i32": 4}
-TYPES = {"int", "real", "bool", "seat"}
+TYPES = {"int", "real", "bool", "seat", "seats", "vec"}
 PASCAL = re.compile(r"[A-Z][A-Za-z0-9]*\Z")
 WORD = re.compile(r"[a-z][a-z_]*(?:[ .][a-z][a-z_]*)*\Z")
 
@@ -97,8 +98,10 @@ def load(path=SCHEMA):
     for e in events:
         if e.get("kind") not in ("continuous", "discrete"):
             raise SchemaError(f"event {e['name']}: kind continuous or discrete")
-        if e.get("binds", "seat") != "seat":
-            raise SchemaError(f"event {e['name']}: binds a seat or nothing")
+        if e.get("binds", "seat") not in ("seat", "seat seat", "seat int"):
+            raise SchemaError(f"event {e['name']}: binds a seat, two seats, a seat and an int, or nothing")
+        if "binds" in e and e["kind"] == "continuous" and e["binds"] != "seat":
+            raise SchemaError(f"event {e['name']}: a continuous event binds a seat or nothing")
     setups = numbered(raw.get("setup", []), SETUP_KEYS, "setup")
     for s in setups:
         for a in s.get("args", []):

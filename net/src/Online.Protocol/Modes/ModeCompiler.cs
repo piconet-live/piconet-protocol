@@ -13,24 +13,39 @@ public sealed record ModeCompilation(byte[]? Package, ModePackage? Mode, string?
 
 /// <summary>The one compiler of game modes (D11 of the design, piconet-docs research/game-modes/): a <c>.fzmode</c>
 /// file to its package (formats.md section 9), for the launcher (checks while writing, the lobby) and the service
-/// (uploads). The language is language.md's; this is api 1's first slice: the header, parameters, the setup words,
-/// constants, globals and seat variables, rules on every step, each seat and out, <c>every(T)</c>, and the
-/// statements and expressions Overdrive and its like need (no sub, wait, board, team or seats variables yet). The
-/// vocabulary is protocol/modes.toml's, through the generated <see cref="ModeWords"/>. The first error stops the
-/// compile; warnings are gathered.</summary>
+/// (uploads). The language is language.md's: the header, parameters, the setup words, constants, variables kept for
+/// the race, a seat or a team, subs, rules, waits, the set helpers, vecs, random numbers, and the standard library's
+/// macros and subs (<see cref="ModeLibrary"/>, compiled with every file); no board yet. The vocabulary is
+/// protocol/modes.toml's, through the generated <see cref="ModeWords"/>. The first error stops the compile; warnings
+/// are gathered.</summary>
 public static class ModeCompiler
 {
     /// <summary>A message as the compiler gives them: "line N: message".</summary>
     public static string Message(int line, string message) =>
         string.Create(CultureInfo.InvariantCulture, $"line {line}: {message}");
 
-    public static ModeCompilation Compile(string source)
+    public static ModeCompilation Compile(string source) =>
+        Compile(source, ModeLibrary.Macros, ModeLibrary.Subs);
+
+    /// <summary>The standard library's macros and subs by name (std.fzmode).</summary>
+    public static (IReadOnlyList<string> Macros, IReadOnlyList<string> Subs) Library =>
+        ([.. ModeLibrary.Macros.Keys.Order(StringComparer.Ordinal)], [.. ModeLibrary.Subs.Select(s => s.Name)]);
+
+    /// <summary>A compile with another library's text than the build's (a test's own macros and subs).</summary>
+    public static ModeCompilation Compile(string source, string library)
+    {
+        var (macros, subs) = ModeLibrary.Read(library);
+        return Compile(source, macros, subs);
+    }
+
+    private static ModeCompilation Compile(string source, IReadOnlyDictionary<string, ModeMacro> macros,
+        IReadOnlyList<ModeSubItem> subs)
     {
         var warnings = new List<string>();
         try
         {
-            var items = ModeParser.Parse(ModeLexer.Tokens(source, warnings));
-            var (mode, budget) = new Build(warnings).File(items, source);
+            var items = ModeParser.Parse(ModeLexer.Tokens(source, warnings), macros);
+            var (mode, budget) = new Build(warnings, subs).File(items, source);
             var package = mode.Write();
             if (package.Length > ModeWords.PackageBytes)
             {
@@ -46,15 +61,18 @@ public static class ModeCompiler
     }
 
     /// <summary>One compile: the file's items in their order, each declared before it is used.</summary>
-    private sealed class Build(List<string> warnings)
+    private sealed class Build(List<string> warnings, IReadOnlyList<ModeSubItem> library)
     {
         private readonly ModeNames _names = new();
         private readonly List<ModeParam> _params = [];
         private readonly List<ModeSetupWord> _setups = [];
         private readonly List<int> _globals = [];
         private readonly List<int> _seatWords = [];
+        private readonly List<int> _teamWords = [];
         private readonly List<ModeRule> _rules = [];
         private ModeEmitter? _emitter;
+        // the rule instances that may wait at once, so far (the api's waits)
+        private int _waiting;
 
         public (ModePackage Mode, long Budget) File(List<ModeItem> items, string source)
         {
@@ -65,9 +83,16 @@ public static class ModeCompiler
                 throw new ModeCompileException(header.ApiLine, $"api {api} is not one this build knows: its newest is api {ModeWords.Api}");
             }
             _emitter = new ModeEmitter(_names, warnings);
+            Subs(items.OfType<ModeSubItem>().ToList());
             foreach (var item in items.Skip(1))
             {
                 Item(item);
+            }
+            // stop_all ends nothing (rule 0x80 only brakes): a mode with it must reach an end of its own
+            if (_emitter.Used.TryGetValue(ModeAction.StopAll, out var stopLine) && !_emitter.Used.ContainsKey(ModeAction.EndRace)
+                && !_setups.Any(s => s.Id == ModeSetup.ClockLimit))
+            {
+                throw new ModeCompileException(stopLine, "stop_all only brakes the machines: a mode with it needs end_race or clock_limit, or its race never ends");
             }
             var mode = new ModePackage
             {
@@ -79,6 +104,7 @@ public static class ModeCompiler
                 Setups = _setups,
                 Globals = _globals,
                 SeatWords = _seatWords,
+                TeamWords = _teamWords,
                 Rules = _rules,
                 Code = _emitter.Code,
                 Source = source,
@@ -105,6 +131,11 @@ public static class ModeCompiler
                     break;
                 case ModeRuleItem rule:
                     Rule(rule);
+                    break;
+                case ModeSubItem:
+                    break;   // (declared before the items, Subs)
+                case ModeTimeArgument time:
+                    TimeArgument(time);
                     break;
                 default:
                     throw new ModeCompileException(item.Line, "this is not an item of api 1");
@@ -218,14 +249,19 @@ public static class ModeCompiler
 
         private void Variable(ModeVariableItem item)
         {
-            var (kind, list, limit) = item.PerSeat
-                ? (ModeNameKind.SeatVariable, _seatWords, ModeWords.SeatWords)
-                : (ModeNameKind.Global, _globals, ModeWords.Globals);
+            var (kind, list, limit, most) = item.Scope switch
+            {
+                ModeScope.Seat => (ModeNameKind.SeatVariable, _seatWords, ModeWords.SeatWords, "words a seat"),
+                ModeScope.Team => (ModeNameKind.TeamVariable, _teamWords, ModeWords.TeamWords, "words a team"),
+                _ => (ModeNameKind.Global, _globals, ModeWords.Globals, "globals"),
+            };
             if (list.Count >= limit)
             {
-                throw new ModeCompileException(item.Line, item.PerSeat
-                    ? $"a mode keeps at most {limit} words a seat"
-                    : $"a mode has at most {limit} globals");
+                throw new ModeCompileException(item.Line, $"a mode keeps at most {limit} {most}");
+            }
+            if (item.Type == ModeType.Vec)
+            {
+                throw new ModeCompileException(item.Line, "a vec is a value of the step, not one to keep: keep its x, y and z as reals");
             }
             var start = item.Value is null ? (item.Type == ModeType.Seat ? -1 : 0)
                 : _names.Constant(item.Value, item.Type, $"{item.Name}'s start value");
@@ -248,16 +284,27 @@ public static class ModeCompiler
             {
                 throw new ModeCompileException(item.Line, $"{e.Name} binds {(e.BindsSeat ? "seat, and takes no name" : "nothing")}");
             }
+            if (item.Second is not null && e.Second is null)
+            {
+                throw new ModeCompileException(item.Line, $"{e.Name} binds one name, its seat");
+            }
             if (!e.Continuous && item.Whiles.Count > 0)
             {
                 throw new ModeCompileException(item.Whiles[0].Line, $"while is for the events that go on (every step, each seat): {e.Name} happens once, so its rule takes when");
             }
-            if (item.EveryTime is { } time)
-            {
-                EveryTime(time);
-            }
             var before = _emitter!.Cost;
-            _rules.Add(_emitter.Rule(item, e.Id, e.BindsSeat));
+            var (rule, waits) = _emitter.Rule(item, e.Id, e.BindsSeat, e.Second);
+            _rules.Add(rule);
+            if (waits)
+            {
+                // a waiting instance resumes in the step's waits and may fire again later in the step: twice its code
+                _emitter.Count(_emitter.Cost - before);
+                _waiting += e.BindsSeat ? ModeWords.Seats : 1;
+                if (_waiting > ModeWords.Waits)
+                {
+                    throw new ModeCompileException(item.Line, $"a mode has at most {ModeWords.Waits} rules waiting at once, a rule on a seat counted for every seat: with this one, {_waiting} could");
+                }
+            }
             if (_emitter.Cost > ModeWords.Budget)
             {
                 throw new ModeCompileException(item.Line, string.Create(CultureInfo.InvariantCulture,
@@ -265,9 +312,11 @@ public static class ModeCompiler
             }
         }
 
-        /// <summary><c>every(T)</c>'s T: a time of at least one step, or a delay parameter that is never less.</summary>
-        private void EveryTime(ModeExpr time)
+        /// <summary>A library macro's time (<c>every(T)</c>'s T): a time of at least one step, or a delay parameter that
+        /// is never less.</summary>
+        private void TimeArgument(ModeTimeArgument item)
         {
+            var time = item.Value;
             if (time is ModeLiteral { Time: true } literal && literal.Bits >= 1)
             {
                 return;
@@ -277,7 +326,29 @@ public static class ModeCompiler
             {
                 return;
             }
-            throw new ModeCompileException(time.Line, "every takes a time of at least one step (every(10s)) or a delay parameter");
+            throw new ModeCompileException(time.Line, $"{item.Macro} takes a time of at least one step ({item.Macro}(10s)) or a delay parameter");
+        }
+
+        /// <summary>The library's subs and the file's, declared before any item (a sub may be called from anywhere in
+        /// the file); a sub that calls itself, directly or through others, is refused.</summary>
+        private void Subs(List<ModeSubItem> subs)
+        {
+            foreach (var sub in library)
+            {
+                _names.Declare(sub.Line, sub.Name, new ModeDeclared(ModeNameKind.Sub, sub.Returns ?? ModeType.Int, -1, Sub: sub));
+            }
+            if (subs.Count > ModeWords.Subs)
+            {
+                throw new ModeCompileException(subs[ModeWords.Subs].Line, $"a mode has at most {ModeWords.Subs} subs");
+            }
+            foreach (var sub in subs)
+            {
+                _names.Declare(sub.Line, sub.Name, new ModeDeclared(ModeNameKind.Sub, sub.Returns ?? ModeType.Int, 0, Sub: sub));
+            }
+            foreach (var sub in subs)
+            {
+                ModeSubCalls.RefuseCycle(sub, name => _names.Find(name)?.Sub);
+            }
         }
     }
 }

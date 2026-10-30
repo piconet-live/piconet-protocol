@@ -1,8 +1,9 @@
 namespace Online.Protocol;
 
-/// <summary>Reads a mode file's tokens into its tree (the language's grammar, section 13; the first slice's subset:
-/// no sub, wait, board, team or seats variables). It knows the syntax only; names and types are the compiler's. The
-/// standard library's <c>every(T) { }</c> is expanded here into the rule it stands for (the language's section 9).</summary>
+/// <summary>Reads a mode file's tokens into its tree (the language's grammar, section 13; no board yet). It knows the
+/// syntax only; names and types are the compiler's. A use of a standard library macro (<see cref="ModeLibrary"/>:
+/// <c>every(10s) { }</c>, <c>lives 3;</c>) is expanded here into the items it stands for, its arguments' tokens put
+/// in for its parameters' names (the language's section 9).</summary>
 internal sealed class ModeParser
 {
     /// <summary>The language's keywords (section 12) and <c>race</c>: none may name a parameter or a variable.</summary>
@@ -12,7 +13,11 @@ internal sealed class ModeParser
         "global", "seat", "team", "int", "real", "bool", "seats", "sub", "rule", "event", "every", "each", "when",
         "while", "do", "board", "if", "else", "for", "in", "where", "by", "desc", "repeat", "wait", "abort", "restart",
         "call", "return", "and", "or", "not", "true", "false", "none", "on", "off", "laps", "course", "macro", "race",
+        "vec",
     ];
+
+    /// <summary>A macro's uses inside macros' bodies go at most this deep (the library's are two).</summary>
+    private const int MostDepth = 4;
 
     private static readonly Dictionary<string, ModeType> Types = new()
     {
@@ -20,21 +25,62 @@ internal sealed class ModeParser
         ["real"] = ModeType.Real,
         ["bool"] = ModeType.Bool,
         ["seat"] = ModeType.Seat,
+        ["seats"] = ModeType.Seats,
+        ["vec"] = ModeType.Vec,
     };
 
-    private static readonly HashSet<string> SetHelpers = ["count", "min", "max", "sum", "any", "all"];
+    private static readonly HashSet<string> SetHelpers = ["count", "min", "max", "sum", "any", "all", "first", "last", "nth"];
+
+    /// <summary>The helpers whose first argument is a set of seats (the others' is a value for each seat).</summary>
+    private static readonly HashSet<string> OverSets = ["count", "first", "last", "nth"];
 
     private static readonly string[] Comparisons = ["==", "!=", "<", "<=", ">", ">="];
 
     private static readonly string[] Assignments = ["=", "+=", "-=", "*=", "/="];
 
     private readonly List<ModeToken> _tokens;
+    private readonly IReadOnlyDictionary<string, ModeMacro> _macros;
+    private readonly int _depth;
+    // A macro's expansion: the label its rules take when they have none ("every 10s").
+    private readonly string _label;
     private int _at;
 
-    private ModeParser(List<ModeToken> tokens) => _tokens = tokens;
+    private ModeParser(List<ModeToken> tokens, IReadOnlyDictionary<string, ModeMacro> macros, int depth = 0, string label = "")
+    {
+        _tokens = tokens;
+        _macros = macros;
+        _depth = depth;
+        _label = label;
+    }
 
-    /// <summary>The file's items in its order, the header first.</summary>
-    public static List<ModeItem> Parse(List<ModeToken> tokens) => new ModeParser(tokens).File();
+    /// <summary>The file's items in its order, the header first; the uses of <paramref name="macros"/> expanded.</summary>
+    public static List<ModeItem> Parse(List<ModeToken> tokens, IReadOnlyDictionary<string, ModeMacro> macros) =>
+        new ModeParser(tokens, macros).File();
+
+    /// <summary>A library's text: its macros (each with its body's tokens, kept to be put in at a use) and its subs.</summary>
+    public static (Dictionary<string, ModeMacro> Macros, List<ModeSubItem> Subs) Library(List<ModeToken> tokens)
+    {
+        var parser = new ModeParser(tokens, new Dictionary<string, ModeMacro>());
+        var macros = new Dictionary<string, ModeMacro>();
+        var subs = new List<ModeSubItem>();
+        while (parser.Current.Kind != ModeTokenKind.End)
+        {
+            if (parser.Current.Is("macro"))
+            {
+                var macro = parser.Macro();
+                macros.Add(macro.Name, macro);
+            }
+            else if (parser.Current.Is("sub"))
+            {
+                subs.Add(parser.Sub());
+            }
+            else
+            {
+                throw parser.Error($"a library holds macros and subs, not {Describe(parser.Current)}");
+            }
+        }
+        return (macros, subs);
+    }
 
     private ModeToken Current => _tokens[_at];
 
@@ -103,7 +149,7 @@ internal sealed class ModeParser
     {
         if (Current.Kind != ModeTokenKind.Name || !Types.TryGetValue(Current.Text, out var type))
         {
-            throw Error($"a type (int, real, bool or seat) is expected here, not {Describe(Current)}");
+            throw Error($"a type (int, real, bool, seat, seats or vec) is expected here, not {Describe(Current)}");
         }
         _at++;
         return type;
@@ -112,11 +158,23 @@ internal sealed class ModeParser
     private List<ModeItem> File()
     {
         var items = new List<ModeItem> { Header() };
+        Items(items);
+        return items;
+    }
+
+    private void Items(List<ModeItem> items)
+    {
         while (Current.Kind != ModeTokenKind.End)
         {
-            items.Add(Item());
+            if (Current.Kind == ModeTokenKind.Name && _macros.TryGetValue(Current.Text, out var macro))
+            {
+                items.AddRange(Expand(macro));
+            }
+            else
+            {
+                items.Add(Item());
+            }
         }
-        return items;
     }
 
     private ModeHeaderItem Header()
@@ -170,15 +228,16 @@ internal sealed class ModeParser
         var token = Current;
         if (token.Kind != ModeTokenKind.Name)
         {
-            throw Error($"a parameter, a setup word, a variable or a rule is expected here, not {Describe(token)}");
+            throw Error($"a parameter, a setup word, a variable, a sub or a rule is expected here, not {Describe(token)}");
         }
         return token.Text switch
         {
             "param" => Param(),
             "const" => Const(),
-            "global" or "seat" => Variable(),
+            "global" or "seat" or "team" => Variable(),
+            "sub" => Sub(),
             "rule" => Rule(),
-            "every" when PeekToken(1).Is("(") => Every(),
+            "macro" => throw Error("macros are the standard library's (api 1): a mode file reuses its code with a sub"),
             _ => Setup(),
         };
     }
@@ -269,7 +328,149 @@ internal sealed class ModeParser
         var name = NewName("a variable");
         var value = Accept("=") ? Expression() : null;
         Expect(";");
-        return new ModeVariableItem(token.Line, token.Text == "seat", type, name, value);
+        var scope = token.Text switch
+        {
+            "seat" => ModeScope.Seat,
+            "team" => ModeScope.Team,
+            _ => ModeScope.Global,
+        };
+        return new ModeVariableItem(token.Line, scope, type, name, value);
+    }
+
+    /// <summary><c>sub [TYPE] NAME(TYPE NAME, ...) { }</c>.</summary>
+    private ModeSubItem Sub()
+    {
+        var line = Take().Line;
+        ModeType? returns = Current.Kind == ModeTokenKind.Name && Types.ContainsKey(Current.Text) ? Type() : null;
+        var name = NewName("a sub");
+        Expect("(");
+        var parameters = new List<ModeSubParam>();
+        if (!Accept(")"))
+        {
+            do
+            {
+                var type = Type();
+                parameters.Add(new ModeSubParam(type, NewName("a sub's parameter")));
+            }
+            while (Accept(","));
+            Expect(")");
+        }
+        return new ModeSubItem(line, returns, name, parameters, Block());
+    }
+
+    /// <summary>A library's <c>macro NAME(KIND NAME, ...) { items }</c>: its body kept as tokens.</summary>
+    private ModeMacro Macro()
+    {
+        var line = Take().Line;
+        var name = Take().Text;
+        Expect("(");
+        var parameters = new List<(string Kind, string Name)>();
+        if (!Accept(")"))
+        {
+            do
+            {
+                var kind = Take().Text;
+                if (kind is not ("time" or "int" or "block"))
+                {
+                    throw Error($"a macro's parameter is a time, an int or a block, not '{kind}'");
+                }
+                parameters.Add((kind, Take().Text));
+            }
+            while (Accept(","));
+            Expect(")");
+        }
+        if (parameters.Take(parameters.Count - 1).Any(p => p.Kind == "block"))
+        {
+            throw new ModeCompileException(line, $"the macro {name}'s block is its last parameter");
+        }
+        var start = _at + 1;
+        SkipBraces();
+        return new ModeMacro(name, parameters, _tokens.Skip(start).Take(_at - start - 1).ToList());
+    }
+
+    /// <summary>Past a <c>{ }</c> and everything in it, braces nested.</summary>
+    private void SkipBraces()
+    {
+        Expect("{");
+        for (var depth = 1; depth > 0; _at++)
+        {
+            if (Current.Kind == ModeTokenKind.End)
+            {
+                throw Error("a block opened with { is never closed with }");
+            }
+            depth += Current.Is("{") ? 1 : Current.Is("}") ? -1 : 0;
+        }
+    }
+
+    /// <summary>A macro's use, <c>NAME(args) { block }</c> or <c>NAME args;</c>: its body's items, with the tokens of
+    /// each argument put in for its parameter's name (an expression in parentheses) and the use's line on every
+    /// token of the body. Its rules without a label are labelled by the use (<c>every 10s</c>).</summary>
+    private List<ModeItem> Expand(ModeMacro macro)
+    {
+        var use = Take();
+        if (_depth >= MostDepth)
+        {
+            throw new ModeCompileException(use.Line, $"the macro {macro.Name} is used inside macros {MostDepth} deep");
+        }
+        var values = macro.Params.Where(p => p.Kind != "block").ToList();
+        var arguments = new List<(List<ModeToken> Tokens, ModeExpr? Value)>();
+        var parenthesised = Accept("(");
+        if (parenthesised ? !Current.Is(")") : !Current.Is(";"))
+        {
+            do
+            {
+                var start = _at;
+                var value = Expression();
+                arguments.Add((_tokens.Skip(start).Take(_at - start).ToList(), value));
+            }
+            while (Accept(","));
+        }
+        Expect(parenthesised ? ")" : ";");
+        if (arguments.Count != values.Count)
+        {
+            throw new ModeCompileException(use.Line, $"{macro.Name} takes {values.Count} value{(values.Count == 1 ? "" : "s")} ({string.Join(", ", values.Select(v => v.Name))}), not {arguments.Count}");
+        }
+        if (macro.Params.Count > 0 && macro.Params[^1].Kind == "block")
+        {
+            if (!parenthesised || !Current.Is("{"))
+            {
+                throw new ModeCompileException(use.Line, $"{macro.Name} takes a block: {macro.Name}({string.Join(", ", values.Select(v => v.Name))}) {{ ... }}");
+            }
+            var start = _at;
+            SkipBraces();
+            arguments.Add((_tokens.Skip(start).Take(_at - start).ToList(), null));
+            Accept(";");
+        }
+        var items = new List<ModeItem>();
+        var given = new Dictionary<string, List<ModeToken>>();
+        for (var i = 0; i < macro.Params.Count; i++)
+        {
+            var (kind, name) = macro.Params[i];
+            var tokens = arguments[i].Tokens;
+            if (kind == "time")
+            {
+                items.Add(new ModeTimeArgument(use.Line, macro.Name, arguments[i].Value!));
+            }
+            given[name] = kind == "block" ? tokens
+                : [new ModeToken(ModeTokenKind.Symbol, "(", tokens[0].Line), .. tokens, new ModeToken(ModeTokenKind.Symbol, ")", tokens[^1].Line)];
+        }
+        var body = new List<ModeToken>();
+        foreach (var token in macro.Body)
+        {
+            if (token.Kind == ModeTokenKind.Name && given.TryGetValue(token.Text, out var argument))
+            {
+                body.AddRange(argument);
+            }
+            else
+            {
+                body.Add(token with { Line = use.Line });
+            }
+        }
+        body.Add(new ModeToken(ModeTokenKind.End, $"the end of {macro.Name}", use.Line));
+        var label = string.Join(", ", arguments.Where(a => a.Value is not null).Select(a => string.Join(' ', a.Tokens.Select(t => t.Text))));
+        var expansion = new ModeParser(body, _macros, _depth + 1, label.Length > 0 ? $"{macro.Name} {label}" : macro.Name);
+        expansion.Items(items);
+        return items;
     }
 
     /// <summary>A setup word (its words matched against the api's, the longest first) and its arguments.</summary>
@@ -358,9 +559,9 @@ internal sealed class ModeParser
     private ModeRuleItem Rule()
     {
         var line = Take().Line;
-        var label = Current.Kind == ModeTokenKind.Text ? Take().Text : "";
+        var label = Current.Kind == ModeTokenKind.Text ? Take().Text : _label;
         Expect("{");
-        var (eventName, bound) = Event();
+        var (eventName, bound, second) = Event();
         var whens = new List<ModeExpr>();
         var whiles = new List<ModeExpr>();
         while (Current.Is("when") || Current.Is("while"))
@@ -371,11 +572,11 @@ internal sealed class ModeParser
         Expect("do");
         var body = Block();
         Expect("}");
-        return new ModeRuleItem(line, label, eventName, bound, whens, whiles, body);
+        return new ModeRuleItem(line, label, eventName, bound, whens, whiles, body, second);
     }
 
-    /// <summary><c>event NAME [(names)];</c>: the event's words as one name, and the name it binds.</summary>
-    private (string Event, string? Bound) Event()
+    /// <summary><c>event NAME [(names)];</c>: the event's words as one name, and the names it binds (one or two).</summary>
+    private (string Event, string? Bound, string? Second) Event()
     {
         Expect("event");
         var words = new List<string>();
@@ -387,38 +588,22 @@ internal sealed class ModeParser
         {
             throw Error($"an event is expected here, not {Describe(Current)}");
         }
-        string? bound = null;
+        string? bound = null, second = null;
         if (Accept("("))
         {
             bound = NewName("the event's seat");
-            if (Current.Is(","))
+            if (Accept(","))
             {
-                throw Error("an event of api 1 binds one name, its seat");
+                second = NewName("the event's second name");
+                if (Current.Is(","))
+                {
+                    throw Error("an event of api 1 binds at most two names");
+                }
             }
             Expect(")");
         }
         Expect(";");
-        return (string.Join(' ', words), bound);
-    }
-
-    /// <summary><c>every(T) { body }</c>: the standard library's macro, a rule on every step while the race clock is on
-    /// a multiple of T after GO.</summary>
-    private ModeRuleItem Every()
-    {
-        var line = Take().Line;
-        Expect("(");
-        var start = _at;
-        var time = Expression();
-        var text = string.Join(' ', _tokens.Skip(start).Take(_at - start).Select(t => t.Text));
-        Expect(")");
-        var body = Block();
-        ModeExpr Race(string field) => new ModeField(line, new ModeName(line, "race"), field);
-        var steps = Race("steps");
-        var zero = new ModeLiteral(line, ModeType.Int, 0, "0");
-        var condition = new ModeBinary(line, "and",
-            new ModeBinary(line, "and", Race("started"), new ModeBinary(line, ">", steps, zero)),
-            new ModeBinary(line, "==", new ModeBinary(line, "%", steps, time), zero));
-        return new ModeRuleItem(line, "every " + text, "every step", null, [], [condition], body, time);
+        return (string.Join(' ', words), bound, second);
     }
 
     private List<ModeStatement> Block()
@@ -448,6 +633,10 @@ internal sealed class ModeParser
             "if" when token.Kind == ModeTokenKind.Name => If(),
             "for" when token.Kind == ModeTokenKind.Name => ForEach(),
             "repeat" when token.Kind == ModeTokenKind.Name => Repeat(),
+            "wait" when token.Kind == ModeTokenKind.Name => Wait(),
+            "call" when token.Kind == ModeTokenKind.Name => CallStatement(),
+            "return" when token.Kind == ModeTokenKind.Name => Return(),
+            "team" when token.Kind == ModeTokenKind.Name => TeamAction(),
             _ when IsActionWord(token) => ActionStatement(),
             _ => Assignment(),
         };
@@ -455,7 +644,45 @@ internal sealed class ModeParser
 
     private bool IsActionWord(ModeToken token) =>
         token.Kind == ModeTokenKind.Name && !PeekToken(1).Is(".") && !Assignments.Any(a => PeekToken(1).Is(a))
-        && ModeWords.Actions.Any(a => a.Name == token.Text);
+        && ModeWords.Actions.Any(a => a.Name == token.Text || (a.Name.StartsWith(token.Text + " ", StringComparison.Ordinal)
+            && !a.Name.EndsWith(" off", StringComparison.Ordinal)));
+
+    private ModeWait Wait()
+    {
+        var line = Take().Line;
+        var steps = Expression();
+        var kind = Current.Is("abort") || Current.Is("restart") ? Take().Text : "";
+        ModeExpr? condition = null;
+        if (kind.Length > 0)
+        {
+            Expect("when");
+            condition = Expression();
+        }
+        Expect(";");
+        return new ModeWait(line, steps, kind, condition);
+    }
+
+    private ModeCallStatement CallStatement()
+    {
+        var line = Take().Line;
+        if (Current.Kind != ModeTokenKind.Name || !PeekToken(1).Is("("))
+        {
+            throw Error("call names a sub and its arguments: call name(a, b);");
+        }
+        var name = Take();
+        Expect("(");
+        var call = Call(name);
+        Expect(";");
+        return new ModeCallStatement(line, call);
+    }
+
+    private ModeReturn Return()
+    {
+        var line = Take().Line;
+        var value = Current.Is(";") ? null : Expression();
+        Expect(";");
+        return new ModeReturn(line, value);
+    }
 
     private ModeLocal LocalStatement()
     {
@@ -472,27 +699,65 @@ internal sealed class ModeParser
         var line = Current.Line;
         var target = Postfix();
         var op = Assignments.FirstOrDefault(Current.Is)
-            ?? throw Error($"a statement is expected here: {Describe(Current)} does not start one");
+            ?? throw (target is ModeName word
+                ? new ModeCompileException(line, $"'{word.Name}' is not a word of api {ModeWords.Api}")
+                : Error($"a statement is expected here: {Describe(Current)} does not start one"));
         _at++;
         var value = Expression();
         Expect(";");
         return new ModeAssign(line, target, op, value);
     }
 
+    /// <summary>An action: its words (<c>no contact</c>), its arguments with commas or without (<c>no contact a b</c>,
+    /// <c>cpu_mode s, 4</c>), and a last <c>off</c> that names the word's <c>off</c> form (<c>respawns s off</c>,
+    /// <c>ghost s off</c>).</summary>
     private ModeActionStatement ActionStatement()
     {
         var token = Take();
-        var arguments = new List<ModeExpr>();
-        if (!Current.Is(";"))
+        var name = token.Text;
+        while (!ModeWords.Actions.Any(a => a.Name == name) && Current.Kind == ModeTokenKind.Name
+               && ModeWords.Actions.Any(a => a.Name.StartsWith(name + " " + Current.Text, StringComparison.Ordinal)))
         {
-            arguments.Add(Expression());
-            while (Accept(","))
+            name += " " + Take().Text;
+        }
+        if (!ModeWords.Actions.Any(a => a.Name == name))
+        {
+            throw Error($"'{name}' is not an action of api {ModeWords.Api}");
+        }
+        var arguments = new List<ModeExpr>();
+        while (!Current.Is(";"))
+        {
+            if (Current.Is("off") && ModeWords.Actions.Any(a => a.Name == name + " off"))
             {
-                arguments.Add(Expression());
+                Take();
+                name += " off";
+                break;
             }
+            if (arguments.Count > 0)
+            {
+                Accept(",");
+            }
+            arguments.Add(Expression());
         }
         Expect(";");
-        return new ModeActionStatement(token.Line, token.Text, arguments);
+        return new ModeActionStatement(token.Line, name, arguments);
+    }
+
+    /// <summary><c>team T no contact;</c>: the action <c>team no contact</c> on team T.</summary>
+    private ModeActionStatement TeamAction()
+    {
+        var line = Take().Line;
+        var team = Expression();
+        foreach (var word in new[] { "no", "contact" })
+        {
+            if (!Current.Is(word))
+            {
+                throw Error($"team T no contact; is the team action: '{word}' is expected here, not {Describe(Current)}");
+            }
+            Take();
+        }
+        Expect(";");
+        return new ModeActionStatement(line, "team no contact", [team]);
     }
 
     private ModeIf If()
@@ -515,6 +780,7 @@ internal sealed class ModeParser
         var line = Take().Line;
         Expect("each");
         string bound;
+        ModeExpr? set = null;
         if (Accept("seat"))
         {
             bound = "seat";
@@ -523,11 +789,7 @@ internal sealed class ModeParser
         {
             bound = NewName("the loop's seat");
             Expect("in");
-            if (!Current.Is("seats"))
-            {
-                throw Error($"for each walks the race's seats (in seats), not {Describe(Current)}");
-            }
-            _at++;
+            set = AllSeats(Expression());
         }
         var where = Accept("where") ? Expression() : null;
         var keys = new List<ModeSortKey>();
@@ -539,8 +801,11 @@ internal sealed class ModeParser
             }
             while (Accept(","));
         }
-        return new ModeForEach(line, bound, where, keys, Block());
+        return new ModeForEach(line, bound, where, keys, Block(), set);
     }
+
+    /// <summary>A loop's or helper's set: null for <c>seats</c>, the race's every seat (a walk with no set to test).</summary>
+    private static ModeExpr? AllSeats(ModeExpr set) => set is ModeName { Name: "seats" } ? null : set;
 
     private ModeRepeat Repeat()
     {
@@ -588,8 +853,8 @@ internal sealed class ModeParser
     private ModeExpr Comparison()
     {
         var left = Sum();
-        var op = Comparisons.FirstOrDefault(Current.Is);
-        if (op is null || Current.Kind != ModeTokenKind.Symbol)
+        var op = Current.Is("in") ? "in" : Comparisons.FirstOrDefault(Current.Is);
+        if (op is null || (Current.Kind != ModeTokenKind.Symbol && op != "in"))
         {
             return left;
         }
@@ -611,7 +876,7 @@ internal sealed class ModeParser
     private ModeExpr Product()
     {
         var left = Unary();
-        while (Current.Kind == ModeTokenKind.Symbol && (Current.Text == "*" || Current.Text == "/" || Current.Text == "%"))
+        while (Current.Kind == ModeTokenKind.Symbol && (Current.Text == "*" || Current.Text == "/" || Current.Text == "%" || Current.Text == "&"))
         {
             var token = Take();
             left = new ModeBinary(token.Line, token.Text, left, Unary());
@@ -698,7 +963,7 @@ internal sealed class ModeParser
         if (SetHelpers.Contains(token.Text) && !Current.Is(")"))
         {
             var first = Expression();
-            if (Current.Is("for") || Current.Is("where") || token.Text == "count")
+            if (Current.Is("for") || Current.Is("where") || OverSets.Contains(token.Text))
             {
                 return SetCall(token, first);
             }
@@ -728,27 +993,56 @@ internal sealed class ModeParser
         return new ModeCall(name.Line, name.Text, arguments);
     }
 
-    /// <summary>The rest of a set helper after its first expression: <c>count(seats where c)</c>,
-    /// <c>min(e for each NAME where c)</c>.</summary>
+    /// <summary>The rest of a set helper after its first expression: <c>count(S where c)</c>,
+    /// <c>first(S where c by key [desc], ...)</c> and <c>last</c>, <c>nth(S where c by key, i)</c> (with keys, the
+    /// last of the list is i), or <c>min(e for each NAME in S where c)</c>.</summary>
     private ModeSetCall SetCall(ModeToken helper, ModeExpr first)
     {
         var bound = "seat";
         ModeExpr? value = first;
-        if (helper.Text == "count")
+        ModeExpr? set = null;
+        if (OverSets.Contains(helper.Text))
         {
-            if (first is not ModeName { Name: "seats" })
-            {
-                throw new ModeCompileException(helper.Line, "count counts the race's seats: count(seats where c)");
-            }
+            set = AllSeats(first);
             value = null;
         }
-        if (Accept("for"))
+        else if (Accept("for"))
         {
             Expect("each");
             bound = Accept("seat") ? "seat" : NewName("the helper's seat");
+            if (Accept("in"))
+            {
+                set = AllSeats(Expression());
+            }
         }
         var where = Accept("where") ? Expression() : null;
+        var keys = new List<ModeSortKey>();
+        if (helper.Text is "first" or "last" or "nth" && Accept("by"))
+        {
+            do
+            {
+                keys.Add(new ModeSortKey(Expression(), Accept("desc")));
+            }
+            while (Accept(","));
+        }
+        ModeExpr? index = null;
+        if (helper.Text == "nth")
+        {
+            if (keys.Count > 0)
+            {
+                var last = keys[^1];
+                keys.RemoveAt(keys.Count - 1);
+                index = last.Descending || keys.Count == 0
+                    ? throw new ModeCompileException(helper.Line, "nth takes its keys, then the place: nth(S where c by key, i)")
+                    : last.Key;
+            }
+            else
+            {
+                Expect(",");
+                index = Expression();
+            }
+        }
         Expect(")");
-        return new ModeSetCall(helper.Line, helper.Text, value, bound, where);
+        return new ModeSetCall(helper.Line, helper.Text, value, bound, where, set, keys, index);
     }
 }

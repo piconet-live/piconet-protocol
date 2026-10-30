@@ -13,7 +13,8 @@ def xml(s):
 
 
 def cs_type(t):
-    return {"int": "ModeType.Int", "real": "ModeType.Real", "bool": "ModeType.Bool", "seat": "ModeType.Seat"}[t]
+    return {"int": "ModeType.Int", "real": "ModeType.Real", "bool": "ModeType.Bool", "seat": "ModeType.Seat",
+            "seats": "ModeType.Seats", "vec": "ModeType.Vec"}[t]
 
 
 def number(v, t):
@@ -43,11 +44,13 @@ def emit(t):
             "    public static int Size(ModeOp op) => op switch", "    {"]
     out += [f"        ModeOp.{o['name']} => {o['size']}," for o in t["ops"]]
     out += ["        _ => 0,", "    };", "",
-            "    /// <summary>The events: name, id, continuous, whether it binds a seat.</summary>",
-            "    public static readonly IReadOnlyList<(string Name, ModeEvent Id, bool Continuous, bool BindsSeat)> Events =",
+            "    /// <summary>The events: name, id, continuous, whether it binds a seat, and the type of the second name it",
+            "    /// binds (null: none; <c>ko(v, by)</c> a seat, <c>out(s, cause)</c> an int).</summary>",
+            "    public static readonly IReadOnlyList<(string Name, ModeEvent Id, bool Continuous, bool BindsSeat, ModeType? Second)> Events =",
             "    ["]
+    second = {"seat seat": "ModeType.Seat", "seat int": "ModeType.Int"}
     out += [f"        ({text(e['name'])}, ModeEvent.{e['pascal']}, {'true' if e['kind'] == 'continuous' else 'false'}, "
-            f"{'true' if 'binds' in e else 'false'})," for e in t["events"]]
+            f"{'true' if 'binds' in e else 'false'}, {second.get(e.get('binds', ''), 'null')})," for e in t["events"]]
     out += ["    ];", "",
             "    /// <summary>The setup words: name, id, arguments (name, type, least, most, default).</summary>",
             "    public static readonly IReadOnlyList<(string Name, ModeSetup Id, IReadOnlyList<ModeArgument> Args)> Setups =",

@@ -35,6 +35,9 @@
     <EmbeddedResource Include="Chat/blocked.txt" LogicalName="Online.Protocol.Chat.blocked.txt" />
     <EmbeddedResource Include="Chat/swears.txt" LogicalName="Online.Protocol.Chat.swears.txt" />
     <EmbeddedResource Include="Chat/LICENSE-profanity-list.txt" LogicalName="Online.Protocol.Chat.LICENSE-profanity-list.txt" />
+    <!-- The game modes' standard library (Modes/ModeLibrary.cs), written in the mode language and compiled with every
+         mode file (piconet-docs research/game-modes/language.md section 9). -->
+    <EmbeddedResource Include="Modes/std.fzmode" LogicalName="Online.Protocol.Modes.std.fzmode" />
   </ItemGroup>
 
 </Project>

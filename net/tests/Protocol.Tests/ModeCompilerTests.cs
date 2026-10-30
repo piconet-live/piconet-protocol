@@ -32,6 +32,11 @@ public sealed class ModeCompilerTests
     [InlineData("words")]
     [InlineData("competitive")]
     [InlineData("pairs")]
+    [InlineData("language")]
+    [InlineData("waits")]
+    [InlineData("race")]
+    [InlineData("knockout")]
+    [InlineData("lives")]
     public void AVectorCompilesToItsPackage(string name)
     {
         var result = CompileVector(name);
@@ -63,6 +68,11 @@ public sealed class ModeCompilerTests
     [InlineData("words")]
     [InlineData("competitive")]
     [InlineData("pairs")]
+    [InlineData("language")]
+    [InlineData("waits")]
+    [InlineData("race")]
+    [InlineData("knockout")]
+    [InlineData("lives")]
     public void APackageReadsBackAsItWasWritten(string name)
     {
         var result = CompileVector(name);
@@ -94,26 +104,57 @@ public sealed class ModeCompilerTests
         Assert.Equal(720, result.Budget);
     }
 
+    /// <summary>A vector's listing's code lines: "  OFFSET  Op operands".</summary>
+    private static List<string> Code(string name) =>
+        ModeDisassembler.List(CompileVector(name).Package!).Split('\n').Select(l => Regex.Match(l, "^  [0-9a-f]{4}  (.*)$"))
+            .Where(m => m.Success).Select(m => m.Groups[1].Value).ToList();
+
     [Fact]
-    public void TheWordsVectorHoldsEveryOperationAndWord()
+    public void TheWordsVectorsHoldEveryOperationAndWord()
     {
         var result = CompileVector("words");
         var mode = result.Mode!;
-        var listing = ModeDisassembler.List(result.Package!);
-        // The listing's code lines: "  OFFSET  Op operands".
-        var code = listing.Split('\n').Select(l => Regex.Match(l, "^  [0-9a-f]{4}  (.*)$")).Where(m => m.Success).Select(m => m.Groups[1].Value).ToList();
-        var ops = code.Select(l => l.Split(' ')[0]).ToHashSet();
+        var race = CompileVector("race").Mode!;
+        // every word, and with the language vector every operation (the words vector's are the first slice's, the
+        // race vector's the race side's of wave 2A)
+        var code = Code("words").Concat(Code("race")).ToList();
+        var ops = code.Concat(Code("language")).Select(l => l.Split(' ')[0]).ToHashSet();
         Assert.Equal(Enum.GetNames<ModeOp>().Order(), ops.Order());
-        Assert.All(ModeWords.SeatReads, r => Assert.Contains(code, l => l.EndsWith("SeatRead " + r.Name, StringComparison.Ordinal)));
+        Assert.All(ModeWords.SeatReads, r => Assert.Contains(code.Concat(Code("language")), l => l.EndsWith("SeatRead " + r.Name, StringComparison.Ordinal)));
         Assert.All(ModeWords.RaceReads, r => Assert.Contains(code, l => l.EndsWith("RaceRead " + r.Name, StringComparison.Ordinal)));
         Assert.All(ModeWords.Actions, a => Assert.Contains(code, l => l.EndsWith("Action " + a.Name, StringComparison.Ordinal)));
-        // every setup word but laps by course (one of the two laps words: the competitive vector has the other)
-        Assert.Equal(ModeWords.Setups.Select(s => s.Id).Where(id => id != ModeSetup.LapsByCourse).Order(), mode.Setups.Select(s => s.Id).Order());
-        Assert.Equal(ModeWords.Events.Select(e => e.Id).Order(), mode.Rules.Select(r => r.Event).Distinct().Order());
+        // every setup word but laps by course (the competitive vector's) and the off forms whose on form the vectors
+        // hold (mine_regen off, restore off: a mode states one of the two)
+        var setups = mode.Setups.Concat(race.Setups).Select(s => s.Id).ToList();
+        Assert.Equal(ModeWords.Setups.Select(s => s.Id).Where(id => id is not (ModeSetup.LapsByCourse or ModeSetup.MineRegen or ModeSetup.RestoreOff)).Order(),
+            setups.Order());
+        Assert.Equal(ModeWords.Events.Select(e => e.Id).Order(), mode.Rules.Concat(race.Rules).Select(r => r.Event).Distinct().Order());
         Assert.Equal(Enum.GetValues<ModeParamKind>(), mode.Params.Select(p => p.Kind).Distinct().Order());
         Assert.Contains(mode.Params, p => p.Type == ModeType.Real);
         Assert.Contains(mode.Setups.SelectMany(s => s.Arguments), a => a.FromParam);
         Assert.Equal(3845, result.Budget);
+    }
+
+    [Fact]
+    public void TheRaceWordsCompileAsTheirRowsSay()
+    {
+        // two names: ko's by and hit's b are seats, out's cause an int, in local 1; a pair event counts every pair
+        var race = CompileVector("race").Mode!;
+        Assert.Equal(2, race.Rules.Single(r => r.Event == ModeEvent.Ko).Locals);
+        Assert.Equal(2, race.Rules.Single(r => r.Event == ModeEvent.Out).Locals);
+        Assert.Contains("binds one name", Errors(Head + "rule \"R\" { event lap(s, t); do { } }\n"));
+        var pair = ModeCompiler.Compile(Head + "rule \"R\" { event hit(a, b); do { a.energy = 1; } }\n");
+        var seat = ModeCompiler.Compile(Head + "rule \"R\" { event lap(a); do { a.energy = 1; } }\n");
+        Assert.Equal(seat.Budget / 30 * 435, pair.Budget);
+        // stop_all ends nothing: it needs an end
+        Assert.Contains("needs end_race or clock_limit", Errors(Head + "rule \"R\" { event go; do { stop_all; } }\n"));
+        Assert.Empty(ModeCompiler.Compile(Head + "rule \"R\" { event go; do { stop_all; end_race; } }\n").Errors);
+        Assert.Empty(ModeCompiler.Compile(Head + "clock_limit 2min;\nrule \"R\" { event go; do { stop_all; } }\n").Errors);
+        // the action words: several words, commas or none, an off form, the team action
+        Assert.Empty(ModeCompiler.Compile(Head + "rule \"R\" { event lap(s); do { respawns s off; ghost s off; no contact s, seats; no contact s seats; team 2 no contact; cpu_mode s, 4; } }\n").Errors);
+        Assert.NotEmpty(Errors(Head + "rule \"R\" { event lap(s); do { real x = s.input.speed; } }\n"));
+        // the library's race macros compile now
+        Assert.Empty(ModeCompiler.Compile(Head + "lives 3;\ntime_limit 5min;\npits_off;\n").Errors);
     }
 
     [Fact]
@@ -177,7 +218,7 @@ public sealed class ModeCompilerTests
     private const string Head = "mode \"Test\" { api 1; }\n";
 
     [Theory]
-    [InlineData(Head + "laps 3;\nrolling_start 1000 km/h;\n", "line 3: 'rolling_start' is not a word of api 1")]
+    [InlineData(Head + "laps 3;\nflying_start 1000 km/h;\n", "line 3: 'flying_start' is not a word of api 1")]
     [InlineData(Head + "global int n;\nrule \"R\" {\n  event every step;\n  do { n = 1.5; }\n}\n",
         "line 5: the int n takes an int, not a real: floor, ceil, round or trunc make an int of a real")]
     [InlineData(Head + "rule \"R\" {\n  event out(s);\n  while race.started;\n  do { eliminate s; }\n}\n",
