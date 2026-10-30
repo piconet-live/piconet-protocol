@@ -1,10 +1,11 @@
-FZMP format 1 api 1, 779 bytes, hash ebe058cc3bdf143e2fc9067f184f6f58fcc4e23dcce3a6d3bed20b70669060df
+FZMP format 1 api 1, 913 bytes, hash c488eb409667f3aeb65c4346aa7fcde4a37606f2218b31f8cf4ddc0865c6e82d
 HEAD name "Practice" badge "" about "Race alone with a minute's rewind and one save."
-PARM 1
+PARM 2
   0 restore_on "Restore" switch int 0..1 step 1 default 0
+  1 lap_count "Laps" number int 0..99 step 1 default 0
 SETP 6
   solo
-  laps 0
+  laps param 1 (lap_count)
   rewind 3600
   pause
   save_state
@@ -31,4 +32,4 @@ CODE 40 bytes
   0020  StoreLocal 0
   0022  Jump 000a
   0027  End
-SRC  511 bytes
+SRC  608 bytes

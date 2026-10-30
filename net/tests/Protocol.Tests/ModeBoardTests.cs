@@ -125,7 +125,8 @@ public sealed class ModeBoardTests
         Assert.True(practice.Succeeded, string.Join(" ", practice.Errors));
         Assert.True(ModeTerms.Of(practice.Mode!).Solo);
         Assert.Equal(0, ModeTerms.Of(practice.Mode!).Laps(1));
-        Assert.Equal("restore_on", practice.Mode!.Params.Single().Name);
+        Assert.Equal(["restore_on", "lap_count"], practice.Mode!.Params.Select(p => p.Name));
+        Assert.Equal(5, ModeTerms.Of(practice.Mode!, [0, 5]).Laps(1));
     }
 
     [Fact]
