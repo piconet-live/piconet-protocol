@@ -4,7 +4,9 @@ and a C++ header, one (board.toml) of the status board between the launcher and 
 view and a C++ header, one (replay.toml) of the replay file, written out as a C++ reader and writer, a C# reader and
 a Python reader, one (launch.toml) of the game's launch file, written out as the C++ reader's key reading and the
 C# writer, and one (stats.toml) of a stat pack's ranges and code constants, written out as the game's C++ tables, the
-C# lists and the two tables of the handbook's pages (PAGES), so that no layout is typed twice (README.md). Follows
+C# lists and the two tables of the handbook's pages (PAGES), and one (rules.toml) of a host's rules, written out as
+the C# rules list and race rules record and the game's C++ reader of a match start's rules into the race block's
+words, so that no layout is typed twice (README.md). Follows
 piconet-runner's port/facts/generate.py.
 
   generate.py           writes the generated files (OUTPUTS)
@@ -31,6 +33,9 @@ import replay_cs
 import replay_cxx
 import replay_cxx_compact
 import replay_py
+import rules
+import rules_cs
+import rules_cxx
 import stats
 import stats_cs
 import stats_cxx
@@ -52,6 +57,7 @@ OUTPUTS = {"csharp": "generated/RelayPackets.g.cs", "cxx": "generated/relay_pack
            "launch_csharp": "generated/LaunchFile.g.cs", "launch_cxx": "generated/launch_file.g.h",
            "stats_csharp": "generated/StatTables.g.cs", "stats_ranges_cxx": "generated/stat_ranges.g.h",
            "stats_constants_cxx": "generated/const_ranges.g.h",
+           "rules_csharp": "generated/HostRules.g.cs", "rules_cxx": "generated/race_rules.g.h",
            "theme_axaml": "generated/Theme.g.axaml", "theme_cxx": "generated/theme_palette.g.h",
            "theme_css": "generated/theme.g.css"}
 # The pages whose tables are generated (between their marker lines, stats_md.py), from the repository's root: the
@@ -227,12 +233,14 @@ def flags(raw):
 
 
 def generated(path=SCHEMA, board_path=board.SCHEMA, replay_path=replay.SCHEMA, launch_path=launch.SCHEMA,
-              stats_path=stats.SCHEMA, theme_path=theme.SCHEMA):
+              stats_path=stats.SCHEMA, rules_path=rules.SCHEMA, theme_path=theme.SCHEMA):
     protocol, packets = load(path)
     laid = board.load(board_path)
     file = replay.load(replay_path, protocol["record_size"])   # a step's records are the relay's
     started = launch.load(launch_path)
     tables = stats.load(stats_path)
+    host = rules.load(rules_path)
+    rules.check_replay(host, {v["feature"] for v in file["versions"] if v.get("feature")})
     tokens = theme.load(theme_path)
     return {OUTPUTS["csharp"]: codec_cs.emit(protocol, packets), OUTPUTS["cxx"]: codec_cxx.emit(protocol, packets),
             OUTPUTS["cxx_describe"]: codec_cxx.emit_describe(protocol, packets),
@@ -243,6 +251,7 @@ def generated(path=SCHEMA, board_path=board.SCHEMA, replay_path=replay.SCHEMA, l
             OUTPUTS["launch_csharp"]: launch_cs.emit(started), OUTPUTS["launch_cxx"]: launch_cxx.emit(started),
             OUTPUTS["stats_csharp"]: stats_cs.emit(tables), OUTPUTS["stats_ranges_cxx"]: stats_cxx.emit_ranges(tables),
             OUTPUTS["stats_constants_cxx"]: stats_cxx.emit_constants(tables),
+            OUTPUTS["rules_csharp"]: rules_cs.emit(host), OUTPUTS["rules_cxx"]: rules_cxx.emit(host),
             OUTPUTS["theme_axaml"]: theme_axaml.emit(tokens), OUTPUTS["theme_cxx"]: theme_cxx.emit(tokens),
             OUTPUTS["theme_css"]: theme_css.emit(tokens)}
 
@@ -267,7 +276,7 @@ def main(args, folder=here, path=SCHEMA, root=ROOT):
         files = {os.path.join(folder, name): text for name, text in generated(path).items()}
         files.update({os.path.join(root, name): text for name, text in pages(root).items()})
     except (SchemaError, board.SchemaError, replay.SchemaError, launch.SchemaError, stats.SchemaError,
-            theme.SchemaError) as e:
+            rules.SchemaError, theme.SchemaError) as e:
         print(f"generate.py: {e}", file=sys.stderr)
         return 1
     stale = []

@@ -68,4 +68,45 @@ public sealed class CustomLobbyMessageTests
         Assert.Contains(HostRules.StatPack, LobbyRules.Settable);
         Assert.DoesNotContain("stat-pack", LobbyRules.Keys);
     }
+
+    [Fact]
+    public void AHostsPackFileTravelsWithTheRulesAndAnOlderEndPassesOverIt()
+    {
+        const string File = "fzstats 1\nname My Pack\n# a comment\nmachine 6 Weight 2520\n";
+        var rules = new LobbyRules(new Dictionary<string, int>(), "My Pack", File);
+        var text = ControlProtocol.Encode(new SetLobbyRules(null, rules));
+        var back = Assert.IsType<SetLobbyRules>(ControlProtocol.DecodeClient(text));
+        Assert.Equal(("My Pack", File), (back.Rules.StatPack, back.Rules.PackFile));
+        Assert.DoesNotContain("packFile", ControlProtocol.Encode(new SetLobbyRules(null, rules with { PackFile = null })),
+            StringComparison.Ordinal);   // (none: the rules as before)
+        var older = Assert.IsType<SetLobbyRules>(ControlProtocol.DecodeClient(
+            """{"type":"setLobbyRules","rules":{"values":{},"statPack":"GX Unleashed"}}"""));
+        Assert.Null(older.Rules.PackFile);
+    }
+
+    [Fact]
+    public void APackOfEveryValueFitsAPackFile()
+    {
+        var entries = new List<StatEntry>();
+        for (var block = 0; block < StatPackRules.Blocks; block++)
+        {
+            foreach (var rule in StatPackRules.All)
+            {
+                for (var word = 0; word < rule.Words; word++)
+                {
+                    var at = rule.At + (word * 4);
+                    var bits = new[] { rule.High, rule.Low, 1f, 0f }.Select(BitConverter.SingleToUInt32Bits)
+                        .Where(b => StatPackRules.Problem(block, at, b) is null).Cast<uint?>().FirstOrDefault();
+                    if (bits is { } b)
+                    {
+                        entries.Add(new StatEntry(block, at, b));
+                    }
+                }
+            }
+        }
+        var (pack, refusal) = StatPack.Of("Every Value", entries);
+        Assert.True(pack is not null, refusal);
+        var file = StatPackText.Write(pack);
+        Assert.True(file.Length <= LobbyRules.MostPackFile / 2, $"{file.Length} characters");
+    }
 }

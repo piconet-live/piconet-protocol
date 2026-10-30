@@ -56,8 +56,14 @@ public enum RuleKind
 /// <summary>One of a host's rules: the name the server's operator and the server's rule list give it, the label a
 /// player's panel shows, whom it concerns, what it is, and its range and Quick Play's value where it is a number.</summary>
 /// <param name="Default">Quick Play's value (a switch: 1 on); 0 where the value is no number.</param>
+/// <param name="Unit">What its number counts ("s", "ms"), as a refusal and the operator's dashboard say it; "": a plain
+/// number.</param>
+/// <param name="Taken">What it may be, as a refusal says it ("0 to 3", "on or off"); null: a rule of another kind, or
+/// one whose range is <see cref="Range"/>.</param>
+/// <param name="Flag">The server's command-line option of a rule the games apply (<see cref="HostRules.Race"/>; a
+/// switch's takes no value); null: none.</param>
 public sealed record HostRule(string Name, string Label, RuleReach Reach, RuleKind Kind, int Least = 0, int Most = 0,
-    int Step = 1, int Default = 0)
+    int Step = 1, int Default = 0, string Unit = "", string? Taken = null, string? Flag = null)
 {
     /// <summary>Whether the rule takes this number: inside its range on its steps; a delay's 0 (off) too.</summary>
     public bool Takes(int value) =>
@@ -83,105 +89,12 @@ public sealed record HostRule(string Name, string Label, RuleReach Reach, RuleKi
 /// one list): the server's rule names in the operator's order (the coordinator's live rules take these names and no
 /// others), each with its player's label, whom it concerns and, for a number, its range and Quick Play's value
 /// (the server's own defaults are read from here). A practice shows the rules that are <see cref="RuleReach.Alone"/>.
+/// The rules themselves, <see cref="All"/>, <see cref="Alone"/>, <see cref="Race"/> and <see cref="Named"/> are
+/// generated from protocol/rules.toml (protocol/generated/HostRules.g.cs).
 /// </summary>
-public static class HostRules
+public static partial class HostRules
 {
-    public static HostRule CourseSelect { get; } = new("course-select", "Course", RuleReach.Together, RuleKind.Course);
-
-    public static HostRule CoursePool { get; } = new("course-pool", "Course pool", RuleReach.Together, RuleKind.Courses);
-
-    public static HostRule Racers { get; } = new("racers", "Racers", RuleReach.Together, RuleKind.Number,
-        GameFacts.Limits.RacersMin, GameFacts.Limits.Seats, Default: GameFacts.Limits.Seats);
-
-    public static HostRule Laps { get; } = new("laps", "Laps", RuleReach.Alone, RuleKind.Number,
-        GameFacts.Limits.LapsMin, GameFacts.Limits.LapsMax, Default: 3);
-
-    public static HostRule CpuLevel { get; } = new("cpu-level", "CPU level", RuleReach.Together, RuleKind.Number,
-        0, GameFacts.Limits.CpuLevelMax, Default: GameFacts.Limits.CpuLevelMax);
-
-    public static HostRule CpuFill { get; } = new("cpu-fill", "CPU racers", RuleReach.Together, RuleKind.Choice);
-
-    /// <summary>Boosting on the first lap: alone too (the game's Practice leaves it off here unless the rule is on,
-    /// piconet-runner's port/image/routines/direct.py).</summary>
-    public static HostRule BoostStart { get; } = new("boost-start", "Boost from the start", RuleReach.Alone, RuleKind.Switch, 0, 1);
-
-    public static HostRule Restore { get; } = new("restore", "Restore", RuleReach.Alone, RuleKind.Switch, 0, 1);
-
-    /// <summary>The race's end this long after the first finish: with one racer the first finish is the last.</summary>
-    public static HostRule FinishLimit { get; } = new("finish-limit", "Finish limit", RuleReach.Together, RuleKind.Number,
-        0, GameFacts.Limits.FinishLimitMax, Default: 90);
-
-    /// <summary>A mine comes back this many milliseconds after it went off (0: it stays gone, the game's own way);
-    /// Quick Play: 200.</summary>
-    public static HostRule MinesReturn { get; } = new("mine-regen", "Mines return", RuleReach.Alone, RuleKind.Delay,
-        GameFacts.Limits.MineRegenStep, GameFacts.Limits.MineRegenMax, GameFacts.Limits.MineRegenStep, Default: 200);
-
-    public static HostRule Machines { get; } = new("machines", "Machines", RuleReach.Together, RuleKind.Machines);
-
-    /// <summary>A range the racers' own settings are brought into; Quick Play: top speed, fixed.</summary>
-    public static HostRule MachineSetting { get; } = new("machine-setting", "Machine setting", RuleReach.Alone, RuleKind.Range,
-        0, GameFacts.Limits.SettingMax, Default: GameFacts.Limits.SettingMax);
-
-    public static HostRule StatPack { get; } = new("stat-pack", "Stats", RuleReach.Alone, RuleKind.Pack);
-    /// <summary>Each racer may race a pack of their own for their machine (handbook/stat-pack-constants.md, "A pack a
-    /// seat"); Quick Play: off, one pack for all (mixed packs only in lobbies).</summary>
-    public static HostRule MixedPacks { get; } = new("mixed-packs", "Mixed packs", RuleReach.Together, RuleKind.Switch, 0, 1);
-
-    /// <summary>The course vote's length, in seconds.</summary>
-    public static HostRule VoteSeconds { get; } = Lobby("vote-seconds", "Course vote", 5, 120, RuleReach.Together);
-
-    /// <summary>The machine choice's length, in seconds.</summary>
-    public static HostRule ChooseSeconds { get; } = Lobby("choose-seconds", "Machine choice", 5, 120, RuleReach.Together);
-
-    /// <summary>The players a lobby needs before its race starts by vote; one above the lobby's racers
-    /// (<see cref="Racers"/>) is taken, and such a lobby never starts by vote.</summary>
-    public static HostRule VotingMinimum { get; } = Lobby("voting-minimum", "Voting minimum", 1, GameFacts.Limits.Seats, RuleReach.Together);
-
-    /// <summary>A Quick Play lobby's start countdown, in seconds: it runs once the lobby has its voting minimum
-    /// (<see cref="VotingMinimum"/>) and lasts this long at that many players, shorter with every player more, down to
-    /// <see cref="StartCountdownLeast"/> seconds when one seat is left; a full lobby starts at once, and the start vote
-    /// still starts it sooner. 0: no countdown, the vote alone (as before 0.5.2). Custom lobbies never count down: their
-    /// host or their vote starts them.</summary>
-    public static HostRule StartCountdown { get; } = Lobby("start-countdown", "Start countdown", 0, 600);
-
     /// <summary>The shortest a start countdown lasts, in seconds (<see cref="StartCountdown"/> is the longest; a
     /// countdown set shorter than this lasts its own length throughout).</summary>
     public const int StartCountdownLeast = 10;
-
-    /// <summary>How long the relay waits for every game of a race to join, in seconds.</summary>
-    public static HostRule StartTimeout { get; } = Lobby("start-timeout", "Start timeout", 10, 600);
-
-    /// <summary>How long the relay waits for every game of a race to be ready, in seconds.</summary>
-    public static HostRule ReadyTimeout { get; } = Lobby("ready-timeout", "Ready timeout", 10, 600);
-
-    /// <summary>How long a lobby waits for the last racers of its race once half are back, in seconds; -1 (a number
-    /// below the range, which <see cref="HostRule.Takes"/> refuses): until the last is back.</summary>
-    public static HostRule StragglerWait { get; } = Lobby("straggler-wait", "Straggler wait", 0, 600);
-
-    /// <summary>The round trip to the race's relay a player may have to race, in milliseconds; a player above it watches
-    /// that race from the lobby. A lobby's rule, which its rules line shows (<see cref="ServerRules.LatencyLimitMs"/>);
-    /// Quick Play: 250. The range is 30 to 300; 30 is the least, for a host whose players are all close (a LAN, one city).</summary>
-    public static HostRule LatencyLimit { get; } = new("latency-limit", "Latency limit", RuleReach.Together, RuleKind.Number,
-        30, 300, Default: ServerRules.QuickPlayLatencyLimitMs);
-
-    /// <summary>Every rule, in the operator's order: the race's, the lobbies' times and limits, the server's own.</summary>
-    public static IReadOnlyList<HostRule> All { get; } =
-    [
-        CourseSelect, CoursePool, Racers, Laps, CpuLevel, CpuFill, BoostStart, Restore, FinishLimit, MinesReturn, Machines,
-        MachineSetting, StatPack, MixedPacks,
-        VoteSeconds, ChooseSeconds, VotingMinimum, StartCountdown, StartTimeout, ReadyTimeout, StragglerWait, LatencyLimit,
-        new("together", "Builds together", RuleReach.Server, RuleKind.Text),
-        new("relay-ceiling", "Relay ceiling", RuleReach.Server, RuleKind.Text),
-    ];
-
-    /// <summary>The rules that mean something in a race alone, in order: what a practice shows.</summary>
-    public static IReadOnlyList<HostRule> Alone { get; } = [.. All.Where(r => r.Reach == RuleReach.Alone)];
-
-    /// <summary>A rule by its name; null: no such rule.</summary>
-    public static HostRule? Named(string name) => All.FirstOrDefault(r => r.Name == name);
-
-    // a lobby's time or limit in the operator's text form ("30", "-1"), with its range: the server's command line and
-    // its live rules both check it here (ServerOptions.Ranges, Coordinator.RuleValues)
-    private static HostRule Lobby(string name, string label, int least, int most, RuleReach reach = RuleReach.Server) =>
-        new(name, label, reach, RuleKind.Text, least, most);
 }

@@ -15,12 +15,22 @@ namespace Online.Protocol;
 /// <see cref="CourseSelectMode"/>, with the fixed course under <see cref="FixedCourseKey"/>, a course of
 /// <see cref="CoursePool.Default"/>); the machine setting's range its low end under "machine-setting" and its high
 /// end under <see cref="SettingHighKey"/>. StatPack: the race's stat pack by its name, one of the server's packs;
-/// null: the disc's own stats. The course pool and the allowed machines are Quick Play's in a custom lobby.
+/// null: the disc's own stats. PackFile: the host's own pack instead, the whole text of a <c>.fzstats</c> file
+/// (<see cref="StatPackText"/>), which the server reads and checks as it would a pack file of its own; StatPack then
+/// holds that pack's own name (a server from before PackFile looks for a pack of that name, and refuses the rules
+/// when it has none). A launcher sends PackFile with a lobby's rules (<see cref="CreateLobby"/>,
+/// <see cref="SetLobbyRules"/>); the server sends a lobby's rules with the pack by its name alone. The course pool and the allowed machines are Quick Play's in a custom lobby.
 /// The server sends a lobby's rules whole (every settable rule's value), so a launcher compares them with Quick
 /// Play's (<see cref="LobbyList.QuickPlay"/>) and shows only the rules that differ (<see cref="Differing"/>).</remarks>
 public sealed record LobbyRules(IReadOnlyDictionary<string, int> Values,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? StatPack = null)
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? StatPack = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? PackFile = null)
 {
+    /// <summary>The longest <see cref="PackFile"/>, in characters: a pack of every value the car data holds, with a
+    /// comment a machine, is about half of it.</summary>
+    public const int MostPackFile = 256 * 1024;
+
+
     /// <summary>The key of the machine setting's high end ("machine-setting" holds the low end).</summary>
     public const string SettingHighKey = "machine-setting-high";
 
@@ -99,7 +109,8 @@ public static class CustomLobby
     /// host removed them from it).</summary>
     public const string LobbyClosed = "lobby_closed";
 
-    /// <summary>An unknown rule name, a choice's value it does not have, or a stat pack the server does not have.</summary>
+    /// <summary>An unknown rule name, a choice's value it does not have, a stat pack the server does not have, or a
+    /// host's pack file that is not a pack (<see cref="LobbyRules.PackFile"/>; the error's message says why).</summary>
     public const string BadRules = "bad_rules";
 
     /// <summary>The rules change only while the lobby waits (forming), not during the course vote, the machine choice
