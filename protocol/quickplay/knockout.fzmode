@@ -45,7 +45,7 @@ rule "Cut the last racer" {
 
 rule "Seconds to the cut" {
   event every step;
-  when race.started;
+  while race.started;
   do {
     cut_in = ceil((next_cut - race.steps) / 60.0);
     show_clock next_cut - race.steps;
