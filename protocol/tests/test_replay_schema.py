@@ -32,7 +32,7 @@ class ReplaySchema(unittest.TestCase):
 
     def test_the_schema_loads(self):
         s = replay.load(record_size=6)
-        self.assertEqual([v["number"] for v in s["versions"]], [2, 3, 4, 5, 6, 7])
+        self.assertEqual([v["number"] for v in s["versions"]], [2, 3, 4, 5, 6, 7, 9])
         self.assertEqual((s["written"], s["head_size"], s["frames_size"], s["lineup_size"]), (7, 10, 12, 124))
         self.assertEqual([m.key for m in s["result"]], ["seat", "rank", "finished", "out", "laps", "timeMs", "bestLapMs"])
 
@@ -45,7 +45,7 @@ class ReplaySchema(unittest.TestCase):
         self.assertIn("Version (u16), then HeaderLength", self.error('{ name = "Version", type = "u16" }', '{ name = "Version", type = "u32" }'))
         self.assertIn("least within the block", self.error("least = 122", "least = 125"))
         self.assertIn("the default is in the range", self.error("default = 2\n", "default = 61\n"))
-        self.assertIn("the number after the last", self.error("version = 8 ", "version = 9 "))
+        self.assertIn("a number no [[version]] has", self.error("version = 8 ", "version = 9 "))
         self.assertIn("[compact]: missing", self.error("full_every = 60", "every = 60"))
         self.assertIn("marks differ", self.error('inputs_mark = "FZRI"', 'inputs_mark = "FZRH"'))
         with self.assertRaises(replay.SchemaError):
@@ -58,6 +58,7 @@ class ReplaySchema(unittest.TestCase):
         self.assertEqual(replay_file.version_of(custom=True, mines=True), 5)
         self.assertEqual(replay_file.version_of(mines=True, seat_packs=True), 6)
         self.assertEqual(replay_file.version_of(stats=True, seat_packs=True, grid=True), 7)
+        self.assertEqual(replay_file.version_of(stats=True, seat_packs=True, grid=True, mode=True), 9)
         with self.assertRaises(ValueError):
             replay_file.version_of(band=True)
 
@@ -127,7 +128,7 @@ class ReplaySchema(unittest.TestCase):
             with self.assertRaises(ValueError):
                 replay_file.expand(bytes(broken))
         older = bytearray(compact)
-        older[7] = 9
+        older[7] = 10
         with self.assertRaises(ValueError):
             replay_file.expand(bytes(older))
 

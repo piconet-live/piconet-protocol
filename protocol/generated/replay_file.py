@@ -15,6 +15,7 @@ VERSION_CUSTOM = 4  # a seat raced a custom machine (a seat's match.setup.seats[
 VERSION_MINES = 5  # the race's mines came back (match.setup.rules.mineRegenMs gives a step or more)
 VERSION_SEATS = 6  # a seat raced a pack of its own (match.setup.packs, a seat's pack)
 VERSION_GRID = 7  # 0.4.0's set-up: the race started on the coordinator's grid (match.setup.grid) or raced wit
+VERSION_MODE = 9  # a race of a game mode (the header's match.setup.mode: the package, its hash, its api and i
 COMPACT_VERSION = 8  # the compact file a recording becomes when it ends
 HEADER_MARK = b"FZRH"
 INPUTS_MARK = b"FZRI"
@@ -26,8 +27,8 @@ DICT_MAX = 67108864
 XZ_MEMLIMIT = 134217728
 MAX_JSON = 1048576
 VERSION_WRITTEN = 7
-VERSIONS = (2, 3, 4, 5, 6, 7)
-FEATURES = ("stats", "custom", "mines", "seat_packs", "grid")
+VERSIONS = (2, 3, 4, 5, 6, 7, 9)
+FEATURES = ("stats", "custom", "mines", "seat_packs", "grid", "mode")
 HEAD_SIZE = 10
 FRAMES_SIZE = 12
 LINEUP_SIZE = 124
@@ -55,6 +56,8 @@ def version_of(**features):
     unknown = set(features) - set(FEATURES)
     if unknown:
         raise ValueError(f"no feature {sorted(unknown)}")
+    if features.get("mode"):
+        return VERSION_MODE
     if features.get("grid"):
         return VERSION_GRID
     if features.get("seat_packs"):

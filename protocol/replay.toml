@@ -55,7 +55,7 @@ max_json = 1048576       # the longest header, and results block, the launcher r
 max_seats = 30           # the game's seats: a mask names seats 0 to 29, the recorder's seat is one of them
 
 [compact]
-version = 8              # the file a recording becomes when it ends (0.5.2 on); a program from before refuses it
+version = 8              # the file a recording becomes when it ends (0.5.2 on); a program from before refuses it; no recording's version
 header_mark = "FZRH"
 inputs_mark = "FZRI"
 checksums_mark = "FZRC"
@@ -108,6 +108,14 @@ name = "Grid"
 feature = "grid"
 doc = """0.4.0's set-up: the race started on the coordinator's grid (match.setup.grid) or raced with no rubber band \
 (the header's rubberBand false: every race and practice from 0.4.0)"""
+
+[[version]]
+number = 9
+name = "Mode"
+feature = "mode"
+doc = """a race of a game mode (the header's match.setup.mode: the package, its hash, its api and its parameters, \
+formats.md section 9): one growable section, so a later mode word needs no version of its own. 8 is the compact \
+file's, never a recording's"""
 
 [head]
 fields = [
