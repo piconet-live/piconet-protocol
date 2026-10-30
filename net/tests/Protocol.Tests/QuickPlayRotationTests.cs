@@ -142,14 +142,14 @@ public sealed class QuickPlayRotationTests : IDisposable
         Assert.StartsWith("broken.fzmode line 5: ", error.Message, StringComparison.Ordinal);
     }
 
-    /// <summary>The official rotation is the target, not yet loadable: its first refusal is the compiler's, the lap
-    /// table (the slice's compiler has no <c>laps by course</c>). When this fails, the compiler took it: the official
-    /// rotation's tests take this one's place.</summary>
+    /// <summary>The official rotation is the target, not yet loadable: its first refusal is the compiler's, knockout's
+    /// rolling start (a display word of a later branch; the slice's lap table is taken). When this fails, the compiler
+    /// took it: the official rotation's tests take this one's place.</summary>
     [Fact]
-    public void TheOfficialRotationWaitsForTheLapTable()
+    public void TheOfficialRotationWaitsForTheRollingStart()
     {
         var error = Assert.Throws<InvalidDataException>(() => QuickPlayRotation.Read(RepositoryFolder.Protocol("protocol", "quickplay")));
-        Assert.StartsWith("competitive.fzmode line 14: ", error.Message, StringComparison.Ordinal);
+        Assert.StartsWith("knockout.fzmode line 15: ", error.Message, StringComparison.Ordinal);
     }
 
     [Fact]
