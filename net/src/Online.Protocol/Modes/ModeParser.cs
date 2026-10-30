@@ -13,7 +13,7 @@ internal sealed class ModeParser
         "global", "seat", "team", "int", "real", "bool", "seats", "sub", "rule", "event", "every", "each", "when",
         "while", "do", "board", "if", "else", "for", "in", "where", "by", "desc", "repeat", "wait", "abort", "restart",
         "call", "return", "and", "or", "not", "true", "false", "none", "on", "off", "laps", "course", "macro", "race",
-        "vec",
+        "vec", "series", "carry",
     ];
 
     /// <summary>A macro's uses inside macros' bodies go at most this deep (the library's are two).</summary>

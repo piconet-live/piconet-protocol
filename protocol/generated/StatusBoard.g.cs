@@ -264,6 +264,18 @@ public sealed class BoardModeHead
     public uint Count;
     public BoardModeLine[] Lines = new BoardModeLine[24];
     public BoardModeWord[] Words = new BoardModeWord[384];
+
+    public BoardModeHead()
+    {
+        for (var i = 0; i < Lines.Length; i++)
+        {
+            Lines[i] = new BoardModeLine();
+        }
+        for (var i = 0; i < Words.Length; i++)
+        {
+            Words[i] = new BoardModeWord();
+        }
+    }
 }
 
 /// <summary> The values of the mode's `board` lines, every picture drawn of a race, a practice, a watched race and a

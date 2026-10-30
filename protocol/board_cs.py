@@ -107,7 +107,11 @@ def emit(board, enums, flags, records, blocks):
             ([f"    public {n(r.name)}() {{ }}"] if any(f.type == "bytes" for f in r.fields) else []) + ["}"]
     for b in blocks:
         if b.kind == "seqlock":
-            out += [""] + doc(b.doc) + [f"public sealed class {n(b.name)}", "{"] + [member(f, n) for f in b.fields] + ["}"]
+            # a list of records with bytes: each its own, so that a new block is whole (no list element runs a constructor)
+            fresh = [f for f in b.fields if f.record and any(r.type == "bytes" for r in f.record.fields)]
+            make = [f"", f"    public {n(b.name)}()", "    {"] + [line for f in fresh for line in (
+                f"        for (var i = 0; i < {f.name}.Length; i++)", "        {", f"            {f.name}[i] = new {n(f.record.name)}();", "        }")] + ["    }"] if fresh else []
+            out += [""] + doc(b.doc) + [f"public sealed class {n(b.name)}", "{"] + [member(f, n) for f in b.fields] + make + ["}"]
     out += ["", "/// <summary>A ring's event: read, not written yet (or being written), or overwritten by a newer one.</summary>",
             f"public enum {n('Read')}", "{", "    Ok,", "    NotYet,", "    Lost,", "}", ""]
     out += view(blocks, records, n, c["class"])

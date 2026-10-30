@@ -15,6 +15,7 @@ laps unlimited;
 rolling_start 1000 km/h;       // speed at the gate, CPU steers through the countdown at 60% accelerator, control at GO
 
 global int next_cut;
+global int cut_in;              // seconds to the next cut, for the board
 global int cuts;
 seat   int cut_order;          // 0: never cut; 1: first out
 
@@ -34,6 +35,12 @@ rule "Cut the last racer" {
     v.cut_order = cuts;
     next_cut = race.steps + interval;
   }
+}
+
+rule "Seconds to the cut" {
+  event every step;
+  when race.started;
+  do { cut_in = ceil((next_cut - race.steps) / 60.0); }
 }
 
 rule "Warn the last racer" {
@@ -59,4 +66,4 @@ rule "Winner" {
 }
 
 board seat cut_order "Out";
-board global next_cut "Next cut";
+board global cut_in "Next cut";
