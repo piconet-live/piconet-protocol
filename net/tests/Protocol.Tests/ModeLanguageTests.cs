@@ -49,7 +49,7 @@ public sealed class ModeLanguageTests
     [Fact]
     public void TheLibraryReadsAndHoldsItsMacrosAndSubs()
     {
-        Assert.Equal(["at", "every", "lives", "pits_off", "time_limit"], ModeCompiler.Library.Macros);
+        Assert.Equal(["at", "every", "lives", "pits_off"], ModeCompiler.Library.Macros);
         Assert.Equal(["dist", "gap_to"], ModeCompiler.Library.Subs.Order());
         // a library sub costs nothing where it is not called
         Assert.Equal(0, Compile("global int n;\n").Budget);

@@ -16,7 +16,7 @@ public sealed record RotationMode(string File, ModePackage Package, string Hash,
     /// it states none, so the lobby's laps. 0: unlimited.</summary>
     public int? Laps(int course) => Terms.Laps(course);
 
-    /// <summary>The mode says <c>cpus allowed</c>: players may vote CPUs into its race (left out, they may not).</summary>
+    /// <summary>The mode says <c>cpus on</c>: players may vote CPUs into its race (left out, they may not).</summary>
     public bool CpusAllowed => Terms.CpusAllowed;
 
     /// <summary>The match start's <c>setup.mode</c>: the package on its parameters' values.</summary>

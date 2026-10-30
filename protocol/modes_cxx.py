@@ -27,13 +27,15 @@ def emit(t):
                                ("actions", "ACTION", "an action (OP_ACTION)")):
         out += [f"// {what}", f"enum {prefix.title()} : std::uint8_t", "{"]
         out += [f"  {prefix}_{e['pascal'].upper()} = {e['id']},  // {e['name']}" for e in t[kind]]
-        out += [f"  {prefix}_COUNT = {len(t[kind])},", "};", ""]
+        out += [f"  {prefix}_COUNT = {t[kind][-1]['id'] + 1 if t[kind] else 0},", "};", ""]
     for c in t["choices"]:
         out += [f"// the choice `{c['name']}`: {c['doc']}" if c["doc"] else f"// the choice `{c['name']}`",
                 f"enum {c['pascal']} : std::uint8_t", "{"]
         out += [f"  {c['name'].upper()}_{v.upper()} = {i}," for i, v in enumerate(c["values"])]
         out += [f"  {c['name'].upper()}_COUNT = {len(c['values'])},", "};", ""]
-    out += ["// the arguments an action pops", "constexpr int ActionArguments(std::uint8_t action)", "{",
+    out += ["// what `on` is for a setup word that also takes a value"]
+    out += [f"inline constexpr int SETUP_{s['pascal'].upper()}_ON = {a['on']};" for s in t["setups"] for a in s.get("args", []) if "on" in a]
+    out += ["", "// the arguments an action pops", "constexpr int ActionArguments(std::uint8_t action)", "{",
             "  switch (action)", "  {"]
     out += [f"    case ACTION_{a['pascal'].upper()}: return {len(a.get('args', []))};" for a in t["actions"]]
     out += ["    default: return -1;", "  }", "}", "",

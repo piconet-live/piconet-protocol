@@ -1,9 +1,9 @@
-FZMP format 1 api 1, 690 bytes, hash 9871e5a81fdc6105c22a6e62b4091f9a218439ff59d764612436f4fe88254fe0
+FZMP format 1 api 1, 690 bytes, hash 350bfedffa9f12cd2ff1e19142c9e86a9570a515cf63567a7f96c208dd154222
 HEAD name "Wrecks" badge "" about ""
 PARM 0
 SETP 2
   laps 0
-  cpus allowed
+  cpus on
 VARS globals 0, seat words 4
   seat 0 = 0
   seat 1 = 0
@@ -44,4 +44,4 @@ CODE 67 bytes
   003d  LoadLocal 1
   003f  StoreSeatVar 2
   0042  End
-SRC  442 bytes
+SRC  437 bytes

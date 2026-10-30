@@ -98,7 +98,7 @@ public sealed class ModeCompilerTests
         Assert.Equal(("Overdrive", "OVERDRIVE", 1), (mode.Name, mode.Badge, mode.Api));
         var rise = Assert.Single(mode.Params);
         Assert.Equal(("rise", ModeType.Int, 5, 50, 5, 10), (rise.Name, rise.Type, rise.Least, rise.Most, rise.Step, rise.Default));
-        Assert.Equal([ModeSetup.CpusAllowed, ModeSetup.Laps, ModeSetup.PedalsLocked, ModeSetup.BoostOff], mode.Setups.Select(s => s.Id));
+        Assert.Equal([ModeSetup.Cpus, ModeSetup.Laps, ModeSetup.PedalsLocked, ModeSetup.Boost], mode.Setups.Select(s => s.Id));
         // laps unlimited: 0; pedals locked: accel 1.0 as written, brake at the word's default 0.0.
         Assert.Equal(new ModeSetupValue(false, 0), Assert.Single(mode.Setups[1].Arguments));
         Assert.Equal([new ModeSetupValue(false, 0x3F800000), new ModeSetupValue(false, 0)], mode.Setups[2].Arguments);
@@ -131,11 +131,10 @@ public sealed class ModeCompilerTests
         Assert.All(ModeWords.SeatReads, r => Assert.Contains(code.Concat(Code("language")), l => l.EndsWith("SeatRead " + r.Name, StringComparison.Ordinal)));
         Assert.All(ModeWords.RaceReads, r => Assert.Contains(code, l => l.EndsWith("RaceRead " + r.Name, StringComparison.Ordinal)));
         Assert.All(ModeWords.Actions, a => Assert.Contains(code.Concat(Code("display")), l => l.EndsWith("Action " + a.Name, StringComparison.Ordinal)));
-        // every setup word but laps by course (the competitive vector's) and the off forms whose on form the vectors
-        // hold (mine_regen off, restore off: a mode states one of the two); the practice vector's are a solo mode's
+        // every setup word but laps by course (the competitive vector's); the practice vector's are a solo mode's
         var solo = CompileVector("practice").Mode!.Setups.Where(s => s.Id != ModeSetup.Laps);
         var setups = mode.Setups.Concat(cuts.Setups).Concat(race.Setups).Concat(solo).Select(s => s.Id).ToList();
-        Assert.Equal(ModeWords.Setups.Where(s => !s.Lobby).Select(s => s.Id).Where(id => id is not (ModeSetup.LapsByCourse or ModeSetup.MineRegen or ModeSetup.RestoreOff or ModeSetup.ResultsTitleLives or ModeSetup.ResultsTitleOverdrive or ModeSetup.ResultsTitleTeams or ModeSetup.ResultsTitleSurvivors or ModeSetup.ResultsTitlePoints)).Order(),
+        Assert.Equal(ModeWords.Setups.Where(s => !s.Lobby).Select(s => s.Id).Where(id => id is not ModeSetup.LapsByCourse).Order(),
             setups.Order());
         Assert.Equal(ModeWords.Events.Select(e => e.Id).Order(), mode.Rules.Concat(race.Rules).Select(r => r.Event).Distinct().Order());
         Assert.Equal(Enum.GetValues<ModeParamKind>(), mode.Params.Select(p => p.Kind).Distinct().Order());
@@ -163,7 +162,7 @@ public sealed class ModeCompilerTests
         Assert.Empty(ModeCompiler.Compile(Head + "rule \"R\" { event lap(s); do { respawns s off; ghost s off; no contact s, seats; no contact s seats; team 2 no contact; cpu_mode s, 4; } }\n").Errors);
         Assert.NotEmpty(Errors(Head + "rule \"R\" { event lap(s); do { real x = s.input.speed; } }\n"));
         // the library's race macros compile now
-        Assert.Empty(ModeCompiler.Compile(Head + "lives 3;\ntime_limit 5min;\npits_off;\n").Errors);
+        Assert.Empty(ModeCompiler.Compile(Head + "lives 3;\nclock_limit 5min;\npits_off;\n").Errors);
     }
 
     [Fact]
@@ -230,7 +229,7 @@ public sealed class ModeCompilerTests
     [InlineData(Head + "laps 3;\nflying_start 1000 km/h;\n", "line 3: 'flying_start' is not a word of api 1")]
     [InlineData(Head + "global int n;\nrule \"R\" {\n  event every step;\n  do { n = 1.5; }\n}\n",
         "line 5: the int n takes an int, not a real: floor, ceil, round or trunc make an int of a real")]
-    [InlineData(Head + "rule \"R\" {\n  event out(s);\n  while race.started;\n  do { eliminate s; }\n}\n",
+    [InlineData(Head + "rule \"R\" {\n  event out(s);\n  while race.started;\n  do { retire s; }\n}\n",
         "line 4: while is for the events that go on (every step, each seat): out happens once, so its rule takes when")]
     [InlineData("mode \"Test\" {\n  api 2;\n}\n", "line 2: api 2 is not one this build knows: its newest is api 1")]
     [InlineData(Head + "param rise \"Rise\" number 5..50 step 5 default 60;\n", "line 2: rise's default 60 is outside 5..50")]
@@ -252,7 +251,7 @@ public sealed class ModeCompilerTests
     [InlineData("global bool g;\nrule \"R\" { event every step; do { g = any(broken for each seat) and all(racing for each seat where not out); } }\n")]
     [InlineData("seat int n;\nrule \"R\" { event every step; do { for each seat where index > 0 { seat.n = 1; seat.n += 2; } } }\n")]
     [InlineData("/* a comment\n over lines */ global real g = 2. * 50% + 1 - -1.5; // and one to the end\n"
-        + "rule \"R\" { event out; when seat.lap < 2; do { eliminate seat; } }\n")]
+        + "rule \"R\" { event out; when seat.lap < 2; do { retire seat; } }\n")]
     [InlineData("const int n = 2 * 3 + 1;\nglobal int g = n % 4;\nrule \"R\" { event every step; do { int x; seat s; real r = x; g = x + round(r); } }\n")]
     public void TheseCompile(string items)
     {

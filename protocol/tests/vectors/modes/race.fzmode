@@ -53,7 +53,7 @@ rule "Hit" { event hit(a, b); do { push a, b.velocity - a.velocity; } }
 rule "Damaged" { event damaged(s); when s.damage_taken > 50.0; do { explode s; } }
 rule "Boost" { event boost(s); do { s.energy -= 1; danger_zone s off; } }
 rule "Wall" { event wall(s); do { freeze s; danger_zone s, 300 km/h, 600 km/h, 3; } }
-rule "Pit" { event pit(s); when s.used_pit and s.surface == 1; do { eliminate s; } }
+rule "Pit" { event pit(s); when s.used_pit and s.surface == 1; do { retire s; } }
 rule "Overtake" { event overtake(a, b); do { a.passes += 1; } }
 rule "Respawned" { event respawned(s); do { s.velocity = s.forward * 500.0; } }
 rule "Land" { event land(s); when s.up.y < 0.5; do { stop_all; } }

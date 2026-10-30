@@ -19,5 +19,7 @@ public enum ModeType
 
 /// <summary>An argument of a setup word (protocol/modes.toml's <c>[[setup]]</c>): its name as a mode file writes it
 /// (empty for the word's one unnamed argument, as <c>laps 3</c>), its type, its range, and the value it takes when the
-/// file leaves it out (null: it must be written).</summary>
-public sealed record ModeArgument(string Name, ModeType Type, double Least, double Most, double? Default);
+/// file leaves it out (null: it must be written). A Bool argument is an on or off: <c>on</c>, <c>off</c> or a switch
+/// parameter. On: a number that also takes those: <c>off</c> is 0, <c>on</c> this value (from a switch parameter, 1 in
+/// the package, which the readers take for it).</summary>
+public sealed record ModeArgument(string Name, ModeType Type, double Least, double Most, double? Default, int? On = null);

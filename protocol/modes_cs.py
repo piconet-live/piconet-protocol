@@ -13,7 +13,7 @@ def xml(s):
 
 
 def cs_type(t):
-    return {"int": "ModeType.Int", "real": "ModeType.Real", "bool": "ModeType.Bool", "seat": "ModeType.Seat",
+    return {"int": "ModeType.Int", "real": "ModeType.Real", "bool": "ModeType.Bool", "switch": "ModeType.Bool", "seat": "ModeType.Seat",
             "seats": "ModeType.Seats", "vec": "ModeType.Vec"}[t]
 
 
@@ -52,14 +52,15 @@ def emit(t):
     out += [f"        ({text(e['name'])}, ModeEvent.{e['pascal']}, {'true' if e['kind'] == 'continuous' else 'false'}, "
             f"{'true' if 'binds' in e else 'false'}, {second.get(e.get('binds', ''), 'null')})," for e in t["events"]]
     out += ["    ];", "",
-            "    /// <summary>The setup words: name, id, arguments (name, type, least, most, default); Lobby: the coordinator's "
+            "    /// <summary>The setup words: name, id, arguments (name, type, least, most, default, what on is); Lobby: the coordinator's "
             "alone, not in the package; Form: how the file writes it (range, text, list; empty: its arguments).</summary>",
             "    public static readonly IReadOnlyList<(string Name, ModeSetup Id, IReadOnlyList<ModeArgument> Args, bool Lobby, string Form)> Setups =",
             "    ["]
     for s in t["setups"]:
         args = ", ".join(
             f"new ModeArgument({text(a.get('name', ''))}, {cs_type(a['type'])}, {number(a.get('least', 0), a['type'])}, "
-            f"{number(a.get('most', 0), a['type'])}, {number(a['default'], a['type']) if 'default' in a else 'null'})"
+            f"{1 if a['type'] == 'switch' else number(a.get('most', 0), a['type'])}, {number(a['default'], a['type']) if 'default' in a else 'null'}"
+            + (f", {a['on']})" if "on" in a else ")")
             for a in s.get("args", []))
         out.append(f"        ({text(s['name'])}, ModeSetup.{s['pascal']}, [{args}], {'true' if s.get('lobby') else 'false'}, {text(s.get('form', ''))}),")
     out += ["    ];", "",

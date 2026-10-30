@@ -99,6 +99,10 @@ public static class ModeDisassembler
     private static string Setup(ModeSetupWord word, ModePackage mode)
     {
         var table = ModeWords.Setups.First(s => s.Id == word.Id);
+        if (word.Id == ModeSetup.ResultsTitle)
+        {
+            return table.Name + " " + Quote(ModeResultsTitle.Text(word.Arguments));
+        }
         var parts = new List<string> { table.Name };
         for (var i = table.Args.Count; i + 1 < word.Arguments.Count; i += 2)  // a table's rows (laps by course)
         {
@@ -109,7 +113,7 @@ public static class ModeDisassembler
         {
             var a = word.Arguments[i];
             var name = table.Args[i].Name.Length > 0 ? table.Args[i].Name + " " : "";
-            parts.Add(name + (a.FromParam ? Invariant($"param {a.Value} ({mode.Params[a.Value].Name})") : Typed(table.Args[i].Type, a.Value)));
+            parts.Add(name + (a.FromParam ? Invariant($"param {a.Value} ({mode.Params[a.Value].Name})") : table.Args[i].Type == ModeType.Bool ? (a.Value == 0 ? "off" : "on") : Typed(table.Args[i].Type, a.Value)));
         }
         return string.Join(' ', parts);
     }
@@ -122,7 +126,7 @@ public static class ModeDisassembler
             ModeOp.Push => Cell((int)operand),
             ModeOp.SeatRead => ModeWords.SeatReads[(int)operand].Name,
             ModeOp.RaceRead => ModeWords.RaceReads[(int)operand].Name,
-            ModeOp.Action => ModeWords.Actions[(int)operand].Name,
+            ModeOp.Action => ModeWords.Actions.First(a => (long)a.Id == operand).Name,
             ModeOp.Param => Invariant($"{operand} ({mode.Params[(int)operand].Name})"),
             ModeOp.Jump or ModeOp.JumpIfZero or ModeOp.JumpIfNotZero => Invariant($"{operand:x4}"),
             ModeOp.SortRun => Invariant($"buffer {i.Operands[0]} keys {i.Operands[1]} desc 0x{i.Operands[2]:x2} reals 0x{i.Operands[3]:x2}"),

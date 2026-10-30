@@ -1,10 +1,10 @@
-FZMP format 1 api 1, 1423 bytes, hash aae5ada02374044d19da882de7ee85120431252c83a99e432c0d468a05b1c587
+FZMP format 1 api 1, 1420 bytes, hash 537535748736a0e7e8d5b63e778b58426ade2ec171a463af3f4a78f5c30c11d2
 HEAD name "Knockout test" badge "KNOCKOUT" about "The last racer explodes every few seconds. The last one left wins."
 PARM 1
   0 interval "Cut every" delay int 300..3600 step 300 default 900
 SETP 3
   laps 0
-  cpus allowed
+  cpus on
   rolling_start 1000 (0x447a0000)
 VARS globals 1, seat words 0
   global 0 = 0
@@ -93,7 +93,7 @@ CODE 302 bytes
   00cc  LoadLocal 1
   00ce  Action explode
   00d0  LoadLocal 1
-  00d2  Action eliminate
+  00d2  Action retire
   00d4  LoadGlobal 0
   00d7  Push 1
   00dc  IAdd
@@ -127,4 +127,4 @@ CODE 302 bytes
   0126  Jump 00f4
   012b  Action end_race
   012d  End
-SRC  861 bytes
+SRC  853 bytes

@@ -1,4 +1,4 @@
-FZMP format 1 api 1, 3985 bytes, hash a01ab1b81d2dc6eb226e652eff91aeec071540c37a36838fe4b888d037e6c07e
+FZMP format 1 api 1, 3987 bytes, hash 89f9d539facc13815840dbb6542ca0ae1963e6ba59543b7b61bdf081d127e17d
 HEAD name "Words" badge "WORDS" about "Every word of api 1, and every operation its compiler writes."
 PARM 5
   0 rounds "Laps" number int 1..9 step 1 default 3
@@ -8,7 +8,7 @@ PARM 5
   4 shape "Order" choice int 0..1 step 1 default 1 ["Most KOs", "Last alive"]
 SETP 4
   laps param 0 (rounds)
-  cpus allowed
+  cpus on
   pedals locked accel param 1 (push) brake 0.25 (0x3e800000)
   boost off
 VARS globals 5, seat words 2
@@ -89,7 +89,7 @@ CODE 809 bytes
   0095  Param 3 (strict)
   0097  JumpIfZero 00b1
   009c  LoadLocal 1
-  009e  Action eliminate
+  009e  Action retire
   00a0  LoadGlobal 0
   00a3  Push 1
   00a8  IAdd
@@ -387,4 +387,4 @@ CODE 809 bytes
   0323  RaceRead steps
   0325  StoreSeatVar 0
   0328  End
-SRC  2611 bytes
+SRC  2603 bytes

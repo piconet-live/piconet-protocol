@@ -1,9 +1,9 @@
-FZMP format 1 api 1, 1239 bytes, hash 05fbfd998993bc562d16c257b4449353521cd47f3420b58200765a0c087ae094
+FZMP format 1 api 1, 1244 bytes, hash 40b91cbde5db51942eae036800b24c668e5782c7f0af136473f637d5d393cb86
 HEAD name "Overdrive" badge "OVERDRIVE" about "Speed locked and rising. Last one alive wins."
 PARM 1
   0 rise "Speed added every 10 s" number int 5..50 step 5 default 10
 SETP 4
-  cpus allowed
+  cpus on
   laps 0
   pedals locked accel 1 (0x3f800000) brake 0 (0x00000000)
   boost off
@@ -40,4 +40,4 @@ CODE 51 bytes
   002d  RaceRead steps
   002f  StoreSeatVar 0
   0032  End
-SRC  915 bytes
+SRC  910 bytes

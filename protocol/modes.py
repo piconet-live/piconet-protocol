@@ -10,11 +10,11 @@ SCHEMA = os.path.join(here, "modes.toml")
 
 TOP_KEYS = {"codec", "api", "op", "event", "setup", "seat_read", "race_read", "action", "choice"}
 API_KEYS = {"number", "budget", "queue", "globals", "seat_words", "locals", "rules", "sorts", "package_bytes", "seats",
-            "team_words", "teams", "waits", "wait_locals", "subs", "board", "board_label", "board_words", "board_word", "fsqrt_cost"}
+            "team_words", "teams", "waits", "wait_locals", "subs", "board", "board_label", "board_words", "board_word", "fsqrt_cost", "results_title"}
 OP_KEYS = {"name", "code", "operands", "doc"}
 EVENT_KEYS = {"name", "id", "kind", "binds", "doc"}
 SETUP_KEYS = {"name", "id", "args", "where", "doc", "table", "lobby", "form"}
-ARG_KEYS = {"type", "name", "least", "most", "default"}
+ARG_KEYS = {"type", "name", "least", "most", "default", "on"}
 READ_KEYS = {"name", "id", "type", "doc"}
 ACTION_KEYS = {"name", "id", "args", "where", "doc", "join"}
 CHOICE_KEYS = {"name", "values", "doc"}
@@ -40,19 +40,21 @@ def whole(value, what, low, high):
 
 
 def pascal(value, what):
-    """A word's name as C# and C++ spell it: `seat.speed` -> SeatSpeed, `cpus allowed` -> CpusAllowed."""
+    """A word's name as C# and C++ spell it: `seat.speed` -> SeatSpeed, `cpus on` -> CpusAllowed."""
     return "".join(part[:1].upper() + part[1:] for part in re.split(r"[ ._]", value))
 
 
-def numbered(raw, allowed, what, high=255):
-    """[(entry)] in id order, ids 0, 1, 2 ...; each a dict with `name`, `id`, `pascal`."""
+def numbered(raw, allowed, what, high=255, gaps=False):
+    """[(entry)] in id order, ids 0, 1, 2 ...; each a dict with `name`, `id`, `pascal`. With gaps, ids only rise: a word
+    removed keeps its id unused, so an older package holding it is refused and never read as another word."""
     out = []
     for i, entry in enumerate(raw):
         keys(entry, allowed, f"{what} {entry.get('name', i) if isinstance(entry, dict) else i}")
         name = entry.get("name")
         if not isinstance(name, str) or not WORD.match(name):
             raise SchemaError(f"{what} {i}: a name of lower-case words (got {name!r})")
-        if whole(entry.get("id"), f"{what} {name}: id", 0, high) != i:
+        ident = whole(entry.get("id"), f"{what} {name}: id", 0, high)
+        if ident <= (out[-1]["id"] if out else -1) if gaps else ident != i:
             raise SchemaError(f"{what} {name}: the ids run 0, 1, 2 ... in the file's order (got {entry['id']})")
         out.append(dict(entry, pascal=pascal(name, what)))
     if len({e["pascal"] for e in out}) != len(out):
@@ -103,16 +105,18 @@ def load(path=SCHEMA):
             raise SchemaError(f"event {e['name']}: binds a seat, two seats, a seat and an int, or nothing")
         if "binds" in e and e["kind"] == "continuous" and e["binds"] != "seat":
             raise SchemaError(f"event {e['name']}: a continuous event binds a seat or nothing")
-    setups = numbered(raw.get("setup", []), SETUP_KEYS, "setup")
+    setups = numbered(raw.get("setup", []), SETUP_KEYS, "setup", gaps=True)
     for s in setups:
         for a in s.get("args", []):
             keys(a, ARG_KEYS, f"setup {s['name']}: an argument")
-            if a.get("type") not in ("int", "real"):
-                raise SchemaError(f"setup {s['name']}: an argument is an int or a real")
+            if a.get("type") not in ("int", "real", "switch"):
+                raise SchemaError(f"setup {s['name']}: an argument is an int, a real or a switch (on, off or a switch parameter)")
+            if "on" in a and (a["type"] != "int" or not a.get("least", 0) <= a["on"] <= a.get("most", 0)):
+                raise SchemaError(f"setup {s['name']}: an argument's `on` is an int in its range")
         if s.get("form", "") not in ("", "range", "text", "list"):
             raise SchemaError(f"setup {s['name']}: form is range, text or list")
-        if s.get("form") and not s.get("lobby"):
-            raise SchemaError(f"setup {s['name']}: a form is a word of the coordinator's")
+        if s.get("form") and not s.get("lobby") and s["form"] != "text":
+            raise SchemaError(f"setup {s['name']}: a range or a list is a word of the coordinator's")
         if s.get("table", "course") != "course":
             raise SchemaError(f"setup {s['name']}: a table is of courses")
     reads = {}
@@ -134,7 +138,7 @@ def load(path=SCHEMA):
     named = [v for c in choices.values() for v in c["values"]]
     if len(set(named)) != len(named):
         raise SchemaError("choice: a value's name twice")
-    actions = numbered(raw.get("action", []), ACTION_KEYS, "action")
+    actions = numbered(raw.get("action", []), ACTION_KEYS, "action", gaps=True)
     for a in actions:
         if any(t not in TYPES and t not in choices for t in a.get("args", [])):
             raise SchemaError(f"action {a['name']}: argument types are {sorted(TYPES)} or a choice")

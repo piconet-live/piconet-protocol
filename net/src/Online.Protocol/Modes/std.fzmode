@@ -13,13 +13,6 @@ macro at(time t, block body) {
   rule { event every step; when race.started and race.steps >= t; do body }
 }
 
-// time_limit t: the game's timer, held from the step (clock_limit); at t the race ends, and the end clause places every
-// seat the mode has not placed in standing order (vocabulary 4.8). A mode that wants another order writes seat.place
-// before t. The timer's display (show seat, TIMER) is the display words' (wave 2B).
-macro time_limit(time t) {
-  clock_limit t;
-}
-
 // lives n: each wreck (a fall, a destroy, a breakdown) costs a life, and the game restores the seat while it has more
 // than one; the wreck that takes its last is final (the game's own out verdict books it). A restore under way always
 // finishes: respawns off waits for its exit, so the wreck after the one that left a single life is the last.

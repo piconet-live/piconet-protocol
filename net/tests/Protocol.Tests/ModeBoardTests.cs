@@ -101,13 +101,13 @@ public sealed class ModeBoardTests
 
     [Theory]
     [InlineData("rewind 1min;\n", "says solo")]
-    [InlineData("pause;\n", "says solo")]
+    [InlineData("pause on;\n", "says solo")]
     [InlineData("resume_countdown 1s;\n", "says solo")]
-    [InlineData("solo;\nsave_state;\n", "says rewind")]
-    [InlineData("solo;\ncpus allowed;\n", "one seat")]
-    [InlineData("solo;\nracers 1..2;\n", "one seat")]
-    [InlineData("solo;\nteams 2..2;\n", "one seat")]
-    [InlineData("solo;\nrewind 2min;\n", "rewind")]
+    [InlineData("solo on;\nsave_state on;\n", "says rewind")]
+    [InlineData("solo on;\ncpus on;\n", "one seat")]
+    [InlineData("solo on;\nracers 1..2;\n", "one seat")]
+    [InlineData("solo on;\nteams 2..2;\n", "one seat")]
+    [InlineData("solo on;\nrewind 2min;\n", "rewind")]
     public void ASoloWordOutOfPlaceIsRefused(string body, string says)
     {
         var result = Compile(body);

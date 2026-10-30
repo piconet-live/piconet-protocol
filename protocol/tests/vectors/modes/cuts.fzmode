@@ -2,7 +2,7 @@
 mode "Cuts" { api 1; about "Every word of the cut race."; }
 race_waits everyone;
 results points;
-results_title knockout;
+results_title "KNOCKOUT";
 
 rule "Clock" {
   event every step;

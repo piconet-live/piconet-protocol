@@ -10,7 +10,7 @@ mode "Overdrive" {
 
 param rise "Speed added every 10 s" number 5..50 step 5 default 10;
 
-cpus allowed;
+cpus on;
 laps unlimited;
 pedals locked accel 1.0;       // at least 0.5, so side attacks still work
 boost off;

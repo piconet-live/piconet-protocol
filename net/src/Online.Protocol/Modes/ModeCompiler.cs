@@ -210,26 +210,28 @@ public static class ModeCompiler
             _board.Add(new ModeBoardLine(item.Scope, found.Type, found.Index, item.Label) { Words = item.Words });
         }
 
-        /// <summary>The words of a race raced alone need <c>solo</c>; and <c>solo</c> is one seat.</summary>
-        private static void SoloWords(List<ModeItem> items)
+        /// <summary>The words of a race raced alone need <c>solo</c>; and <c>solo</c> is one seat. A word stated
+        /// <c>off</c> asks for nothing; a switch parameter may be on, so it counts as on.</summary>
+        private void SoloWords(List<ModeItem> items)
         {
             int? Line(ModeSetup id) => items.OfType<ModeSetupItem>().FirstOrDefault(s => ModeWords.Setups.Single(w => w.Name == s.Word).Id == id)?.Line;
-            foreach (var (id, name) in new[] { (ModeSetup.Rewind, "rewind"), (ModeSetup.Pause, "pause"), (ModeSetup.SaveState, "save_state"), (ModeSetup.ResumeCountdown, "resume_countdown") })
+            int? On(ModeSetup id) => _setups.FirstOrDefault(s => s.Id == id)?.Arguments[0] is { FromParam: false, Value: 0 } ? null : Line(id);
+            foreach (var (line, name) in new[] { (Line(ModeSetup.Rewind), "rewind"), (On(ModeSetup.Pause), "pause"), (On(ModeSetup.SaveState), "save_state"), (Line(ModeSetup.ResumeCountdown), "resume_countdown") })
             {
-                if (Line(id) is { } line && Line(ModeSetup.Solo) is null)
+                if (line is { } at && On(ModeSetup.Solo) is null)
                 {
-                    throw new ModeCompileException(line, $"{name} is a word of a race raced alone: a mode with it says solo");
+                    throw new ModeCompileException(at, $"{name} is a word of a race raced alone: a mode with it says solo on");
                 }
             }
-            if (Line(ModeSetup.SaveState) is { } saved && Line(ModeSetup.Rewind) is null)
+            if (On(ModeSetup.SaveState) is { } saved && Line(ModeSetup.Rewind) is null)
             {
                 throw new ModeCompileException(saved, "save_state keeps a moment inside the rewind's reach: a mode with it says rewind");
             }
-            if (Line(ModeSetup.Solo) is not null)
+            if (On(ModeSetup.Solo) is not null)
             {
-                foreach (var (id, name) in new[] { (ModeSetup.CpusAllowed, "cpus allowed"), (ModeSetup.Racers, "racers"), (ModeSetup.Teams, "teams") })
+                foreach (var (at, name) in new[] { (On(ModeSetup.Cpus), "cpus"), (Line(ModeSetup.Racers), "racers"), (Line(ModeSetup.Teams), "teams") })
                 {
-                    if (Line(id) is { } line)
+                    if (at is { } line)
                     {
                         throw new ModeCompileException(line, $"{name}: a solo mode is one seat");
                     }
@@ -268,6 +270,16 @@ public static class ModeCompiler
                 (_setups.Any(w => w.Id == s.Id) || _lobbyWords.Any(w => w.Id == s.Id))) is { Name: not null } other)
             {
                 throw new ModeCompileException(item.Line, $"{other.Name} and {word.Name}: one of them");
+            }
+            if (word.Id == ModeSetup.ResultsTitle)
+            {
+                var title = item.Table![0];
+                if (ModeResultsTitle.Refusal(title.Key) is { } refused)
+                {
+                    throw new ModeCompileException(title.Line, refused);
+                }
+                _setups.Add(new ModeSetupWord(word.Id, ModeResultsTitle.Cells(title.Key)));
+                return;
             }
             var given = new Dictionary<string, ModeSetupArgument>();
             foreach (var argument in item.Arguments)
@@ -360,8 +372,24 @@ public static class ModeCompiler
             var what = argument.Name.Length > 0 ? $"{word}'s {argument.Name}" : word;
             if (given is null)
             {
-                var value = argument.Default ?? throw new ModeCompileException(item.Line, $"{what} needs its value");
+                var value = argument.Default ?? throw new ModeCompileException(item.Line, argument.Type == ModeType.Bool
+                    ? $"{what} takes on, off or a switch parameter" : $"{what} needs its value");
                 return new ModeSetupValue(false, argument.Type == ModeType.Real ? ModeOperators.Cell((float)value) : (int)value);
+            }
+            if (argument.Type == ModeType.Bool || argument.On is not null)
+            {
+                if (given.Value is ModeLiteral { Text: "on" or "off" } state)
+                {
+                    return new ModeSetupValue(false, state.Bits == 0 ? 0 : argument.On ?? 1);
+                }
+                if (given.Value is ModeName { Name: var named } && _names.Find(named) is { Kind: ModeNameKind.Param, Type: ModeType.Bool } flag)
+                {
+                    return new ModeSetupValue(true, flag.Index);
+                }
+                if (argument.Type == ModeType.Bool)
+                {
+                    throw new ModeCompileException(given.Line, $"{what} takes on, off or a switch parameter");
+                }
             }
             if (given.Value is ModeName name && _names.Find(name.Name) is { Kind: ModeNameKind.Param } param)
             {

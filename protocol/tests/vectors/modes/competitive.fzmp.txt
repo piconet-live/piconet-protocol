@@ -1,10 +1,10 @@
-FZMP format 1 api 1, 980 bytes, hash 50b0410953fa2e5c37cd7076dac533fa810e3d2be3cbd17dc9211687b7359d37
+FZMP format 1 api 1, 980 bytes, hash a97a5dacb5813673bf1e6af6408183a46b4bd75617ae8d532dd1bb5f8fc5d5c4
 HEAD name "Quick Play" badge "" about "The game's own rules."
 PARM 0
 SETP 2
-  cpus allowed
+  cpus on
   laps by course course 36 (Mute City: Sonic Oval) 8 course 31 (Aeropolis: Screw Drive) 6 course 14 (Big Blue: Drift Highway) 6 course 16 (Casino Palace: Split Oval) 6 course 1 (Mute City: Twist Road) 6 course 11 (Green Plant: Mobius Ring) 4 course 32 (Outer Space: Meteor Stream) 4 else 3
 VARS globals 0, seat words 0
 RULE 0
 CODE 0 bytes
-SRC  790 bytes
+SRC  785 bytes

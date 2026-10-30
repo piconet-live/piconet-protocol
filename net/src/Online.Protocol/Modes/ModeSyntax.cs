@@ -50,7 +50,7 @@ internal sealed record ModeForEach(int Line, string Bound, ModeExpr? Where, IRea
 
 internal sealed record ModeRepeat(int Line, ModeExpr Count, IReadOnlyList<ModeStatement> Body) : ModeStatement(Line);
 
-/// <summary>An action word with its arguments: <c>eliminate s;</c>.</summary>
+/// <summary>An action word with its arguments: <c>retire s;</c>.</summary>
 internal sealed record ModeActionStatement(int Line, string Action, IReadOnlyList<ModeExpr> Arguments) : ModeStatement(Line);
 
 /// <summary><c>wait t;</c>, <c>wait t abort when c;</c> or <c>wait t restart when c;</c> (<see cref="Kind"/> "",

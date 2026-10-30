@@ -6,5 +6,5 @@ mode "Quick Play" {
   about "The game's own rules.";
 }
 
-cpus allowed;
+cpus on;
 laps 3;

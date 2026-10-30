@@ -5,15 +5,18 @@ namespace Online.Protocol;
 /// <summary>What a mode states of its race, read from its setup words on its parameters' values: the one place a mode's
 /// word meets a lobby rule (the overhaul of piconet-docs research/game-modes/ design 5). A word left out leaves the
 /// lobby's rule, but two: a mode owns its race's ending, so the finish limit is off unless the mode states it, and CPUs
-/// come only when it says <c>cpus allowed</c>. The service and the launcher's stand-in both lay these over a lobby.
+/// come only when it says <c>cpus on</c>. The service and the launcher's stand-in both lay these over a lobby.
 /// Lobby flow (the vote's and choice's times, the timeouts, the ping limit) is not a mode's.</summary>
 public sealed record ModeTerms
 {
-    /// <summary>The mode says <c>solo</c>: a race raced alone, which the launcher starts itself (Play's Practice). No
+    // what `mine_regen on` is, as a switch parameter gives it (1 in the package)
+    private static readonly int MineRegenOn = ModeWords.Setups.First(s => s.Id == ModeSetup.MineRegen).Args[0].On!.Value;
+
+    /// <summary>The mode says <c>solo on</c>: a race raced alone, which the launcher starts itself (Play's Practice). No
     /// lobby and no rotation races it.</summary>
     public bool Solo { get; init; }
 
-    /// <summary>The mode says <c>cpus allowed</c>: players may vote CPUs into its race (it never forces them).</summary>
+    /// <summary>The mode says <c>cpus on</c>: players may vote CPUs into its race (it never forces them).</summary>
     public bool CpusAllowed { get; init; }
 
     /// <summary>The value of <see cref="LobbyRules.Values"/>' "laps" for a mode with a table of laps by course: no one
@@ -77,8 +80,8 @@ public sealed record ModeTerms
             var a = word.Arguments;
             terms = word.Id switch
             {
-                ModeSetup.CpusAllowed => terms with { CpusAllowed = true },
-                ModeSetup.Solo => terms with { Solo = true },
+                ModeSetup.Cpus => terms with { CpusAllowed = Cell(a[0]) != 0 },
+                ModeSetup.Solo => terms with { Solo = Cell(a[0]) != 0 },
                 ModeSetup.Laps => terms with { LapsAll = Cell(a[0]) },
                 ModeSetup.LapsByCourse => terms with
                 {
@@ -87,9 +90,8 @@ public sealed record ModeTerms
                 },
                 ModeSetup.CpuLevel => terms with { CpuLevel = Cell(a[0]) },
                 ModeSetup.FinishLimit => terms with { FinishLimit = Cell(a[0]) },
-                ModeSetup.MineRegen => terms with { MinesReturn = Cell(a[0]) },
-                ModeSetup.MineRegenOff => terms with { MinesReturn = 0 },
-                ModeSetup.BoostOff => terms with { BoostStart = false },
+                ModeSetup.MineRegen => terms with { MinesReturn = Cell(a[0]) == 1 ? MineRegenOn : Cell(a[0]) },
+                ModeSetup.Boost when Cell(a[0]) == 0 => terms with { BoostStart = false },
                 _ => terms,   // (the game's alone)
             };
         }
@@ -102,14 +104,12 @@ public sealed record ModeTerms
                 ModeSetup.Racers => terms with { Racers = (Cell(a[0]), Cell(a[1])) },
                 ModeSetup.MachinesAll => terms with { Machines = [] },
                 ModeSetup.Machines => terms with { Machines = [.. a.Select(Cell).Order()] },
-                ModeSetup.CustomsOff => terms with { CustomsOff = true },
+                ModeSetup.Customs => terms with { CustomsOff = Cell(a[0]) == 0 },
                 ModeSetup.MachineSetting => terms with { Setting = new SettingRange(Cell(a[0]), Cell(a[1])) },
                 ModeSetup.Stats => terms with { Pack = word.Text },
                 ModeSetup.StatsStock => terms with { Pack = "" },
-                ModeSetup.MixedPacksOn => terms with { MixedPacks = true },
-                ModeSetup.MixedPacksOff => terms with { MixedPacks = false },
-                ModeSetup.BoostStartOn => terms with { BoostStart = true },
-                ModeSetup.BoostStartOff => terms with { BoostStart = false },
+                ModeSetup.MixedPacks => terms with { MixedPacks = Cell(a[0]) != 0 },
+                ModeSetup.BoostStart => terms with { BoostStart = Cell(a[0]) != 0 },
                 ModeSetup.Teams => terms with { Teams = (Cell(a[0]), Cell(a[1])) },
                 _ => terms,
             };

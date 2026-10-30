@@ -1033,7 +1033,7 @@ bytes and hash it had), each u32 its tag (four letters), u32 its length and its 
 The **content hash** is the SHA-256 of the package's bytes; its **share code** the first 8 characters of the hash's
 base32 (RFC 4648, upper case, no padding). At most 64 KiB, the source included.
 
-**A mode's words over a lobby's rules** (`ModeTerms`): a word stated wins; left out, the lobby's rule stands, but for the finish limit (0 unless stated: a mode owns its ending) and CPUs (none without `cpus allowed`). The coordinator writes the result in the match start, so `setup.rules`, `laps` and the seats say what is raced.
+**A mode's words over a lobby's rules** (`ModeTerms`): a word stated wins; left out, the lobby's rule stands, but for the finish limit (0 unless stated: a mode owns its ending) and CPUs (none without `cpus on`). The coordinator writes the result in the match start, so `setup.rules`, `laps` and the seats say what is raced.
 
 **In a match start**: `setup.mode` = `{"package": BASE64, "hash": HEX, "api": N, "params": [i32, ...], "teams":
 [team, ...]}`, the parameters in `PARM`'s order (a real's bits); `teams` each seat's team by seat, 0 to 29, set by

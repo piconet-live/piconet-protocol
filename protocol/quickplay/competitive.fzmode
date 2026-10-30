@@ -9,7 +9,7 @@ mode "Quick Play" {
   about "The game's own rules.";
 }
 
-cpus allowed;          // players may vote CPUs in, as today; none come without the vote
+cpus on;          // players may vote CPUs in, as today; none come without the vote
 finish_limit 90;       // the lobby's limit stops at a mode's door: Quick Play's own end, as today
 
 laps by course {

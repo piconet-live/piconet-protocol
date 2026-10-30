@@ -14,6 +14,11 @@
 # a op b. Every operation costs one operation of the step's budget, but SortRun: 1 + 5 x entries x keys, and FSqrt:
 # [api] fsqrt_cost (the owner, 2026-10-30: the game's square root is the dear one; `sqrt`, and `dist`, which calls it).
 #
+# A setup word's or action's id only rises: a word taken out leaves its id unused (`eliminate` 1; `mine_regen off` 7,
+# `restore off` 10, `mixed_packs off` 22, `boost_start off` 24, the fixed results titles 35 to 39), so a package from before
+# is refused and never read as another word. A setup argument of type "switch" is an on or off: `on`, `off` or a switch
+# parameter (1 or 0); an int argument with `on = N` also takes those: off 0, on N, and a switch parameter's 1 reads as N.
+#
 # A word: `name` as a mode file writes it, `id` its number in the bytecode (Action, SeatRead, RaceRead) or the package
 # (setup words, events), `type` what a read gives (int, real, bool, seat, seats, vec), `args` an action's or setup word's
 # arguments in order, `doc`, and `where`: the game's site or the part that applies it (vocabulary.md's). A setup word
@@ -21,7 +26,7 @@
 # first): "course", a course's number (courses.toml). A setup word with `lobby = true` is the coordinator's alone and
 # is not in the package's SETP (formats.md section 9): what it sets reaches the game as the match start's own fields,
 # so a game needs to know nothing of it; the compiler reads it from the file (ModePackage.LobbyWords, ModeTerms).
-# `form`: how the file writes it: "range" (`racers 2..8`: its two arguments, least and most), "text" (`stats "GX+"`),
+# `form`: how the file writes it: "range" (`racers 2..8`: its two arguments, least and most), "text" (`stats "GX+"`, `results_title "TEXT"`, in the package a value a byte),
 # "list" (`machines ["Blue Falcon", ...]`); none: its arguments.
 
 [codec.csharp]
@@ -45,6 +50,7 @@ teams = 30             # teams in a race at most (a team's number 0 to 29)
 waits = 64             # rule instances waiting at once (the compiler counts the most a mode can have)
 wait_locals = 8        # locals a waiting rule keeps, its event's binding included
 fsqrt_cost = 8         # what one FSqrt takes of the budget (the compiler's count and the interpreter's, in both its loops)
+results_title = 23     # a results title's characters: the window's 24 bytes with the NUL (runner mode_hud.h)
 board = 8              # `board` lines a scope (global, seat, team): what the status board holds (board.toml)
 board_label = 32       # a `board` line's label, in UTF-8 bytes
 board_words = 16       # the words a `board` line may name
@@ -420,7 +426,7 @@ doc = """the game's out verdict became true for the seat this step (the image's 
 cause (an int, what the machine's state says at that step; the first that holds: 5 time over; 2 exploded (the event \
 `destroyed` below: contact, a strip, a death surface, the skip limit, `explode`); 3 fell (flag 0x800 with no explosion: \
 lost course, out of bounds, under the fall planes); 1 energy (broken down, flag 0x80, at rest; a CPU at rest too: it \
-comes to rest broken down); 4 retired (`retire`, `eliminate`); 0 none of these)"""
+comes to rest broken down); 4 retired (`retire`); 0 none of these)"""
 
 # --- wave 2A, the race side: events (each found at the mode point by comparing a seat's state with the last step's,
 # kept in the block's engine page; language 6 gives their order in a step)
@@ -566,10 +572,10 @@ args = [{ type = "int", least = 0, most = 99 }]
 where = "the coordinator, at match forming: the match start's laps (0, `unlimited`: the game's free run)"
 
 [[setup]]
-name = "cpus allowed"
+name = "cpus"
 id = 1
-where = "the coordinator: players may vote CPUs into the mode's race; left out, they may not"
-
+args = [{ type = "switch" }]
+where = "the coordinator: on, players may vote CPUs into the mode's race (it never forces them); off or left out, they may not"
 [[setup]]
 name = "pedals locked"
 id = 2
@@ -578,10 +584,10 @@ args = [{ type = "real", name = "accel", least = 0.0, most = 1.0, default = 1.0 
 where = "the stand-in routine, before the game's rule hook fn_1_331EC: every seat's accelerator M+0x200 and brake M+0x204, flag 0x2000 cleared"
 
 [[setup]]
-name = "boost off"
+name = "boost"
 id = 3
-where = "the stand-in routine, after the game's rule hook fn_1_331EC: every seat's boost request (flag 0x40) cleared"
-
+args = [{ type = "switch" }]
+where = "the stand-in routine, after the game's rule hook fn_1_331EC: off, every seat's boost request (flag 0x40) cleared; on or left out, nothing"
 [[setup]]
 name = "laps by course"
 id = 4
@@ -607,14 +613,10 @@ finish; a machine that crosses the line during that wait still finishes. In a mo
 [[setup]]
 name = "mine_regen"
 id = 6
-args = [{ type = "int", least = 50, most = 5000 }]
-where = "the race block's RACE_MINE_REGEN: a mine comes back so many milliseconds after it went off (in steps, rounded down)"
-
-[[setup]]
-name = "mine_regen off"
-id = 7
-where = "the race block's RACE_MINE_REGEN 0: a mine stays gone, the game's own way"
-
+args = [{ type = "int", least = 50, most = 5000, on = 200 }]
+where = """the race block's RACE_MINE_REGEN: a mine comes back so many milliseconds after it went off (in steps, rounded down). `off` \
+stays gone, the game's own way (0 in the package); `on` is 200 ms, the owner's default for the lobby rule (1 in the package when a \
+switch parameter gives it). Also a number or a number parameter, 50 to 5000"""
 [[setup]]
 name = "cpu_level"
 id = 8
@@ -622,21 +624,16 @@ args = [{ type = "int", least = 0, most = 3 }]
 where = "the race block's RACE_CPULEVEL: 0 Novice, 1 Standard, 2 Expert, 3 Master"
 
 [[setup]]
-name = "restore on"
+name = "restore"
 id = 9
-where = """every seat respawns (machine flag 0x1, the mode's respawns on each seat at its first run), never the lobby's rule \
-0x8000, so `respawns s off` may take one seat out of it. Left out in a mode, no seat respawns unless a rule says `respawns s`: the lobby's restore rule never reaches a mode's race"""
-
+args = [{ type = "switch" }]
+where = """on: every seat respawns (machine flag 0x1, the mode's respawns on each seat at its first run), never the lobby's rule \
+0x8000, so `respawns s off` may take one seat out of it. Off or left out in a mode, no seat respawns unless a rule says `respawns s`: the lobby's restore rule never reaches a mode's race"""
 [[setup]]
-name = "restore off"
-id = 10
-where = "no seat respawns unless a rule says `respawns s`, as when left out"
-
-[[setup]]
-name = "contact off"
+name = "contact"
 id = 11
-where = "every pair of seats passes through each other (the pair gate at main.rel 0x8514C reads the block's no-contact rows)"
-
+args = [{ type = "switch" }]
+where = "off: every pair of seats passes through each other (the pair gate at main.rel 0x8514C reads the block's no-contact rows); on or left out, the game's own contact"
 [[setup]]
 name = "clock_limit"
 id = 12
@@ -706,29 +703,17 @@ lobby = true
 where = "the coordinator: no stat pack, enforced: the disc's own stats"
 
 [[setup]]
-name = "mixed_packs on"
+name = "mixed_packs"
 id = 21
 lobby = true
-where = "the coordinator: each racer may race a pack of their own"
-
+args = [{ type = "switch" }]
+where = "the coordinator: on, each racer may race a pack of their own; off, one pack for all. Left out: the lobby's rule stands"
 [[setup]]
-name = "mixed_packs off"
-id = 22
-lobby = true
-where = "the coordinator: one pack for all"
-
-[[setup]]
-name = "boost_start on"
+name = "boost_start"
 id = 23
 lobby = true
-where = "the coordinator: the match start's rules (RACE_BOOST): boosting on the first lap"
-
-[[setup]]
-name = "boost_start off"
-id = 24
-lobby = true
-where = "the coordinator: the match start's rules (RACE_BOOST 0): no boosting on the first lap"
-
+args = [{ type = "switch" }]
+where = "the coordinator: the match start's rules (RACE_BOOST): on, boosting on the first lap; off, none. Left out: the lobby's rule stands"
 [[setup]]
 name = "teams"
 id = 25
@@ -743,9 +728,9 @@ where = "the coordinator: the teams a race of this mode has, set by the host and
 [[setup]]
 name = "solo"
 id = 26
-where = """the launcher starts it itself as a practice (the launch file's `practice`: one seat, seat 0, no relay, every step's \
-row the local pad's, port/core/src/practice_session.cpp). No lobby and no rotation races it; the game refuses it with a relay"""
-
+args = [{ type = "switch" }]
+where = """on: the launcher starts it itself as a practice (the launch file's `practice`: one seat, seat 0, no relay, every step's \
+row the local pad's, port/core/src/practice_session.cpp). No lobby and no rotation races it; the game refuses it with a relay. Off or left out: a race"""
 [[setup]]
 name = "rewind"
 id = 27
@@ -756,15 +741,15 @@ in the undo log, the mode's block with the rest. Left out in a solo mode, no way
 [[setup]]
 name = "pause"
 id = 28
-where = """Start stands the picture at the moment it shows; the stick and the replay's bar then move it inside `rewind`'s reach, \
-and Start again goes on from it (from an earlier moment: what came after is dropped). Left out, Start does nothing"""
-
+args = [{ type = "switch" }]
+where = """on: Start stands the picture at the moment it shows; the stick and the replay's bar then move it inside `rewind`'s reach, \
+and Start again goes on from it (from an earlier moment: what came after is dropped). Off or left out, Start does nothing"""
 [[setup]]
 name = "save_state"
 id = 29
-where = """one saved moment, D-pad right saves and D-pad left loads: a mark on a step inside `rewind`'s reach, gone when the race \
-has run past the reach or gone on from before it. Needs `rewind`"""
-
+args = [{ type = "switch" }]
+where = """on: one saved moment, D-pad right saves and D-pad left loads: a mark on a step inside `rewind`'s reach, gone when the race \
+has run past the reach or gone on from before it. Needs `rewind`. Off or left out, none"""
 [[setup]]
 name = "resume_countdown"
 id = 30
@@ -772,11 +757,11 @@ args = [{ type = "int", least = 0, most = 300 }]
 where = "the time between a resume or a load and the race running on, a time or steps. Left out: 0, at once"
 
 [[setup]]
-name = "customs off"
+name = "customs"
 id = 31
 lobby = true
-where = "the coordinator: no custom machines in this mode's races, whatever the machines word says; a choice of one is refused and the racer races their stock machine. Left out: custom machines are allowed, a machines list holds the stock machines only"
-
+args = [{ type = "switch" }]
+where = "the coordinator: off, no custom machines in this mode's races, whatever the machines word says; a choice of one is refused and the racer races their stock machine. On or left out: custom machines are allowed, a machines list holds the stock machines only"
 [[seat_read]]
 name = "racing"
 id = 0
@@ -1125,13 +1110,6 @@ where = "site L (main.rel 0x23854, after the air drag) in the next step's machin
 doc = """holds the seat's speed at v km/h for the step: a written seat.speed. v is held to 0 to 9000; a seat frozen, broken \
 down, destroyed, finished, retired or restoring is not held"""
 
-[[action]]
-name = "eliminate"
-id = 1
-args = ["seat"]
-where = "the mode point: flag 0x08000000 (retired) and flag 0x1 cleared; the game's own verdict books it out at the next step"
-doc = "the seat is out of the race, by the game's own verdict"
-
 # --- wave 2A, the race side: actions. Applied after the run, in the queue's order (language 6)
 
 [[action]]
@@ -1139,7 +1117,7 @@ name = "retire"
 id = 2
 args = ["seat"]
 where = "the mode point: flag 0x08000000 and flag 0x1 cleared in one write (never on a finished seat)"
-doc = "as eliminate: the seat is retired, the game's verdict books it out at the next step"
+doc = "the seat is out of the race: it is retired, the game's verdict books it out at the next step"
 
 [[action]]
 name = "explode"
@@ -1320,41 +1298,12 @@ straight on to the points page. Drawing only. Needs award"""
 doc = "the VS RESULTS times page is passed on its own; the race's results are the points page"
 
 [[setup]]
-name = "results_title knockout"
+name = "results_title"
 id = 34
-where = "the results' title (fn_1_1461C8 0x146304): the core's fixed string in the window for VS TOTAL RANKING, font 0x1D (A to Z and the space)"
-doc = "the points page's title reads KNOCKOUT"
-
-[[setup]]
-name = "results_title lives"
-id = 35
-where = "the results' title (fn_1_1461C8 0x146304): the core's fixed string in the window for VS TOTAL RANKING, font 0x1D (A to Z and the space)"
-doc = "the points page's title reads LIVES"
-
-[[setup]]
-name = "results_title overdrive"
-id = 36
-where = "the results' title (fn_1_1461C8 0x146304): the core's fixed string in the window for VS TOTAL RANKING, font 0x1D (A to Z and the space)"
-doc = "the points page's title reads OVERDRIVE"
-
-[[setup]]
-name = "results_title teams"
-id = 37
-where = "the results' title (fn_1_1461C8 0x146304): the core's fixed string in the window for VS TOTAL RANKING, font 0x1D (A to Z and the space)"
-doc = "the points page's title reads TEAMS"
-
-[[setup]]
-name = "results_title survivors"
-id = 38
-where = "the results' title (fn_1_1461C8 0x146304): the core's fixed string in the window for VS TOTAL RANKING, font 0x1D (A to Z and the space)"
-doc = "the points page's title reads SURVIVORS"
-
-[[setup]]
-name = "results_title points"
-id = 39
-where = "the results' title (fn_1_1461C8 0x146304): the core's fixed string in the window for VS TOTAL RANKING, font 0x1D (A to Z and the space)"
-doc = "the points page's title reads POINTS"
-
+form = "text"
+where = """the results' title (fn_1_1461C8 0x146304): `results_title "TEXT"`, the string in the window for VS TOTAL RANKING (in the package \
+a value a byte), font 0x1D: A to Z and the space, api.results_title long at most (the core's window holds 24 bytes with the NUL, mode_hud.h); not all spaces, none at either end"""
+doc = "the points page's title reads TEXT"
 # ---- The displays (vocabulary 5): presentation only. An action writes the seat's display record in the block (the
 # runner's port/core/src/mode_hud.h), at the mode point like every action; the drawing reads it, every frame, from
 # what the step left (a rollback redraws). Nothing a step reads is written, and nothing draws from a generator.

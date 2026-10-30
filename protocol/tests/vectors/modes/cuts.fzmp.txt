@@ -1,10 +1,10 @@
-FZMP format 1 api 1, 922 bytes, hash e4a964ddcd9cee1992a3247f4e258b76999046a7f8401b5b4452594d551058b9
+FZMP format 1 api 1, 964 bytes, hash ed11d906ba82720728d144619a0300d7860c421f53ce5a041f4c69a5ba7003cf
 HEAD name "Cuts" badge "" about "Every word of the cut race."
 PARM 0
 SETP 3
   race_waits everyone
   results points
-  results_title knockout
+  results_title "KNOCKOUT"
 VARS globals 0, seat words 0
 RULE 3
   0 "Clock" event every step, locals 1, when none, while 0000, body 0003
@@ -63,4 +63,4 @@ CODE 108 bytes
   ; rule 2 body
   0069  Action end_race
   006b  End
-SRC  632 bytes
+SRC  634 bytes

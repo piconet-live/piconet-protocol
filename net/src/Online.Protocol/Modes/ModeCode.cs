@@ -101,6 +101,10 @@ internal static class ModeCode
             {
                 throw new InvalidDataException($"{i.Op} at {i.Offset} names {i.Operands[0]}, past its table's {most}");
             }
+            if (i.Op == ModeOp.Action && ModeWords.Actions.All(a => (long)a.Id != i.Operands[0]))
+            {
+                throw new InvalidDataException($"{i.Op} at {i.Offset} names {i.Operands[0]}, a word no longer of the table");
+            }
             if (IsJump(i.Op) && !starts.Contains((uint)i.Operands[0]))
             {
                 throw new InvalidDataException($"{i.Op} at {i.Offset} jumps inside an operation");
@@ -123,7 +127,7 @@ internal static class ModeCode
         ModeOp.Param => package.Params.Count,
         ModeOp.SeatRead => ModeWords.SeatReads.Count,
         ModeOp.RaceRead => ModeWords.RaceReads.Count,
-        ModeOp.Action => ModeWords.Actions.Count,
+        ModeOp.Action => (long)ModeWords.Actions[^1].Id + 1,
         ModeOp.SortBegin or ModeOp.SortAdd or ModeOp.SortRun or ModeOp.SortNext => ModeWords.Sorts,
         _ => null,
     };

@@ -18,7 +18,7 @@ public static partial class HostRules
     /// <summary>The CPU racers' level: 0 Novice, 1 Standard, 2 Expert, 3 Master.</summary>
     public static HostRule CpuLevel { get; } = new("cpu-level", "CPU level", RuleReach.Together, RuleKind.Number, 0, 3, Default: 3, Taken: "0 to 3", Flag: "--cpu-level", SetupWord: "cpu_level");
 
-    public static HostRule CpuFill { get; } = new("cpu-fill", "CPU racers", RuleReach.Together, RuleKind.Choice, SetupWord: "cpus allowed");
+    public static HostRule CpuFill { get; } = new("cpu-fill", "CPU racers", RuleReach.Together, RuleKind.Choice, SetupWord: "cpus");
 
     /// <summary>Boosting on the first lap: alone too (the game's Practice leaves it off here unless the rule is on,
     /// piconet-runner's port/image/routines/direct.py).</summary>

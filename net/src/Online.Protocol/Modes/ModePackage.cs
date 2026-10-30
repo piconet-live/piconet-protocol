@@ -36,6 +36,41 @@ public sealed record ModeParam(string Name, string Label, ModeParamKind Kind, Mo
 /// <summary>A setup word's argument: a constant cell, or the index of the parameter that gives it.</summary>
 public sealed record ModeSetupValue(bool FromParam, int Value);
 
+/// <summary>The title <c>results_title</c> carries in the package: a value a character, in the word's arguments. It is
+/// drawn by the game's font 0x1D, whose table (main.rel .data 0x1AEA8 + 0x1D x 0x38) holds the glyphs 'A' to 'Z' only; the
+/// drawing routine fn_1_4A0D8 steps over a space, and over anything else without drawing it, so only those two are
+/// allowed. The game's window for it holds 24 bytes with the NUL. Centred on x 320, a letter takes 24 of the screen's
+/// 640 and a space 12 (fn_1_1461C8 sets the space's factor 0.5), so the longest title is 552 wide and fits.</summary>
+public static class ModeResultsTitle
+{
+    /// <summary>Why a title cannot be drawn; null: it can.</summary>
+    public static string? Refusal(string title)
+    {
+        ArgumentNullException.ThrowIfNull(title);
+        if (title.Length > ModeWords.ResultsTitle)
+        {
+            return $"results_title is at most {ModeWords.ResultsTitle} characters: \"{title}\" has {title.Length}";
+        }
+        if (title.FirstOrDefault(c => c is not (>= 'A' and <= 'Z') and not ' ') is var bad and not '\0')
+        {
+            return $"results_title: the game's font 0x1D draws A to Z and the space, not '{bad}'";
+        }
+        return title.Trim(' ').Length != title.Length || title.Length == 0
+            ? "results_title needs a title, with no space at either end: the game centres the whole string"
+            : null;
+    }
+
+    /// <summary>A title as the word's arguments.</summary>
+    public static List<ModeSetupValue> Cells(string title)
+    {
+        ArgumentNullException.ThrowIfNull(title);
+        return [.. title.Select(c => new ModeSetupValue(false, c))];
+    }
+
+    /// <summary>The word's arguments as its title.</summary>
+    public static string Text(IEnumerable<ModeSetupValue> cells) => new([.. cells.Select(c => (char)c.Value)]);
+}
+
 /// <summary>A setup word as the package keeps it: every argument of the word, in the table's order, the ones the file
 /// left out at their defaults (so a reader needs no table of defaults).</summary>
 public sealed record ModeSetupWord(ModeSetup Id, IReadOnlyList<ModeSetupValue> Arguments);
@@ -429,6 +464,15 @@ public sealed class ModePackage
                 1 => true,
                 _ => throw new InvalidDataException($"the setup word {word.Name}'s argument has an unknown source"),
             }, s.I32())).ToList();
+            if (word.Id == ModeSetup.ResultsTitle)
+            {
+                if (arguments.Any(a => a.FromParam || a.Value is < 0 or > 127) || ModeResultsTitle.Refusal(ModeResultsTitle.Text(arguments)) is not null)
+                {
+                    throw new InvalidDataException($"the setup word {word.Name}'s arguments are not its own");
+                }
+                list.Add(new ModeSetupWord(word.Id, arguments));
+                continue;
+            }
             var table = word.Id == ModeSetup.LapsByCourse;  // (modes.toml's `table`: a pair a course after the arguments)
             if ((table ? arguments.Count < word.Args.Count || (arguments.Count - word.Args.Count) % 2 != 0
                        : arguments.Count != word.Args.Count) ||

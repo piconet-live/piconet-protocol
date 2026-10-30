@@ -116,7 +116,7 @@ race = { key = "cpuLevel", absent = 3, word = "RACE_CPULEVEL", at = 256, flag = 
 
 [[rule]]
 name = "cpu-fill"
-setup = "cpus allowed"
+setup = "cpus"
 label = "CPU racers"
 cs = "CpuFill"
 reach = "together"

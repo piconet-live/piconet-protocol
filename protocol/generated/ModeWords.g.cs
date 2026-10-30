@@ -173,28 +173,24 @@ public enum ModeSetup : byte
 {
     /// <summary><c>laps</c></summary>
     Laps = 0,
-    /// <summary><c>cpus allowed</c></summary>
-    CpusAllowed = 1,
+    /// <summary><c>cpus</c></summary>
+    Cpus = 1,
     /// <summary><c>pedals locked</c></summary>
     PedalsLocked = 2,
-    /// <summary><c>boost off</c></summary>
-    BoostOff = 3,
+    /// <summary><c>boost</c></summary>
+    Boost = 3,
     /// <summary><c>laps by course</c></summary>
     LapsByCourse = 4,
     /// <summary><c>finish_limit</c></summary>
     FinishLimit = 5,
     /// <summary><c>mine_regen</c></summary>
     MineRegen = 6,
-    /// <summary><c>mine_regen off</c></summary>
-    MineRegenOff = 7,
     /// <summary><c>cpu_level</c></summary>
     CpuLevel = 8,
-    /// <summary><c>restore on</c></summary>
-    RestoreOn = 9,
-    /// <summary><c>restore off</c></summary>
-    RestoreOff = 10,
-    /// <summary><c>contact off</c></summary>
-    ContactOff = 11,
+    /// <summary><c>restore</c></summary>
+    Restore = 9,
+    /// <summary><c>contact</c></summary>
+    Contact = 11,
     /// <summary><c>clock_limit</c></summary>
     ClockLimit = 12,
     /// <summary><c>rolling_start</c></summary>
@@ -213,14 +209,10 @@ public enum ModeSetup : byte
     Stats = 19,
     /// <summary><c>stats stock</c></summary>
     StatsStock = 20,
-    /// <summary><c>mixed_packs on</c></summary>
-    MixedPacksOn = 21,
-    /// <summary><c>mixed_packs off</c></summary>
-    MixedPacksOff = 22,
-    /// <summary><c>boost_start on</c></summary>
-    BoostStartOn = 23,
-    /// <summary><c>boost_start off</c></summary>
-    BoostStartOff = 24,
+    /// <summary><c>mixed_packs</c></summary>
+    MixedPacks = 21,
+    /// <summary><c>boost_start</c></summary>
+    BoostStart = 23,
     /// <summary><c>teams</c></summary>
     Teams = 25,
     /// <summary><c>solo</c></summary>
@@ -233,24 +225,14 @@ public enum ModeSetup : byte
     SaveState = 29,
     /// <summary><c>resume_countdown</c></summary>
     ResumeCountdown = 30,
-    /// <summary><c>customs off</c></summary>
-    CustomsOff = 31,
+    /// <summary><c>customs</c></summary>
+    Customs = 31,
     /// <summary><c>race_waits everyone</c></summary>
     RaceWaitsEveryone = 32,
     /// <summary><c>results points</c></summary>
     ResultsPoints = 33,
-    /// <summary><c>results_title knockout</c></summary>
-    ResultsTitleKnockout = 34,
-    /// <summary><c>results_title lives</c></summary>
-    ResultsTitleLives = 35,
-    /// <summary><c>results_title overdrive</c></summary>
-    ResultsTitleOverdrive = 36,
-    /// <summary><c>results_title teams</c></summary>
-    ResultsTitleTeams = 37,
-    /// <summary><c>results_title survivors</c></summary>
-    ResultsTitleSurvivors = 38,
-    /// <summary><c>results_title points</c></summary>
-    ResultsTitlePoints = 39,
+    /// <summary><c>results_title</c></summary>
+    ResultsTitle = 34,
 }
 
 /// <summary>A read of a seat (protocol/modes.toml).</summary>
@@ -380,8 +362,6 @@ public enum ModeAction : byte
 {
     /// <summary><c>seat.speed</c></summary>
     SeatSpeed = 0,
-    /// <summary><c>eliminate</c></summary>
-    Eliminate = 1,
     /// <summary><c>retire</c></summary>
     Retire = 2,
     /// <summary><c>explode</c></summary>
@@ -483,6 +463,8 @@ public static partial class ModeWords
     public const int WaitLocals = 8;
     /// <summary>The api's limit <c>fsqrt_cost</c>.</summary>
     public const int FsqrtCost = 8;
+    /// <summary>The api's limit <c>results_title</c>.</summary>
+    public const int ResultsTitle = 23;
     /// <summary>The api's limit <c>board</c>.</summary>
     public const int Board = 8;
     /// <summary>The api's limit <c>board_label</c>.</summary>
@@ -597,21 +579,19 @@ public static partial class ModeWords
         ("wrong_way", ModeEvent.WrongWay, false, true, null),
     ];
 
-    /// <summary>The setup words: name, id, arguments (name, type, least, most, default); Lobby: the coordinator's alone, not in the package; Form: how the file writes it (range, text, list; empty: its arguments).</summary>
+    /// <summary>The setup words: name, id, arguments (name, type, least, most, default, what on is); Lobby: the coordinator's alone, not in the package; Form: how the file writes it (range, text, list; empty: its arguments).</summary>
     public static readonly IReadOnlyList<(string Name, ModeSetup Id, IReadOnlyList<ModeArgument> Args, bool Lobby, string Form)> Setups =
     [
         ("laps", ModeSetup.Laps, [new ModeArgument("", ModeType.Int, 0, 99, null)], false, ""),
-        ("cpus allowed", ModeSetup.CpusAllowed, [], false, ""),
+        ("cpus", ModeSetup.Cpus, [new ModeArgument("", ModeType.Bool, 0, 1, null)], false, ""),
         ("pedals locked", ModeSetup.PedalsLocked, [new ModeArgument("accel", ModeType.Real, 0.0f, 1.0f, 1.0f), new ModeArgument("brake", ModeType.Real, 0.0f, 1.0f, 0.0f)], false, ""),
-        ("boost off", ModeSetup.BoostOff, [], false, ""),
+        ("boost", ModeSetup.Boost, [new ModeArgument("", ModeType.Bool, 0, 1, null)], false, ""),
         ("laps by course", ModeSetup.LapsByCourse, [new ModeArgument("else", ModeType.Int, 0, 99, 3)], false, ""),
         ("finish_limit", ModeSetup.FinishLimit, [new ModeArgument("", ModeType.Int, 0, 600, null)], false, ""),
-        ("mine_regen", ModeSetup.MineRegen, [new ModeArgument("", ModeType.Int, 50, 5000, null)], false, ""),
-        ("mine_regen off", ModeSetup.MineRegenOff, [], false, ""),
+        ("mine_regen", ModeSetup.MineRegen, [new ModeArgument("", ModeType.Int, 50, 5000, null, 200)], false, ""),
         ("cpu_level", ModeSetup.CpuLevel, [new ModeArgument("", ModeType.Int, 0, 3, null)], false, ""),
-        ("restore on", ModeSetup.RestoreOn, [], false, ""),
-        ("restore off", ModeSetup.RestoreOff, [], false, ""),
-        ("contact off", ModeSetup.ContactOff, [], false, ""),
+        ("restore", ModeSetup.Restore, [new ModeArgument("", ModeType.Bool, 0, 1, null)], false, ""),
+        ("contact", ModeSetup.Contact, [new ModeArgument("", ModeType.Bool, 0, 1, null)], false, ""),
         ("clock_limit", ModeSetup.ClockLimit, [new ModeArgument("", ModeType.Int, 60, 65535, null)], false, ""),
         ("rolling_start", ModeSetup.RollingStart, [new ModeArgument("", ModeType.Real, 0.0f, 9000.0f, 1000.0f)], false, ""),
         ("course", ModeSetup.Course, [], true, "text"),
@@ -621,25 +601,18 @@ public static partial class ModeWords
         ("machine_setting", ModeSetup.MachineSetting, [new ModeArgument("least", ModeType.Int, 0, 100, null), new ModeArgument("most", ModeType.Int, 0, 100, null)], true, "range"),
         ("stats", ModeSetup.Stats, [], true, "text"),
         ("stats stock", ModeSetup.StatsStock, [], true, ""),
-        ("mixed_packs on", ModeSetup.MixedPacksOn, [], true, ""),
-        ("mixed_packs off", ModeSetup.MixedPacksOff, [], true, ""),
-        ("boost_start on", ModeSetup.BoostStartOn, [], true, ""),
-        ("boost_start off", ModeSetup.BoostStartOff, [], true, ""),
+        ("mixed_packs", ModeSetup.MixedPacks, [new ModeArgument("", ModeType.Bool, 0, 1, null)], true, ""),
+        ("boost_start", ModeSetup.BoostStart, [new ModeArgument("", ModeType.Bool, 0, 1, null)], true, ""),
         ("teams", ModeSetup.Teams, [new ModeArgument("least", ModeType.Int, 2, 30, null), new ModeArgument("most", ModeType.Int, 2, 30, null)], true, "range"),
-        ("solo", ModeSetup.Solo, [], false, ""),
+        ("solo", ModeSetup.Solo, [new ModeArgument("", ModeType.Bool, 0, 1, null)], false, ""),
         ("rewind", ModeSetup.Rewind, [new ModeArgument("", ModeType.Int, 60, 3600, null)], false, ""),
-        ("pause", ModeSetup.Pause, [], false, ""),
-        ("save_state", ModeSetup.SaveState, [], false, ""),
+        ("pause", ModeSetup.Pause, [new ModeArgument("", ModeType.Bool, 0, 1, null)], false, ""),
+        ("save_state", ModeSetup.SaveState, [new ModeArgument("", ModeType.Bool, 0, 1, null)], false, ""),
         ("resume_countdown", ModeSetup.ResumeCountdown, [new ModeArgument("", ModeType.Int, 0, 300, null)], false, ""),
-        ("customs off", ModeSetup.CustomsOff, [], true, ""),
+        ("customs", ModeSetup.Customs, [new ModeArgument("", ModeType.Bool, 0, 1, null)], true, ""),
         ("race_waits everyone", ModeSetup.RaceWaitsEveryone, [], false, ""),
         ("results points", ModeSetup.ResultsPoints, [], false, ""),
-        ("results_title knockout", ModeSetup.ResultsTitleKnockout, [], false, ""),
-        ("results_title lives", ModeSetup.ResultsTitleLives, [], false, ""),
-        ("results_title overdrive", ModeSetup.ResultsTitleOverdrive, [], false, ""),
-        ("results_title teams", ModeSetup.ResultsTitleTeams, [], false, ""),
-        ("results_title survivors", ModeSetup.ResultsTitleSurvivors, [], false, ""),
-        ("results_title points", ModeSetup.ResultsTitlePoints, [], false, ""),
+        ("results_title", ModeSetup.ResultsTitle, [], false, "text"),
     ];
 
     /// <summary>The reads of a seat (<c>seat.NAME</c>): name, id, type.</summary>
@@ -712,7 +685,6 @@ public static partial class ModeWords
     public static readonly IReadOnlyList<(string Name, ModeAction Id, IReadOnlyList<ModeType> Args)> Actions =
     [
         ("seat.speed", ModeAction.SeatSpeed, [ModeType.Seat, ModeType.Real]),
-        ("eliminate", ModeAction.Eliminate, [ModeType.Seat]),
         ("retire", ModeAction.Retire, [ModeType.Seat]),
         ("explode", ModeAction.Explode, [ModeType.Seat]),
         ("respawns", ModeAction.Respawns, [ModeType.Seat]),

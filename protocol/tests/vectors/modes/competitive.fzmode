@@ -8,7 +8,7 @@ mode "Quick Play" {
   about "The game's own rules.";
 }
 
-cpus allowed;          // players may vote CPUs in, as today; none come without the vote
+cpus on;          // players may vote CPUs in, as today; none come without the vote
 
 laps by course {
   "Mute City: Sonic Oval": 8;

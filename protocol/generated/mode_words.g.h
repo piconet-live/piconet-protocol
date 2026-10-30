@@ -23,6 +23,7 @@ inline constexpr int TEAMS = 30;
 inline constexpr int WAITS = 64;
 inline constexpr int WAIT_LOCALS = 8;
 inline constexpr int FSQRT_COST = 8;
+inline constexpr int RESULTS_TITLE = 23;
 inline constexpr int BOARD = 8;
 inline constexpr int BOARD_LABEL = 32;
 inline constexpr int BOARD_WORDS = 16;
@@ -211,17 +212,15 @@ enum Event : std::uint8_t
 enum Setup : std::uint8_t
 {
   SETUP_LAPS = 0,  // laps
-  SETUP_CPUSALLOWED = 1,  // cpus allowed
+  SETUP_CPUS = 1,  // cpus
   SETUP_PEDALSLOCKED = 2,  // pedals locked
-  SETUP_BOOSTOFF = 3,  // boost off
+  SETUP_BOOST = 3,  // boost
   SETUP_LAPSBYCOURSE = 4,  // laps by course
   SETUP_FINISHLIMIT = 5,  // finish_limit
   SETUP_MINEREGEN = 6,  // mine_regen
-  SETUP_MINEREGENOFF = 7,  // mine_regen off
   SETUP_CPULEVEL = 8,  // cpu_level
-  SETUP_RESTOREON = 9,  // restore on
-  SETUP_RESTOREOFF = 10,  // restore off
-  SETUP_CONTACTOFF = 11,  // contact off
+  SETUP_RESTORE = 9,  // restore
+  SETUP_CONTACT = 11,  // contact
   SETUP_CLOCKLIMIT = 12,  // clock_limit
   SETUP_ROLLINGSTART = 13,  // rolling_start
   SETUP_COURSE = 14,  // course
@@ -231,26 +230,19 @@ enum Setup : std::uint8_t
   SETUP_MACHINESETTING = 18,  // machine_setting
   SETUP_STATS = 19,  // stats
   SETUP_STATSSTOCK = 20,  // stats stock
-  SETUP_MIXEDPACKSON = 21,  // mixed_packs on
-  SETUP_MIXEDPACKSOFF = 22,  // mixed_packs off
-  SETUP_BOOSTSTARTON = 23,  // boost_start on
-  SETUP_BOOSTSTARTOFF = 24,  // boost_start off
+  SETUP_MIXEDPACKS = 21,  // mixed_packs
+  SETUP_BOOSTSTART = 23,  // boost_start
   SETUP_TEAMS = 25,  // teams
   SETUP_SOLO = 26,  // solo
   SETUP_REWIND = 27,  // rewind
   SETUP_PAUSE = 28,  // pause
   SETUP_SAVESTATE = 29,  // save_state
   SETUP_RESUMECOUNTDOWN = 30,  // resume_countdown
-  SETUP_CUSTOMSOFF = 31,  // customs off
+  SETUP_CUSTOMS = 31,  // customs
   SETUP_RACEWAITSEVERYONE = 32,  // race_waits everyone
   SETUP_RESULTSPOINTS = 33,  // results points
-  SETUP_RESULTSTITLEKNOCKOUT = 34,  // results_title knockout
-  SETUP_RESULTSTITLELIVES = 35,  // results_title lives
-  SETUP_RESULTSTITLEOVERDRIVE = 36,  // results_title overdrive
-  SETUP_RESULTSTITLETEAMS = 37,  // results_title teams
-  SETUP_RESULTSTITLESURVIVORS = 38,  // results_title survivors
-  SETUP_RESULTSTITLEPOINTS = 39,  // results_title points
-  SETUP_COUNT = 40,
+  SETUP_RESULTSTITLE = 34,  // results_title
+  SETUP_COUNT = 35,
 };
 
 // a read of a seat (OP_SEATREAD)
@@ -325,7 +317,6 @@ enum Race : std::uint8_t
 enum Action : std::uint8_t
 {
   ACTION_SEATSPEED = 0,  // seat.speed
-  ACTION_ELIMINATE = 1,  // eliminate
   ACTION_RETIRE = 2,  // retire
   ACTION_EXPLODE = 3,  // explode
   ACTION_RESPAWNS = 4,  // respawns
@@ -406,13 +397,15 @@ enum Look : std::uint8_t
   LOOK_COUNT = 3,
 };
 
+// what `on` is for a setup word that also takes a value
+inline constexpr int SETUP_MINEREGEN_ON = 200;
+
 // the arguments an action pops
 constexpr int ActionArguments(std::uint8_t action)
 {
   switch (action)
   {
     case ACTION_SEATSPEED: return 2;
-    case ACTION_ELIMINATE: return 1;
     case ACTION_RETIRE: return 1;
     case ACTION_EXPLODE: return 1;
     case ACTION_RESPAWNS: return 1;

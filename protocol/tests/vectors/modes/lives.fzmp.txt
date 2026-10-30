@@ -1,9 +1,9 @@
-FZMP format 1 api 1, 584 bytes, hash bc7d3668860973884bdaf6e12bc83b5868806e0bd94f723d1b408d66ee415d1d
+FZMP format 1 api 1, 584 bytes, hash 5b730d4ce2fca78034962331e670c1fc998fa5165e84d13e8ab89f8848e15900
 HEAD name "Lives test" badge "LIVES" about "Three lives each. The last wreck is final."
 PARM 0
 SETP 2
   laps 2
-  cpus allowed
+  cpus on
 VARS globals 0, seat words 1
   seat 0 = 3
 RULE 3
@@ -55,4 +55,4 @@ CODE 106 bytes
   0061  Push 0
   0066  StoreSeatVar 0
   0069  End
-SRC  253 bytes
+SRC  248 bytes

@@ -7,5 +7,5 @@ mode "Lives test" {
 }
 
 laps 2;
-cpus allowed;
+cpus on;
 lives 3;

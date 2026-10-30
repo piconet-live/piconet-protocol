@@ -1,10 +1,10 @@
-FZMP format 1 api 1, 4478 bytes, hash ac27f0f4e174032875698b12076812b71f25fa0f6f232ce54e9de55634438829
+FZMP format 1 api 1, 4490 bytes, hash 26cd2cf25760aebfeac923c18ab5f4ce55aa82419a3080342360ab9f2299fbf9
 HEAD name "Race words" badge "" about "Every race-side word of api 1."
 PARM 1
   0 limit "Time" delay int 3600..36000 step 1800 default 18000
 SETP 7
   finish_limit 30
-  mine_regen off
+  mine_regen 0
   cpu_level 2
   restore on
   contact off
@@ -201,7 +201,7 @@ CODE 860 bytes
   0154  Ret
   ; rule 12 body
   0155  LoadLocal 0
-  0157  Action eliminate
+  0157  Action retire
   0159  End
   ; rule 13 body
   015a  LoadLocal 0
@@ -466,4 +466,4 @@ CODE 860 bytes
   0354  JumpIfZero 035b
   0359  Action end_race
   035b  End
-SRC  2945 bytes
+SRC  2942 bytes

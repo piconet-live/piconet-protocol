@@ -74,15 +74,15 @@ public sealed class ModeTermsTests
     public void CustomsOffIsTheCoordinatorsWordNotTheGames()
     {
         var mode = ModeCompiler.Compile("mode \"M\" { api 1; }\ncustoms off;\n").Mode!;
-        Assert.Contains(mode.LobbyWords, w => w.Id == ModeSetup.CustomsOff);
-        Assert.DoesNotContain(mode.Setups, w => w.Id == ModeSetup.CustomsOff);
+        Assert.Contains(mode.LobbyWords, w => w.Id == ModeSetup.Customs);
+        Assert.DoesNotContain(mode.Setups, w => w.Id == ModeSetup.Customs);
     }
 
     [Fact]
     public void EveryWordSetsItsRule()
     {
         var terms = Terms("""
-            cpus allowed;
+            cpus on;
             laps 7;
             cpu_level 1;
             boost_start on;
@@ -160,11 +160,11 @@ public sealed class ModeTermsTests
     [InlineData("machines [\"Nope\"];", "\"Nope\" is no machine of the game's")]
     [InlineData("machines [\"Blue Falcon\", \"Blue Falcon\"];", "\"Blue Falcon\" is in the list twice")]
     [InlineData("machines all;\nmachines [\"Blue Falcon\"];", "machines all and machines: one of them")]
-    [InlineData("customs off;\ncustoms off;", "customs off is set twice")]
+    [InlineData("customs off;\ncustoms off;", "customs is set twice")]
     [InlineData("course \"Nowhere\";", "\"Nowhere\" is no course of the pool")]
     [InlineData("stats 3;", "stats takes a name in quotes")]
-    [InlineData("boost_start on;\nboost_start off;", "boost_start on and boost_start off: one of them")]
-    [InlineData("mixed_packs on;\nmixed_packs on;", "mixed_packs on is set twice")]
+    [InlineData("boost_start on;\nboost_start off;", "boost_start is set twice")]
+    [InlineData("mixed_packs on;\nmixed_packs on;", "mixed_packs is set twice")]
     public void AWordOutOfItsLimitsIsRefusedWithItsLine(string body, string says)
     {
         var error = Error(body);
@@ -308,8 +308,119 @@ public sealed class ModeTermsTests
     [Fact]
     public void ASoloModeIsRefusedARace()
     {
-        var mode = ModeCompiler.Compile("mode \"S\" { api 1; }\nsolo;\n").Mode!;
+        var mode = ModeCompiler.Compile("mode \"S\" { api 1; }\nsolo on;\n").Mode!;
         Assert.True(ModeTerms.Of(mode).Solo);
         Assert.Contains("raced alone", ModeTerms.Of(mode).Refusal(1, 0), StringComparison.Ordinal);
+    }
+
+    private const string Sw = "mode \"S\" { api 1; }\nparam p \"P\" switch default off;\nparam n \"N\" number 50..5000 default 200;\n";
+
+    /// <summary>An on/off word's three spellings, in the terms it reaches: on, off, a switch parameter's two values.</summary>
+    [Theory]
+    [InlineData("cpus")]
+    [InlineData("boost_start")]
+    [InlineData("mixed_packs")]
+    [InlineData("customs")]
+    [InlineData("boost")]
+    [InlineData("solo")]
+    public void AnOnOffWordTakesOnOffOrASwitchParameter(string word)
+    {
+        bool? Read(ModeTerms t) => word switch
+        {
+            "cpus" => t.CpusAllowed,
+            "boost_start" => t.BoostStart,
+            "mixed_packs" => t.MixedPacks,
+            "customs" => !t.CustomsOff,
+            "solo" => t.Solo,
+            _ => t.BoostStart != false,
+        };
+        ModeTerms Of(string value, IReadOnlyList<int>? values = null) =>
+            ModeTerms.Of(ModeCompiler.Compile($"{Sw}{word} {value};\n").Mode!, values);
+        Assert.True(Read(Of("on")));
+        Assert.False(Read(Of("off")));
+        Assert.False(Read(Of("p")));                // its default
+        Assert.True(Read(Of("p", [1, 200])));
+        Assert.False(Read(Of("p", [0, 200])));
+    }
+
+    [Theory]
+    [InlineData("off", null, 0)]
+    [InlineData("on", null, 200)]
+    [InlineData("750", null, 750)]
+    [InlineData("n", 900, 900)]
+    [InlineData("p", 0, 0)]
+    [InlineData("p", 1, 200)]
+    public void AMineRegenIsOnOffANumberOrAParameter(string value, int? given, int ms)
+    {
+        var mode = ModeCompiler.Compile($"{Sw}mine_regen {value};\n").Mode!;
+        var values = given is { } g ? (value == "n" ? new[] { 0, g } : [g, 200]) : null;
+        Assert.Equal(ms, ModeTerms.Of(mode, values).MinesReturn);
+    }
+
+    [Theory]
+    [InlineData("boost;", "boost takes on, off or a switch parameter")]
+    [InlineData("boost 1;", "boost takes on, off or a switch parameter")]
+    [InlineData("boost true;", "boost takes on, off or a switch parameter")]
+    [InlineData("boost n;", "boost takes on, off or a switch parameter")]
+    [InlineData("boost nope;", "boost takes on, off or a switch parameter")]
+    [InlineData("cpus allowed;", "cpus takes on, off or a switch parameter")]
+    [InlineData("restore;", "restore takes on, off or a switch parameter")]
+    [InlineData("contact 0;", "contact takes on, off or a switch parameter")]
+    [InlineData("solo;", "solo takes on, off or a switch parameter")]
+    [InlineData("customs n;", "customs takes on, off or a switch parameter")]
+    [InlineData("mine_regen 49;", "mine_regen is 50..5000")]
+    [InlineData("mine_regen true;", "mine_regen")]
+    [InlineData("pause on;", "says solo on")]
+    [InlineData("solo off;\nrewind 1min;", "says solo on")]
+    [InlineData("solo on;\nsave_state on;", "says rewind")]
+    [InlineData("solo p;\ncpus p;", "one seat")]
+    [InlineData("time_limit 5min;", "not a word of api")]
+    [InlineData("rule \"R\" { event go; do { eliminate seat; } }", "eliminate")]
+    public void AnOnOffWordGivenAnythingElseIsRefused(string body, string says)
+    {
+        var result = ModeCompiler.Compile(Sw + body + "\n");
+        Assert.Null(result.Mode);
+        Assert.Contains(says, Assert.Single(result.Errors), StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("pause off;")]
+    [InlineData("save_state off;")]
+    [InlineData("pause p;\nsolo p;")]
+    [InlineData("solo off;\ncpus on;")]
+    public void AnOffWordAsksForNothing(string body) => Assert.Empty(ModeCompiler.Compile(Sw + body + "\n").Errors);
+
+    [Theory]
+    [InlineData("A")]
+    [InlineData("KNOCKOUT")]
+    [InlineData("VS TOTAL RANKING")]
+    [InlineData("ABCDEFGHIJKLM OPQRSTUVW")]   // 23, the window's 24 bytes with the NUL
+    public void AResultsTitleTravelsInThePackage(string title)
+    {
+        var mode = ModeCompiler.Compile($"mode \"S\" {{ api 1; }}\nresults_title \"{title}\";\n");
+        var word = Assert.Single(ModePackage.Read(mode.Package!).Setups);
+        Assert.Equal(ModeSetup.ResultsTitle, word.Id);
+        Assert.Equal(title, ModeResultsTitle.Text(word.Arguments));
+        Assert.Contains($"results_title \"{title}\"", ModeDisassembler.List(mode.Package!), StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("results_title knockout;", "takes a name in quotes")]
+    [InlineData("results_title p;", "takes a name in quotes")]
+    [InlineData("results_title \"\";", "needs a title")]
+    [InlineData("results_title \"   \";", "needs a title")]
+    [InlineData("results_title \" KO\";", "no space at either end")]
+    [InlineData("results_title \"KO \";", "no space at either end")]
+    [InlineData("results_title \"Knockout\";", "A to Z and the space, not 'n'")]
+    [InlineData("results_title \"ROUND 2\";", "A to Z and the space, not '2'")]
+    [InlineData("results_title \"GO!\";", "A to Z and the space, not '!'")]
+    [InlineData("results_title \"\u00C9TAPE\";", "A to Z and the space")]
+    [InlineData("results_title \"ABCDEFGHIJKLMNOPQRSTUVWX\";", "at most 23 characters")]
+    [InlineData("results_title \"A\";\nresults_title \"B\";", "results_title is set twice")]
+    public void AResultsTitleTheGameCannotDrawIsRefused(string body, string says)
+    {
+        var result = ModeCompiler.Compile(Sw + body + "\n");
+        Assert.Null(result.Mode);
+        Assert.Contains(says, Assert.Single(result.Errors), StringComparison.Ordinal);
     }
 }

@@ -386,7 +386,7 @@ public sealed record ErrorMessage(string Code, string Message, int? Seconds = nu
 /// (<see cref="HostRules.StartCountdown"/>), the milliseconds left when the state was sent; the lobby's match begins
 /// when it runs out, unless its start vote begins it first. Null: no countdown runs (too few players, a custom lobby,
 /// the rule off, or the lobby is past forming); a launcher from before it passes over it. NoCpuVote: the lobby's
-/// modes allow no CPU racers (none says <c>cpus allowed</c>), so there is no CPU vote; a launcher from before it
+/// modes allow no CPU racers (none says <c>cpus on</c>), so there is no CPU vote; a launcher from before it
 /// passes over it. CannotRace: the members (player ids) whose launcher cannot run the lobby's mode
 /// (<see cref="Hello.Modes"/>): they stay in the lobby and watch, and are never put in its races; null: none.</summary>
 public sealed record LobbyState(
@@ -448,7 +448,7 @@ public sealed record MeasureRelays(string MatchId, IReadOnlyList<RelayEndpoint> 
 /// <summary>The race: join the relay with the token, as this seat. The relay's host is an address when the
 /// coordinator started the relay itself (it changes from one start to the next); a name otherwise. ReportLive: send the race as the game sees it
 /// (<see cref="RaceReport"/>) for the lobby's waiting players. NoRejoin: a game that leaves this race does not come
-/// back and no Rejoin is offered: its mode does not say <c>cpus allowed</c>, and a CPU drives a seat meanwhile.</summary>
+/// back and no Rejoin is offered: its mode does not say <c>cpus on</c>, and a CPU drives a seat meanwhile.</summary>
 public sealed record MatchStart(string MatchId, RelayEndpoint Relay, string Token, int Seat, RaceSetup Setup,
     bool ReportLive = false,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool NoRejoin = false) : ServerMessage;

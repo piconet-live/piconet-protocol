@@ -8,11 +8,11 @@ mode "Practice" {
 param restore_on "Restore" switch default off;
 param lap_count "Laps" number 0..99 default 0;  // 0: unlimited
 
-solo;
+solo on;
 laps lap_count;
 rewind 1min;
-pause;
-save_state;
+pause on;
+save_state on;
 resume_countdown 1s;
 
 // The seat's own restore: a machine that crashes or falls is put back on the track.
