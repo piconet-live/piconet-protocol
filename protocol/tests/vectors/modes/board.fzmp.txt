@@ -1,8 +1,8 @@
-FZMP format 1 api 1, 987 bytes, hash 0ad629431ef0555c84080d6c9a853e89e2f7d9dd40d575a7c23667d0d61606ef
+FZMP format 1 api 1, 1120 bytes, hash 0c45810cbedc7d16aa1042f23b8e301caa19a17a8f517b9291018ddc08f3b746
 HEAD name "Board" badge "" about ""
 PARM 0
 SETP 0
-VARS globals 5, seat words 2, team words 1
+VARS globals 5, seat words 3, team words 1
   global 0 = 7
   global 1 = 1069547520 (0x3fc00000, real 1.5)
   global 2 = 0
@@ -10,11 +10,12 @@ VARS globals 5, seat words 2, team words 1
   global 4 = 0
   seat 0 = 3
   seat 1 = 0
+  seat 2 = 0
   team 0 = 100
 RULE 2
   0 "Count" event every step, locals 1, when none, while none, body 0000
   1 "Lose" event each seat, locals 1, when none, while none, body 000d
-CODE 41 bytes
+CODE 50 bytes
   ; rule 0 body
   0000  LoadGlobal 0
   0003  Push 1
@@ -31,12 +32,16 @@ CODE 41 bytes
   0019  LoadLocal 0
   001b  LoadLocal 0
   001d  SeatRead index
-  001f  Push 2
-  0024  IMul
-  0025  StoreTeamVar 0
-  0028  End
-SRC  683 bytes
-BORD 8
+  001f  StoreSeatVar 2
+  0022  LoadLocal 0
+  0024  LoadLocal 0
+  0026  SeatRead index
+  0028  Push 2
+  002d  IMul
+  002e  StoreTeamVar 0
+  0031  End
+SRC  770 bytes
+BORD 9
   Global Int word 0 "Next cut"
   Global Real word 1 "Pace"
   Global Bool word 2 "Armed"
@@ -45,3 +50,4 @@ BORD 8
   Seat Int word 0 "Lives"
   Seat Real word 1 "Best"
   Team Int word 0 "Tank"
+  Seat Int word 2 "State" ["", "Sûr", "Out"]

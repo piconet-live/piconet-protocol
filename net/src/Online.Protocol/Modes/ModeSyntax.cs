@@ -97,9 +97,9 @@ public enum ModeScope
 /// <summary><c>global TYPE NAME [= const];</c>, <c>seat TYPE NAME [= const];</c> or <c>team TYPE NAME [= const];</c>.</summary>
 internal sealed record ModeVariableItem(int Line, ModeScope Scope, ModeType Type, string Name, ModeExpr? Value) : ModeItem(Line);
 
-/// <summary><c>board global|seat|team NAME "Label";</c> (the language's section 10): a variable's value on the status
+/// <summary><c>board global|seat|team NAME "Label" ["Word", ...];</c>, the words optional (the language's section 10): a variable's value on the status
 /// board.</summary>
-internal sealed record ModeBoardItem(int Line, ModeScope Scope, string Name, string Label) : ModeItem(Line);
+internal sealed record ModeBoardItem(int Line, ModeScope Scope, string Name, string Label, IReadOnlyList<string> Words) : ModeItem(Line);
 
 internal sealed record ModeSubParam(ModeType Type, string Name);
 

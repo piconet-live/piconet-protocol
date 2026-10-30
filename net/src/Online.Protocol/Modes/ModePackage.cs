@@ -54,7 +54,15 @@ public sealed record ModeRule(string Label, ModeEvent Event, int Locals, uint Wh
 }
 
 /// <summary>A <c>board</c> line as the package keeps it: its variable's scope, type and word, and its label.</summary>
-public sealed record ModeBoardLine(ModeScope Scope, ModeType Type, int Word, string Label);
+public sealed record ModeBoardLine(ModeScope Scope, ModeType Type, int Word, string Label)
+{
+    /// <summary>The words the line names: its variable's whole number picks one. None: it shows the number.</summary>
+    public IReadOnlyList<string> Words { get; init; } = [];
+
+    public bool Equals(ModeBoardLine? other) => other is not null && (Scope, Type, Word, Label) == (other.Scope, other.Type, other.Word, other.Label) && Words.SequenceEqual(other.Words);
+
+    public override int GetHashCode() => HashCode.Combine(Scope, Type, Word, Label, Words.Count);
+}
 
 /// <summary>The match start's <c>setup.mode</c> (formats.md section 9): the package, its hash, its api, the
 /// parameters' values in <c>PARM</c>'s order (a real's bits) and each seat's team, by seat (0 to 29; null: every seat
@@ -187,6 +195,11 @@ public sealed class ModePackage
                     s.U8((int)line.Type);
                     s.U16(line.Word);
                     s.Text(line.Label);
+                    s.U8(line.Words.Count);
+                    foreach (var word in line.Words)
+                    {
+                        s.Text(word);
+                    }
                 }
             });
         }
@@ -350,11 +363,20 @@ public sealed class ModePackage
         for (var i = 0; i < count; i++)
         {
             var (scope, type, word, label) = (s.U8(), s.U8(), s.U16(), s.Text());
+            var words = new List<string>();
+            for (var left = s.U8(); left > 0; left--)
+            {
+                words.Add(s.Text());
+            }
+            if (words.Count > ModeWords.BoardWords || type == (int)ModeType.Real && words.Count > 0 || words.Any(w => Encoding.UTF8.GetByteCount(w) > ModeWords.BoardWord))
+            {
+                throw new InvalidDataException($"the board's line \"{label}\" names words not of api {ModeWords.Api}");
+            }
             if (scope > (int)ModeScope.Team || type >= (int)ModeType.Vec || Encoding.UTF8.GetByteCount(label) is 0 or > ModeWords.BoardLabel)
             {
                 throw new InvalidDataException($"the board's line \"{label}\" is not one of api {ModeWords.Api}");
             }
-            list.Add(new ModeBoardLine((ModeScope)scope, (ModeType)type, word, label));
+            list.Add(new ModeBoardLine((ModeScope)scope, (ModeType)type, word, label) { Words = words });
         }
         s.End();
         if (list.GroupBy(l => l.Scope).Any(g => g.Count() > ModeWords.Board))

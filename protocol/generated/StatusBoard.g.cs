@@ -11,8 +11,8 @@ public static class BoardLayout
 {
     /// <summary>"FZSB": the board's first four bytes.</summary>
     public const uint Magic = 0x42535A46;
-    public const uint Version = 2;
-    public const int Size = 7168;
+    public const uint Version = 3;
+    public const int Size = 14912;
     public const int Header = 0;
     public const int HeaderMagic = 0;
     public const int HeaderVersion = 4;
@@ -29,12 +29,12 @@ public static class BoardLayout
     public const int Status = 128;
     public const int Snapshot = 192;
     public const int ModeHead = 1792;
-    public const int ModeValues = 2880;
-    public const int Events = 4864;
+    public const int ModeValues = 10624;
+    public const int Events = 12608;
     public const int EventsSlots = 64;
     public const int EventsSlot = 32;
-    public const int EventsFirst = 4872;
-    public const int Mailbox = 6976;
+    public const int EventsFirst = 12616;
+    public const int Mailbox = 14720;
 }
 
 /// <summary> Where the game is. Set by the game; the launcher reads it to judge a heartbeat that stands.</summary>
@@ -199,7 +199,16 @@ public struct BoardModeLine
     public ushort Column;
     public uint LabelLength;
     public byte[] Label = new byte[32];
+    public uint WordCount;
     public BoardModeLine() { }
+}
+
+/// <summary> One word a `board` line names: what its variable shows when it holds that word's index.</summary>
+public struct BoardModeWord
+{
+    public uint Length;
+    public byte[] Text = new byte[16];
+    public BoardModeWord() { }
 }
 
 /// <summary> One value of a `board` line: a word, as its line's type says.</summary>
@@ -254,6 +263,7 @@ public sealed class BoardModeHead
     public byte[] Hash = new byte[8];
     public uint Count;
     public BoardModeLine[] Lines = new BoardModeLine[24];
+    public BoardModeWord[] Words = new BoardModeWord[384];
 }
 
 /// <summary> The values of the mode's `board` lines, every picture drawn of a race, a practice, a watched race and a
@@ -488,7 +498,11 @@ public readonly unsafe struct BoardView
         Volatile.Write(ref *(uint*)(_at + BoardLayout.ModeHead + 84), v.Count);
         for (var i = 0; i < 24; i++)
         {
-            StoreModeLine(BoardLayout.ModeHead + 88 + i * 40, in v.Lines[i]);
+            StoreModeLine(BoardLayout.ModeHead + 88 + i * 44, in v.Lines[i]);
+        }
+        for (var i = 0; i < 384; i++)
+        {
+            StoreModeWord(BoardLayout.ModeHead + 1144 + i * 20, in v.Words[i]);
         }
         Volatile.Write(ref seq, s + 2);
     }
@@ -518,7 +532,11 @@ public readonly unsafe struct BoardView
             into.Count = Volatile.Read(ref *(uint*)(_at + BoardLayout.ModeHead + 84));
             for (var i = 0; i < 24; i++)
             {
-                LoadModeLine(BoardLayout.ModeHead + 88 + i * 40, ref into.Lines[i]);
+                LoadModeLine(BoardLayout.ModeHead + 88 + i * 44, ref into.Lines[i]);
+            }
+            for (var i = 0; i < 384; i++)
+            {
+                LoadModeWord(BoardLayout.ModeHead + 1144 + i * 20, ref into.Words[i]);
             }
             Interlocked.MemoryBarrier();
             if (Volatile.Read(ref seq) == s)
@@ -760,6 +778,7 @@ public readonly unsafe struct BoardView
         {
             BinaryPrimitives.WriteUInt32LittleEndian(v.Label.AsSpan(i * 4), Volatile.Read(ref *(uint*)(_at + at + 8 + i * 4)));
         }
+        v.WordCount = Volatile.Read(ref *(uint*)(_at + at + 40));
     }
 
     private void StoreModeLine(int at, in BoardModeLine v)
@@ -771,6 +790,25 @@ public readonly unsafe struct BoardView
         for (var i = 0; i < 8; i++)
         {
             Volatile.Write(ref *(uint*)(_at + at + 8 + i * 4), BinaryPrimitives.ReadUInt32LittleEndian(v.Label.AsSpan(i * 4)));
+        }
+        Volatile.Write(ref *(uint*)(_at + at + 40), v.WordCount);
+    }
+
+    private void LoadModeWord(int at, ref BoardModeWord v)
+    {
+        v.Length = Volatile.Read(ref *(uint*)(_at + at + 0));
+        for (var i = 0; i < 4; i++)
+        {
+            BinaryPrimitives.WriteUInt32LittleEndian(v.Text.AsSpan(i * 4), Volatile.Read(ref *(uint*)(_at + at + 4 + i * 4)));
+        }
+    }
+
+    private void StoreModeWord(int at, in BoardModeWord v)
+    {
+        Volatile.Write(ref *(uint*)(_at + at + 0), v.Length);
+        for (var i = 0; i < 4; i++)
+        {
+            Volatile.Write(ref *(uint*)(_at + at + 4 + i * 4), BinaryPrimitives.ReadUInt32LittleEndian(v.Text.AsSpan(i * 4)));
         }
     }
 

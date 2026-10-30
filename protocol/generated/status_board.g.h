@@ -12,8 +12,8 @@
 namespace fzgx::board
 {
 inline constexpr std::uint32_t MAGIC = 0x42535A46;  // "FZSB" as its first four bytes
-inline constexpr std::uint32_t VERSION = 2;
-inline constexpr std::size_t SIZE = 7168;  // the whole board, in bytes
+inline constexpr std::uint32_t VERSION = 3;
+inline constexpr std::size_t SIZE = 14912;  // the whole board, in bytes
 
 // Where the game is. Set by the game; the launcher reads it to judge a heartbeat that stands.
 enum class Phase : std::uint32_t
@@ -126,6 +126,14 @@ struct ModeLine
   std::uint16_t column = 0;  // its place in its scope's values, 0 to 7
   std::uint32_t label_length = 0;
   std::array<std::uint8_t, 32> label{};  // UTF-8, as the file wrote it
+  std::uint32_t word_count = 0;  // the words the line names, 0 to 16; they stand in the head's Words
+};
+
+// One word a `board` line names: what its variable shows when it holds that word's index.
+struct ModeWord
+{
+  std::uint32_t length = 0;
+  std::array<std::uint8_t, 16> text{};  // UTF-8, as the file wrote it
 };
 
 // One value of a `board` line: a word, as its line's type says.
@@ -179,6 +187,7 @@ struct ModeHead
   std::array<std::uint8_t, 8> hash{};
   std::uint32_t count = 0;  // the lines that follow (at most 24)
   std::array<ModeLine, 24> lines{};
+  std::array<ModeWord, 384> words{};
 };
 
 // The values of the mode's `board` lines, every picture drawn of a race, a practice, a watched race and a replay: what
@@ -214,10 +223,10 @@ inline constexpr std::size_t HEADER = 0;  // 32 bytes, plain
 inline constexpr std::size_t PULSE = 64;  // 16 bytes, plain
 inline constexpr std::size_t STATUS = 128;  // 24 bytes, seqlock
 inline constexpr std::size_t SNAPSHOT = 192;  // 1580 bytes, seqlock
-inline constexpr std::size_t MODE_HEAD = 1792;  // 1048 bytes, seqlock
-inline constexpr std::size_t MODE_VALUES = 2880;  // 1964 bytes, seqlock
-inline constexpr std::size_t EVENTS = 4864;  // 2056 bytes, ring
-inline constexpr std::size_t MAILBOX = 6976;  // 144 bytes, seqlock
+inline constexpr std::size_t MODE_HEAD = 1792;  // 8824 bytes, seqlock
+inline constexpr std::size_t MODE_VALUES = 10624;  // 1964 bytes, seqlock
+inline constexpr std::size_t EVENTS = 12608;  // 2056 bytes, ring
+inline constexpr std::size_t MAILBOX = 14720;  // 144 bytes, seqlock
 inline constexpr std::size_t HEADER_MAGIC = 0;
 inline constexpr std::size_t HEADER_VERSION = 4;
 inline constexpr std::size_t HEADER_SIZE = 8;
@@ -231,7 +240,7 @@ inline constexpr std::size_t PULSE_WATCH_BEAT = 72;
 inline constexpr std::size_t PULSE_STOP_REASON = 76;
 inline constexpr std::size_t EVENTS_SLOTS = 64;
 inline constexpr std::size_t EVENTS_SLOT = 32;
-inline constexpr std::size_t EVENTS_FIRST = 4872;
+inline constexpr std::size_t EVENTS_FIRST = 12616;
 }  // namespace at
 
 // A ring's event: read, not written yet (or being written), or overwritten by a newer one.
@@ -489,7 +498,9 @@ public:
       Store<std::uint32_t>(at::MODE_HEAD + 76 + i * 4, Pack(&v.hash[i * 4]), std::memory_order_relaxed);
     Store<std::uint32_t>(at::MODE_HEAD + 84, v.count, std::memory_order_relaxed);
     for (std::size_t i = 0; i < 24; ++i)
-      StoreModeLine(at::MODE_HEAD + 88 + i * 40, v.lines[i], std::memory_order_relaxed);
+      StoreModeLine(at::MODE_HEAD + 88 + i * 44, v.lines[i], std::memory_order_relaxed);
+    for (std::size_t i = 0; i < 384; ++i)
+      StoreModeWord(at::MODE_HEAD + 1144 + i * 20, v.words[i], std::memory_order_relaxed);
     seq.store(s + 2, std::memory_order_release);
   }
   // False when every try met the writer at work (or the board was never written: Seq 0 reads as written).
@@ -510,7 +521,9 @@ public:
         Unpack(Load<std::uint32_t>(at::MODE_HEAD + 76 + i * 4, std::memory_order_relaxed), &v.hash[i * 4]);
       v.count = Load<std::uint32_t>(at::MODE_HEAD + 84, std::memory_order_relaxed);
       for (std::size_t i = 0; i < 24; ++i)
-        LoadModeLine(at::MODE_HEAD + 88 + i * 40, &v.lines[i], std::memory_order_relaxed);
+        LoadModeLine(at::MODE_HEAD + 88 + i * 44, &v.lines[i], std::memory_order_relaxed);
+      for (std::size_t i = 0; i < 384; ++i)
+        LoadModeWord(at::MODE_HEAD + 1144 + i * 20, &v.words[i], std::memory_order_relaxed);
       std::atomic_thread_fence(std::memory_order_acquire);
       if (seq.load(std::memory_order_relaxed) == s)
       {
@@ -741,6 +754,7 @@ private:
     v->label_length = Load<std::uint32_t>(base + 4, order);
     for (std::size_t i = 0; i < 8; ++i)
       Unpack(Load<std::uint32_t>(base + 8 + i * 4, order), &v->label[i * 4]);
+    v->word_count = Load<std::uint32_t>(base + 40, order);
   }
   void StoreModeLine(std::size_t base, const ModeLine& v, std::memory_order order)
   {
@@ -750,6 +764,19 @@ private:
     Store<std::uint32_t>(base + 4, v.label_length, order);
     for (std::size_t i = 0; i < 8; ++i)
       Store<std::uint32_t>(base + 8 + i * 4, Pack(&v.label[i * 4]), order);
+    Store<std::uint32_t>(base + 40, v.word_count, order);
+  }
+  void LoadModeWord(std::size_t base, ModeWord* v, std::memory_order order) const
+  {
+    v->length = Load<std::uint32_t>(base + 0, order);
+    for (std::size_t i = 0; i < 4; ++i)
+      Unpack(Load<std::uint32_t>(base + 4 + i * 4, order), &v->text[i * 4]);
+  }
+  void StoreModeWord(std::size_t base, const ModeWord& v, std::memory_order order)
+  {
+    Store<std::uint32_t>(base + 0, v.length, order);
+    for (std::size_t i = 0; i < 4; ++i)
+      Store<std::uint32_t>(base + 4 + i * 4, Pack(&v.text[i * 4]), order);
   }
   void LoadModeValue(std::size_t base, ModeValue* v, std::memory_order order) const
   {

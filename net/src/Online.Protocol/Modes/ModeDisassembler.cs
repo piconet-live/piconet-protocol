@@ -63,7 +63,7 @@ public static class ModeDisassembler
             Line(Invariant($"BORD {mode.Board.Count}"));
             foreach (var line in mode.Board)
             {
-                Line(Invariant($"  {line.Scope} {line.Type} word {line.Word} {Quote(line.Label)}"));
+                Line(Invariant($"  {line.Scope} {line.Type} word {line.Word} {Quote(line.Label)}{(line.Words.Count > 0 ? " [" + string.Join(", ", line.Words.Select(Quote)) + "]" : "")}"));
             }
         }
         return text.ToString();

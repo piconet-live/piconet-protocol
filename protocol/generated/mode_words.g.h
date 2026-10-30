@@ -25,6 +25,8 @@ inline constexpr int WAIT_LOCALS = 8;
 inline constexpr int FSQRT_COST = 8;
 inline constexpr int BOARD = 8;
 inline constexpr int BOARD_LABEL = 32;
+inline constexpr int BOARD_WORDS = 16;
+inline constexpr int BOARD_WORD = 16;
 inline constexpr int PACKAGE_BYTES = 65536;
 inline constexpr int SEATS = 30;
 

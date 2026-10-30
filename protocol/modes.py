@@ -10,7 +10,7 @@ SCHEMA = os.path.join(here, "modes.toml")
 
 TOP_KEYS = {"codec", "api", "op", "event", "setup", "seat_read", "race_read", "action", "choice"}
 API_KEYS = {"number", "budget", "queue", "globals", "seat_words", "locals", "rules", "sorts", "package_bytes", "seats",
-            "team_words", "teams", "waits", "wait_locals", "subs", "board", "board_label", "fsqrt_cost"}
+            "team_words", "teams", "waits", "wait_locals", "subs", "board", "board_label", "board_words", "board_word", "fsqrt_cost"}
 OP_KEYS = {"name", "code", "operands", "doc"}
 EVENT_KEYS = {"name", "id", "kind", "binds", "doc"}
 SETUP_KEYS = {"name", "id", "args", "where", "doc", "table", "lobby", "form"}

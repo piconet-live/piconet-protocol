@@ -47,6 +47,8 @@ wait_locals = 8        # locals a waiting rule keeps, its event's binding includ
 fsqrt_cost = 8         # what one FSqrt takes of the budget (the compiler's count and the interpreter's, in both its loops)
 board = 8              # `board` lines a scope (global, seat, team): what the status board holds (board.toml)
 board_label = 32       # a `board` line's label, in UTF-8 bytes
+board_words = 16       # the words a `board` line may name
+board_word = 16        # one of those words, in UTF-8 bytes
 package_bytes = 65536  # a package's whole size, the source included
 seats = 30
 

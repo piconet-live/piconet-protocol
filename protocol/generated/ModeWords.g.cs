@@ -465,6 +465,10 @@ public static partial class ModeWords
     public const int Board = 8;
     /// <summary>The api's limit <c>board_label</c>.</summary>
     public const int BoardLabel = 32;
+    /// <summary>The api's limit <c>board_words</c>.</summary>
+    public const int BoardWords = 16;
+    /// <summary>The api's limit <c>board_word</c>.</summary>
+    public const int BoardWord = 16;
     /// <summary>The api's limit <c>package_bytes</c>.</summary>
     public const int PackageBytes = 65536;
     /// <summary>The api's limit <c>seats</c>.</summary>

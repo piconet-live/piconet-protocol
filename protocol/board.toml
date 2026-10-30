@@ -26,7 +26,7 @@
 [board]
 name = "status board"
 magic = "FZSB"          # the file's first four bytes
-version = 2             # a new layout is a new version: a game and a launcher of different versions refuse each other
+version = 3             # a new layout is a new version: a game and a launcher of different versions refuse each other
 endian = "little"
 block_align = 64
 
@@ -172,6 +172,15 @@ fields = [
     { name = "Column", type = "u16", doc = "its place in its scope's values, 0 to 7" },
     { name = "LabelLength", type = "u32" },
     { name = "Label", type = "bytes", size = 32, doc = "UTF-8, as the file wrote it" },
+    { name = "WordCount", type = "u32", doc = "the words the line names, 0 to 16; they stand in the head's Words" },
+]
+
+[[record]]
+name = "ModeWord"
+doc = "One word a `board` line names: what its variable shows when it holds that word's index."
+fields = [
+    { name = "Length", type = "u32" },
+    { name = "Text", type = "bytes", size = 16, doc = "UTF-8, as the file wrote it" },
 ]
 
 [[record]]
@@ -267,6 +276,7 @@ fields = [
     { name = "Hash", type = "bytes", size = 8, doc = "the first 8 bytes of the package's content hash (the share code is the first 40 bits' base32)" },
     { name = "Count", type = "u32", doc = "the lines that follow (at most 24)" },
     { name = "Lines", type = "ModeLine", count = 24 },
+    { name = "Words", type = "ModeWord", count = 384, doc = "a line's words: Words[line * 16 + value], the line's place in Lines; a value outside 0 to WordCount - 1 shows the number" },
 ]
 
 [[block]]

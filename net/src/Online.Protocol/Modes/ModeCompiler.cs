@@ -181,7 +181,19 @@ public static class ModeCompiler
             {
                 throw new ModeCompileException(item.Line, $"a board line's label is 1 to {ModeWords.BoardLabel} bytes");
             }
-            _board.Add(new ModeBoardLine(item.Scope, found.Type, found.Index, item.Label));
+            if (item.Words.Count > 0 && found.Type == ModeType.Real)
+            {
+                throw new ModeCompileException(item.Line, $"board {word} {item.Name}: a real is no whole number, and a line's words are picked by one");
+            }
+            if (item.Words.Count > ModeWords.BoardWords)
+            {
+                throw new ModeCompileException(item.Line, $"a board line names at most {ModeWords.BoardWords} words");
+            }
+            if (item.Words.Any(w => Encoding.UTF8.GetByteCount(w) > ModeWords.BoardWord))
+            {
+                throw new ModeCompileException(item.Line, $"a board line's word is at most {ModeWords.BoardWord} bytes");
+            }
+            _board.Add(new ModeBoardLine(item.Scope, found.Type, found.Index, item.Label) { Words = item.Words });
         }
 
         /// <summary>The words of a race raced alone need <c>solo</c>; and <c>solo</c> is one seat.</summary>

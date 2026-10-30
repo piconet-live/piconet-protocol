@@ -243,7 +243,7 @@ internal sealed class ModeParser
         };
     }
 
-    /// <summary><c>board seat lives_left "Lives";</c>.</summary>
+    /// <summary><c>board seat lives_left "Lives";</c>, or with its words: <c>board seat state "State" ["Racing", "Out"];</c>.</summary>
     private ModeBoardItem Board()
     {
         var line = Take().Line;
@@ -261,8 +261,18 @@ internal sealed class ModeParser
             throw new ModeCompileException(nameToken.Line, $"board names a variable, not {Describe(nameToken)}");
         }
         var label = Text();
+        var words = new List<string>();
+        if (Accept("["))
+        {
+            words.Add(Text());
+            while (Accept(","))
+            {
+                words.Add(Text());
+            }
+            Expect("]");
+        }
         Expect(";");
-        return new ModeBoardItem(line, scope, nameToken.Text, label);
+        return new ModeBoardItem(line, scope, nameToken.Text, label, words);
     }
 
     private ModeParamItem Param()
