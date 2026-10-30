@@ -85,6 +85,7 @@ public static class ReplayFormat
         public const long FlowHigh = 1;
         public const long FlowDefault = 0;
         public const string RubberBand = "rubberBand";
+        public const string SimGenerator = "simGenerator";
         public const string ModSha1 = "mod_sha1";
         public const string ModCommit = "mod_commit";
         public const string Game = "game";

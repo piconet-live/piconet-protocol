@@ -237,6 +237,12 @@ optional = true
 doc = "false from 0.4.0 on; absent (or true) in recordings before, which race with the band"
 
 [[header]]
+key = "simGenerator"
+type = "bool"
+optional = true
+doc = "true: the simulation's draws came from its own generator (race block +104); absent (or false) in recordings before, which race with the one the executable shares with the effects and cameras"
+
+[[header]]
 key = "mod_sha1"
 type = "text"
 optional = true

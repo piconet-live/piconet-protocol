@@ -39,7 +39,7 @@ RESULTS_TAIL = 8
 MAX_BYTES = 268435456
 MAX_STEPS = 1296000
 MAX_SEATS = 30
-HEADER_KEYS = ("match", "seat", "mask", "delay", "flow", "rubberBand", "mod_sha1", "mod_commit", "game", "engine", "module_sha1", "recorded", "practice")
+HEADER_KEYS = ("match", "seat", "mask", "delay", "flow", "rubberBand", "simGenerator", "mod_sha1", "mod_commit", "game", "engine", "module_sha1", "recorded", "practice")
 RESULT_KEYS = ("seat", "rank", "finished", "out", "laps", "timeMs", "bestLapMs")
 # the lineup's block: (name, offset, count, struct format of one)
 LINEUP_FIELDS = (("machines", 0, 30, "B"), ("ranks", 30, 30, "B"), ("settings", 60, 30, "h"), ("control_mode", 120, 1, "B"), ("rel_d70", 121, 1, "B"),)

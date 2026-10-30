@@ -111,6 +111,7 @@ inline constexpr std::uint32_t FLOW_LOW = 0;
 inline constexpr std::uint32_t FLOW_HIGH = 1u;
 inline constexpr std::uint32_t FLOW_DEFAULT = 0;
 inline constexpr const char* RUBBER_BAND = "rubberBand";
+inline constexpr const char* SIM_GENERATOR = "simGenerator";
 inline constexpr const char* MOD_SHA1 = "mod_sha1";  // the bundle's image
 inline constexpr const char* MOD_COMMIT = "mod_commit";  // the commit the image was built from
 inline constexpr const char* GAME = "game";  // the disc's ID, GFZE01 (absent: the fork's, which ran only this game)
