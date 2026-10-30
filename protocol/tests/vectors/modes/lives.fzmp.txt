@@ -1,0 +1,58 @@
+FZMP format 1 api 1, 584 bytes, hash bc7d3668860973884bdaf6e12bc83b5868806e0bd94f723d1b408d66ee415d1d
+HEAD name "Lives test" badge "LIVES" about "Three lives each. The last wreck is final."
+PARM 0
+SETP 2
+  laps 2
+  cpus allowed
+VARS globals 0, seat words 1
+  seat 0 = 3
+RULE 3
+  0 "lives 3" event race_start, locals 1, when none, while none, body 0000
+  1 "lives 3" event each seat, locals 1, when 0035, while none, body 003a
+  2 "lives 3" event out, locals 1, when none, while none, body 005f
+CODE 106 bytes
+  ; rule 0 body
+  0000  Push 0
+  0005  StoreLocal 0
+  0007  LoadLocal 0
+  0009  RaceRead seats
+  000b  ILt
+  000c  JumpIfZero 0034
+  0011  LoadLocal 0
+  0013  LoadSeatVar 0
+  0016  Push 1
+  001b  IGt
+  001c  JumpIfZero 0025
+  0021  LoadLocal 0
+  0023  Action respawns
+  0025  LoadLocal 0
+  0027  Push 1
+  002c  IAdd
+  002d  StoreLocal 0
+  002f  Jump 0007
+  0034  End
+  ; rule 1 when
+  0035  LoadLocal 0
+  0037  SeatRead restoring
+  0039  Ret
+  ; rule 1 body
+  003a  LoadLocal 0
+  003c  LoadLocal 0
+  003e  LoadSeatVar 0
+  0041  Push 1
+  0046  ISub
+  0047  StoreSeatVar 0
+  004a  LoadLocal 0
+  004c  LoadSeatVar 0
+  004f  Push 1
+  0054  ILe
+  0055  JumpIfZero 005e
+  005a  LoadLocal 0
+  005c  Action respawns off
+  005e  End
+  ; rule 2 body
+  005f  LoadLocal 0
+  0061  Push 0
+  0066  StoreSeatVar 0
+  0069  End
+SRC  253 bytes

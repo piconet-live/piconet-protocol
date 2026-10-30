@@ -41,5 +41,10 @@ def emit(t):
             "{", "  switch (event)", "  {"]
     out += [f"    case EVENT_{e['pascal'].upper()}: return {'true' if e['kind'] == 'continuous' else 'false'};"
             for e in t["events"]]
-    out += ["    default: return false;", "  }", "}", "", f"}}  // namespace {t['namespace_cxx']}", ""]
+    out += ["    default: return false;", "  }", "}", "",
+            "// the names a discrete event binds: 0 none, 1 its seat, 2 its seat and a second value (a seat or an int)",
+            "constexpr int EventBinds(std::uint8_t event)", "{", "  switch (event)", "  {"]
+    out += [f"    case EVENT_{e['pascal'].upper()}: return {len(e['binds'].split()) if 'binds' in e else 0};"
+            for e in t["events"]]
+    out += ["    default: return 0;", "  }", "}", "", f"}}  // namespace {t['namespace_cxx']}", ""]
     return "\n".join(out)

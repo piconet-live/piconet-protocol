@@ -1,0 +1,130 @@
+FZMP format 1 api 1, 1423 bytes, hash aae5ada02374044d19da882de7ee85120431252c83a99e432c0d468a05b1c587
+HEAD name "Knockout test" badge "KNOCKOUT" about "The last racer explodes every few seconds. The last one left wins."
+PARM 1
+  0 interval "Cut every" delay int 300..3600 step 300 default 900
+SETP 3
+  laps 0
+  cpus allowed
+  rolling_start 1000 (0x447a0000)
+VARS globals 1, seat words 0
+  global 0 = 0
+RULE 1
+  0 "every interval" event every step, locals 3, when none, while 0000, body 0024
+CODE 302 bytes
+  ; rule 0 while
+  0000  RaceRead started
+  0002  Dup
+  0003  JumpIfZero 0011
+  0008  Pop
+  0009  RaceRead steps
+  000b  Push 0
+  0010  IGt
+  0011  Dup
+  0012  JumpIfZero 0023
+  0017  Pop
+  0018  RaceRead steps
+  001a  Param 0 (interval)
+  001c  IMod
+  001d  Push 0
+  0022  IEq
+  0023  Ret
+  ; rule 0 body
+  0024  Push 0
+  0029  StoreLocal 0
+  002b  Push 0
+  0030  StoreLocal 1
+  0032  LoadLocal 1
+  0034  RaceRead seats
+  0036  ILt
+  0037  JumpIfZero 005e
+  003c  LoadLocal 1
+  003e  SeatRead racing
+  0040  JumpIfZero 004f
+  0045  LoadLocal 0
+  0047  Push 1
+  004c  IAdd
+  004d  StoreLocal 0
+  004f  LoadLocal 1
+  0051  Push 1
+  0056  IAdd
+  0057  StoreLocal 1
+  0059  Jump 0032
+  005e  LoadLocal 0
+  0060  StoreLocal 0
+  0062  Push -1
+  0067  StoreLocal 1
+  0069  SortBegin 0
+  006b  Push 0
+  0070  StoreLocal 2
+  0072  LoadLocal 2
+  0074  RaceRead seats
+  0076  ILt
+  0077  JumpIfZero 009d
+  007c  LoadLocal 2
+  007e  SeatRead racing
+  0080  JumpIfZero 008e
+  0085  LoadLocal 2
+  0087  SeatRead distance
+  0089  LoadLocal 2
+  008b  SortAdd buffer 0 keys 1
+  008e  LoadLocal 2
+  0090  Push 1
+  0095  IAdd
+  0096  StoreLocal 2
+  0098  Jump 0072
+  009d  SortRun buffer 0 keys 1 desc 0x00 reals 0x01
+  00a2  SortNext 0
+  00a4  StoreLocal 1
+  00a6  LoadLocal 1
+  00a8  StoreLocal 1
+  00aa  LoadLocal 0
+  00ac  Push 2
+  00b1  IGe
+  00b2  Dup
+  00b3  JumpIfZero 00c1
+  00b8  Pop
+  00b9  LoadLocal 1
+  00bb  Push -1
+  00c0  INe
+  00c1  JumpIfZero 012d
+  00c6  LoadLocal 1
+  00c8  LoadLocal 0
+  00ca  Action seat.place
+  00cc  LoadLocal 1
+  00ce  Action explode
+  00d0  LoadLocal 1
+  00d2  Action eliminate
+  00d4  LoadGlobal 0
+  00d7  Push 1
+  00dc  IAdd
+  00dd  StoreGlobal 0
+  00e0  LoadLocal 0
+  00e2  Push 2
+  00e7  IEq
+  00e8  JumpIfZero 012d
+  00ed  Push 0
+  00f2  StoreLocal 2
+  00f4  LoadLocal 2
+  00f6  RaceRead seats
+  00f8  ILt
+  00f9  JumpIfZero 012b
+  00fe  LoadLocal 2
+  0100  SeatRead racing
+  0102  Dup
+  0103  JumpIfZero 010e
+  0108  Pop
+  0109  LoadLocal 2
+  010b  LoadLocal 1
+  010d  INe
+  010e  JumpIfZero 011c
+  0113  LoadLocal 2
+  0115  Push 1
+  011a  Action seat.place
+  011c  LoadLocal 2
+  011e  Push 1
+  0123  IAdd
+  0124  StoreLocal 2
+  0126  Jump 00f4
+  012b  Action end_race
+  012d  End
+SRC  861 bytes

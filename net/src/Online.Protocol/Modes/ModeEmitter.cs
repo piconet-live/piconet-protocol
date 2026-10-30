@@ -36,6 +36,9 @@ internal sealed partial class ModeEmitter(ModeNames names, List<string> warnings
     // the subs being written, the innermost last: their returns' jumps and value
     private readonly List<(string Name, ModeType? Type, Local? Value, List<int> Jumps)> _subs = [];
 
+    /// <summary>The actions the rules written so far use, each with the line of its first use.</summary>
+    public Dictionary<ModeAction, int> Used { get; } = [];
+
     /// <summary>The operations a step at worst of the rules written so far.</summary>
     public long Cost { get; private set; }
 
@@ -47,7 +50,7 @@ internal sealed partial class ModeEmitter(ModeNames names, List<string> warnings
     private uint Here => (uint)_code.Count;
 
     /// <summary>Writes a rule: its conditions and its body, after the code written before it; and whether it waits.</summary>
-    public (ModeRule Rule, bool Waits) Rule(ModeRuleItem item, ModeEvent id, bool bindsSeat)
+    public (ModeRule Rule, bool Waits) Rule(ModeRuleItem item, ModeEvent id, bool bindsSeat, ModeType? second = null)
     {
         _locals.Clear();
         _implicit.Clear();
@@ -58,6 +61,20 @@ internal sealed partial class ModeEmitter(ModeNames names, List<string> warnings
         if (bindsSeat)
         {
             Declare(item.Line, item.Bound ?? "seat", ModeType.Seat, true);
+            if (second is { } type)
+            {
+                // local 1: the event's second value (ko's by, hit's b, out's cause) when the rule names it; the
+                // interpreter puts the value there either way, and a local declared later is given its own value
+                if (item.Second is { } name)
+                {
+                    Declare(item.Line, name, type, true);
+                }
+                // a pair event (hit, overtake) happens at most once a pair a step
+                if (id is ModeEvent.Hit or ModeEvent.Overtake)
+                {
+                    _multiplier = ModeWords.Seats * (ModeWords.Seats - 1) / 2;
+                }
+            }
         }
         var when = Condition(item.Whens);
         var during = Condition(item.Whiles);

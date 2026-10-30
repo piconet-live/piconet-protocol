@@ -75,14 +75,11 @@ public sealed class ModeLanguageTests
     }
 
     [Theory]
-    [InlineData("lives 3;\n", "line 2: 'respawns' is not a word of api 1")]
-    [InlineData("time_limit 5min;\n", "line 2: 'clock_limit' is not a word of api 1")]
-    [InlineData("pits_off;\n", "line 2: a seat has no 'in_pit' (neither a read of api 1 nor a seat variable)")]
     [InlineData("lives;\n", "line 2: lives takes 1 value (n), not 0")]
     [InlineData("every(10s);\n", "line 2: every takes a block: every(t) { ... }")]
     [InlineData("param p \"P\" number 1..3;\nat(p) { }\n", "line 3: at takes a time of at least one step (at(10s)) or a delay parameter")]
     [InlineData("macro m() { }\n", "line 2: macros are the standard library's (api 1): a mode file reuses its code with a sub")]
-    public void ALibraryMacroWhoseWordsAreNotBuiltYetIsRefusedAtItsUse(string items, string message) =>
+    public void ALibraryMacroUsedWronglyIsRefusedAtItsUse(string items, string message) =>
         Assert.Equal(message, Error(items));
 
     [Fact]

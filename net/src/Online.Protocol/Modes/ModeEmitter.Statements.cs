@@ -321,6 +321,7 @@ internal sealed partial class ModeEmitter
             Value(statement.Arguments[i], action.Args[i], action.Name);
         }
         Op(ModeOp.Action, (long)action.Id);
+        Used.TryAdd(action.Id, statement.Line);
     }
 
     /// <summary>An argument of a choice (protocol/modes.toml's <c>[[choice]]</c>): one of its names, pushed as its

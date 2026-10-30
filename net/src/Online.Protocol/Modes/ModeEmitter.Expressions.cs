@@ -128,6 +128,13 @@ internal sealed partial class ModeEmitter
             Op(ModeOp.LoadTeamVar, kept.Index);
             return kept.Type;
         }
+        if (field.Target is ModeField { Field: "input" } input
+            && ModeWords.SeatReads.FirstOrDefault(r => r.Name == "input." + field.Field) is { Name: not null } control)
+        {
+            Value(input.Target, ModeType.Seat, $"'.input.{field.Field}'");
+            Op(ModeOp.SeatRead, (long)control.Id);
+            return control.Type;
+        }
         if (field.Field is "x" or "y" or "z" && TypeOf(field.Target) == ModeType.Vec)
         {
             var mark = _locals.Count;

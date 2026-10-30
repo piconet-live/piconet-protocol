@@ -99,8 +99,10 @@ def load(path=SCHEMA):
     for e in events:
         if e.get("kind") not in ("continuous", "discrete"):
             raise SchemaError(f"event {e['name']}: kind continuous or discrete")
-        if e.get("binds", "seat") != "seat":
-            raise SchemaError(f"event {e['name']}: binds a seat or nothing")
+        if e.get("binds", "seat") not in ("seat", "seat seat", "seat int"):
+            raise SchemaError(f"event {e['name']}: binds a seat, two seats, a seat and an int, or nothing")
+        if "binds" in e and e["kind"] == "continuous" and e["binds"] != "seat":
+            raise SchemaError(f"event {e['name']}: a continuous event binds a seat or nothing")
     setups = numbered(raw.get("setup", []), SETUP_KEYS, "setup")
     for s in setups:
         for a in s.get("args", []):
