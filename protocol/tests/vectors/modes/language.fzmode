@@ -1,0 +1,116 @@
+// The language past the first slice, every part at least once: subs, waits, teams, sets and their helpers, vecs,
+// random numbers and the standard library's every, at, gap_to and dist. A vector for the compiler's tests and the
+// runner's interpreter tests (protocol/README.md), not a mode to race.
+
+mode "Language" {
+  api 1;
+  about "Subs, waits, teams, sets, vecs and random numbers.";
+}
+
+param gap "Gap" delay 1s..10s step 1s default 2s;
+
+const int most = 3;
+
+global int draws;
+global real chance;
+global seats marked;
+global seat picked = none;
+global int found;
+global real reach;
+seat int waited;
+seat seats rivals;
+team int score = 1;
+team real pool;
+
+// A sub that gives a value, called inside an expression; it calls another.
+sub real ahead(seat a, seat b) {
+  return a.distance - b.distance + half(gap_to(a, b));
+}
+
+sub real half(real x) {
+  return x / 2;
+}
+
+// A sub that gives nothing, called with call; its return leaves a loop early.
+sub mark(seat s) {
+  for each seat {
+    if (seat == s) {
+      marked += seat;
+      return;
+    }
+  }
+}
+
+every(1s) {
+  draws += random(6) + 1;
+  chance = random_real();
+  int i = 0;
+  repeat most { i += random(0); }
+}
+
+at(10s) {
+  call mark(first(seats));
+  marked = marked - picked + seats & marked;
+  picked = first(seats where racing by distance desc);
+  picked = last(marked where not out);
+  picked = nth(seats by speed desc, energy, 2);
+  picked = nth(marked, 0);
+  found = count(seats - marked where racing) + count(seats);
+  if (picked in marked and marked != seats) { found += 1; }
+}
+
+rule "Teams" {
+  event each seat;
+  while race.started;
+  do {
+    seat.team.score += 1;
+    seat.team.pool = max(seat.team.pool, seat.energy);
+    seat.rivals = seats - seat;
+    if (seat.team == 0) { seat.rivals -= first(seat.rivals); }
+  }
+}
+
+rule "Vecs" {
+  event every step;
+  when race.started;
+  do {
+    vec p = picked.position;
+    vec q = (p - nth(seats, 1).position) * 2 / 4;
+    q = -q + p;
+    reach = length(q) + dot(p, q) + p.x + q.y - q.z + sqrt(reach);
+    reach = min(dist(picked, other) for each other in marked where other.racing);
+    reach += ahead(picked, last(seats)) + gap_to(last(seats), picked) * picked.lap_length;
+  }
+}
+
+// A wait in a loop over the seats, its loop's seat kept.
+rule "Wait" {
+  event every step;
+  when race.started;
+  do {
+    for each s in marked {
+      wait gap;
+      s.waited += 1;
+    }
+  }
+}
+
+rule "Abort" {
+  event out(s);
+  do {
+    wait 3s abort when s.racing;
+    s.waited = 100;
+  }
+}
+
+rule "Restart" {
+  event each seat;
+  when seat.racing;
+  do {
+    int left = 2;
+    wait 2s restart when seat.broken;
+    seat.waited = left;
+    wait 1;
+    seat.waited += 1;
+  }
+}

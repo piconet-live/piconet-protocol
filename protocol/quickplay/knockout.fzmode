@@ -1,0 +1,62 @@
+// A spicy Quick Play option: a rolling start, then the last racer is out every interval.
+
+mode "Knockout" {
+  api 1;
+  badge "KNOCKOUT";
+  about "Every 30 seconds the racer in last place is out.";
+}
+
+param interval  "Cut every"   delay 10s..120s step 5s default 30s;
+param first_cut "First cut"   delay 20s..120s step 5s default 45s;   // a 30-machine grid is 374 m long
+param keep      "Racers left" number 1..29 default 1;
+
+cpus allowed;
+laps unlimited;
+rolling_start 1000 km/h;       // speed at the gate, CPU steers through the countdown at 60% accelerator, control at GO
+
+global int next_cut;
+global int cuts;
+seat   int cut_order;          // 0: never cut; 1: first out
+
+rule "Arm" {
+  event go;
+  do { next_cut = first_cut; }
+}
+
+rule "Cut the last racer" {
+  event every step;
+  while race.started and race.steps >= next_cut and count(seats where racing) > keep;
+  do {
+    seat v = last(seats where racing by standing);
+    explode v;                 // the game's explosion, as story chapter 6
+    eliminate v;               // the game's own out verdict (D5)
+    cuts += 1;
+    v.cut_order = cuts;
+    next_cut = race.steps + interval;
+  }
+}
+
+rule "Warn the last racer" {
+  event each seat;
+  do {
+    if (seat.racing and seat == last(seats where racing by standing)) {
+      show_number seat, ceil((next_cut - race.steps) / 60.0);    // seconds to the cut
+    } else {
+      show_number seat, -1;
+    }
+  }
+}
+
+rule "Winner" {
+  event every step;
+  when race.started and count(seats where racing) <= keep;
+  do {
+    // survivors first (end_race fills them in standing order), then the cut racers, last out first
+    int n = keep + 1;
+    for each seat where seat.cut_order > 0 by seat.cut_order desc { seat.place = n; n += 1; }
+    end_race;
+  }
+}
+
+// board seat cut_order "Out";     (language 10: back when the compiler has board)
+// board global next_cut "Next cut";

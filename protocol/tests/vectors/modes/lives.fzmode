@@ -1,0 +1,11 @@
+// Lives for the race-side words' game test (wave 2A): the standard library's lives, three a seat, over a short race.
+
+mode "Lives test" {
+  api 1;
+  badge "LIVES";
+  about "Three lives each. The last wreck is final.";
+}
+
+laps 2;
+cpus allowed;
+lives 3;

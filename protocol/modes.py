@@ -8,16 +8,18 @@ import tomllib
 here = os.path.dirname(os.path.abspath(__file__))
 SCHEMA = os.path.join(here, "modes.toml")
 
-TOP_KEYS = {"codec", "api", "op", "event", "setup", "seat_read", "race_read", "action"}
-API_KEYS = {"number", "budget", "queue", "globals", "seat_words", "locals", "rules", "sorts", "package_bytes", "seats"}
+TOP_KEYS = {"codec", "api", "op", "event", "setup", "seat_read", "race_read", "action", "choice"}
+API_KEYS = {"number", "budget", "queue", "globals", "seat_words", "locals", "rules", "sorts", "package_bytes", "seats",
+            "team_words", "teams", "waits", "wait_locals", "subs"}
 OP_KEYS = {"name", "code", "operands", "doc"}
 EVENT_KEYS = {"name", "id", "kind", "binds", "doc"}
-SETUP_KEYS = {"name", "id", "args", "where", "doc", "table"}
+SETUP_KEYS = {"name", "id", "args", "where", "doc", "table", "lobby", "form"}
 ARG_KEYS = {"type", "name", "least", "most", "default"}
 READ_KEYS = {"name", "id", "type", "doc"}
-ACTION_KEYS = {"name", "id", "args", "where", "doc"}
+ACTION_KEYS = {"name", "id", "args", "where", "doc", "join"}
+CHOICE_KEYS = {"name", "values", "doc"}
 OPERANDS = {"u8": 1, "u16": 2, "u32": 4, "i32": 4}
-TYPES = {"int", "real", "bool", "seat"}
+TYPES = {"int", "real", "bool", "seat", "seats", "vec"}
 PASCAL = re.compile(r"[A-Z][A-Za-z0-9]*\Z")
 WORD = re.compile(r"[a-z][a-z_]*(?:[ .][a-z][a-z_]*)*\Z")
 
@@ -97,14 +99,20 @@ def load(path=SCHEMA):
     for e in events:
         if e.get("kind") not in ("continuous", "discrete"):
             raise SchemaError(f"event {e['name']}: kind continuous or discrete")
-        if e.get("binds", "seat") != "seat":
-            raise SchemaError(f"event {e['name']}: binds a seat or nothing")
+        if e.get("binds", "seat") not in ("seat", "seat seat", "seat int"):
+            raise SchemaError(f"event {e['name']}: binds a seat, two seats, a seat and an int, or nothing")
+        if "binds" in e and e["kind"] == "continuous" and e["binds"] != "seat":
+            raise SchemaError(f"event {e['name']}: a continuous event binds a seat or nothing")
     setups = numbered(raw.get("setup", []), SETUP_KEYS, "setup")
     for s in setups:
         for a in s.get("args", []):
             keys(a, ARG_KEYS, f"setup {s['name']}: an argument")
             if a.get("type") not in ("int", "real"):
                 raise SchemaError(f"setup {s['name']}: an argument is an int or a real")
+        if s.get("form", "") not in ("", "range", "text", "list"):
+            raise SchemaError(f"setup {s['name']}: form is range, text or list")
+        if s.get("form") and not s.get("lobby"):
+            raise SchemaError(f"setup {s['name']}: a form is a word of the coordinator's")
         if s.get("table", "course") != "course":
             raise SchemaError(f"setup {s['name']}: a table is of courses")
     reads = {}
@@ -113,11 +121,28 @@ def load(path=SCHEMA):
         for r in reads[kind]:
             if r.get("type") not in TYPES:
                 raise SchemaError(f"{kind} {r['name']}: type one of {sorted(TYPES)}")
+    choices = {}
+    for entry in raw.get("choice", []):
+        keys(entry, CHOICE_KEYS, f"choice {entry.get('name', '?')}")
+        name, values = entry.get("name"), entry.get("values")
+        if not isinstance(name, str) or not re.fullmatch(r"[a-z]+", name) or name in TYPES or name in choices:
+            raise SchemaError(f"choice {name!r}: a new lower-case name, not a type's")
+        if (not isinstance(values, list) or not values or len(values) > 255
+                or any(not isinstance(v, str) or not re.fullmatch(r"[A-Za-z][A-Za-z_]*", v) for v in values)):
+            raise SchemaError(f"choice {name}: values are names")
+        choices[name] = {"name": name, "pascal": pascal(name, "choice"), "values": values, "doc": entry.get("doc", "")}
+    named = [v for c in choices.values() for v in c["values"]]
+    if len(set(named)) != len(named):
+        raise SchemaError("choice: a value's name twice")
     actions = numbered(raw.get("action", []), ACTION_KEYS, "action")
     for a in actions:
-        if any(t not in TYPES for t in a.get("args", [])):
-            raise SchemaError(f"action {a['name']}: argument types are {sorted(TYPES)}")
+        if any(t not in TYPES and t not in choices for t in a.get("args", [])):
+            raise SchemaError(f"action {a['name']}: argument types are {sorted(TYPES)} or a choice")
+        if "join" in a and (not isinstance(a["join"], str) or not re.fullmatch(r"[a-z]+", a["join"])
+                            or len(a.get("args", [])) < 2):
+            raise SchemaError(f"action {a['name']}: join is the word between its first two arguments")
     return {"namespace_cs": codec.get("csharp", {}).get("namespace", "Online.Protocol"),
             "namespace_cxx": codec.get("cxx", {}).get("namespace", "fzgx::modes"),
             "api": api, "ops": ops, "events": events, "setups": setups,
-            "seat_reads": reads["seat_read"], "race_reads": reads["race_read"], "actions": actions}
+            "seat_reads": reads["seat_read"], "race_reads": reads["race_read"], "actions": actions,
+            "choices": list(choices.values())}

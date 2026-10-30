@@ -1,0 +1,32 @@
+// A knockout for the race-side words' game test (wave 2A), not a Quick Play mode: a rolling start, then every
+// interval the last racing seat explodes and is out, placed by how many were still racing; the last two decide the
+// race, and the race ends with the mode's places.
+
+mode "Knockout test" {
+  api 1;
+  badge "KNOCKOUT";
+  about "The last racer explodes every few seconds. The last one left wins.";
+}
+
+param interval "Cut every" delay 5s..60s step 5s default 15s;
+
+laps unlimited;
+cpus allowed;
+rolling_start 1000 km/h;
+
+global int cuts;
+
+every(interval) {
+  int n = count(seats where racing);
+  seat s = first(seats where racing by distance);
+  if (n >= 2 and s != none) {
+    s.place = n;
+    explode s;
+    eliminate s;
+    cuts += 1;
+    if (n == 2) {
+      for each seat where racing and seat != s { seat.place = 1; }
+      end_race;
+    }
+  }
+}

@@ -15,17 +15,32 @@ namespace Online.Protocol;
 /// <see cref="CourseSelectMode"/>, with the fixed course under <see cref="FixedCourseKey"/>, a course of
 /// <see cref="CoursePool.Default"/>); the machine setting's range its low end under "machine-setting" and its high
 /// end under <see cref="SettingHighKey"/>. StatPack: the race's stat pack by its name, one of the server's packs;
-/// null: the disc's own stats. PackFile: the host's own pack instead, the whole text of a <c>.fzstats</c> file
+/// null: no pack, the disc's own stats, the row's Stock (a new lobby starts on Quick Play's pack, the server's own: LobbyList.QuickPlay's). PackFile: the host's own pack instead, the whole text of a <c>.fzstats</c> file
 /// (<see cref="StatPackText"/>), which the server reads and checks as it would a pack file of its own; StatPack then
 /// holds that pack's own name (a server from before PackFile looks for a pack of that name, and refuses the rules
 /// when it has none). A launcher sends PackFile with a lobby's rules (<see cref="CreateLobby"/>,
-/// <see cref="SetLobbyRules"/>); the server sends a lobby's rules with the pack by its name alone. The course pool and the allowed machines are Quick Play's in a custom lobby.
+/// <see cref="SetLobbyRules"/>); the server sends a lobby's rules with the pack by its name alone. ModeFile: the
+/// host's game mode, the whole text of a <c>.fzmode</c> file (piconet-docs research/game-modes/), which the server
+/// compiles with the one compiler (<see cref="ModeCompiler"/>) and races in place of Quick Play's rules: a file that
+/// does not compile is refused with the compiler's messages (<see cref="CustomLobby.BadMode"/>). The server sends a
+/// lobby's rules with the mode as <see cref="Mode"/> alone (its hash, name and badge); a launcher that sends rules again
+/// without a ModeFile and with the Mode the server sent keeps it, and without either races no mode. A server from
+/// before modes passes over both. ModeValues: the host's values of the mode's parameters, in <c>PARM</c>'s order (a
+/// real's bits), checked against its declared ranges (<see cref="ModePackage.ValuesRefusal"/>) and raced in
+/// <c>setup.mode.params</c>; null: a new file's defaults, or what the lobby's mode has. The course pool and the allowed machines are Quick Play's in a custom lobby.
 /// The server sends a lobby's rules whole (every settable rule's value), so a launcher compares them with Quick
 /// Play's (<see cref="LobbyList.QuickPlay"/>) and shows only the rules that differ (<see cref="Differing"/>).</remarks>
 public sealed record LobbyRules(IReadOnlyDictionary<string, int> Values,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? StatPack = null,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? PackFile = null)
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? PackFile = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] LobbyMode? Mode = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? ModeFile = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<int>? ModeValues = null)
 {
+    /// <summary>The longest <see cref="ModeFile"/>, in characters: the package a mode compiles to holds the file's
+    /// text and is at most <see cref="ModeWords.PackageBytes"/>.</summary>
+    public const int MostModeFile = ModeWords.PackageBytes;
+
     /// <summary>The longest <see cref="PackFile"/>, in characters: a pack of every value the car data holds, with a
     /// comment a machine, is about half of it.</summary>
     public const int MostPackFile = 256 * 1024;
@@ -33,6 +48,10 @@ public sealed record LobbyRules(IReadOnlyDictionary<string, int> Values,
 
     /// <summary>The key of the machine setting's high end ("machine-setting" holds the low end).</summary>
     public const string SettingHighKey = "machine-setting-high";
+
+    /// <summary>The key of the lobby's teams under a mode: 0 none (every seat its own), or 2 to
+    /// <see cref="ModeTeams.Most"/>. No rule of the table: only a mode's race has teams, in its <c>setup.mode.teams</c>.</summary>
+    public const string TeamsKey = "teams";
 
     /// <summary>The key of the fixed course, with <see cref="HostRules.CourseSelect"/> at
     /// <see cref="CourseSelectMode.Fixed"/>.</summary>
@@ -49,7 +68,7 @@ public sealed record LobbyRules(IReadOnlyDictionary<string, int> Values,
     /// <summary>The keys <see cref="Values"/> may hold: the settable rules' names but the stat pack's (its own
     /// member), and the two extra keys.</summary>
     public static IReadOnlyList<string> Keys { get; } =
-        [.. Settable.Where(r => r.Kind != RuleKind.Pack).Select(r => r.Name), SettingHighKey, FixedCourseKey];
+        [.. Settable.Where(r => r.Kind != RuleKind.Pack).Select(r => r.Name), SettingHighKey, FixedCourseKey, TeamsKey];
 
     /// <summary>The value under a key; null: Quick Play's.</summary>
     public int? Value(string key) => Values is not null && Values.TryGetValue(key, out var v) ? v : null;
@@ -67,7 +86,8 @@ public sealed record LobbyRules(IReadOnlyDictionary<string, int> Values,
     {
         ArgumentNullException.ThrowIfNull(quickPlay);
         bool Differs(string key) => Value(key) is { } v && v != quickPlay.Value(key);
-        return [.. Settable.Where(rule => rule.Kind switch
+        // (what the lobby's mode states is the mode's, not the host's, and is not news beside its name)
+        return [.. Settable.Where(rule => Mode?.Terms?.ContainsKey(rule.Name) != true && !(rule == HostRules.StatPack && Mode?.Pack is not null)).Where(rule => rule.Kind switch
         {
             RuleKind.Pack => StatPack != quickPlay.StatPack,
             RuleKind.Range => Differs(rule.Name) || Differs(SettingHighKey),
@@ -116,6 +136,15 @@ public static class CustomLobby
     /// <summary>The rules change only while the lobby waits (forming), not during the course vote, the machine choice
     /// or a race.</summary>
     public const string RulesLocked = "rules_locked";
+
+    /// <summary>A host's mode file that is too long or does not compile (<see cref="LobbyRules.ModeFile"/>; the
+    /// error's message holds the compiler's first error, "line N: ..."), or a <see cref="LobbyRules.Mode"/> the lobby
+    /// does not hold.</summary>
+    public const string BadMode = "bad_mode";
+
+    /// <summary>The lobby's mode cannot race now: fewer racers or teams than it says (<c>racers</c>, <c>teams</c>); the
+    /// error's message says what it needs. The lobby stays as it is.</summary>
+    public const string ModeRefuses = "mode_refuses";
 
     /// <summary>A lobby name that is empty, too long, or holds characters a name does not.</summary>
     public const string BadName = "bad_lobby_name";
@@ -167,3 +196,27 @@ public sealed record LeaveLobby : ClientMessage;
 /// own rules in the same form, whole: what a lobby's rules are compared with (<see cref="LobbyRules.Differing"/>).</summary>
 public sealed record LobbyList(IReadOnlyList<LobbySummary> Lobbies,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] LobbyRules? QuickPlay = null) : ServerMessage;
+
+/// <summary>A custom lobby's game mode as the server names it (<see cref="LobbyRules.Mode"/>): the package's content
+/// hash (<see cref="ModePackage.Hash"/>) and share code, the mode's name, its badge and its line of what it changes
+/// (the header's; "" when it has none), and the api it needs (<see cref="Hello.Modes"/>). Terms: the rules the mode
+/// owns, by the rule's key as <see cref="LobbyRules.Values"/> holds them (<see cref="ModeTerms.Rules"/>), which win over
+/// the lobby's own; Pack: the stat pack it names ("" the disc's own stats; null: it names none). CpusAllowed is in Terms
+/// (cpu-fill). Null Terms: a server from before them. Params: the mode's parameters as its package declares them, and
+/// Values their values now, in the same order: the lobby's rule controls and what its panel shows. Null: it has none,
+/// or a server from before them. Machines: the machine ids it allows when it states a list, so a Garage shows them
+/// before the machine choice opens; null: it states none (the lobby's machines stand). CustomsOff: it races no custom
+/// machines (<c>customs off</c>), so a Garage holds them back; a reader from before passes over it.</summary>
+public sealed record LobbyMode(string Hash, string ShareCode, string Name, int Api, string Badge = "", string About = "",
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyDictionary<string, int>? Terms = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Pack = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<ModeParam>? Params = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<int>? Values = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<int>? Machines = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool CustomsOff = false);
+
+/// <summary>The player's team in a custom lobby with teams: their own, or (from the host) another member's
+/// (<paramref name="PlayerId"/>); null Team: none, the race gives them one. A race's seats get their teams from these
+/// (<see cref="ModeTeams.Assign"/>). Refused: <see cref="CustomLobby.NotHost"/> for another's, or a team outside the
+/// lobby's. A launcher from before it never sends it.</summary>
+public sealed record ChooseTeam(int? Team, string? PlayerId = null) : ClientMessage;

@@ -28,6 +28,11 @@ def emit(t):
         out += [f"// {what}", f"enum {prefix.title()} : std::uint8_t", "{"]
         out += [f"  {prefix}_{e['pascal'].upper()} = {e['id']},  // {e['name']}" for e in t[kind]]
         out += [f"  {prefix}_COUNT = {len(t[kind])},", "};", ""]
+    for c in t["choices"]:
+        out += [f"// the choice `{c['name']}`: {c['doc']}" if c["doc"] else f"// the choice `{c['name']}`",
+                f"enum {c['pascal']} : std::uint8_t", "{"]
+        out += [f"  {c['name'].upper()}_{v.upper()} = {i}," for i, v in enumerate(c["values"])]
+        out += [f"  {c['name'].upper()}_COUNT = {len(c['values'])},", "};", ""]
     out += ["// the arguments an action pops", "constexpr int ActionArguments(std::uint8_t action)", "{",
             "  switch (action)", "  {"]
     out += [f"    case ACTION_{a['pascal'].upper()}: return {len(a.get('args', []))};" for a in t["actions"]]
@@ -36,5 +41,10 @@ def emit(t):
             "{", "  switch (event)", "  {"]
     out += [f"    case EVENT_{e['pascal'].upper()}: return {'true' if e['kind'] == 'continuous' else 'false'};"
             for e in t["events"]]
-    out += ["    default: return false;", "  }", "}", "", f"}}  // namespace {t['namespace_cxx']}", ""]
+    out += ["    default: return false;", "  }", "}", "",
+            "// the names a discrete event binds: 0 none, 1 its seat, 2 its seat and a second value (a seat or an int)",
+            "constexpr int EventBinds(std::uint8_t event)", "{", "  switch (event)", "  {"]
+    out += [f"    case EVENT_{e['pascal'].upper()}: return {len(e['binds'].split()) if 'binds' in e else 0};"
+            for e in t["events"]]
+    out += ["    default: return 0;", "  }", "}", "", f"}}  // namespace {t['namespace_cxx']}", ""]
     return "\n".join(out)

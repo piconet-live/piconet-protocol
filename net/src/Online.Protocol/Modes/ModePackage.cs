@@ -27,6 +27,10 @@ public sealed record ModeParam(string Name, string Label, ModeParamKind Kind, Mo
     public bool Holds(int value) => Type == ModeType.Real
         ? BitConverter.Int32BitsToSingle(value) is var v && v >= BitConverter.Int32BitsToSingle(Least) && v <= BitConverter.Int32BitsToSingle(Most)
         : value >= Least && value <= Most;
+
+    /// <summary>Whether a host may set this value: within the range and, for whole numbers, on a step from the least.
+    /// (A real's step is the control's; the game's check is the range.)</summary>
+    public bool Fits(int value) => Holds(value) && (Type == ModeType.Real || Step <= 1 || ((long)value - Least) % Step == 0);
 }
 
 /// <summary>A setup word's argument: a constant cell, or the index of the parameter that gives it.</summary>
@@ -36,6 +40,12 @@ public sealed record ModeSetupValue(bool FromParam, int Value);
 /// left out at their defaults (so a reader needs no table of defaults).</summary>
 public sealed record ModeSetupWord(ModeSetup Id, IReadOnlyList<ModeSetupValue> Arguments);
 
+/// <summary>A setup word of the coordinator's (modes.toml's <c>lobby</c>), as the compiler read it from the file: its
+/// values in order (a range's ends, a course's or the machines' numbers), a stat pack's name. It is not in the
+/// package's <c>SETP</c>: the game sees what it sets as the match start's own fields. The content hash holds it all
+/// the same, through the file's text in <c>SRC </c>.</summary>
+public sealed record ModeLobbyWord(ModeSetup Id, IReadOnlyList<ModeSetupValue> Values, string? Text = null);
+
 /// <summary>A rule as the package keeps it: its conditions' and body's offsets in the code (<see cref="None"/>:
 /// none), and its locals, the event's binding (local 0) included.</summary>
 public sealed record ModeRule(string Label, ModeEvent Event, int Locals, uint When, uint While, uint Body)
@@ -43,9 +53,10 @@ public sealed record ModeRule(string Label, ModeEvent Event, int Locals, uint Wh
     public const uint None = 0xFFFFFFFF;
 }
 
-/// <summary>The match start's <c>setup.mode</c> (formats.md section 9): the package, its hash, its api and the
-/// parameters' values in <c>PARM</c>'s order (a real's bits).</summary>
-public sealed record ModeStart(string Package, string Hash, int Api, IReadOnlyList<int> Params)
+/// <summary>The match start's <c>setup.mode</c> (formats.md section 9): the package, its hash, its api, the
+/// parameters' values in <c>PARM</c>'s order (a real's bits) and each seat's team, by seat (0 to 29; null: every seat
+/// its own, its number).</summary>
+public sealed record ModeStart(string Package, string Hash, int Api, IReadOnlyList<int> Params, IReadOnlyList<int>? Teams = null)
 {
     public string ToJson() => JsonSerializer.Serialize(this, ControlProtocol.Json);
 }
@@ -65,10 +76,15 @@ public sealed class ModePackage
     public string About { get; init; } = "";
     public IReadOnlyList<ModeParam> Params { get; init; } = [];
     public IReadOnlyList<ModeSetupWord> Setups { get; init; } = [];
+    /// <summary>The words of the coordinator's, from the compile (not in the bytes: <see cref="Read"/> gives none;
+    /// everyone that uses them compiles the file).</summary>
+    public IReadOnlyList<ModeLobbyWord> LobbyWords { get; init; } = [];
     /// <summary>Each global's start value.</summary>
     public IReadOnlyList<int> Globals { get; init; } = [];
     /// <summary>Each seat word's start value.</summary>
     public IReadOnlyList<int> SeatWords { get; init; } = [];
+    /// <summary>Each team word's start value.</summary>
+    public IReadOnlyList<int> TeamWords { get; init; } = [];
     public IReadOnlyList<ModeRule> Rules { get; init; } = [];
     public required byte[] Code { get; init; }
     public required string Source { get; init; }
@@ -127,6 +143,15 @@ public sealed class ModePackage
             foreach (var value in Globals.Concat(SeatWords))
             {
                 s.I32(value);
+            }
+            // a mode with words a team: their count and start values after the seats' (none: nothing, as before teams)
+            if (TeamWords.Count > 0)
+            {
+                s.U16(TeamWords.Count);
+                foreach (var value in TeamWords)
+                {
+                    s.I32(value);
+                }
             }
         });
         w.Section("RULE", s =>
@@ -202,8 +227,31 @@ public sealed class ModePackage
         return null;
     }
 
-    public ModeStart Start(IReadOnlyList<int>? values = null)
+    /// <summary>Why a host's parameter values are not this mode's, in a line for them; null: they are. One value a
+    /// parameter in <c>PARM</c>'s order, each within its declared range and on its step.</summary>
+    public string? ValuesRefusal(IReadOnlyList<int> values)
     {
+        ArgumentNullException.ThrowIfNull(values);
+        if (values.Count != Params.Count)
+        {
+            return $"the mode has {Params.Count} settings, not {values.Count}";
+        }
+        for (var i = 0; i < values.Count; i++)
+        {
+            if (!Params[i].Fits(values[i]))
+            {
+                return $"{Params[i].Label}: that value is outside what the mode allows";
+            }
+        }
+        return null;
+    }
+
+    public ModeStart Start(IReadOnlyList<int>? values = null, IReadOnlyList<int>? teams = null)
+    {
+        if (teams is not null && (teams.Count > ModeWords.Seats || teams.Any(t => t is < 0 or >= ModeWords.Teams)))
+        {
+            throw new ArgumentException($"a team is 0 to {ModeWords.Teams - 1}, at most one a seat", nameof(teams));
+        }
         var package = Write();
         if (values is not null && values.Count > Params.Count)
         {
@@ -217,7 +265,7 @@ public sealed class ModePackage
                 throw new ArgumentException($"the parameter {Params[i].Name} is outside its range", nameof(values));
             }
         }
-        return new ModeStart(Convert.ToBase64String(package), Hash(package), Api, chosen);
+        return new ModeStart(Convert.ToBase64String(package), Hash(package), Api, chosen, teams);
     }
 
     /// <summary>Reads and checks a package; a package that does not read throws <see cref="InvalidDataException"/>
@@ -258,8 +306,9 @@ public sealed class ModePackage
             About = about,
             Params = parameters,
             Setups = ReadSetups(sections[2], parameters.Count),
-            Globals = ReadVars(sections[3], out var seatWords),
+            Globals = ReadVars(sections[3], out var seatWords, out var teamWords),
             SeatWords = seatWords,
+            TeamWords = teamWords,
             Rules = ReadRules(sections[4], code.Length),
             Code = code,
             Source = sections[6].Utf8(sections[6].Left),
@@ -325,7 +374,7 @@ public sealed class ModePackage
         return list;
     }
 
-    private static List<int> ReadVars(ModeReader s, out List<int> seatWordValues)
+    private static List<int> ReadVars(ModeReader s, out List<int> seatWordValues, out List<int> teamWordValues)
     {
         var (globals, seatWords) = (s.U16(), s.U16());
         if (globals > ModeWords.Globals || seatWords > ModeWords.SeatWords)
@@ -334,6 +383,16 @@ public sealed class ModePackage
         }
         var g = Enumerable.Range(0, globals).Select(_ => s.I32()).ToList();
         seatWordValues = Enumerable.Range(0, seatWords).Select(_ => s.I32()).ToList();
+        teamWordValues = [];
+        if (s.Left > 0)
+        {
+            var teamWords = s.U16();
+            if (teamWords == 0 || teamWords > ModeWords.TeamWords)
+            {
+                throw new InvalidDataException($"1 to {ModeWords.TeamWords} words a team, when a mode keeps any");
+            }
+            teamWordValues = Enumerable.Range(0, teamWords).Select(_ => s.I32()).ToList();
+        }
         s.End();
         return g;
     }

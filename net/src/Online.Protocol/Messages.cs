@@ -70,12 +70,14 @@ public sealed record Rgb(byte R, byte G, byte B)
 /// player's tag (<see cref="PlayerTags"/>), shown after the name; a launcher from before tags passes over it.
 /// Custom: the garage-built machine the player races in place of Machine (<see cref="CustomMachine"/>, as their
 /// <see cref="SeatSetup.Custom"/> will carry it), so the other members see it; null: Machine. A launcher from before
-/// it passes over it.</summary>
+/// it passes over it. Team: the team the player chose or the host gave them (0 to 29; shown as "Team 1" on); null:
+/// none yet, or a lobby without teams (<see cref="LobbyRules.TeamsKey"/>): the race gives them one.</summary>
 public sealed record PlayerInfo(string Id, string Name, int Machine, Rgb Color, int? StockColor = null, bool Racing = false,
     bool Chosen = false, string? Tag = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool Watching = false,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Pack = null,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] CustomMachine? Custom = null);
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] CustomMachine? Custom = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] int? Team = null);
 
 /// <summary>A relay the players measure. An empty host means the coordinator's own host.</summary>
 public sealed record RelayEndpoint(string Id, string Host, int Port);
@@ -104,12 +106,16 @@ public sealed record SeatSetup(int Seat, string? PlayerId, string Name, int Mach
 /// <see cref="MostSeatPacks"/>; null with no seat on a pack of its own, the race of before.
 /// Grid: the start grid, the seats in their starting order, pole first: every seat of the race once (the coordinator's
 /// rule, Online.Server StartGrid: the players ahead of the CPUs, in reverse of the lobby's last finish). Null: the
-/// game's own grid (the CPUs ahead of seat 0, which starts last), every race before 0.4.0 and every replay of one.</summary>
+/// game's own grid (the CPUs ahead of seat 0, which starts last), every race before 0.4.0 and every replay of one.
+/// Mode: the race's game mode (formats.md section 9: the package, its hash, its api and its parameters' values), which
+/// every game runs and the replay's header keeps (version 9); sent only to games whose launcher said it runs that
+/// api (<see cref="Hello.Modes"/>). Null: no mode, the race of before.</summary>
 public sealed record RaceSetup(
     int Course, int Laps, IReadOnlyList<SeatSetup> Seats, uint ShuffleSeed, uint CpuSeed, RaceRules? Rules = null,
     StatPackWire? Stats = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<StatPackWire>? Packs = null,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<int>? Grid = null)
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<int>? Grid = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] ModeStart? Mode = null)
 {
     /// <summary>The most packs a race's seats may race beside its own (the game's MAX_SEAT_PACKS).</summary>
     public const int MostSeatPacks = 4;
@@ -175,6 +181,7 @@ public sealed record ServerRules(
 [JsonDerivedType(typeof(JoinLobby), "joinLobby")]
 [JsonDerivedType(typeof(SetLobbyRules), "setLobbyRules")]
 [JsonDerivedType(typeof(KickPlayer), "kick")]
+[JsonDerivedType(typeof(ChooseTeam), "chooseTeam")]
 [JsonDerivedType(typeof(StartLobbyRace), "startLobbyRace")]
 [JsonDerivedType(typeof(LeaveLobby), "leaveLobby")]
 public abstract record ClientMessage;
@@ -212,7 +219,10 @@ public abstract record ClientMessage;
 /// line, whatever their builds, and players who name none by their build as before (a server may know the line of a
 /// released build that named none). A claim, as the build is. Written only when set: a launcher with no version
 /// (built with none, or a pre-release) names none, and a launcher from before the field says nothing; a server from
-/// before it passes over it, which is why the version stays. A text that is no line is refused (bad_line).</summary>
+/// before it passes over it, which is why the version stays. A text that is no line is refused (bad_line).
+/// Modes: the newest game-mode api this launcher and its game run (<see cref="ModeWords.Api"/>; 0: none). A server
+/// matches a player into a race of a mode only when their launcher said that mode's api or a newer one: a launcher
+/// from before modes says nothing, reads as 0, and is never sent a mode it would drop. Written only when set.</summary>
 public sealed record Hello(string Name, int Version, string? Build = null, bool VoteCounts = false,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool Debug = false,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool StatPacks = false,
@@ -220,7 +230,8 @@ public sealed record Hello(string Name, int Version, string? Build = null, bool 
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool Notices = false,
     string? Key = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool Players = false,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Line = null) : ClientMessage
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Line = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] int Modes = 0) : ClientMessage
 {
     /// <summary>The longest build name a server takes.</summary>
     public const int MaxBuildLength = 128;
@@ -374,7 +385,10 @@ public sealed record ErrorMessage(string Code, string Message, int? Seconds = nu
 /// and a launcher from before them passes over them. StartsInMs: a Quick Play lobby's start countdown
 /// (<see cref="HostRules.StartCountdown"/>), the milliseconds left when the state was sent; the lobby's match begins
 /// when it runs out, unless its start vote begins it first. Null: no countdown runs (too few players, a custom lobby,
-/// the rule off, or the lobby is past forming); a launcher from before it passes over it.</summary>
+/// the rule off, or the lobby is past forming); a launcher from before it passes over it. NoCpuVote: the lobby's
+/// modes allow no CPU racers (none says <c>cpus allowed</c>), so there is no CPU vote; a launcher from before it
+/// passes over it. CannotRace: the members (player ids) whose launcher cannot run the lobby's mode
+/// (<see cref="Hello.Modes"/>): they stay in the lobby and watch, and are never put in its races; null: none.</summary>
 public sealed record LobbyState(
     string LobbyId, IReadOnlyList<PlayerInfo> Players, int Capacity, int VotingMinimum, bool VotingOpen,
     int StartVotes, int CpuFillVotes, string Stage = LobbyState.Forming, LobbyRace? Race = null, string? Waiting = null,
@@ -385,7 +399,9 @@ public sealed record LobbyState(
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] LobbyRules? Rules = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Name = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool Locked = false,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] int? StartsInMs = null)
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] int? StartsInMs = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool NoCpuVote = false,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<string>? CannotRace = null)
     : ServerMessage
 {
     /// <summary><see cref="Waiting"/>: the race server (relay) is being started.</summary>
@@ -431,9 +447,11 @@ public sealed record MeasureRelays(string MatchId, IReadOnlyList<RelayEndpoint> 
 
 /// <summary>The race: join the relay with the token, as this seat. The relay's host is an address when the
 /// coordinator started the relay itself (it changes from one start to the next); a name otherwise. ReportLive: send the race as the game sees it
-/// (<see cref="RaceReport"/>) for the lobby's waiting players.</summary>
+/// (<see cref="RaceReport"/>) for the lobby's waiting players. NoRejoin: a game that leaves this race does not come
+/// back and no Rejoin is offered: its mode does not say <c>cpus allowed</c>, and a CPU drives a seat meanwhile.</summary>
 public sealed record MatchStart(string MatchId, RelayEndpoint Relay, string Token, int Seat, RaceSetup Setup,
-    bool ReportLive = false) : ServerMessage;
+    bool ReportLive = false,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool NoRejoin = false) : ServerMessage;
 
 /// <summary>Taken out of a forming match; the player stays in the lobby for the next one. Reasons: latency (too slow
 /// to the chosen relay), no_relay (none connected), relay_failed (the race server could not be started, in any region).</summary>
@@ -447,11 +465,22 @@ public sealed record Requeued(string MatchId, string Reason) : ServerMessage;
 public sealed record QuickPlayEnded(string MatchId, string Reason, string? Message = null) : ServerMessage;
 
 /// <summary>The forming match's course vote (like Overwatch's map vote): the options (course numbers;
-/// <see cref="RandomCourse"/> for "Random course") and how long it lasts.</summary>
-public sealed record CourseVote(string MatchId, IReadOnlyList<int> Options, int DurationMs) : ServerMessage
+/// <see cref="RandomCourse"/> for "Random course") and how long it lasts. Cards: what each option races, in the
+/// options' order, when the lobby races game modes (Quick Play's rotation, piconet-docs research/game-modes/ design
+/// 6): a launcher from before them passes over them; null: the lobby's own laps and rules on every course.</summary>
+public sealed record CourseVote(string MatchId, IReadOnlyList<int> Options, int DurationMs,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<VoteCard>? Cards = null) : ServerMessage
 {
     public const int RandomCourse = -1;
 }
+
+/// <summary>What a vote's option races (<see cref="CourseVote.Cards"/>): its mode's name and its laps (0: unlimited;
+/// null: not known before the draw, "Random course"), and for a mode that changes the race (a spicy card) the mode's
+/// one-word badge and its line of what it changes (the header's <c>badge</c> and <c>about</c>); a normal card has
+/// neither.</summary>
+public sealed record VoteCard(string Mode, int? Laps,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Badge = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? About = null);
 
 /// <summary>The course vote as it stands (the counts are visible to everyone during the vote):
 /// the votes per option, in the options' order, and who has voted (player ids), sent to everyone in the lobby who
@@ -460,15 +489,19 @@ public sealed record CourseVotes(string MatchId, IReadOnlyList<int> Votes, IRead
 
 /// <summary>The vote's result: the votes per option, the option drawn (a draw weighted by the votes; every option
 /// alike when nobody voted) and the course (drawn from the pool when "Random course" won). For the launcher's
-/// animation; the match start follows.</summary>
-public sealed record CourseChosen(string MatchId, IReadOnlyList<int> Options, IReadOnlyList<int> Votes, int Winner, int Course)
+/// animation; the match start follows. Card: what the race is, with the vote's cards (<see cref="CourseVote.Cards"/>):
+/// "Random course" draws a mode as well as a course.</summary>
+public sealed record CourseChosen(string MatchId, IReadOnlyList<int> Options, IReadOnlyList<int> Votes, int Winner, int Course,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] VoteCard? Card = null)
     : ServerMessage;
 
 /// <summary>The match's machine choice, its own step after the course is decided: the course,
 /// the machines racers may take, and how long the choice lasts. It ends when every racer has chosen
 /// (<see cref="MachineChoice"/>) or the time is up; a racer who has not chosen races the machine they last raced or
-/// queued with.</summary>
-public sealed record ChooseMachine(string MatchId, int Course, IReadOnlyList<int> Machines, int DurationMs) : ServerMessage;
+/// queued with. CustomsOff: the race's mode takes no custom machines (<c>customs off</c>): one sent back is refused, and
+/// the racer races their stock machine; a reader from before passes over it.</summary>
+public sealed record ChooseMachine(string MatchId, int Course, IReadOnlyList<int> Machines, int DurationMs,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool CustomsOff = false) : ServerMessage;
 
 /// <summary>The lobby's race as a racer's game sees it, for the players waiting in the lobby.</summary>
 public sealed record LiveRace(string MatchId, RaceSnapshot Snapshot) : ServerMessage;

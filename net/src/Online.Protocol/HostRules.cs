@@ -12,6 +12,9 @@ public enum RuleReach
 
     /// <summary>The server's own running (timeouts, relays, builds that race together): the operator's only.</summary>
     Server,
+
+    /// <summary>A practice's alone: no lobby and no server sets it (<see cref="HostRules.All"/> does not hold it).</summary>
+    Practice,
 }
 
 /// <summary>What a rule's value is, and so the control that sets it.</summary>
@@ -62,8 +65,10 @@ public enum RuleKind
 /// one whose range is <see cref="Range"/>.</param>
 /// <param name="Flag">The server's command-line option of a rule the games apply (<see cref="HostRules.Race"/>; a
 /// switch's takes no value); null: none.</param>
+/// <param name="SetupWord">The game mode's setup word that sets the rule (modes.toml; a mode's word wins); null: it runs
+/// the lobby or the server before a mode is chosen, or is a practice's, and is no mode's to set.</param>
 public sealed record HostRule(string Name, string Label, RuleReach Reach, RuleKind Kind, int Least = 0, int Most = 0,
-    int Step = 1, int Default = 0, string Unit = "", string? Taken = null, string? Flag = null)
+    int Step = 1, int Default = 0, string Unit = "", string? Taken = null, string? Flag = null, string? SetupWord = null)
 {
     /// <summary>Whether the rule takes this number: inside its range on its steps; a delay's 0 (off) too.</summary>
     public bool Takes(int value) =>

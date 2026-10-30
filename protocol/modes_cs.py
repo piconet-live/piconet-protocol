@@ -13,7 +13,8 @@ def xml(s):
 
 
 def cs_type(t):
-    return {"int": "ModeType.Int", "real": "ModeType.Real", "bool": "ModeType.Bool", "seat": "ModeType.Seat"}[t]
+    return {"int": "ModeType.Int", "real": "ModeType.Real", "bool": "ModeType.Bool", "seat": "ModeType.Seat",
+            "seats": "ModeType.Seats", "vec": "ModeType.Vec"}[t]
 
 
 def number(v, t):
@@ -43,21 +44,24 @@ def emit(t):
             "    public static int Size(ModeOp op) => op switch", "    {"]
     out += [f"        ModeOp.{o['name']} => {o['size']}," for o in t["ops"]]
     out += ["        _ => 0,", "    };", "",
-            "    /// <summary>The events: name, id, continuous, whether it binds a seat.</summary>",
-            "    public static readonly IReadOnlyList<(string Name, ModeEvent Id, bool Continuous, bool BindsSeat)> Events =",
+            "    /// <summary>The events: name, id, continuous, whether it binds a seat, and the type of the second name it",
+            "    /// binds (null: none; <c>ko(v, by)</c> a seat, <c>out(s, cause)</c> an int).</summary>",
+            "    public static readonly IReadOnlyList<(string Name, ModeEvent Id, bool Continuous, bool BindsSeat, ModeType? Second)> Events =",
             "    ["]
+    second = {"seat seat": "ModeType.Seat", "seat int": "ModeType.Int"}
     out += [f"        ({text(e['name'])}, ModeEvent.{e['pascal']}, {'true' if e['kind'] == 'continuous' else 'false'}, "
-            f"{'true' if 'binds' in e else 'false'})," for e in t["events"]]
+            f"{'true' if 'binds' in e else 'false'}, {second.get(e.get('binds', ''), 'null')})," for e in t["events"]]
     out += ["    ];", "",
-            "    /// <summary>The setup words: name, id, arguments (name, type, least, most, default).</summary>",
-            "    public static readonly IReadOnlyList<(string Name, ModeSetup Id, IReadOnlyList<ModeArgument> Args)> Setups =",
+            "    /// <summary>The setup words: name, id, arguments (name, type, least, most, default); Lobby: the coordinator's "
+            "alone, not in the package; Form: how the file writes it (range, text, list; empty: its arguments).</summary>",
+            "    public static readonly IReadOnlyList<(string Name, ModeSetup Id, IReadOnlyList<ModeArgument> Args, bool Lobby, string Form)> Setups =",
             "    ["]
     for s in t["setups"]:
         args = ", ".join(
             f"new ModeArgument({text(a.get('name', ''))}, {cs_type(a['type'])}, {number(a.get('least', 0), a['type'])}, "
             f"{number(a.get('most', 0), a['type'])}, {number(a['default'], a['type']) if 'default' in a else 'null'})"
             for a in s.get("args", []))
-        out.append(f"        ({text(s['name'])}, ModeSetup.{s['pascal']}, [{args}]),")
+        out.append(f"        ({text(s['name'])}, ModeSetup.{s['pascal']}, [{args}], {'true' if s.get('lobby') else 'false'}, {text(s.get('form', ''))}),")
     out += ["    ];", "",
             "    /// <summary>The reads of a seat (<c>seat.NAME</c>): name, id, type.</summary>",
             "    public static readonly IReadOnlyList<(string Name, ModeSeatRead Id, ModeType Type)> SeatReads =",
@@ -72,7 +76,25 @@ def emit(t):
             "    /// <summary>The actions: name, id, the types of their arguments in order.</summary>",
             "    public static readonly IReadOnlyList<(string Name, ModeAction Id, IReadOnlyList<ModeType> Args)> Actions =",
             "    ["]
-    out += [f"        ({text(a['name'])}, ModeAction.{a['pascal']}, [{', '.join(cs_type(x) for x in a.get('args', []))}]),"
+    choices = {c["name"]: c for c in t["choices"]}
+    out += [f"        ({text(a['name'])}, ModeAction.{a['pascal']}, "
+            f"[{', '.join('ModeType.Int' if x in choices else cs_type(x) for x in a.get('args', []))}]),"
             for a in t["actions"]]
-    out += ["    ];", "}", ""]
+    out += ["    ];", "",
+            "    /// <summary>The choices: an argument of one takes one of its names, its value the name's place.</summary>",
+            "    public static readonly IReadOnlyDictionary<string, IReadOnlyList<string>> Choices =",
+            "        new Dictionary<string, IReadOnlyList<string>>", "        {"]
+    out += [f"            [{text(c['name'])}] = [{', '.join(text(v) for v in c['values'])}]," for c in t["choices"]]
+    out += ["        };", "",
+            "    /// <summary>The actions' arguments that take a choice: (action, argument) to the choice's name.</summary>",
+            "    public static readonly IReadOnlyDictionary<(ModeAction Action, int Argument), string> ActionChoices =",
+            "        new Dictionary<(ModeAction Action, int Argument), string>", "        {"]
+    out += [f"            [(ModeAction.{a['pascal']}, {i})] = {text(x)},"
+            for a in t["actions"] for i, x in enumerate(a.get("args", [])) if x in choices]
+    out += ["        };", "",
+            "    /// <summary>The actions written with a word between their first two arguments in place of a comma.</summary>",
+            "    public static readonly IReadOnlyDictionary<ModeAction, string> ActionJoins =",
+            "        new Dictionary<ModeAction, string>", "        {"]
+    out += [f"            [ModeAction.{a['pascal']}] = {text(a['join'])}," for a in t["actions"] if "join" in a]
+    out += ["        };", "}", ""]
     return "\n".join(out)

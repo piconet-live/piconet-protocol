@@ -18,6 +18,9 @@ internal static class ModeOperators
 
     private static int Truth(bool value) => value ? 1 : 0;
 
+    /// <summary>A seat's set (SeatBit): bit <paramref name="seat"/>, none (or no seat) the empty set.</summary>
+    public static int SeatBit(int seat) => seat is >= 0 and < ModeWords.Seats ? 1 << seat : 0;
+
     /// <summary>Whole numbers wrap; by 0 gives 0, and the least number by -1 itself (modes.toml's IDiv).</summary>
     public static int Divide(int a, int b) => b == 0 ? 0 : b == -1 ? unchecked(-a) : a / b;
 
@@ -72,7 +75,7 @@ internal static class ModeOperators
             "ceil" => Saturate(Math.Ceiling(x)),
             "round" => Saturate(Math.Round((double)x, MidpointRounding.AwayFromZero)),
             "trunc" => Saturate(Math.Truncate(x)),
-            _ => Cell(x < 0 ? float.NaN : MathF.Sqrt(x)),
+            _ => Cell(ModeMaths.GameSqrt(x)),
         };
     }
 }
