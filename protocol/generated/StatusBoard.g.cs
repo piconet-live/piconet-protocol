@@ -104,6 +104,8 @@ public enum BoardEventKind : uint
     Notice = 5,
     /// <summary>a step's checksum differed from the relay's: A the step</summary>
     Desync = 6,
+    /// <summary>the view of the local racer's chase camera changed while it races (the player's camera button, or the start): A the view (1 to 3), B the one before (0: none said yet in this start)</summary>
+    Camera = 7,
 }
 
 /// <summary> A racer at the snapshot's moment.</summary>
