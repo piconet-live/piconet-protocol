@@ -135,6 +135,14 @@ internal sealed partial class ModeEmitter
             Op(ModeOp.SeatRead, (long)control.Id);
             return control.Type;
         }
+        if (field.Target is ModeField { Field: "base", Target: ModeField { Field: "stat" } own })
+        {
+            return StatRead(own.Target, "stat.base." + field.Field, field);
+        }
+        if (field.Target is ModeField { Field: "stat" } stat)
+        {
+            return StatRead(stat.Target, "stat." + field.Field, field);
+        }
         if (field.Field is "x" or "y" or "z" && TypeOf(field.Target) == ModeType.Vec)
         {
             var mark = _locals.Count;
@@ -157,6 +165,21 @@ internal sealed partial class ModeEmitter
         }
         throw new ModeCompileException(field.Line, $"a seat has no '{field.Field}' (neither a read of api {ModeWords.Api} nor a seat variable)");
     }
+
+    private ModeType StatRead(ModeExpr seat, string name, ModeField field)
+    {
+        var read = ModeWords.SeatReads.FirstOrDefault(r => r.Name == name);
+        if (read.Name is null)
+        {
+            throw new ModeCompileException(field.Line, $"a seat has no stat '{field.Field}': {StatNames()}");
+        }
+        Value(seat, ModeType.Seat, $"'.{name}'");
+        Op(ModeOp.SeatRead, (long)read.Id);
+        return read.Type;
+    }
+
+    private static string StatNames() =>
+        string.Join(", ", ModeWords.SeatReads.Where(r => r.Name.StartsWith("stat.", StringComparison.Ordinal) && !r.Name.StartsWith("stat.base.", StringComparison.Ordinal)).Select(r => r.Name[5..]));
 
     private ModeType Unary(ModeUnary unary)
     {
@@ -434,6 +457,15 @@ internal sealed partial class ModeEmitter
                 Op(ModeOp.StoreLocal, gathered.Slot);
                 return type;
             }),
+            ModeParser.SetValue => Gather(call, gathered, 0, _ =>
+            {
+                Op(ModeOp.LoadLocal, gathered.Slot);
+                Emit(new ModeName(call.Line, call.Bound));
+                Op(ModeOp.SeatBit);
+                Op(ModeOp.BitOr);
+                Op(ModeOp.StoreLocal, gathered.Slot);
+                return ModeType.Seats;
+            }),
             "any" or "all" => Gather(call, gathered, call.Helper == "any" ? 0 : 1, value =>
             {
                 Value(value, ModeType.Bool, call.Helper);
@@ -464,7 +496,7 @@ internal sealed partial class ModeEmitter
     /// and gives the value's type.</summary>
     private ModeType Gather(ModeSetCall call, Local gathered, int start, Func<ModeExpr, ModeType> each)
     {
-        if (call.Helper != "count" && call.Value is null)
+        if (call.Helper is not ("count" or ModeParser.SetValue) && call.Value is null)
         {
             throw new ModeCompileException(call.Line, $"{call.Helper} takes a value: {call.Helper}(e for each seat where c)");
         }
@@ -480,20 +512,24 @@ internal sealed partial class ModeEmitter
     private ModeType Extreme(ModeSetCall call, Local gathered)
     {
         var found = Temporary(call.Line, ModeType.Bool);
+        var taken = Temporary(call.Line, ModeType.Int);
         Push(0);
         Op(ModeOp.StoreLocal, found.Slot);
         return Gather(call, gathered, 0, value =>
         {
+            // the value written once, held in a local: the step's budget counts both branches of an if
+            var type = Number(value, call.Helper);
+            Op(ModeOp.StoreLocal, taken.Slot);
             Op(ModeOp.LoadLocal, found.Slot);
             var first = JumpAhead(ModeOp.JumpIfZero);
             Op(ModeOp.LoadLocal, gathered.Slot);
-            var type = Number(value, call.Helper);
+            Op(ModeOp.LoadLocal, taken.Slot);
             var o = ModeOperators.Binary[call.Helper];
             Op(type == ModeType.Real ? o.RealOp!.Value : o.IntOp!.Value);
             Op(ModeOp.StoreLocal, gathered.Slot);
             var next = JumpAhead(ModeOp.Jump);
             Land(first);
-            Emit(value);
+            Op(ModeOp.LoadLocal, taken.Slot);
             Op(ModeOp.StoreLocal, gathered.Slot);
             Push(1);
             Op(ModeOp.StoreLocal, found.Slot);

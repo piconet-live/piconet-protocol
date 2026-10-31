@@ -1081,6 +1081,127 @@ id = 51
 type = "bool"
 doc = "nobody touches the seat (its no-contact row is every seat)"
 
+
+[[seat_read]]
+name = "stat.weight"
+id = 52
+type = "real"
+doc = "M+0x8, this step's: the machine's weight. A change keeps the speed: the momentum is scaled with it at the same step. The inertia, the box and the collision stats stay the creation's"
+
+[[seat_read]]
+name = "stat.accel"
+id = 53
+type = "real"
+doc = "M+0x220, this step's: acceleration; the thrust reads it every step (fn_1_26F34)"
+
+[[seat_read]]
+name = "stat.max_speed"
+id = 54
+type = "real"
+doc = "M+0x22C, this step's: max speed; the thrust reads it every step (fn_1_26F34)"
+
+[[seat_read]]
+name = "stat.grip"
+id = 55
+type = "real"
+doc = "M+0xC, this step's: grip 1, the corners' sideways limit (fn_1_278B8, every step); grip 2 and 3 stay the machine's"
+
+[[seat_read]]
+name = "stat.turn"
+id = 56
+type = "real"
+doc = "M+0x14, this step's: turn movement, every step"
+
+[[seat_read]]
+name = "stat.strafe"
+id = 57
+type = "real"
+doc = "M+0x1C, this step's: strafe, every step"
+
+[[seat_read]]
+name = "stat.drag"
+id = 58
+type = "real"
+doc = "M+0x23C, this step's: drag; the thrust reads it every step (fn_1_26F34)"
+
+[[seat_read]]
+name = "stat.boost_strength"
+id = 59
+type = "real"
+doc = "M+0x230, this step's: boost strength as the machine holds it: a pack's value x 0.57; read when a boost starts, so a running boost keeps what it got"
+
+[[seat_read]]
+name = "stat.boost_length"
+id = 60
+type = "real"
+doc = "M+0x234, this step's: boost length in seconds; read when a boost starts, so a running boost keeps its count"
+
+[[seat_read]]
+name = "stat.body"
+id = 61
+type = "real"
+doc = "M+0x30, this step's: body, the damage multiplier; read at every hit"
+
+[[seat_read]]
+name = "stat.base.weight"
+id = 62
+type = "real"
+doc = "the machine's own weight, M+0x8 before the mode's change"
+
+[[seat_read]]
+name = "stat.base.accel"
+id = 63
+type = "real"
+doc = "the machine's own accel, M+0x220 before the mode's change"
+
+[[seat_read]]
+name = "stat.base.max_speed"
+id = 64
+type = "real"
+doc = "the machine's own max_speed, M+0x22C before the mode's change"
+
+[[seat_read]]
+name = "stat.base.grip"
+id = 65
+type = "real"
+doc = "the machine's own grip, M+0xC before the mode's change"
+
+[[seat_read]]
+name = "stat.base.turn"
+id = 66
+type = "real"
+doc = "the machine's own turn, M+0x14 before the mode's change"
+
+[[seat_read]]
+name = "stat.base.strafe"
+id = 67
+type = "real"
+doc = "the machine's own strafe, M+0x1C before the mode's change"
+
+[[seat_read]]
+name = "stat.base.drag"
+id = 68
+type = "real"
+doc = "the machine's own drag, M+0x23C before the mode's change"
+
+[[seat_read]]
+name = "stat.base.boost_strength"
+id = 69
+type = "real"
+doc = "the machine's own boost_strength, M+0x230 before the mode's change"
+
+[[seat_read]]
+name = "stat.base.boost_length"
+id = 70
+type = "real"
+doc = "the machine's own boost_length, M+0x234 before the mode's change"
+
+[[seat_read]]
+name = "stat.base.body"
+id = 71
+type = "real"
+doc = "the machine's own body, M+0x30 before the mode's change"
+
 [[race_read]]
 name = "steps"
 id = 0
@@ -1437,3 +1558,80 @@ args = ["seat"]
 where = "the display page's tag bytes"
 doc = "the seat's tag goes (its ordinary name tag, if it has one, comes back)"
 
+[[action]]
+name = "seat.stat.weight"
+id = 38
+args = ["seat", "real"]
+where = "the seat's stat record in the mode's block; the stand-in routine writes M+0x8 after the game's rule hook fn_1_331EC rebuilt it, from the next step on"
+doc = "the machine's weight. A change keeps the speed: the momentum is scaled with it at the same step. The inertia, the box and the collision stats stay the creation's; held to the stat pack's range. It lasts until written again or the race ends"
+
+[[action]]
+name = "seat.stat.accel"
+id = 39
+args = ["seat", "real"]
+where = "the seat's stat record in the mode's block; the stand-in routine writes M+0x220 after the game's rule hook fn_1_331EC rebuilt it, from the next step on"
+doc = "acceleration; the thrust reads it every step (fn_1_26F34); held to the stat pack's range. It lasts until written again or the race ends"
+
+[[action]]
+name = "seat.stat.max_speed"
+id = 40
+args = ["seat", "real"]
+where = "the seat's stat record in the mode's block; the stand-in routine writes M+0x22C after the game's rule hook fn_1_331EC rebuilt it, from the next step on"
+doc = "max speed; the thrust reads it every step (fn_1_26F34); held to the stat pack's range. It lasts until written again or the race ends"
+
+[[action]]
+name = "seat.stat.grip"
+id = 41
+args = ["seat", "real"]
+where = "the seat's stat record in the mode's block; the stand-in routine writes M+0xC after the game's rule hook fn_1_331EC rebuilt it, from the next step on"
+doc = "grip 1, the corners' sideways limit (fn_1_278B8, every step); grip 2 and 3 stay the machine's; held to the stat pack's range. It lasts until written again or the race ends"
+
+[[action]]
+name = "seat.stat.turn"
+id = 42
+args = ["seat", "real"]
+where = "the seat's stat record in the mode's block; the stand-in routine writes M+0x14 after the game's rule hook fn_1_331EC rebuilt it, from the next step on"
+doc = "turn movement, every step; held to the stat pack's range. It lasts until written again or the race ends"
+
+[[action]]
+name = "seat.stat.strafe"
+id = 43
+args = ["seat", "real"]
+where = "the seat's stat record in the mode's block; the stand-in routine writes M+0x1C after the game's rule hook fn_1_331EC rebuilt it, from the next step on"
+doc = "strafe, every step; held to the stat pack's range. It lasts until written again or the race ends"
+
+[[action]]
+name = "seat.stat.drag"
+id = 44
+args = ["seat", "real"]
+where = "the seat's stat record in the mode's block; the stand-in routine writes M+0x23C after the game's rule hook fn_1_331EC rebuilt it, from the next step on"
+doc = "drag; the thrust reads it every step (fn_1_26F34); held to the stat pack's range. It lasts until written again or the race ends"
+
+[[action]]
+name = "seat.stat.boost_strength"
+id = 45
+args = ["seat", "real"]
+where = "the seat's stat record in the mode's block; the stand-in routine writes M+0x230 after the game's rule hook fn_1_331EC rebuilt it, from the next step on"
+doc = "boost strength as the machine holds it: a pack's value x 0.57; read when a boost starts, so a running boost keeps what it got; held to the stat pack's range. It lasts until written again or the race ends"
+
+[[action]]
+name = "seat.stat.boost_length"
+id = 46
+args = ["seat", "real"]
+where = "the seat's stat record in the mode's block; the stand-in routine writes M+0x234 after the game's rule hook fn_1_331EC rebuilt it, from the next step on"
+doc = "boost length in seconds; read when a boost starts, so a running boost keeps its count; held to the stat pack's range. It lasts until written again or the race ends"
+
+[[action]]
+name = "seat.stat.body"
+id = 47
+args = ["seat", "real"]
+where = "the seat's stat record in the mode's block; the stand-in routine writes M+0x30 after the game's rule hook fn_1_331EC rebuilt it, from the next step on"
+doc = "body, the damage multiplier; read at every hit; held to the stat pack's range. It lasts until written again or the race ends"
+
+[[action]]
+name = "damage"
+id = 48
+args = ["seat", "real"]
+where = "the mode point, after the run (the image's mode_point): the game's own fn_1_24F10(M, x)"
+doc = """the game's damage: x times the body M+0x30, 20 at most for a player and 1.01 x max energy, nothing while restoring or \
+in a KO's wait; below 0 energy the machine breaks down as at a last hit. No KO credit. x below 0 counts as 0; more in one run add up"""

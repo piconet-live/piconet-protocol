@@ -42,10 +42,11 @@ macro pits_off() {
   } }
 }
 
-// gap_to(a, b): the distance along the course from a to b, wrapped at the finish line, the shorter way round.
+// gap_to(a, b): the distance along the course from a to b, wrapped at the finish line, the shorter way round. From the
+// laps' own distances, so a pair takes a tenth of what the whole race's distance and a floor did: thirty seats may each
+// look at thirty others in one step (design 9.5).
 sub real gap_to(seat a, seat b) {
-  real d = abs(a.distance - b.distance);
-  d = d - a.lap_length * floor(d / a.lap_length);
+  real d = abs(a.lap_distance - b.lap_distance);
   return min(d, a.lap_length - d);
 }
 

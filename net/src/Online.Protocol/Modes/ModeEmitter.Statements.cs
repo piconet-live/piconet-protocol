@@ -159,6 +159,27 @@ internal sealed partial class ModeEmitter
             Op(ModeOp.StoreTeamVar, kept.Index);
             return;
         }
+        if (field.Target is ModeField { Field: "base", Target: ModeField { Field: "stat" } })
+        {
+            throw new ModeCompileException(assign.Line, $"seat.stat.base.{field.Field} is the machine's own: write seat.stat.{field.Field}");
+        }
+        if (field.Target is ModeField { Field: "stat" } stat)
+        {
+            var word = ModeWords.Actions.FirstOrDefault(a => a.Name == "seat.stat." + field.Field);
+            if (word.Name is null)
+            {
+                throw new ModeCompileException(assign.Line, $"a seat has no stat '{field.Field}': {StatNames()}");
+            }
+            var current = ModeWords.SeatReads.First(r => r.Name == "stat." + field.Field);
+            Value(stat.Target, ModeType.Seat, $"'.stat.{field.Field}'");
+            Work(assign, word.Args[1], $"seat.stat.{field.Field}", () =>
+            {
+                Emit(stat.Target);
+                Op(ModeOp.SeatRead, (long)current.Id);
+            });
+            Op(ModeOp.Action, (long)word.Id);
+            return;
+        }
         var action = ModeWords.Actions.FirstOrDefault(a => a.Name == "seat." + field.Field);
         var read = ModeWords.SeatReads.FirstOrDefault(r => r.Name == field.Field);
         Value(field.Target, ModeType.Seat, $"'.{field.Field}'");

@@ -29,6 +29,9 @@ internal sealed class ModeParser
         ["vec"] = ModeType.Vec,
     };
 
+    /// <summary>The helper's name of a set written as a value, <c>(seats where c)</c>; no file can name it.</summary>
+    internal const string SetValue = "(where)";
+
     private static readonly HashSet<string> SetHelpers = ["count", "min", "max", "sum", "any", "all", "first", "last", "nth"];
 
     /// <summary>The helpers whose first argument is a set of seats (the others' is a value for each seat).</summary>
@@ -1028,7 +1031,15 @@ internal sealed class ModeParser
             default:
                 if (Accept("("))
                 {
+                    var line = token.Line;
                     var inner = Expression();
+                    if (Accept("where"))
+                    {
+                        // (seats where c): a set as a value, the seats of a helper's parentheses
+                        var condition = Expression();
+                        Expect(")");
+                        return new ModeSetCall(line, SetValue, null, "seat", condition, AllSeats(inner), [], null);
+                    }
                     Expect(")");
                     return inner;
                 }

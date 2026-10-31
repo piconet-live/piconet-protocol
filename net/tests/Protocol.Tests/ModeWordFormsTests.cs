@@ -128,6 +128,93 @@ public sealed class ModeWordFormsTests
         Assert.NotEmpty(Compile(body).Errors);
     }
 
+    /// <summary>The design's example 9.5, as it stands there.</summary>
+    [Fact]
+    public void InfectionCompiles()
+    {
+        var result = ModeCompiler.Compile("""
+            mode "Infection" { api 1; badge "INFECTION"; about "A touch passes it on. Stay clean."; }
+            param slow  "Slowdown at half a lap" number 0..50 default 20;
+            param limit "Time" delay 1min..10min step 30s default 3min;
+
+            laps unlimited;
+            clock_limit limit;
+            seat int infected_at;
+
+            rule "Patient zero" {
+              event go;
+              do {
+                seat z = nth(seats where racing, random(count(seats where racing)));
+                z.infected_at = 1;
+              }
+            }
+
+            rule "Spread" {
+              event hit(a, b);
+              do {
+                if (a.infected_at == 0) { if (b.infected_at > 0) { a.infected_at = race.steps; } }
+                else if (b.infected_at == 0) { b.infected_at = race.steps; }
+              }
+            }
+
+            rule "Hide and slow" {
+              event each seat;
+              while race.started and seat.racing and seat.infected_at == 0;
+              do {
+                real d = min(gap_to(seat, other) for each other where other.infected_at > 0 and other.racing);
+                real f = min(1.0, d / (seat.lap_length / 2));
+                seat.stat.max_speed = seat.stat.base.max_speed * (1 - slow / 100.0 * f);
+              }
+            }
+
+            rule "Map" {
+              event every step;
+              do {
+                seats clean = (seats where seat.infected_at == 0);
+                for each seat where seat.infected_at > 0 { map_hide seat from clean; }
+              }
+            }
+
+            rule "Places at the end" {
+              event every step;
+              when race.started and race.steps >= limit;
+              do {
+                int n = 1;
+                for each seat where seat.infected_at == 0 by standing { seat.place = n; n += 1; }
+                for each seat where seat.infected_at > 0 by seat.infected_at desc { seat.place = n; n += 1; }
+              }
+            }
+            """);
+        Assert.Empty(result.Errors);
+        Assert.InRange(result.Budget, 1, ModeWords.Budget);
+    }
+
+    [Theory]
+    [InlineData("rule \"R\" { event each seat; do { damage seat, 5.0; } }")]
+    [InlineData("rule \"R\" { event each seat; do { real a = seat.stat.max_speed; } }")]
+    [InlineData("rule \"R\" { event each seat; do { real a = seat.stat.base.body; } }")]
+    [InlineData("rule \"R\" { event each seat; do { seat.stat.max_speed = 1.0; } }")]
+    [InlineData("rule \"R\" { event each seat; do { seat.stat.drag *= 2; } }")]
+    [InlineData("rule \"R\" { event go; do { seat a = first(seats); a.stat.boost_length -= 0.5; } }")]
+    [InlineData("rule \"R\" { event go; do { map_hide nth(seats, 0) from (seats where racing); } }")]
+    [InlineData("rule \"R\" { event go; do { for each s in (seats where racing) { retire s; } } }")]
+    [InlineData("rule \"R\" { event go; do { int a = count((seats where racing) - nth(seats, 0)); } }")]
+    public void AStatWordOrASetValueCompiles(string body)
+    {
+        Assert.Empty(Compile(body).Errors);
+    }
+
+    [Theory]
+    [InlineData("rule \"R\" { event each seat; do { seat.stat.base.body = 1.0; } }", "the machine's own")]
+    [InlineData("rule \"R\" { event each seat; do { seat.stat.colour = 1.0; } }", "no stat")]
+    [InlineData("rule \"R\" { event each seat; do { real a = seat.stat.colour; } }", "no stat")]
+    [InlineData("rule \"R\" { event each seat; do { seat.stat.base.colour = 1.0; } }", "the machine's own")]
+    [InlineData("rule \"R\" { event each seat; do { real a = seat.stat.base.colour; } }", "no stat")]
+    public void AStatWordIsRefusedWithItsReason(string body, string reason)
+    {
+        Assert.Contains(Compile(body).Errors, e => e.Contains(reason, StringComparison.Ordinal));
+    }
+
     [Theory]
     [InlineData("points_table game;")]
     [InlineData("time_bonus off;")]
@@ -137,11 +224,8 @@ public sealed class ModeWordFormsTests
     [InlineData("spin_attacks off;")]
     [InlineData("side_attacks off;")]
     [InlineData("spin_immunity off;")]
-    [InlineData("rule \"R\" { event each seat; do { damage seat, 5.0; } }")]
     [InlineData("rule \"R\" { event each seat; do { boost seat off; } }")]
     [InlineData("rule \"R\" { event each seat; do { show_number seat off; } }")]
-    [InlineData("rule \"R\" { event each seat; do { real a = seat.stat.max_speed; } }")]
-    [InlineData("rule \"R\" { event each seat; do { seat.stat.max_speed = 1.0; } }")]
     [InlineData("rule \"R\" { event go; do { int a = race.course; } }")]
     [InlineData("rule \"R\" { event go; do { int a = race.humans_left; } }")]
     public void AWordTheDocumentsMarkNotBuiltIsRefused(string body)

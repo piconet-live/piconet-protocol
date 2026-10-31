@@ -1,0 +1,51 @@
+// Every seat.stat word, read and written, the machine's own values, and damage; a set as a value.
+mode "Stats" { api 1; about "A vector of the stat words."; }
+
+param bad "A real that is not finite" switch default off;
+param hurt "Damage" number 0..100 default 5;
+
+global real seen;
+seat int infected;
+
+rule "Writes" {
+  event each seat;
+  while race.started and seat.racing;
+  do {
+    seat.stat.weight = seat.stat.base.weight * 2;
+    seat.stat.accel = seat.stat.base.accel + 0.25;
+    seat.stat.max_speed = seat.stat.base.max_speed * 0.5;
+    seat.stat.grip = seat.stat.base.grip;
+    seat.stat.turn = seat.stat.base.turn;
+    seat.stat.strafe = seat.stat.base.strafe;
+    seat.stat.drag = seat.stat.base.drag;
+    seat.stat.boost_strength = seat.stat.base.boost_strength;
+    seat.stat.boost_length = seat.stat.base.boost_length;
+    seat.stat.body = seat.stat.base.body + 1;
+    seat.stat.body += 1;
+    if (seat.index == 1) {
+      seat.stat.drag = 99.0;            // held to a pack's range
+      seat.stat.boost_length = 9.0;
+      seat.stat.boost_strength = 1000.0;
+      seat.stat.weight = 0.0;
+    }
+    if (bad and seat.index == 2) { seat.stat.accel = 1.0 / 0.0; }
+  }
+}
+
+rule "Reads" {
+  event every step;
+  while race.started;
+  do {
+    for each seat {
+      seen = seat.stat.weight + seat.stat.accel + seat.stat.max_speed + seat.stat.grip + seat.stat.turn + seat.stat.strafe
+           + seat.stat.drag + seat.stat.boost_strength + seat.stat.boost_length;
+    }
+  }
+}
+
+rule "Hurts" { event go; do { for each seat { damage seat, hurt; damage seat, 1.0; } } }
+
+rule "Map" {
+  event every step;
+  do { for each seat where seat.infected > 0 { map_hide seat from (seats where seat.infected == 0); } }
+}

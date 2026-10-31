@@ -1,4 +1,4 @@
-FZMP format 1 api 1, 5200 bytes, hash 91f0478c07e7d1264e0c2e6f5ab4e7deec8059e51af90f834172a2128ac98ee7
+FZMP format 1 api 1, 5044 bytes, hash d716123d24a33260ed5efb9439a55877ea908c444f844184a44d3ef67a0d7e3a
 HEAD name "Language" badge "" about "Subs, waits, teams, sets, vecs and random numbers."
 PARM 1
   0 gap "Gap" delay int 60..600 step 60 default 120
@@ -18,11 +18,11 @@ RULE 7
   0 "every 1s" event every step, locals 2, when none, while 0000, body 0027
   1 "at 10s" event every step, locals 4, when 0074, while none, body 0086
   2 "Teams" event each seat, locals 4, when none, while 0325, body 0328
-  3 "Vecs" event every step, locals 18, when 03b9, while none, body 03bc
-  4 "Wait" event every step, locals 2, when 07b2, while none, body 07b5
-  5 "Abort" event out, locals 1, when none, while none, body 07ff
-  6 "Restart" event each seat, locals 2, when 0820, while none, body 0825
-CODE 2150 bytes
+  3 "Vecs" event every step, locals 19, when 03b9, while none, body 03bc
+  4 "Wait" event every step, locals 2, when 0716, while none, body 0719
+  5 "Abort" event out, locals 1, when none, while none, body 0763
+  6 "Restart" event each seat, locals 2, when 0784, while none, body 0789
+CODE 1994 bytes
   ; rule 0 while
   0000  RaceRead started
   0002  Dup
@@ -586,359 +586,275 @@ CODE 2150 bytes
   0535  Push 0
   053a  StoreLocal 6
   053c  LoadGlobal 2
-  053f  StoreLocal 8
+  053f  StoreLocal 9
   0541  Push 0
-  0546  StoreLocal 9
-  0548  LoadLocal 9
+  0546  StoreLocal 10
+  0548  LoadLocal 10
   054a  RaceRead seats
   054c  ILt
-  054d  JumpIfZero 0687
-  0552  LoadLocal 9
+  054d  JumpIfZero 0611
+  0552  LoadLocal 10
   0554  SeatBit
-  0555  LoadLocal 8
+  0555  LoadLocal 9
   0557  BitAnd
-  0558  JumpIfZero 0678
-  055d  LoadLocal 9
+  0558  JumpIfZero 0602
+  055d  LoadLocal 10
   055f  SeatRead racing
-  0561  JumpIfZero 0678
-  0566  LoadLocal 7
-  0568  JumpIfZero 05f3
-  056d  LoadLocal 6
-  056f  LoadGlobal 3
-  0572  LoadLocal 9
-  0574  StoreLocal 11
-  0576  StoreLocal 10
-  0578  Push 0
-  057d  StoreLocal 12
-  057f  LoadLocal 10
-  0581  SeatRead position
-  0583  StoreLocal 15
-  0585  StoreLocal 14
-  0587  StoreLocal 13
-  0589  LoadLocal 13
-  058b  LoadLocal 11
-  058d  SeatRead position
-  058f  StoreLocal 15
-  0591  StoreLocal 14
-  0593  StoreLocal 13
-  0595  LoadLocal 13
-  0597  FSub
-  0598  StoreLocal 13
-  059a  LoadLocal 10
-  059c  SeatRead position
-  059e  StoreLocal 16
-  05a0  StoreLocal 15
-  05a2  StoreLocal 14
-  05a4  LoadLocal 15
-  05a6  LoadLocal 11
-  05a8  SeatRead position
-  05aa  StoreLocal 16
-  05ac  StoreLocal 15
-  05ae  StoreLocal 14
-  05b0  LoadLocal 15
-  05b2  FSub
-  05b3  StoreLocal 14
-  05b5  LoadLocal 10
-  05b7  SeatRead position
-  05b9  StoreLocal 17
-  05bb  StoreLocal 16
-  05bd  StoreLocal 15
-  05bf  LoadLocal 17
-  05c1  LoadLocal 11
-  05c3  SeatRead position
-  05c5  StoreLocal 17
-  05c7  StoreLocal 16
-  05c9  StoreLocal 15
-  05cb  LoadLocal 17
-  05cd  FSub
-  05ce  StoreLocal 15
-  05d0  LoadLocal 13
-  05d2  LoadLocal 13
-  05d4  FMul
-  05d5  LoadLocal 14
-  05d7  LoadLocal 14
-  05d9  FMul
-  05da  FAdd
-  05db  LoadLocal 15
-  05dd  LoadLocal 15
-  05df  FMul
-  05e0  FAdd
-  05e1  FSqrt
-  05e2  StoreLocal 12
-  05e4  Jump 05e9
-  05e9  LoadLocal 12
-  05eb  FMin
-  05ec  StoreLocal 6
-  05ee  Jump 0678
-  05f3  LoadGlobal 3
-  05f6  LoadLocal 9
-  05f8  StoreLocal 11
-  05fa  StoreLocal 10
-  05fc  Push 0
-  0601  StoreLocal 12
-  0603  LoadLocal 10
-  0605  SeatRead position
-  0607  StoreLocal 15
-  0609  StoreLocal 14
-  060b  StoreLocal 13
-  060d  LoadLocal 13
-  060f  LoadLocal 11
-  0611  SeatRead position
-  0613  StoreLocal 15
-  0615  StoreLocal 14
-  0617  StoreLocal 13
-  0619  LoadLocal 13
-  061b  FSub
-  061c  StoreLocal 13
-  061e  LoadLocal 10
-  0620  SeatRead position
-  0622  StoreLocal 16
-  0624  StoreLocal 15
-  0626  StoreLocal 14
-  0628  LoadLocal 15
-  062a  LoadLocal 11
-  062c  SeatRead position
-  062e  StoreLocal 16
-  0630  StoreLocal 15
-  0632  StoreLocal 14
-  0634  LoadLocal 15
-  0636  FSub
-  0637  StoreLocal 14
-  0639  LoadLocal 10
-  063b  SeatRead position
-  063d  StoreLocal 17
-  063f  StoreLocal 16
-  0641  StoreLocal 15
-  0643  LoadLocal 17
-  0645  LoadLocal 11
-  0647  SeatRead position
-  0649  StoreLocal 17
-  064b  StoreLocal 16
-  064d  StoreLocal 15
-  064f  LoadLocal 17
-  0651  FSub
-  0652  StoreLocal 15
-  0654  LoadLocal 13
-  0656  LoadLocal 13
-  0658  FMul
-  0659  LoadLocal 14
-  065b  LoadLocal 14
-  065d  FMul
-  065e  FAdd
-  065f  LoadLocal 15
-  0661  LoadLocal 15
-  0663  FMul
-  0664  FAdd
-  0665  FSqrt
-  0666  StoreLocal 12
-  0668  Jump 066d
-  066d  LoadLocal 12
-  066f  StoreLocal 6
-  0671  Push 1
-  0676  StoreLocal 7
-  0678  LoadLocal 9
-  067a  Push 1
-  067f  IAdd
-  0680  StoreLocal 9
-  0682  Jump 0548
-  0687  LoadLocal 6
-  0689  StoreGlobal 5
-  068c  LoadGlobal 5
-  068f  LoadGlobal 3
-  0692  Push -1
-  0697  StoreLocal 6
-  0699  Push 0
-  069e  StoreLocal 7
-  06a0  LoadLocal 7
-  06a2  RaceRead seats
-  06a4  ILt
-  06a5  JumpIfZero 06bd
-  06aa  LoadLocal 7
-  06ac  StoreLocal 6
-  06ae  LoadLocal 7
-  06b0  Push 1
-  06b5  IAdd
-  06b6  StoreLocal 7
-  06b8  Jump 06a0
-  06bd  LoadLocal 6
-  06bf  StoreLocal 7
-  06c1  StoreLocal 6
-  06c3  Push 0
-  06c8  StoreLocal 8
-  06ca  LoadLocal 6
-  06cc  SeatRead distance
-  06ce  LoadLocal 7
-  06d0  SeatRead distance
-  06d2  FSub
-  06d3  LoadLocal 6
-  06d5  LoadLocal 7
-  06d7  StoreLocal 10
-  06d9  StoreLocal 9
-  06db  Push 0
-  06e0  StoreLocal 11
-  06e2  LoadLocal 9
-  06e4  SeatRead distance
-  06e6  LoadLocal 10
-  06e8  SeatRead distance
-  06ea  FSub
-  06eb  FAbs
-  06ec  StoreLocal 12
-  06ee  LoadLocal 12
-  06f0  LoadLocal 9
-  06f2  SeatRead lap_length
-  06f4  LoadLocal 12
-  06f6  LoadLocal 9
-  06f8  SeatRead lap_length
-  06fa  FDiv
-  06fb  Floor
-  06fc  IToF
-  06fd  FMul
-  06fe  FSub
-  06ff  StoreLocal 12
-  0701  LoadLocal 12
-  0703  LoadLocal 9
-  0705  SeatRead lap_length
-  0707  LoadLocal 12
-  0709  FSub
-  070a  FMin
-  070b  StoreLocal 11
-  070d  Jump 0712
-  0712  LoadLocal 11
-  0714  StoreLocal 9
-  0716  Push 0
-  071b  StoreLocal 10
-  071d  LoadLocal 9
-  071f  Push 2
-  0724  IToF
-  0725  FDiv
-  0726  StoreLocal 10
-  0728  Jump 072d
-  072d  LoadLocal 10
-  072f  FAdd
-  0730  StoreLocal 8
-  0732  Jump 0737
-  0737  LoadLocal 8
-  0739  Push -1
-  073e  StoreLocal 6
-  0740  Push 0
-  0745  StoreLocal 7
-  0747  LoadLocal 7
-  0749  RaceRead seats
-  074b  ILt
-  074c  JumpIfZero 0764
-  0751  LoadLocal 7
-  0753  StoreLocal 6
-  0755  LoadLocal 7
-  0757  Push 1
-  075c  IAdd
-  075d  StoreLocal 7
-  075f  Jump 0747
-  0764  LoadLocal 6
-  0766  LoadGlobal 3
-  0769  StoreLocal 7
-  076b  StoreLocal 6
-  076d  Push 0
-  0772  StoreLocal 8
-  0774  LoadLocal 6
-  0776  SeatRead distance
-  0778  LoadLocal 7
-  077a  SeatRead distance
-  077c  FSub
-  077d  FAbs
-  077e  StoreLocal 9
-  0780  LoadLocal 9
-  0782  LoadLocal 6
-  0784  SeatRead lap_length
-  0786  LoadLocal 9
-  0788  LoadLocal 6
-  078a  SeatRead lap_length
-  078c  FDiv
-  078d  Floor
-  078e  IToF
-  078f  FMul
-  0790  FSub
-  0791  StoreLocal 9
-  0793  LoadLocal 9
-  0795  LoadLocal 6
-  0797  SeatRead lap_length
-  0799  LoadLocal 9
-  079b  FSub
-  079c  FMin
-  079d  StoreLocal 8
-  079f  Jump 07a4
-  07a4  LoadLocal 8
-  07a6  LoadGlobal 3
-  07a9  SeatRead lap_length
-  07ab  FMul
-  07ac  FAdd
-  07ad  FAdd
-  07ae  StoreGlobal 5
-  07b1  End
+  0561  JumpIfZero 0602
+  0566  LoadGlobal 3
+  0569  LoadLocal 10
+  056b  StoreLocal 12
+  056d  StoreLocal 11
+  056f  Push 0
+  0574  StoreLocal 13
+  0576  LoadLocal 11
+  0578  SeatRead position
+  057a  StoreLocal 16
+  057c  StoreLocal 15
+  057e  StoreLocal 14
+  0580  LoadLocal 14
+  0582  LoadLocal 12
+  0584  SeatRead position
+  0586  StoreLocal 16
+  0588  StoreLocal 15
+  058a  StoreLocal 14
+  058c  LoadLocal 14
+  058e  FSub
+  058f  StoreLocal 14
+  0591  LoadLocal 11
+  0593  SeatRead position
+  0595  StoreLocal 17
+  0597  StoreLocal 16
+  0599  StoreLocal 15
+  059b  LoadLocal 16
+  059d  LoadLocal 12
+  059f  SeatRead position
+  05a1  StoreLocal 17
+  05a3  StoreLocal 16
+  05a5  StoreLocal 15
+  05a7  LoadLocal 16
+  05a9  FSub
+  05aa  StoreLocal 15
+  05ac  LoadLocal 11
+  05ae  SeatRead position
+  05b0  StoreLocal 18
+  05b2  StoreLocal 17
+  05b4  StoreLocal 16
+  05b6  LoadLocal 18
+  05b8  LoadLocal 12
+  05ba  SeatRead position
+  05bc  StoreLocal 18
+  05be  StoreLocal 17
+  05c0  StoreLocal 16
+  05c2  LoadLocal 18
+  05c4  FSub
+  05c5  StoreLocal 16
+  05c7  LoadLocal 14
+  05c9  LoadLocal 14
+  05cb  FMul
+  05cc  LoadLocal 15
+  05ce  LoadLocal 15
+  05d0  FMul
+  05d1  FAdd
+  05d2  LoadLocal 16
+  05d4  LoadLocal 16
+  05d6  FMul
+  05d7  FAdd
+  05d8  FSqrt
+  05d9  StoreLocal 13
+  05db  Jump 05e0
+  05e0  LoadLocal 13
+  05e2  StoreLocal 8
+  05e4  LoadLocal 7
+  05e6  JumpIfZero 05f7
+  05eb  LoadLocal 6
+  05ed  LoadLocal 8
+  05ef  FMin
+  05f0  StoreLocal 6
+  05f2  Jump 0602
+  05f7  LoadLocal 8
+  05f9  StoreLocal 6
+  05fb  Push 1
+  0600  StoreLocal 7
+  0602  LoadLocal 10
+  0604  Push 1
+  0609  IAdd
+  060a  StoreLocal 10
+  060c  Jump 0548
+  0611  LoadLocal 6
+  0613  StoreGlobal 5
+  0616  LoadGlobal 5
+  0619  LoadGlobal 3
+  061c  Push -1
+  0621  StoreLocal 6
+  0623  Push 0
+  0628  StoreLocal 7
+  062a  LoadLocal 7
+  062c  RaceRead seats
+  062e  ILt
+  062f  JumpIfZero 0647
+  0634  LoadLocal 7
+  0636  StoreLocal 6
+  0638  LoadLocal 7
+  063a  Push 1
+  063f  IAdd
+  0640  StoreLocal 7
+  0642  Jump 062a
+  0647  LoadLocal 6
+  0649  StoreLocal 7
+  064b  StoreLocal 6
+  064d  Push 0
+  0652  StoreLocal 8
+  0654  LoadLocal 6
+  0656  SeatRead distance
+  0658  LoadLocal 7
+  065a  SeatRead distance
+  065c  FSub
+  065d  LoadLocal 6
+  065f  LoadLocal 7
+  0661  StoreLocal 10
+  0663  StoreLocal 9
+  0665  Push 0
+  066a  StoreLocal 11
+  066c  LoadLocal 9
+  066e  SeatRead lap_distance
+  0670  LoadLocal 10
+  0672  SeatRead lap_distance
+  0674  FSub
+  0675  FAbs
+  0676  StoreLocal 12
+  0678  LoadLocal 12
+  067a  LoadLocal 9
+  067c  SeatRead lap_length
+  067e  LoadLocal 12
+  0680  FSub
+  0681  FMin
+  0682  StoreLocal 11
+  0684  Jump 0689
+  0689  LoadLocal 11
+  068b  StoreLocal 9
+  068d  Push 0
+  0692  StoreLocal 10
+  0694  LoadLocal 9
+  0696  Push 2
+  069b  IToF
+  069c  FDiv
+  069d  StoreLocal 10
+  069f  Jump 06a4
+  06a4  LoadLocal 10
+  06a6  FAdd
+  06a7  StoreLocal 8
+  06a9  Jump 06ae
+  06ae  LoadLocal 8
+  06b0  Push -1
+  06b5  StoreLocal 6
+  06b7  Push 0
+  06bc  StoreLocal 7
+  06be  LoadLocal 7
+  06c0  RaceRead seats
+  06c2  ILt
+  06c3  JumpIfZero 06db
+  06c8  LoadLocal 7
+  06ca  StoreLocal 6
+  06cc  LoadLocal 7
+  06ce  Push 1
+  06d3  IAdd
+  06d4  StoreLocal 7
+  06d6  Jump 06be
+  06db  LoadLocal 6
+  06dd  LoadGlobal 3
+  06e0  StoreLocal 7
+  06e2  StoreLocal 6
+  06e4  Push 0
+  06e9  StoreLocal 8
+  06eb  LoadLocal 6
+  06ed  SeatRead lap_distance
+  06ef  LoadLocal 7
+  06f1  SeatRead lap_distance
+  06f3  FSub
+  06f4  FAbs
+  06f5  StoreLocal 9
+  06f7  LoadLocal 9
+  06f9  LoadLocal 6
+  06fb  SeatRead lap_length
+  06fd  LoadLocal 9
+  06ff  FSub
+  0700  FMin
+  0701  StoreLocal 8
+  0703  Jump 0708
+  0708  LoadLocal 8
+  070a  LoadGlobal 3
+  070d  SeatRead lap_length
+  070f  FMul
+  0710  FAdd
+  0711  FAdd
+  0712  StoreGlobal 5
+  0715  End
   ; rule 4 when
-  07b2  RaceRead started
-  07b4  Ret
+  0716  RaceRead started
+  0718  Ret
   ; rule 4 body
-  07b5  LoadGlobal 2
-  07b8  StoreLocal 0
-  07ba  Push 0
-  07bf  StoreLocal 1
-  07c1  LoadLocal 1
-  07c3  RaceRead seats
-  07c5  ILt
-  07c6  JumpIfZero 07fe
-  07cb  LoadLocal 1
-  07cd  SeatBit
-  07ce  LoadLocal 0
-  07d0  BitAnd
-  07d1  JumpIfZero 07ef
-  07d6  Param 0 (gap)
-  07d8  Wait locals 2
-  07df  LoadLocal 1
-  07e1  LoadLocal 1
-  07e3  LoadSeatVar 0
-  07e6  Push 1
-  07eb  IAdd
-  07ec  StoreSeatVar 0
-  07ef  LoadLocal 1
-  07f1  Push 1
-  07f6  IAdd
-  07f7  StoreLocal 1
-  07f9  Jump 07c1
-  07fe  End
+  0719  LoadGlobal 2
+  071c  StoreLocal 0
+  071e  Push 0
+  0723  StoreLocal 1
+  0725  LoadLocal 1
+  0727  RaceRead seats
+  0729  ILt
+  072a  JumpIfZero 0762
+  072f  LoadLocal 1
+  0731  SeatBit
+  0732  LoadLocal 0
+  0734  BitAnd
+  0735  JumpIfZero 0753
+  073a  Param 0 (gap)
+  073c  Wait locals 2
+  0743  LoadLocal 1
+  0745  LoadLocal 1
+  0747  LoadSeatVar 0
+  074a  Push 1
+  074f  IAdd
+  0750  StoreSeatVar 0
+  0753  LoadLocal 1
+  0755  Push 1
+  075a  IAdd
+  075b  StoreLocal 1
+  075d  Jump 0725
+  0762  End
   ; rule 5 body
-  07ff  Jump 0809
-  0804  LoadLocal 0
-  0806  SeatRead racing
-  0808  Ret
-  0809  Push 180
-  080e  Wait locals 1 abort when 0804
-  0815  LoadLocal 0
-  0817  Push 100
-  081c  StoreSeatVar 0
-  081f  End
+  0763  Jump 076d
+  0768  LoadLocal 0
+  076a  SeatRead racing
+  076c  Ret
+  076d  Push 180
+  0772  Wait locals 1 abort when 0768
+  0779  LoadLocal 0
+  077b  Push 100
+  0780  StoreSeatVar 0
+  0783  End
   ; rule 6 when
-  0820  LoadLocal 0
-  0822  SeatRead racing
-  0824  Ret
+  0784  LoadLocal 0
+  0786  SeatRead racing
+  0788  Ret
   ; rule 6 body
-  0825  Push 2
-  082a  StoreLocal 1
-  082c  Jump 0836
-  0831  LoadLocal 0
-  0833  SeatRead broken
-  0835  Ret
-  0836  Push 120
-  083b  Wait locals 2 restart when 0831
-  0842  LoadLocal 0
-  0844  LoadLocal 1
-  0846  StoreSeatVar 0
-  0849  Push 1
-  084e  Wait locals 2
-  0855  LoadLocal 0
-  0857  LoadLocal 0
-  0859  LoadSeatVar 0
-  085c  Push 1
-  0861  IAdd
-  0862  StoreSeatVar 0
-  0865  End
+  0789  Push 2
+  078e  StoreLocal 1
+  0790  Jump 079a
+  0795  LoadLocal 0
+  0797  SeatRead broken
+  0799  Ret
+  079a  Push 120
+  079f  Wait locals 2 restart when 0795
+  07a6  LoadLocal 0
+  07a8  LoadLocal 1
+  07aa  StoreSeatVar 0
+  07ad  Push 1
+  07b2  Wait locals 2
+  07b9  LoadLocal 0
+  07bb  LoadLocal 0
+  07bd  LoadSeatVar 0
+  07c0  Push 1
+  07c5  IAdd
+  07c6  StoreSeatVar 0
+  07c9  End
 SRC  2675 bytes

@@ -303,7 +303,27 @@ enum Seat : std::uint8_t
   SEAT_KOS = 49,  // kos
   SEAT_ISPLAYER = 50,  // is_player
   SEAT_GHOST = 51,  // ghost
-  SEAT_COUNT = 52,
+  SEAT_STATWEIGHT = 52,  // stat.weight
+  SEAT_STATACCEL = 53,  // stat.accel
+  SEAT_STATMAXSPEED = 54,  // stat.max_speed
+  SEAT_STATGRIP = 55,  // stat.grip
+  SEAT_STATTURN = 56,  // stat.turn
+  SEAT_STATSTRAFE = 57,  // stat.strafe
+  SEAT_STATDRAG = 58,  // stat.drag
+  SEAT_STATBOOSTSTRENGTH = 59,  // stat.boost_strength
+  SEAT_STATBOOSTLENGTH = 60,  // stat.boost_length
+  SEAT_STATBODY = 61,  // stat.body
+  SEAT_STATBASEWEIGHT = 62,  // stat.base.weight
+  SEAT_STATBASEACCEL = 63,  // stat.base.accel
+  SEAT_STATBASEMAXSPEED = 64,  // stat.base.max_speed
+  SEAT_STATBASEGRIP = 65,  // stat.base.grip
+  SEAT_STATBASETURN = 66,  // stat.base.turn
+  SEAT_STATBASESTRAFE = 67,  // stat.base.strafe
+  SEAT_STATBASEDRAG = 68,  // stat.base.drag
+  SEAT_STATBASEBOOSTSTRENGTH = 69,  // stat.base.boost_strength
+  SEAT_STATBASEBOOSTLENGTH = 70,  // stat.base.boost_length
+  SEAT_STATBASEBODY = 71,  // stat.base.body
+  SEAT_COUNT = 72,
 };
 
 // a read of the race (OP_RACEREAD)
@@ -356,7 +376,18 @@ enum Action : std::uint8_t
   ACTION_BREAKDOWN = 35,  // break_down
   ACTION_TAG = 36,  // tag
   ACTION_TAGOFF = 37,  // tag off
-  ACTION_COUNT = 38,
+  ACTION_SEATSTATWEIGHT = 38,  // seat.stat.weight
+  ACTION_SEATSTATACCEL = 39,  // seat.stat.accel
+  ACTION_SEATSTATMAXSPEED = 40,  // seat.stat.max_speed
+  ACTION_SEATSTATGRIP = 41,  // seat.stat.grip
+  ACTION_SEATSTATTURN = 42,  // seat.stat.turn
+  ACTION_SEATSTATSTRAFE = 43,  // seat.stat.strafe
+  ACTION_SEATSTATDRAG = 44,  // seat.stat.drag
+  ACTION_SEATSTATBOOSTSTRENGTH = 45,  // seat.stat.boost_strength
+  ACTION_SEATSTATBOOSTLENGTH = 46,  // seat.stat.boost_length
+  ACTION_SEATSTATBODY = 47,  // seat.stat.body
+  ACTION_DAMAGE = 48,  // damage
+  ACTION_COUNT = 49,
 };
 
 // the choice `part`: a part of the game's own race HUD: TIMER the timed mode's clock (clock_limit's time, R+0xA4: seconds, 0 to 999); DISTANCE the metres to the finish (the seat's own); DIGIT the story's big digit (danger_zone's seconds, 3 2 1); WARNING, SUCCESS, FAILED, TIME_OVER, SPEED_GAUGE, OBJECTS the story's pictures, off until shown; RANK, LAPS, SPEED, ENERGY, LAP_TIMES, RACE_TIME, FACES the standard HUD (the mask .data 0x3D544; FACES the board fn_1_D27B8), on until hidden
@@ -447,6 +478,17 @@ constexpr int ActionArguments(std::uint8_t action)
     case ACTION_BREAKDOWN: return 1;
     case ACTION_TAG: return 2;
     case ACTION_TAGOFF: return 1;
+    case ACTION_SEATSTATWEIGHT: return 2;
+    case ACTION_SEATSTATACCEL: return 2;
+    case ACTION_SEATSTATMAXSPEED: return 2;
+    case ACTION_SEATSTATGRIP: return 2;
+    case ACTION_SEATSTATTURN: return 2;
+    case ACTION_SEATSTATSTRAFE: return 2;
+    case ACTION_SEATSTATDRAG: return 2;
+    case ACTION_SEATSTATBOOSTSTRENGTH: return 2;
+    case ACTION_SEATSTATBOOSTLENGTH: return 2;
+    case ACTION_SEATSTATBODY: return 2;
+    case ACTION_DAMAGE: return 2;
     default: return -1;
   }
 }

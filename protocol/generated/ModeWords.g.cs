@@ -344,6 +344,46 @@ public enum ModeSeatRead : byte
     IsPlayer = 50,
     /// <summary><c>ghost</c></summary>
     Ghost = 51,
+    /// <summary><c>stat.weight</c></summary>
+    StatWeight = 52,
+    /// <summary><c>stat.accel</c></summary>
+    StatAccel = 53,
+    /// <summary><c>stat.max_speed</c></summary>
+    StatMaxSpeed = 54,
+    /// <summary><c>stat.grip</c></summary>
+    StatGrip = 55,
+    /// <summary><c>stat.turn</c></summary>
+    StatTurn = 56,
+    /// <summary><c>stat.strafe</c></summary>
+    StatStrafe = 57,
+    /// <summary><c>stat.drag</c></summary>
+    StatDrag = 58,
+    /// <summary><c>stat.boost_strength</c></summary>
+    StatBoostStrength = 59,
+    /// <summary><c>stat.boost_length</c></summary>
+    StatBoostLength = 60,
+    /// <summary><c>stat.body</c></summary>
+    StatBody = 61,
+    /// <summary><c>stat.base.weight</c></summary>
+    StatBaseWeight = 62,
+    /// <summary><c>stat.base.accel</c></summary>
+    StatBaseAccel = 63,
+    /// <summary><c>stat.base.max_speed</c></summary>
+    StatBaseMaxSpeed = 64,
+    /// <summary><c>stat.base.grip</c></summary>
+    StatBaseGrip = 65,
+    /// <summary><c>stat.base.turn</c></summary>
+    StatBaseTurn = 66,
+    /// <summary><c>stat.base.strafe</c></summary>
+    StatBaseStrafe = 67,
+    /// <summary><c>stat.base.drag</c></summary>
+    StatBaseDrag = 68,
+    /// <summary><c>stat.base.boost_strength</c></summary>
+    StatBaseBoostStrength = 69,
+    /// <summary><c>stat.base.boost_length</c></summary>
+    StatBaseBoostLength = 70,
+    /// <summary><c>stat.base.body</c></summary>
+    StatBaseBody = 71,
 }
 
 /// <summary>A read of the race (protocol/modes.toml).</summary>
@@ -436,6 +476,28 @@ public enum ModeAction : byte
     Tag = 36,
     /// <summary><c>tag off</c></summary>
     TagOff = 37,
+    /// <summary><c>seat.stat.weight</c></summary>
+    SeatStatWeight = 38,
+    /// <summary><c>seat.stat.accel</c></summary>
+    SeatStatAccel = 39,
+    /// <summary><c>seat.stat.max_speed</c></summary>
+    SeatStatMaxSpeed = 40,
+    /// <summary><c>seat.stat.grip</c></summary>
+    SeatStatGrip = 41,
+    /// <summary><c>seat.stat.turn</c></summary>
+    SeatStatTurn = 42,
+    /// <summary><c>seat.stat.strafe</c></summary>
+    SeatStatStrafe = 43,
+    /// <summary><c>seat.stat.drag</c></summary>
+    SeatStatDrag = 44,
+    /// <summary><c>seat.stat.boost_strength</c></summary>
+    SeatStatBoostStrength = 45,
+    /// <summary><c>seat.stat.boost_length</c></summary>
+    SeatStatBoostLength = 46,
+    /// <summary><c>seat.stat.body</c></summary>
+    SeatStatBody = 47,
+    /// <summary><c>damage</c></summary>
+    Damage = 48,
 }
 
 /// <summary>The vocabulary of one api, by the names a mode file writes (protocol/modes.toml).</summary>
@@ -681,6 +743,26 @@ public static partial class ModeWords
         ("kos", ModeSeatRead.Kos, ModeType.Int),
         ("is_player", ModeSeatRead.IsPlayer, ModeType.Bool),
         ("ghost", ModeSeatRead.Ghost, ModeType.Bool),
+        ("stat.weight", ModeSeatRead.StatWeight, ModeType.Real),
+        ("stat.accel", ModeSeatRead.StatAccel, ModeType.Real),
+        ("stat.max_speed", ModeSeatRead.StatMaxSpeed, ModeType.Real),
+        ("stat.grip", ModeSeatRead.StatGrip, ModeType.Real),
+        ("stat.turn", ModeSeatRead.StatTurn, ModeType.Real),
+        ("stat.strafe", ModeSeatRead.StatStrafe, ModeType.Real),
+        ("stat.drag", ModeSeatRead.StatDrag, ModeType.Real),
+        ("stat.boost_strength", ModeSeatRead.StatBoostStrength, ModeType.Real),
+        ("stat.boost_length", ModeSeatRead.StatBoostLength, ModeType.Real),
+        ("stat.body", ModeSeatRead.StatBody, ModeType.Real),
+        ("stat.base.weight", ModeSeatRead.StatBaseWeight, ModeType.Real),
+        ("stat.base.accel", ModeSeatRead.StatBaseAccel, ModeType.Real),
+        ("stat.base.max_speed", ModeSeatRead.StatBaseMaxSpeed, ModeType.Real),
+        ("stat.base.grip", ModeSeatRead.StatBaseGrip, ModeType.Real),
+        ("stat.base.turn", ModeSeatRead.StatBaseTurn, ModeType.Real),
+        ("stat.base.strafe", ModeSeatRead.StatBaseStrafe, ModeType.Real),
+        ("stat.base.drag", ModeSeatRead.StatBaseDrag, ModeType.Real),
+        ("stat.base.boost_strength", ModeSeatRead.StatBaseBoostStrength, ModeType.Real),
+        ("stat.base.boost_length", ModeSeatRead.StatBaseBoostLength, ModeType.Real),
+        ("stat.base.body", ModeSeatRead.StatBaseBody, ModeType.Real),
     ];
 
     /// <summary>The reads of the race (<c>race.NAME</c>): name, id, type.</summary>
@@ -732,6 +814,17 @@ public static partial class ModeWords
         ("break_down", ModeAction.BreakDown, [ModeType.Seat]),
         ("tag", ModeAction.Tag, [ModeType.Seat, ModeType.Int]),
         ("tag off", ModeAction.TagOff, [ModeType.Seat]),
+        ("seat.stat.weight", ModeAction.SeatStatWeight, [ModeType.Seat, ModeType.Real]),
+        ("seat.stat.accel", ModeAction.SeatStatAccel, [ModeType.Seat, ModeType.Real]),
+        ("seat.stat.max_speed", ModeAction.SeatStatMaxSpeed, [ModeType.Seat, ModeType.Real]),
+        ("seat.stat.grip", ModeAction.SeatStatGrip, [ModeType.Seat, ModeType.Real]),
+        ("seat.stat.turn", ModeAction.SeatStatTurn, [ModeType.Seat, ModeType.Real]),
+        ("seat.stat.strafe", ModeAction.SeatStatStrafe, [ModeType.Seat, ModeType.Real]),
+        ("seat.stat.drag", ModeAction.SeatStatDrag, [ModeType.Seat, ModeType.Real]),
+        ("seat.stat.boost_strength", ModeAction.SeatStatBoostStrength, [ModeType.Seat, ModeType.Real]),
+        ("seat.stat.boost_length", ModeAction.SeatStatBoostLength, [ModeType.Seat, ModeType.Real]),
+        ("seat.stat.body", ModeAction.SeatStatBody, [ModeType.Seat, ModeType.Real]),
+        ("damage", ModeAction.Damage, [ModeType.Seat, ModeType.Real]),
     ];
 
     /// <summary>The choices: an argument of one takes one of its names, its value the name's place.</summary>
