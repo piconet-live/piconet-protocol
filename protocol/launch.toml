@@ -42,7 +42,7 @@ name = "File"
 cs = "LaunchFile"
 doc = "the launch file: every setting of one start of the game"
 cs_order = ["about", "bundle", "widescreen", "trueWidescreen", "lanes", "controllerSetup", "match", "replay",
-            "windowName", "windowNamePicture", "showFrameRate", "rumble", "present", "verticalSync", "fullScreen",
+            "windowName", "windowNamePicture", "showFrameRate", "showInputs", "rumble", "present", "verticalSync", "fullScreen",
             "refreshRate", "taskbar", "board", "debug"]
 member = [
     { key = "about", type = "text", to = "about", missing = "a line that says what this start is for", cs = { name = "About", write = "required" } },
@@ -52,6 +52,7 @@ member = [
     { key = "trueWidescreen", type = "bool", to = "true_widescreen", cs = { name = "TrueWidescreen", write = "true" } },
     { key = "windowName", type = "text", to = "window_name", most_bytes = 64, cs = { name = "WindowName", write = "set" } },
     { key = "showFrameRate", type = "bool", to = "show_frame_rate", cs = { name = "ShowFrameRate", write = "set" } },
+    { key = "showInputs", type = "bool", to = "show_inputs", cs = { name = "ShowInputs", write = "true" } },
     { key = "rumble", type = "bool", to = "rumble", cs = { name = "Rumble", write = "false" } },
     { key = "windowNamePicture", type = "object", cs = { name = "WindowNamePicture", write = "set" } },
     { key = "taskbar", type = "object", cs = { name = "Taskbar", write = "set" } },
