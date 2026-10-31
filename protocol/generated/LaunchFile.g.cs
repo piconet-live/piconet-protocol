@@ -13,7 +13,7 @@ public static class LaunchFormat
     /// <summary>The most bytes of "windowName" (UTF-8) the game's reader takes.</summary>
     public const int WindowNameMostBytes = 64;
     /// <summary>The range of "camera" the game's reader takes.</summary>
-    public const int MatchCameraLow = 1, MatchCameraHigh = 3;
+    public const int MatchCameraLow = 1, MatchCameraHigh = 4;
     /// <summary>The range of "width" the game's reader takes.</summary>
     public const int WindowNamePictureWidthLow = 1, WindowNamePictureWidthHigh = 512;
     /// <summary>The range of "height" the game's reader takes.</summary>
