@@ -9,8 +9,11 @@ internal static class ModeSubCalls
     public static void RefuseCycle(ModeSubItem sub, Func<string, ModeSubItem?> find)
     {
         var path = new List<string>();
+        // each sub walked once: subs calling others twice each make 2^n paths, and one walked found no way back
+        var walked = new HashSet<string>();
         void Walk(ModeSubItem at)
         {
+            walked.Add(at.Name);
             path.Add(at.Name);
             foreach (var call in Calls(at.Body))
             {
@@ -22,7 +25,7 @@ internal static class ModeSubCalls
                 {
                     throw new ModeCompileException(call.Line, $"the sub {sub.Name} calls itself ({string.Join(" -> ", path.Append(sub.Name))}): a sub may not, directly or through another");
                 }
-                if (!path.Contains(called.Name))
+                if (!walked.Contains(called.Name))
                 {
                     Walk(called);
                 }

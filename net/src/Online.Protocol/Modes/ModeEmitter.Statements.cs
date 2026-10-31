@@ -17,6 +17,7 @@ internal sealed partial class ModeEmitter
 
     private void Statement(ModeStatement statement)
     {
+        In(statement.Line);
         _line = statement.Line;
         switch (statement)
         {
@@ -57,6 +58,7 @@ internal sealed partial class ModeEmitter
             default:
                 throw new ModeCompileException(statement.Line, "this statement is not of api 1");
         }
+        _nesting--;
     }
 
     private void LocalStatement(ModeLocal local)

@@ -43,6 +43,9 @@ internal sealed class ModeLexer
         ["..", "==", "!=", "<=", ">=", "+=", "-=", "*=", "/=", "{", "}", "(", ")", "[", "]", ";", ",", ".", "=", "<", ">",
          ":", "+", "-", "*", "×", "/", "%", "&"];
 
+    // Past an int of steps at any unit, and well inside a decimal, times 3600 too.
+    private const int MostTimeDigits = 20;
+
     private readonly string _text;
     private readonly List<string> _warnings;
     private int _at;
@@ -280,13 +283,13 @@ internal sealed class ModeLexer
         switch (spaced, unit)
         {
             case (false, "s"):
-                return Time(text, decimal.Parse(digits, CultureInfo.InvariantCulture) * 60);
+                return Time(text, digits, 60, 1);
             case (false, "ms"):
-                return Time(text, decimal.Parse(digits, CultureInfo.InvariantCulture) * 60 / 1000);
+                return Time(text, digits, 60, 1000);
             case (false, "min"):
-                return Time(text, decimal.Parse(digits, CultureInfo.InvariantCulture) * 3600);
+                return Time(text, digits, 3600, 1);
             case (_, "steps"):
-                return Time(text, decimal.Parse(digits, CultureInfo.InvariantCulture));
+                return Time(text, digits, 1, 1);
             case (true, "km/h"):
             case (true, "m"):
                 return new ModeToken(ModeTokenKind.Fraction, text, _line, Real: ParseReal(digits));
@@ -301,8 +304,15 @@ internal sealed class ModeLexer
         }
     }
 
-    private ModeToken Time(string text, decimal steps)
+    /// <summary>A time's steps: its digits times <paramref name="times"/>, by <paramref name="by"/>. More digits than a
+    /// decimal holds are past any int of steps.</summary>
+    private ModeToken Time(string text, string digits, int times, int by)
     {
+        if (digits.Length > MostTimeDigits)
+        {
+            throw new ModeCompileException(_line, $"{digits[..MostTimeDigits]}... is longer than an int of steps can hold");
+        }
+        var steps = decimal.Parse(digits, CultureInfo.InvariantCulture) * times / by;
         var whole = decimal.Floor(steps + 0.5m);
         if (whole != steps)
         {

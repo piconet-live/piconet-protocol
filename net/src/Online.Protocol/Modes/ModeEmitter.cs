@@ -18,6 +18,8 @@ namespace Online.Protocol;
 /// bound.</para></summary>
 internal sealed partial class ModeEmitter(ModeNames names, List<string> warnings)
 {
+    private const long MostMultiplier = 1L << 28;
+
     private sealed record Local(string Name, ModeType Type, int Slot, bool Fixed);
 
     private readonly ModeBytes _code = new();
@@ -35,6 +37,12 @@ internal sealed partial class ModeEmitter(ModeNames names, List<string> warnings
     private bool _waits;
     // the subs being written, the innermost last: their returns' jumps and value
     private readonly List<(string Name, ModeType? Type, Local? Value, List<int> Jumps)> _subs = [];
+    // The levels open now, statements and expressions and a sub's body inside its call (ModeLimits).
+    private int _nesting;
+    // The operations written so far, those taken back too (TypeOf): the work of the compile (ModeLimits).
+    private long _written;
+    // The types found so far in this rule: a node has the one type wherever its rule writes it, a sub's body too.
+    private readonly Dictionary<ModeExpr, ModeType> _types = new(ReferenceEqualityComparer.Instance);
 
     /// <summary>The actions the rules written so far use, each with the line of its first use.</summary>
     public Dictionary<ModeAction, int> Used { get; } = [];
@@ -60,6 +68,7 @@ internal sealed partial class ModeEmitter(ModeNames names, List<string> warnings
         _high = 0;
         _scope = 0;
         _waits = false;
+        _types.Clear();   // (a later item may declare a name this rule's sub read otherwise)
         _gameStart = id == ModeEvent.GameStart;
         _line = item.Line;
         _multiplier = bindsSeat ? ModeWords.Seats : 1;
@@ -126,6 +135,10 @@ internal sealed partial class ModeEmitter(ModeNames names, List<string> warnings
 
     private void Op(ModeOp op, params long[] operands)
     {
+        if (++_written > ModeLimits.MostWritten)
+        {
+            throw new ModeCompileException(_line, $"this mode takes too much work to compile, past {ModeLimits.MostWritten} operations written: subs calling subs are written out at every call, so call fewer");
+        }
         if (op == ModeOp.Action && _gameStart && ModeWords.ActionsNeedingAStep.Contains((ModeAction)operands[0]))
         {
             var word = ModeWords.Actions.First(a => a.Id == (ModeAction)operands[0]).Name;
@@ -156,6 +169,15 @@ internal sealed partial class ModeEmitter(ModeNames names, List<string> warnings
     }
 
     private void Push(int cell) => Op(ModeOp.Push, cell);
+
+    /// <summary>One level further in, while a statement or an expression is written.</summary>
+    private void In(int line)
+    {
+        if (++_nesting > ModeLimits.MostNesting)
+        {
+            throw ModeLimits.TooDeep(line);
+        }
+    }
 
     /// <summary>A jump whose target is written later (<see cref="Land"/>): where its operand is.</summary>
     private int JumpAhead(ModeOp op)
@@ -240,9 +262,9 @@ internal sealed partial class ModeEmitter(ModeNames names, List<string> warnings
     {
         var outer = _multiplier;
         var top = Here;
-        _multiplier = outer * (iterations + 1);
+        _multiplier = Times(outer, iterations + 1);
         var exits = test();
-        _multiplier = outer * iterations;
+        _multiplier = Times(outer, iterations);
         body();
         Op(ModeOp.Jump, top);
         _multiplier = outer;
@@ -251,6 +273,11 @@ internal sealed partial class ModeEmitter(ModeNames names, List<string> warnings
             Land(exit);
         }
     }
+
+    /// <summary>A loop's count over an outer count, held at <see cref="MostMultiplier"/>: far past any budget, and the
+    /// count of a rule stays a long however many long repeats nest (it would wrap, and a negative count pass the budget).</summary>
+    private static long Times(long outer, long iterations) =>
+        iterations == 0 ? 0 : outer >= MostMultiplier / iterations ? MostMultiplier : outer * iterations;
 
     /// <summary>The race's seats in seat order: one local is the counter and the seat, from 0 while below
     /// <c>race.seats</c>; a seat not in <paramref name="set"/> (null: every seat; worked out once, before the loop) or

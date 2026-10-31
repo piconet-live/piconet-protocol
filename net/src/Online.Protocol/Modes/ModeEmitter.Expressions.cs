@@ -6,30 +6,42 @@ namespace Online.Protocol;
 // past; Pop; b. A vec is three cells: its operations work them one by one through the compiler's locals.
 internal sealed partial class ModeEmitter
 {
-    private ModeType Emit(ModeExpr expr) => expr switch
+    private ModeType Emit(ModeExpr expr)
     {
-        ModeLiteral l => Literal(l),
-        ModeName n => Name(n),
-        ModeField f => Field(f),
-        ModeUnary u => Unary(u),
-        ModeBinary b => Binary(b),
-        ModeCall c => Call(c),
-        ModeSetCall s => SetCall(s),
-        _ => throw new ModeCompileException(expr.Line, "this expression is not of api 1"),
-    };
+        In(expr.Line);
+        var type = expr switch
+        {
+            ModeLiteral l => Literal(l),
+            ModeName n => Name(n),
+            ModeField f => Field(f),
+            ModeUnary u => Unary(u),
+            ModeBinary b => Binary(b),
+            ModeCall c => Call(c),
+            ModeSetCall s => SetCall(s),
+            _ => throw new ModeCompileException(expr.Line, "this expression is not of api 1"),
+        };
+        _nesting--;
+        return type;
+    }
 
-    /// <summary>An expression's type, without writing it: it is written and taken back.</summary>
+    /// <summary>An expression's type, without writing it: it is written and taken back, once a rule. Written again each
+    /// time, an operator's two sides would be written twice at every level, 2^n times for a sum of n terms.</summary>
     private ModeType TypeOf(ModeExpr expr)
     {
         if (expr is ModeCall call && names.Find(call.Function) is { Kind: ModeNameKind.Sub, Sub.Returns: { } returns })
         {
             return returns;   // (a sub's code is not written twice to learn its type)
         }
+        if (_types.TryGetValue(expr, out var known))
+        {
+            return known;
+        }
         var (size, cost, warned) = (_code.Count, Cost, warnings.Count);
         var type = Emit(expr);
         _code.Truncate(size);
         Cost = cost;
         warnings.RemoveRange(warned, warnings.Count - warned);
+        _types[expr] = type;
         return type;
     }
 
