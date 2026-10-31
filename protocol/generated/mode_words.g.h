@@ -259,7 +259,8 @@ enum Setup : std::uint8_t
   SETUP_STARTTOGETHER = 45,  // start_together
   SETUP_COURSESALL = 46,  // courses all
   SETUP_COURSES = 47,  // courses
-  SETUP_COUNT = 48,
+  SETUP_HUDMODERN = 48,  // hud modern
+  SETUP_COUNT = 49,
 };
 
 // a read of a seat (OP_SEATREAD)

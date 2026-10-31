@@ -10,6 +10,8 @@
   },
   "showFrameRate": true,
   "showInputs": true,
+  "modernHud": true,
+  "hudLayout": "D:\\Piconet\\hud-layout.json",
   "rumble": false,
   "present": "field",
   "verticalSync": true,

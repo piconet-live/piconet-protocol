@@ -20,8 +20,8 @@ inline constexpr std::size_t TASKBAR_NAME_MOST_BYTES = 64;
 inline constexpr std::uint32_t DEBUG_TEST_LAG_MS_LOW = 0u, DEBUG_TEST_LAG_MS_HIGH = 10000u;
 
 // File: the launch file: every setting of one start of the game. Takes about, bundle, board, widescreen,
-// trueWidescreen, windowName, showFrameRate, showInputs, rumble, present, refreshRate, verticalSync, fullScreen,
-// controllerSetup; by hand: windowNamePicture, taskbar, lanes, match, replay, debug.
+// trueWidescreen, windowName, showFrameRate, showInputs, modernHud, hudLayout, rumble, present, refreshRate,
+// verticalSync, fullScreen, controllerSetup; by hand: windowNamePicture, taskbar, lanes, match, replay, debug.
 template <typename P, typename T>
 void ReadFile([[maybe_unused]] P& p, [[maybe_unused]] T* t)
 {
@@ -35,6 +35,8 @@ void ReadFile([[maybe_unused]] P& p, [[maybe_unused]] T* t)
   p.Words("windowName", &t->window_name);
   p.Flag("showFrameRate", &t->show_frame_rate);
   p.Flag("showInputs", &t->show_inputs);
+  p.Flag("modernHud", &t->modern_hud);
+  p.Words("hudLayout", &t->hud_layout);
   p.Flag("rumble", &t->rumble);
   p.OneOf("present", &t->present, {"field", "console", "copy"});
   p.OneOf("refreshRate", &t->refresh_rate, {"60", "120", "240", "display"});

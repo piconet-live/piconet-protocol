@@ -1608,6 +1608,12 @@ where = "the coordinator: the courses its vote and its Random draw from, and a l
 # A choice ([[choice]]): the names an argument of that kind takes, its value the name's place in `values` (from 0).
 # An action's argument of a choice's name takes one of those names, never a number.
 
+[[setup]]
+name = "hud modern"
+id = 48
+where = """the window's flag HUD_MODERN (mode_hud.h): the core takes the game's energy meter, rank, lap counter, race time and lap list off the part mask at the drawing, and the runner's own HUD draws them, as the player's Modern setting does. Drawing only. Left out, the player's setting decides"""
+doc = "everyone races on the modern HUD; without it each player chooses Classic or Modern"
+
 [[choice]]
 name = "part"
 values = ["TIMER", "DISTANCE", "DIGIT", "WARNING", "SUCCESS", "FAILED", "TIME_OVER", "SPEED_GAUGE", "OBJECTS", "LEADER_GAP", "GHOST_GAP", "RANK", "LAPS", "SPEED", "ENERGY", "LAP_TIMES", "RACE_TIME", "FACES"]

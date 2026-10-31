@@ -42,7 +42,7 @@ name = "File"
 cs = "LaunchFile"
 doc = "the launch file: every setting of one start of the game"
 cs_order = ["about", "bundle", "widescreen", "trueWidescreen", "lanes", "controllerSetup", "match", "replay",
-            "windowName", "windowNamePicture", "showFrameRate", "showInputs", "rumble", "present", "verticalSync", "fullScreen",
+            "windowName", "windowNamePicture", "showFrameRate", "showInputs", "modernHud", "hudLayout", "rumble", "present", "verticalSync", "fullScreen",
             "refreshRate", "taskbar", "board", "debug"]
 member = [
     { key = "about", type = "text", to = "about", missing = "a line that says what this start is for", cs = { name = "About", write = "required" } },
@@ -53,6 +53,8 @@ member = [
     { key = "windowName", type = "text", to = "window_name", most_bytes = 64, cs = { name = "WindowName", write = "set" } },
     { key = "showFrameRate", type = "bool", to = "show_frame_rate", cs = { name = "ShowFrameRate", write = "set" } },
     { key = "showInputs", type = "bool", to = "show_inputs", cs = { name = "ShowInputs", write = "true" } },
+    { key = "modernHud", type = "bool", to = "modern_hud", cs = { name = "ModernHud", write = "true" } },
+    { key = "hudLayout", type = "text", to = "hud_layout", cs = { name = "HudLayout", write = "set" } },
     { key = "rumble", type = "bool", to = "rumble", cs = { name = "Rumble", write = "false" } },
     { key = "windowNamePicture", type = "object", cs = { name = "WindowNamePicture", write = "set" } },
     { key = "taskbar", type = "object", cs = { name = "Taskbar", write = "set" } },

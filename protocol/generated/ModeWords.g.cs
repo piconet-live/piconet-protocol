@@ -261,6 +261,8 @@ public enum ModeSetup : byte
     CoursesAll = 46,
     /// <summary><c>courses</c></summary>
     Courses = 47,
+    /// <summary><c>hud modern</c></summary>
+    HudModern = 48,
 }
 
 /// <summary>A read of a seat (protocol/modes.toml).</summary>
@@ -769,6 +771,7 @@ public static partial class ModeWords
         ("start_together", ModeSetup.StartTogether, [], false, ""),
         ("courses all", ModeSetup.CoursesAll, [], true, ""),
         ("courses", ModeSetup.Courses, [], true, "list"),
+        ("hud modern", ModeSetup.HudModern, [], false, ""),
     ];
 
     /// <summary>The reads of a seat (<c>seat.NAME</c>): name, id, type.</summary>
