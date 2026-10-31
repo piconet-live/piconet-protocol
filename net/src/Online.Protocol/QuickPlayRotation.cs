@@ -34,9 +34,9 @@ public sealed record RotationMode(string File, ModePackage Package, string Hash,
         spicy && ModeRuleLines.Of(Package) is { Count: > 0 } rules ? rules : null);
 }
 
-/// <summary>A spicy option of the rotation: its mode, the courses it is raced on (null: the pool) and its weight in
-/// the draw among the spicy options.</summary>
-public sealed record RotationSpicy(RotationMode Mode, IReadOnlyList<int>? Courses, int Weight);
+/// <summary>A spicy option of the rotation: its mode (whose file says the courses it is raced on) and its weight in the
+/// draw among the spicy options.</summary>
+public sealed record RotationSpicy(RotationMode Mode, int Weight);
 
 /// <summary>One option of Quick Play's vote: a course (<see cref="CourseVote.RandomCourse"/> for "Random course") with
 /// the mode it is raced in; Spicy: one of the rotation's spicy options.</summary>
@@ -49,7 +49,9 @@ public sealed record QuickPlayOption(int Course, RotationMode Mode, bool Spicy)
 /// Quick Play's rotation (piconet-docs research/game-modes/ design 6): the coordinator's list of mode files, its
 /// <c>quickplay.toml</c>, and those files compiled. A vote card is a (course, mode) pair: the vote shows
 /// <see cref="Cards"/> course cards, exactly <see cref="SpicyCards"/> of them spicy, and "Random course", which lands
-/// on a spicy option with the chance <see cref="RandomSpicyChance"/>. Quick Play never has leaderboards: a file that
+/// on a spicy option with the chance <see cref="RandomSpicyChance"/>. Which courses a mode races on is its own file's
+/// <c>courses</c> word (left out, or <c>all</c>: the pool); the rotation says only which modes, their weights and the
+/// card counts. Quick Play never has leaderboards: a file that
 /// asks for them is refused. The service reads it at its start, and the launcher's stand-in service the same files,
 /// so a test races what the service races.
 /// </summary>
@@ -64,14 +66,13 @@ public sealed class QuickPlayRotation
     private static readonly string[] TopKeys = ["cards", "spicy_cards", "random_spicy_chance", "leaderboards", "show_laps", "normal", "spicy"];
 
     private QuickPlayRotation(int cards, int spicyCards, double randomSpicyChance, bool showLaps, RotationMode normal,
-        IReadOnlyList<int>? normalCourses, IReadOnlyList<RotationSpicy> spicy)
+        IReadOnlyList<RotationSpicy> spicy)
     {
         Cards = cards;
         SpicyCards = spicyCards;
         RandomSpicyChance = randomSpicyChance;
         ShowLaps = showLaps;
         Normal = normal;
-        NormalCourses = normalCourses;
         Spicy = spicy;
     }
 
@@ -89,9 +90,6 @@ public sealed class QuickPlayRotation
 
     /// <summary>The normal option: the mode every other card races.</summary>
     public RotationMode Normal { get; }
-
-    /// <summary>The courses of the normal option (null: the pool).</summary>
-    public IReadOnlyList<int>? NormalCourses { get; }
 
     /// <summary>The spicy options, in the file's order.</summary>
     public IReadOnlyList<RotationSpicy> Spicy { get; }
@@ -147,7 +145,7 @@ public sealed class QuickPlayRotation
         {
             throw new InvalidDataException($"{FileName}: no [normal] option: the mode every other card races");
         }
-        var (normalMode, normalCourses, _) = Option(folder, normal, "[normal]", modes, weighted: false);
+        var (normalMode, _) = Option(folder, normal, "[normal]", modes, weighted: false);
         var spicy = new List<RotationSpicy>();
         if (table.TryGetValue("spicy", out var s))
         {
@@ -157,20 +155,21 @@ public sealed class QuickPlayRotation
             }
             foreach (var option in options)
             {
-                var (mode, courses, weight) = Option(folder, option, $"[[spicy]] {spicy.Count + 1}", modes, weighted: true);
-                spicy.Add(new RotationSpicy(mode, courses, weight));
+                var (mode, weight) = Option(folder, option, $"[[spicy]] {spicy.Count + 1}", modes, weighted: true);
+                spicy.Add(new RotationSpicy(mode, weight));
             }
         }
         if (spicyCards > 0 && spicy.Count == 0)
         {
             throw new InvalidDataException($"{FileName}: spicy_cards is {spicyCards}, and there is no [[spicy]] option");
         }
-        return new QuickPlayRotation(cards, spicyCards, chance, showLaps, normalMode, normalCourses, spicy);
+        return new QuickPlayRotation(cards, spicyCards, chance, showLaps, normalMode, spicy);
     }
 
     /// <summary>A vote's options: <see cref="Cards"/> course cards from the pool, <see cref="SpicyCards"/> of them
-    /// spicy (each a spicy option drawn by weight, on one of its courses the pool holds; a normal card when none is
-    /// held), at places drawn among the cards, every course once; then "Random course". <paramref name="draw"/>(n)
+    /// spicy (each a spicy option drawn by weight, on one course drawn from those of its list the pool holds; a normal
+    /// card when none is held), drawn first, and the normal cards from what is left, at places drawn among the cards,
+    /// every course once; then "Random course". <paramref name="draw"/>(n)
     /// draws a whole number from 0 to n - 1.</summary>
     public IReadOnlyList<QuickPlayOption> Vote(IReadOnlyList<int> pool, Func<int, int> draw)
     {
@@ -183,7 +182,7 @@ public sealed class QuickPlayRotation
             spicy.Add(option);
             used.Add(option.Course);
         }
-        var normal = Shuffled(Within(NormalCourses, pool).Where(x => !used.Contains(x)).ToList(), draw)
+        var normal = Shuffled(Within(Normal, pool).Where(x => !used.Contains(x)).ToList(), draw)
             .Take(Cards - spicy.Count).Select(x => new QuickPlayOption(x, Normal, false)).ToList();
         foreach (var option in spicy)
         {
@@ -194,7 +193,8 @@ public sealed class QuickPlayRotation
     }
 
     /// <summary>What "Random course" races: with the chance <see cref="RandomSpicyChance"/> a spicy option (by weight,
-    /// on one of its courses the pool holds), otherwise the normal mode on a course of the pool.</summary>
+    /// then one course of its list the pool holds), otherwise the normal mode on a course of its list the pool holds. A
+    /// list the pool holds nothing of is drawn from whole: the mode's word stands over the pool.</summary>
     public QuickPlayOption Random(IReadOnlyList<int> pool, Func<int, int> draw)
     {
         ArgumentNullException.ThrowIfNull(pool);
@@ -203,13 +203,14 @@ public sealed class QuickPlayRotation
         {
             return spicy;
         }
-        var courses = Within(NormalCourses, pool).ToList();
-        return new QuickPlayOption(courses.Count == 0 ? pool[draw(pool.Count)] : courses[draw(courses.Count)], Normal, false);
+        var courses = Within(Normal, pool).ToList();
+        courses = courses.Count > 0 ? courses : [.. Normal.Terms.Courses ?? pool];
+        return new QuickPlayOption(courses[draw(courses.Count)], Normal, false);
     }
 
     private QuickPlayOption? SpicyOption(IReadOnlyList<int> pool, Func<int, int> draw, HashSet<int> used)
     {
-        var open = Spicy.Select(s => (Option: s, Courses: Within(s.Courses, pool).Where(x => !used.Contains(x)).ToList()))
+        var open = Spicy.Select(s => (Option: s, Courses: Within(s.Mode, pool).Where(x => !used.Contains(x)).ToList()))
             .Where(s => s.Courses.Count > 0).ToList();
         if (open.Count == 0)
         {
@@ -220,8 +221,9 @@ public sealed class QuickPlayRotation
         return new QuickPlayOption(chosen.Courses[draw(chosen.Courses.Count)], chosen.Option.Mode, true);
     }
 
-    private static IEnumerable<int> Within(IReadOnlyList<int>? courses, IReadOnlyList<int> pool) =>
-        courses is null ? pool : courses.Where(pool.Contains);
+    /// <summary>The courses of the pool a mode may race on: its list's, or all of them (no list, <c>courses all</c>).</summary>
+    private static IEnumerable<int> Within(RotationMode mode, IReadOnlyList<int> pool) =>
+        mode.Terms.Courses is { Count: > 0 } listed ? listed.Where(pool.Contains) : pool;
 
     private static List<int> Shuffled(List<int> list, Func<int, int> draw)
     {
@@ -233,10 +235,14 @@ public sealed class QuickPlayRotation
         return list;
     }
 
-    private static (RotationMode Mode, IReadOnlyList<int>? Courses, int Weight) Option(string folder, TomlTable option,
+    private static (RotationMode Mode, int Weight) Option(string folder, TomlTable option,
         string what, Dictionary<string, RotationMode> modes, bool weighted)
     {
-        string[] keys = weighted ? ["mode", "courses", "weight"] : ["mode", "courses"];
+        string[] keys = weighted ? ["mode", "weight"] : ["mode"];
+        if (option.ContainsKey("courses"))
+        {
+            throw new InvalidDataException($"{FileName} {what}: courses is no key of the rotation any more: the mode file says them, courses [\"Venue: Track\"]; (left out: the pool)");
+        }
         if (option.Keys.FirstOrDefault(k => !keys.Contains(k)) is { } unknown)
         {
             throw new InvalidDataException($"{FileName} {what}: '{unknown}' is not a key of an option: {string.Join(", ", keys)}");
@@ -250,18 +256,8 @@ public sealed class QuickPlayRotation
             mode = Compiled(folder, file);
             modes[file] = mode;
         }
-        IReadOnlyList<int>? courses = null;
-        if (option.TryGetValue("courses", out var c) && c is not "pool")
-        {
-            if (c is not TomlArray list || list.Count == 0)
-            {
-                throw new InvalidDataException($"{FileName} {what}: courses is \"pool\" (the server's vote pool) or a list of course numbers");
-            }
-            courses = [.. list.Select(x => x is long number && CoursePool.Default.Contains((int)number) ? (int)number
-                : throw new InvalidDataException($"{FileName} {what}: {x} is not a course of the pool ({string.Join(" ", CoursePool.Default)})"))];
-        }
         var weight = weighted ? Whole(option, "weight", 1, 1, 1000, $" {what}") : 0;
-        return (mode, courses, weight);
+        return (mode, weight);
     }
 
     private static RotationMode Compiled(string folder, string file)
@@ -280,11 +276,12 @@ public sealed class QuickPlayRotation
         {
             throw new InvalidDataException($"{file} {compiled.Errors[0]}");
         }
-        // the rotation's cards name the courses, and a Quick Play lobby's seats are its own
+        // a card names one course of the mode's list, so a pin is no card's, and a Quick Play lobby's seats are its own.
+        // (A list holds courses of the pool alone, CoursePool.Default: the compiler refuses any other, line and all.)
         var terms = ModeTerms.Of(compiled.Mode!);
         if (terms.Course is not null || terms.Racers is not null)
         {
-            throw new InvalidDataException($"{file}: a mode of Quick Play's rotation says neither course nor racers: the rotation's cards name the courses, and its lobby the seats");
+            throw new InvalidDataException($"{file}: a mode of Quick Play's rotation says neither course nor racers: its cards draw from its courses, and its lobby has the seats");
         }
         if (terms.Solo)
         {

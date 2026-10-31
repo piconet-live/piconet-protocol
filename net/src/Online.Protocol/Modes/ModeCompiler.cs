@@ -103,6 +103,7 @@ public static class ModeCompiler
             {
                 throw new ModeCompileException(stopLine, "stop_all only brakes the machines: a mode with it needs end_race or clock_limit, or its race never ends");
             }
+            LapsWithinCourses(items);
             if (items.OfType<ModeSetupItem>().FirstOrDefault(s => s.Word == "race_waits everyone") is { } waits
                 && !_emitter.Used.ContainsKey(ModeAction.EndRace) && !_setups.Any(s => s.Id == ModeSetup.ClockLimit))
             {
@@ -347,6 +348,33 @@ public static class ModeCompiler
                 : values;
         }
 
+        /// <summary>One course or a list of them: the file says one.</summary>
+        private void OneOfCourseAndCourses(ModeSetupItem item, string first, string name)
+        {
+            if (first is "course" or "courses" && _lobbyWords.FirstOrDefault(w => w.Id is ModeSetup.Course or ModeSetup.Courses or ModeSetup.CoursesAll) is { } other)
+            {
+                throw new ModeCompileException(item.Line, $"{ModeWords.Setups.First(s => s.Id == other.Id).Name} and {name}: one of them (course pins one course, courses lists the ones it may race on)");
+            }
+        }
+
+        /// <summary>A lap count for a course the mode's list leaves out is a mistake in the file, whichever word came first.</summary>
+        private void LapsWithinCourses(IEnumerable<ModeItem> items)
+        {
+            if (_lobbyWords.FirstOrDefault(w => w.Id == ModeSetup.Courses) is not { } listed
+                || items.OfType<ModeSetupItem>().FirstOrDefault(s => s.Word == "laps by course") is not { Table: { } table })
+            {
+                return;
+            }
+            foreach (var row in table)
+            {
+                var course = CourseTable.Courses.First(c => $"{c.Place}: {c.Track}" == row.Key).Course;
+                if (listed.Values.All(v => v.Value != course))
+                {
+                    throw new ModeCompileException(row.Line, $"laps by course names \"{row.Key}\", which is not in this mode's courses");
+                }
+            }
+        }
+
         private void Setup(ModeSetupItem item)
         {
             var word = ModeWords.Setups.Single(s => s.Name == item.Word);
@@ -361,6 +389,7 @@ public static class ModeCompiler
             {
                 throw new ModeCompileException(item.Line, $"{other.Name} and {word.Name}: one of them");
             }
+            OneOfCourseAndCourses(item, first, word.Name);
             if (word.Id == ModeSetup.TagTexts)
             {
                 throw new ModeCompileException(item.Line, "tag_texts is the compiler's own: a rule writes tag s, \"TEXT\"; and the text is kept");
@@ -424,6 +453,14 @@ public static class ModeCompiler
             _setups.Add(new ModeSetupWord(word.Id, values));
         }
 
+        /// <summary>A course a mode may race on, by the number of its name: a course of the pool.</summary>
+        private static int PoolCourse(ModeSetupRow row)
+        {
+            var course = CoursePool.Default.FirstOrDefault(c => CourseNames.Name(c) == row.Key);
+            return course != 0 ? course
+                : throw new ModeCompileException(row.Line, $"\"{row.Key}\" is no course of the pool (\"Venue: Track\", as courses.toml names them)");
+        }
+
         /// <summary>A word of the coordinator's: a range's ends in order, a course or machines by their numbers, a pack by
         /// its name.</summary>
         private static ModeLobbyWord LobbyWord(ModeSetupItem item, ModeSetup id, string name, List<ModeSetupValue> values)
@@ -431,12 +468,19 @@ public static class ModeCompiler
             var rows = item.Table ?? [];
             if (id == ModeSetup.Course)
             {
-                var course = CourseTable.Courses.FirstOrDefault(c => $"{c.Place}: {c.Track}" == rows[0].Key).Course;
-                if (course == 0 || !CoursePool.Default.Contains(course))
+                values.Add(new ModeSetupValue(false, PoolCourse(rows[0])));
+            }
+            if (id == ModeSetup.Courses)
+            {
+                foreach (var row in rows)
                 {
-                    throw new ModeCompileException(rows[0].Line, $"\"{rows[0].Key}\" is no course of the pool (\"Venue: Track\", as courses.toml names them)");
+                    var course = PoolCourse(row);
+                    if (values.Any(v => v.Value == course))
+                    {
+                        throw new ModeCompileException(row.Line, $"\"{row.Key}\" is in the list twice");
+                    }
+                    values.Add(new ModeSetupValue(false, course));
                 }
-                values.Add(new ModeSetupValue(false, course));
             }
             if (id == ModeSetup.Machines)
             {

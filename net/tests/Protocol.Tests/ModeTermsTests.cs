@@ -24,7 +24,7 @@ public sealed class ModeTermsTests
     [Fact]
     public void EveryRuleThatShapesARaceHasItsWord()
     {
-        var flow = new[] { "course-pool", "vote-seconds", "choose-seconds", "voting-minimum", "start-countdown", "start-timeout",
+        var flow = new[] { "vote-seconds", "choose-seconds", "voting-minimum", "start-countdown", "start-timeout",
             "ready-timeout", "straggler-wait", "latency-limit", "together", "relay-ceiling" };
         Assert.Equal(flow.Order(), HostRules.All.Where(r => r.SetupWord is null).Select(r => r.Name).Order());
         foreach (var rule in HostRules.All.Where(r => r.SetupWord is not null))
@@ -69,6 +69,42 @@ public sealed class ModeTermsTests
         Assert.Equal(listed is { } machine ? [machine] : null, terms.Machines);
         Assert.DoesNotContain(terms.Rules().Keys, k => k.Contains("custom", StringComparison.Ordinal));   // (no number a host's value could change)
     }
+
+    /// <summary>The word left out changes nothing, <c>all</c> is the whole pool, a list keeps its courses in order; none
+    /// of it is a number a host's value could change, and none of it reaches the game's words.</summary>
+    [Theory]
+    [InlineData("", null)]
+    [InlineData("courses all;", new int[0])]
+    [InlineData("courses [\"Casino Palace: Split Oval\", \"Mute City: Sonic Oval\"];", new[] { 16, 36 })]
+    [InlineData("courses [\"Mute City: Sonic Oval\"];", new[] { 36 })]
+    public void CoursesAreTheLobbysUnlessTheModeStatesThem(string words, int[]? listed)
+    {
+        var terms = Terms(words);
+        Assert.Equal(listed, terms.Courses);
+        Assert.Null(terms.Course);
+        Assert.DoesNotContain(terms.Rules().Keys, k => k.Contains("course", StringComparison.Ordinal));
+        Assert.DoesNotContain(Compile(words).Mode!.Setups, w => w.Id is ModeSetup.Courses or ModeSetup.CoursesAll);
+    }
+
+    /// <summary>The list names what the pool holds, by the names the launcher and the vote show (the story's too); a
+    /// course of the game's outside the pool is refused, as <c>course</c> refuses it.</summary>
+    [Fact]
+    public void EveryCourseOfThePoolCanBeListedAndNoOther()
+    {
+        var names = string.Join(", ", CoursePool.Default.Select(c => $"\"{CourseNames.Name(c)}\""));
+        Assert.Equal(CoursePool.Default.Order(), Terms($"courses [{names}];").Courses);
+        var outside = CourseTable.Courses.Where(c => !CoursePool.Default.Contains(c.Course)).Select(c => $"{c.Place}: {c.Track}").FirstOrDefault()
+            ?? CourseNames.Name(CourseNames.FirstStoryStage);
+        Assert.Contains("is no course of the pool", Error($"courses [\"{outside}\"];"), StringComparison.Ordinal);
+    }
+
+    /// <summary>A lap table within the list compiles, with its <c>else</c>; only a list is checked (<c>courses all</c>
+    /// and no word leave the table alone); a pin keeps its own way.</summary>
+    [Theory]
+    [InlineData("courses [\"Mute City: Sonic Oval\"];\nlaps by course { \"Mute City: Sonic Oval\": 3; else: 2; }")]
+    [InlineData("courses all;\nlaps by course { \"Casino Palace: Split Oval\": 3; else: 2; }")]
+    [InlineData("laps by course { \"Casino Palace: Split Oval\": 3; else: 2; }")]
+    public void ALapTableWithinTheCoursesCompiles(string words) => Assert.True(Compile(words).Succeeded, string.Join("; ", Compile(words).Errors));
 
     [Fact]
     public void CustomsOffIsTheCoordinatorsWordNotTheGames()
@@ -162,6 +198,15 @@ public sealed class ModeTermsTests
     [InlineData("machines all;\nmachines [\"Blue Falcon\"];", "machines all and machines: one of them")]
     [InlineData("customs off;\ncustoms off;", "customs is set twice")]
     [InlineData("course \"Nowhere\";", "\"Nowhere\" is no course of the pool")]
+    [InlineData("courses [\"Nowhere\"];", "\"Nowhere\" is no course of the pool")]
+    [InlineData("courses [];", "courses takes names in quotes")]
+    [InlineData("courses [\"Mute City: Sonic Oval\", \"Mute City: Sonic Oval\"];", "\"Mute City: Sonic Oval\" is in the list twice")]
+    [InlineData("courses all;\ncourses [\"Mute City: Sonic Oval\"];", "courses all and courses: one of them")]
+    [InlineData("course \"Mute City: Sonic Oval\";\ncourses [\"Mute City: Sonic Oval\"];", "course and courses: one of them")]
+    [InlineData("courses [\"Mute City: Sonic Oval\"];\ncourse \"Mute City: Sonic Oval\";", "courses and course: one of them")]
+    [InlineData("course \"Mute City: Sonic Oval\";\ncourses all;", "course and courses all: one of them")]
+    [InlineData("courses [\"Mute City: Sonic Oval\"];\nlaps by course { \"Casino Palace: Split Oval\": 3; else: 2; }", "laps by course names \"Casino Palace: Split Oval\"")]
+    [InlineData("laps by course { \"Casino Palace: Split Oval\": 3; else: 2; }\ncourses [\"Mute City: Sonic Oval\"];", "laps by course names \"Casino Palace: Split Oval\"")]
     [InlineData("stats 3;", "stats takes a name in quotes")]
     [InlineData("boost_start on;\nboost_start off;", "boost_start is set twice")]
     [InlineData("mixed_packs on;\nmixed_packs on;", "mixed_packs is set twice")]

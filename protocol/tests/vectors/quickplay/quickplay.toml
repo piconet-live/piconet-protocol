@@ -9,9 +9,7 @@ show_laps = true
 
 [normal]
 mode = "competitive.fzmode"
-courses = "pool"
 
 [[spicy]]
 mode = "overdrive.fzmode"
-courses = [8]
 weight = 1

@@ -73,7 +73,7 @@ kind = "course"
 
 [[rule]]
 name = "course-pool"
-setup = "flow"
+setup = "courses"
 label = "Course pool"
 cs = "CoursePool"
 reach = "together"

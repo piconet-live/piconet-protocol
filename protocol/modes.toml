@@ -1588,6 +1588,19 @@ contact pass: mode_preload fills every no-contact row and their OR as it takes t
 first run writes them again. `no_contact s off` or `no contact` can bring a pair back; `contact on` is refused"""
 doc = "every racer starts on the same spot, slot 0's, and nobody touches anybody from before the first step"
 
+[[setup]]
+name = "courses all"
+id = 46
+lobby = true
+where = "the coordinator: every course of the pool, whatever the lobby's pool is. Not in Quick Play's rotation, whose cards name the courses"
+
+[[setup]]
+name = "courses"
+id = 47
+lobby = true
+form = "list"
+where = "the coordinator: the courses its vote and its Random draw from, and a lobby's fixed course is one of (courses of the pool, \"Venue: Track\"). Not with `course`, and not in Quick Play's rotation, whose cards name the courses"
+
 # ---- The displays (vocabulary 5): presentation only. An action writes the seat's display record in the block (the
 # runner's port/core/src/mode_hud.h), at the mode point like every action; the drawing reads it, every frame, from
 # what the step left (a rollback redraws). Nothing a step reads is written, and nothing draws from a generator.

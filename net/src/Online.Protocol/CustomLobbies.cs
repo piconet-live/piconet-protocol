@@ -206,14 +206,17 @@ public sealed record LobbyList(IReadOnlyList<LobbySummary> Lobbies,
 /// Values their values now, in the same order: the lobby's rule controls and what its panel shows. Null: it has none,
 /// or a server from before them. Machines: the machine ids it allows when it states a list, so a Garage shows them
 /// before the machine choice opens; null: it states none (the lobby's machines stand). CustomsOff: it races no custom
-/// machines (<c>customs off</c>), so a Garage holds them back; a reader from before passes over it.</summary>
+/// machines (<c>customs off</c>), so a Garage holds them back; a reader from before passes over it. Courses: the course
+/// numbers it may race on when it states a list, so a host's course row stays within them; null: it states none (the
+/// lobby's pool stands); a reader from before passes over it.</summary>
 public sealed record LobbyMode(string Hash, string ShareCode, string Name, int Api, string Badge = "", string About = "",
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyDictionary<string, int>? Terms = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Pack = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<ModeParam>? Params = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<int>? Values = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<int>? Machines = null,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool CustomsOff = false);
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool CustomsOff = false,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<int>? Courses = null);
 
 /// <summary>The player's team in a custom lobby with teams: their own, or (from the host) another member's
 /// (<paramref name="PlayerId"/>); null Team: none, the race gives them one. A race's seats get their teams from these
