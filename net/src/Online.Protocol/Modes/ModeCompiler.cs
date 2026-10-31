@@ -123,6 +123,7 @@ public static class ModeCompiler
                 throw new ModeCompileException(clockLine, "show_clock and clock_limit both write the game's clock: a mode has one or the other");
             }
             SoloWords(items);
+            StartTogetherWords(items);
             if (_emitter.TagTexts.Count > 0)
             {
                 _setups.Add(new ModeSetupWord(ModeSetup.TagTexts, ModeTagTexts.Cells(_emitter.TagTexts)));
@@ -252,6 +253,19 @@ public static class ModeCompiler
                     }
                 }
             }
+        }
+
+        /// <summary><c>start_together</c> puts every machine on one spot, which only works with contact off, as it
+        /// keeps it from before the first step. A <c>contact</c> that can be on (stated on, or a switch parameter) is refused.</summary>
+        private void StartTogetherWords(List<ModeItem> items)
+        {
+            if (_setups.All(s => s.Id != ModeSetup.StartTogether) || _setups.FirstOrDefault(s => s.Id == ModeSetup.Contact) is not { } contact
+                || contact.Arguments[0] is { FromParam: false, Value: 0 })
+            {
+                return;
+            }
+            var word = ModeWords.Setups.Single(w => w.Id == ModeSetup.Contact).Name;
+            throw new ModeCompileException(items.OfType<ModeSetupItem>().First(s => s.Word == word).Line, "contact on: start_together keeps every racer on one spot, so contact stays off");
         }
 
         private void Param(ModeParamItem item)

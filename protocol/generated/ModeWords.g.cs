@@ -253,6 +253,8 @@ public enum ModeSetup : byte
     TimeBonus = 43,
     /// <summary><c>points_table</c></summary>
     PointsTable = 44,
+    /// <summary><c>start_together</c></summary>
+    StartTogether = 45,
 }
 
 /// <summary>A read of a seat (protocol/modes.toml).</summary>
@@ -745,6 +747,7 @@ public static partial class ModeWords
         ("spin_immunity", ModeSetup.SpinImmunity, [new ModeArgument("", ModeType.Bool, 0, 1, null)], false, ""),
         ("time_bonus", ModeSetup.TimeBonus, [new ModeArgument("", ModeType.Int, 1, 120, null, 5)], false, ""),
         ("points_table", ModeSetup.PointsTable, [new ModeArgument("", ModeType.Int, 0, 999, null)], false, ""),
+        ("start_together", ModeSetup.StartTogether, [], false, ""),
     ];
 
     /// <summary>The reads of a seat (<c>seat.NAME</c>): name, id, type.</summary>

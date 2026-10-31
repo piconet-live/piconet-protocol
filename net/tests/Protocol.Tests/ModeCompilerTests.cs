@@ -48,6 +48,7 @@ public sealed class ModeCompilerTests
     [InlineData("combat")]
     [InlineData("vecs")]
     [InlineData("held_words")]
+    [InlineData("together")]
     public void AVectorCompilesToItsPackage(string name)
     {
         var result = CompileVector(name);
@@ -139,7 +140,7 @@ public sealed class ModeCompilerTests
         Assert.All(ModeWords.Actions, a => Assert.Contains(code.Concat(Code("display")), l => l.EndsWith("Action " + a.Name, StringComparison.Ordinal)));
         // every setup word but laps by course (the competitive vector's); the practice vector's are a solo mode's
         var solo = CompileVector("practice").Mode!.Setups.Where(s => s.Id != ModeSetup.Laps);
-        var setups = mode.Setups.Concat(cuts.Setups).Concat(race.Setups).Concat(solo).Concat(CompileVector("combat").Mode!.Setups.Where(s => s.Id != ModeSetup.ClockLimit)).Select(s => s.Id).ToList();
+        var setups = mode.Setups.Concat(cuts.Setups).Concat(race.Setups).Concat(solo).Concat(CompileVector("combat").Mode!.Setups.Where(s => s.Id != ModeSetup.ClockLimit)).Concat(CompileVector("together").Mode!.Setups).Select(s => s.Id).ToList();
         Assert.Equal(ModeWords.Setups.Where(s => !s.Lobby).Select(s => s.Id).Where(id => id is not ModeSetup.LapsByCourse).Order(),
             setups.Order());
         Assert.Equal(ModeWords.Events.Select(e => e.Id).Order(), mode.Rules.Concat(race.Rules).Select(r => r.Event).Distinct().Order());

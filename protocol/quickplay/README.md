@@ -13,3 +13,4 @@ it at its start (a file that does not load stops the start), and the launcher's 
 | `knockout.fzmode` | A spicy option: a rolling start, then the last racer is out every interval |
 | `practice.fzmode` | Not in the rotation: Play's Practice, raced alone (`solo`); the launcher starts it itself, beside the program in this folder |
 | `time_trial.fzmode` | Not in the rotation: a time trial, raced alone (`solo`); no launcher page starts it yet |
+| `ghost_race.fzmode` | Not in the rotation: a time trial raced together: everyone starts on one spot, nobody touches anybody, the others drawn as ghosts, the laps a parameter; no launcher page lists it yet |

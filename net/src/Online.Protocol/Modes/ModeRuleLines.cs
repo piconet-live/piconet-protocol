@@ -37,6 +37,7 @@ public static class ModeRuleLines
         ModeSetup.Contact => a[0] == 0 ? "No contact" : null,
         ModeSetup.ClockLimit => $"Time limit {Clock(a[0])}",
         ModeSetup.RollingStart => $"Rolling start at {Say(BitConverter.Int32BitsToSingle(a[0]))} km/h",
+        ModeSetup.StartTogether => "Everyone starts on one spot",
         ModeSetup.RaceWaitsEveryone => "Waits for every racer",
         ModeSetup.Damage => Percent("Damage", a[0]),
         ModeSetup.Knockback => Percent("Knockback", a[0]),

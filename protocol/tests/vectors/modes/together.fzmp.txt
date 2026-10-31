@@ -1,0 +1,31 @@
+FZMP format 1 api 1, 406 bytes, hash 6fb8121c1fd839e2ab3863488a26a317da5d439061cf6a41041d1cf299f8d7c6
+HEAD name "Together" badge "" about ""
+PARM 0
+SETP 1
+  start_together
+VARS globals 1, seat words 0
+  global 0 = 0
+RULE 1
+  0 "Count" event race_start, locals 1, when none, while none, body 0000
+CODE 54 bytes
+  ; rule 0 body
+  0000  Push 0
+  0005  StoreLocal 0
+  0007  LoadLocal 0
+  0009  RaceRead seats
+  000b  ILt
+  000c  JumpIfZero 0035
+  0011  LoadLocal 0
+  0013  SeatRead ghost
+  0015  JumpIfZero 0026
+  001a  LoadGlobal 0
+  001d  Push 1
+  0022  IAdd
+  0023  StoreGlobal 0
+  0026  LoadLocal 0
+  0028  Push 1
+  002d  IAdd
+  002e  StoreLocal 0
+  0030  Jump 0007
+  0035  End
+SRC  235 bytes

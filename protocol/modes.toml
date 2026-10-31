@@ -1549,6 +1549,15 @@ args = [{ type = "int", least = 0, most = 999 }]
 where = "the package: the table, copied into the mode's block; never by switching the race type to Grand Prix (R+0x5 = 1 also turns on spares, cup layouts and FINAL LAP rules)"
 doc = "`points_table game` (the Grand Prix's, .rodata 0xDB38: the compiler writes them) or `points_table [100, 80, ...]` at most thirty: what a place earns when the mode ends the race, added to award's. Needs end_race or clock_limit"
 
+[[setup]]
+name = "start_together"
+id = 45
+where = """the grid's placing (main.rel fn_1_85934 0x85BF4, `mr r3, r28`, the slot for fn_1_85C58) under the window's flag TOGETHER: every \
+machine takes slot 0's place, through the game's own fn_1_85C58 and fn_1_23500; the list and the rank tables stay the game's. Contact is off from before the first \
+contact pass: mode_preload fills every no-contact row and their OR as it takes the block (a mode's first run comes only after that step's pairs), and the \
+first run writes them again. `ghost s off` or `no contact` can bring a pair back; `contact on` is refused"""
+doc = "every racer starts on the same spot, slot 0's, and nobody touches anybody from before the first step"
+
 # ---- The displays (vocabulary 5): presentation only. An action writes the seat's display record in the block (the
 # runner's port/core/src/mode_hud.h), at the mode point like every action; the drawing reads it, every frame, from
 # what the step left (a rollback redraws). Nothing a step reads is written, and nothing draws from a generator.
