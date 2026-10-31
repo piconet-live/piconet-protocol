@@ -287,6 +287,26 @@ public sealed class ModeWordFormsTests
         Assert.Contains("destroyed", listing, StringComparison.Ordinal);
     }
 
+    [Theory]
+    [InlineData("rule \"R\" { event each seat; do { push seat, vec(100.0, 0, seat.speed); } }")]
+    [InlineData("rule \"R\" { event each seat; do { vec v = vec(1, 2, 3); seat.velocity = v * 2; } }")]
+    [InlineData("param force \"F\" number 0..500 default 100; rule \"R\" { event each seat; do { push seat, cross(seat.forward, seat.up) * force; } }")]
+    [InlineData("rule \"R\" { event each seat; do { real a = cross(seat.up, vec(0, 1, 0)).y; } }")]
+    public void AVecIsBuilt(string body)
+    {
+        Assert.Empty(Compile(body).Errors);
+    }
+
+    [Theory]
+    [InlineData("rule \"R\" { event each seat; do { vec v = vec(1, 2); } }", "three numbers")]
+    [InlineData("rule \"R\" { event each seat; do { vec v = vec(seat, 2, 3); } }", "vec takes")]
+    [InlineData("rule \"R\" { event each seat; do { vec v = cross(seat.up); } }", "two vecs")]
+    [InlineData("rule \"R\" { event each seat; do { vec v = cross(seat.up, 1.0); } }", "vec")]
+    public void AVecFormIsRefused(string body, string reason)
+    {
+        Assert.Contains(Compile(body).Errors, e => e.Contains(reason, StringComparison.Ordinal));
+    }
+
     /// <summary>The docs' <c>length</c> and <c>dot</c>, and a vec's arithmetic (language 4).</summary>
     [Theory]
     [InlineData("global real x; rule \"R\" { event each seat; do { x = length(seat.velocity); } }")]

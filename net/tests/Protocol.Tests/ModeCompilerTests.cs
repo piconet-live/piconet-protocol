@@ -46,6 +46,7 @@ public sealed class ModeCompilerTests
     [InlineData("edges")]
     [InlineData("stats")]
     [InlineData("combat")]
+    [InlineData("vecs")]
     public void AVectorCompilesToItsPackage(string name)
     {
         var result = CompileVector(name);

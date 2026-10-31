@@ -338,6 +338,47 @@ internal sealed partial class ModeEmitter
         Free(mark);
     }
 
+    private ModeType VecCall(ModeCall call)
+    {
+        if (call.Function == "vec")
+        {
+            if (call.Arguments.Count != 3)
+            {
+                throw new ModeCompileException(call.Line, "vec takes three numbers: vec(x, y, z)");
+            }
+            foreach (var part in call.Arguments)
+            {
+                Value(part, ModeType.Real, "vec");
+            }
+            return ModeType.Vec;
+        }
+        if (call.Arguments.Count != 2)
+        {
+            throw new ModeCompileException(call.Line, "cross takes two vecs");
+        }
+        Cross(call.Arguments[0], call.Arguments[1]);
+        return ModeType.Vec;
+    }
+
+    /// <summary>cross(a, b): a.y b.z - a.z b.y, a.z b.x - a.x b.z, a.x b.y - a.y b.x, each two roundings (language 5).</summary>
+    private void Cross(ModeExpr a, ModeExpr b)
+    {
+        var mark = _locals.Count;
+        var x = Spilled(a, ModeType.Vec);
+        var y = Spilled(b, ModeType.Vec);
+        foreach (var (first, second) in new[] { (1, 2), (2, 0), (0, 1) })
+        {
+            Op(ModeOp.LoadLocal, x.Slot + first);
+            Op(ModeOp.LoadLocal, y.Slot + second);
+            Op(ModeOp.FMul);
+            Op(ModeOp.LoadLocal, x.Slot + second);
+            Op(ModeOp.LoadLocal, y.Slot + first);
+            Op(ModeOp.FMul);
+            Op(ModeOp.FSub);
+        }
+        Free(mark);
+    }
+
     /// <summary>A sort key: a number, a bool or a seat.</summary>
     private ModeType Key(ModeExpr key)
     {
@@ -363,6 +404,10 @@ internal sealed partial class ModeEmitter
         if (names.Find(call.Function) is { Kind: ModeNameKind.Sub })
         {
             return Inline(call, false)!.Value;
+        }
+        if (call.Function is "vec" or "cross")
+        {
+            return VecCall(call);
         }
         switch (call.Function, call.Arguments.Count)
         {
