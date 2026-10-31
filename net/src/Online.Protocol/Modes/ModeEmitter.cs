@@ -60,6 +60,8 @@ internal sealed partial class ModeEmitter(ModeNames names, List<string> warnings
         _high = 0;
         _scope = 0;
         _waits = false;
+        _gameStart = id == ModeEvent.GameStart;
+        _line = item.Line;
         _multiplier = bindsSeat ? ModeWords.Seats : 1;
         if (bindsSeat)
         {
@@ -90,7 +92,7 @@ internal sealed partial class ModeEmitter(ModeNames names, List<string> warnings
             warnings.Add(ModeCompiler.Message(item.Line, $"rule \"{item.Label}\" has when, which runs it once, and uses {word}, which is meant for every step: did you mean while?"));
         }
         // at least one: formats.md's rule has local 0, and the interpreter refuses a rule without it (a rule on no seat
-        // that declares nothing, as `event go; do { n += 1; }`, needs none itself)
+        // that declares nothing, as `event race_start; do { n += 1; }`, needs none itself)
         return (new ModeRule(item.Label, id, Math.Max(_high, 1), when, during, body), _waits);
     }
 
@@ -117,8 +119,18 @@ internal sealed partial class ModeEmitter(ModeNames names, List<string> warnings
     // right under `when`.
     private string? _perStep;
 
+    // game_start's rule: the words that need a running step are refused (ModeWords.ActionsNeedingAStep), through a sub too,
+    // and wait; _line, the statement being written, says where.
+    private bool _gameStart;
+    private int _line;
+
     private void Op(ModeOp op, params long[] operands)
     {
+        if (op == ModeOp.Action && _gameStart && ModeWords.ActionsNeedingAStep.Contains((ModeAction)operands[0]))
+        {
+            var word = ModeWords.Actions.First(a => a.Id == (ModeAction)operands[0]).Name;
+            throw new ModeCompileException(_line, $"{word} needs a running step, and game_start comes before the first one: use countdown or race_start");
+        }
         if (op == ModeOp.Action && (ModeAction)operands[0] is ModeAction.SeatSpeed or ModeAction.SeatVelocity or ModeAction.ShowClock or ModeAction.ShowNumber)
         {
             _perStep ??= ModeWords.Actions.First(a => a.Id == (ModeAction)operands[0]).Name;

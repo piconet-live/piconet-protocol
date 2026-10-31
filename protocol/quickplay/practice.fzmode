@@ -17,7 +17,7 @@ resume_countdown 1s;
 
 // The seat's own restore: a machine that crashes or falls is put back on the track.
 rule "Restore" {
-  event race_start;
+  event game_start;
   when restore_on;
   do { for each seat { respawns seat; } }
 }

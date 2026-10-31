@@ -82,6 +82,11 @@ def emit(t):
             f"[{', '.join('ModeType.Int' if x in choices else cs_type(x) for x in a.get('args', []))}]),"
             for a in t["actions"]]
     out += ["    ];", "",
+            "    /// <summary>The actions that need a running step, which game_start refuses.</summary>",
+            "    public static readonly IReadOnlySet<ModeAction> ActionsNeedingAStep =",
+            "        new HashSet<ModeAction>", "        {"]
+    out += [f"            ModeAction.{a['pascal']}," for a in t["actions"] if a.get("needs_step")]
+    out += ["        };", "",
             "    /// <summary>The choices: an argument of one takes one of its names, its value the name's place.</summary>",
             "    public static readonly IReadOnlyDictionary<string, IReadOnlyList<string>> Choices =",
             "        new Dictionary<string, IReadOnlyList<string>>", "        {"]

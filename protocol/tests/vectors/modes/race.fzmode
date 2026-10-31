@@ -23,7 +23,7 @@ seat int falls;
 seat int passes;
 
 rule "Start" {
-  event race_start;
+  event countdown;
   do {
     for each seat {
       respawns seat;
@@ -36,7 +36,7 @@ rule "Start" {
 }
 
 rule "Go" {
-  event go;
+  event race_start;
   do {
     pads_back;
     for each seat { ghost seat off; release seat; }
@@ -59,6 +59,7 @@ rule "Respawned" { event respawned(s); do { s.velocity = s.forward * 500.0; } }
 rule "Land" { event land(s); when s.up.y < 0.5; do { stop_all; } }
 rule "Boost end" { event boost_end(s); when s.input.accel > 0.5 and s.input.brake < 0.1; do { s.energy += 1; } }
 rule "Wrong way" { event wrong_way(s); do { s.place = 30; } }
+rule "From the first picture" { event game_start; do { for each seat { seat.look = invisible; seat.own_look = normal; } } }
 
 rule "Out" {
   event out(s, cause);

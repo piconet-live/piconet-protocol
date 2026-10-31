@@ -17,14 +17,14 @@ rolling_start 1000 km/h;       // speed at the gate, CPU steers through the coun
 race_waits everyone;           // the race goes on until the mode ends it, not until the last player is out
 results_title "KNOCKOUT";       // the points page: a point for every cut survived, ties in the order below
 
-global int interval;           // steps between cuts, worked out once at go
+global int interval;           // steps between cuts, worked out once at the race start
 global int next_cut;
 global int cut_in;             // seconds to the next cut
 global int cuts;
 seat   int cut_order;          // 0: never cut; 1: first out
 
 rule "Arm" {
-  event go;
+  event race_start;
   do {
     next_cut = first_cut;
     interval = max(10s, (length - first_cut) / max(1, count(seats where racing) - keep - 1));

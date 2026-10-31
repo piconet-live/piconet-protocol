@@ -162,9 +162,9 @@ public sealed class ModeCompilerTests
         var seat = ModeCompiler.Compile(Head + "rule \"R\" { event lap(a); do { a.energy = 1; } }\n");
         Assert.Equal(seat.Budget / 30 * 435, pair.Budget);
         // stop_all ends nothing: it needs an end
-        Assert.Contains("needs end_race or clock_limit", Errors(Head + "rule \"R\" { event go; do { stop_all; } }\n"));
-        Assert.Empty(ModeCompiler.Compile(Head + "rule \"R\" { event go; do { stop_all; end_race; } }\n").Errors);
-        Assert.Empty(ModeCompiler.Compile(Head + "clock_limit 2min;\nrule \"R\" { event go; do { stop_all; } }\n").Errors);
+        Assert.Contains("needs end_race or clock_limit", Errors(Head + "rule \"R\" { event race_start; do { stop_all; } }\n"));
+        Assert.Empty(ModeCompiler.Compile(Head + "rule \"R\" { event race_start; do { stop_all; end_race; } }\n").Errors);
+        Assert.Empty(ModeCompiler.Compile(Head + "clock_limit 2min;\nrule \"R\" { event race_start; do { stop_all; } }\n").Errors);
         // the action words: several words, commas or none, an off form, the team action
         Assert.Empty(ModeCompiler.Compile(Head + "rule \"R\" { event lap(s); do { respawns s off; ghost s off; no contact s, seats; no contact s seats; team 2 no contact; cpu_mode s, 4; } }\n").Errors);
         Assert.NotEmpty(Errors(Head + "rule \"R\" { event lap(s); do { real x = s.input.speed; } }\n"));
@@ -184,6 +184,56 @@ public sealed class ModeCompilerTests
         Assert.Contains("is no course of the game's", Errors("mode \"M\" { api 1; } laps by course { \"Mute City: Nowhere\": 3; else: 3; }"));
         Assert.Contains("one of them", Errors("mode \"M\" { api 1; } laps 3; laps by course { else: 3; }"));
         Assert.Contains("twice", Errors("mode \"M\" { api 1; } laps by course { \"Mute City: Sonic Oval\": 3; \"Mute City: Sonic Oval\": 4; else: 3; }"));
+    }
+
+    /// <summary>game_start comes before the first step: the words that need one are refused, through a sub too, and wait.</summary>
+    [Theory]
+    [InlineData("seat a = first(seats); a.speed = 100.0;", "seat.speed")]
+    [InlineData("retire first(seats);", "retire")]
+    [InlineData("explode first(seats);", "explode")]
+    [InlineData("cpu_mode first(seats), 1;", "cpu_mode")]
+    [InlineData("end_race;", "end_race")]
+    [InlineData("boost first(seats);", "boost")]
+    [InlineData("stock_banner first(seats), GAP;", "stock_banner")]
+    [InlineData("break_down first(seats);", "break_down")]
+    [InlineData("damage first(seats), 1.0;", "damage")]
+    public void GameStartRefusesWhatNeedsAStep(string body, string named)
+    {
+        Assert.Contains(named + " needs a running step", Errors(Head + "clock_limit 2min;\nrule \"R\" { event game_start; do { " + body + " } }\n"));
+        // the same word is any other event's
+        Assert.Empty(ModeCompiler.Compile(Head + "clock_limit 2min;\nrule \"R\" { event countdown; do { " + body + " } }\n").Errors);
+    }
+
+    [Fact]
+    public void GameStartRefusesThroughASubAndWait()
+    {
+        Assert.Contains("retire needs a running step", Errors(Head +
+            "sub out(seat s) { retire s; }\nrule \"R\" { event game_start; do { call out(first(seats)); } }\n"));
+        Assert.Contains("a wait counts steps", Errors(Head + "rule \"R\" { event game_start; do { wait 1s; } }\n"));
+    }
+
+    [Fact]
+    public void GameStartTakesTheSetUpWords()
+    {
+        var result = ModeCompiler.Compile(Head + """
+            rule "R" {
+              event game_start;
+              do {
+                for each seat {
+                  seat.look = invisible; seat.own_look = normal; hide seat, FACES; show seat, LEADER_GAP;
+                  respawns seat; ghost seat; seat.energy = 50.0; show_number seat, 3;
+                }
+              }
+            }
+
+            """);
+        Assert.Empty(result.Errors);
+    }
+
+    [Fact]
+    public void TheOldWordGoIsGone()
+    {
+        Assert.Contains("'go' is not an event", Errors(Head + "rule \"R\" { event go; do { } }\n"));
     }
 
     private static string Errors(string source) => string.Join("\n", ModeCompiler.Compile(source).Errors.Select(e => e.ToString()));
@@ -274,8 +324,8 @@ public sealed class ModeCompilerTests
     [InlineData("rule \"R\" { event every step; do { int x = 3 % 1.5; } }\n", "line 2: '%' takes whole numbers: use floor, ceil, round or trunc first")]
     [InlineData("param p \"P\" number 1..3;\nevery(p) { }\n", "line 3: every takes a time of at least one step (every(10s)) or a delay parameter")]
     [InlineData("pedals locked accel 1.5;\n", "line 2: pedals locked's accel is 0..1")]
-    [InlineData("rule \"R\" { event each seat; do { show seat, 3; } }\n", "line 2: show takes one of TIMER, DISTANCE, DIGIT, WARNING, SUCCESS, FAILED, TIME_OVER, SPEED_GAUGE, OBJECTS, RANK, LAPS, SPEED, ENERGY, LAP_TIMES, RACE_TIME, FACES")]
-    [InlineData("rule \"R\" { event each seat; do { show seat, ghost; } }\n", "line 2: show takes one of TIMER, DISTANCE, DIGIT, WARNING, SUCCESS, FAILED, TIME_OVER, SPEED_GAUGE, OBJECTS, RANK, LAPS, SPEED, ENERGY, LAP_TIMES, RACE_TIME, FACES")]
+    [InlineData("rule \"R\" { event each seat; do { show seat, 3; } }\n", "line 2: show takes one of TIMER, DISTANCE, DIGIT, WARNING, SUCCESS, FAILED, TIME_OVER, SPEED_GAUGE, OBJECTS, LEADER_GAP, RANK, LAPS, SPEED, ENERGY, LAP_TIMES, RACE_TIME, FACES")]
+    [InlineData("rule \"R\" { event each seat; do { show seat, ghost; } }\n", "line 2: show takes one of TIMER, DISTANCE, DIGIT, WARNING, SUCCESS, FAILED, TIME_OVER, SPEED_GAUGE, OBJECTS, LEADER_GAP, RANK, LAPS, SPEED, ENERGY, LAP_TIMES, RACE_TIME, FACES")]
     [InlineData("rule \"R\" { event each seat; do { seat.look = TIMER; } }\n", "line 2: seat.look takes one of normal, ghost, invisible")]
     [InlineData("rule \"R\" { event each seat; do { seat.look += ghost; } }\n", "line 2: seat.look takes a name: write seat.look = normal;")]
     [InlineData("rule \"R\" { event each seat; do { map_hide seat, seats; } }\n", "line 2: map_hide writes 'from' before its second argument: map_hide s from seats;")]

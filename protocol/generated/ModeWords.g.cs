@@ -130,10 +130,10 @@ public enum ModeEvent : byte
     EachSeat = 1,
     /// <summary><c>out</c></summary>
     Out = 2,
+    /// <summary><c>countdown</c></summary>
+    Countdown = 3,
     /// <summary><c>race_start</c></summary>
-    RaceStart = 3,
-    /// <summary><c>go</c></summary>
-    Go = 4,
+    RaceStart = 4,
     /// <summary><c>lap</c></summary>
     Lap = 5,
     /// <summary><c>checkpoint</c></summary>
@@ -166,6 +166,8 @@ public enum ModeEvent : byte
     BoostEnd = 19,
     /// <summary><c>wrong_way</c></summary>
     WrongWay = 20,
+    /// <summary><c>game_start</c></summary>
+    GameStart = 21,
 }
 
 /// <summary>A setup word (protocol/modes.toml).</summary>
@@ -683,8 +685,8 @@ public static partial class ModeWords
         ("every step", ModeEvent.EveryStep, true, false, null),
         ("each seat", ModeEvent.EachSeat, true, true, null),
         ("out", ModeEvent.Out, false, true, ModeType.Int),
+        ("countdown", ModeEvent.Countdown, false, false, null),
         ("race_start", ModeEvent.RaceStart, false, false, null),
-        ("go", ModeEvent.Go, false, false, null),
         ("lap", ModeEvent.Lap, false, true, null),
         ("checkpoint", ModeEvent.Checkpoint, false, true, null),
         ("finish", ModeEvent.Finish, false, true, null),
@@ -701,6 +703,7 @@ public static partial class ModeWords
         ("land", ModeEvent.Land, false, true, null),
         ("boost_end", ModeEvent.BoostEnd, false, true, null),
         ("wrong_way", ModeEvent.WrongWay, false, true, null),
+        ("game_start", ModeEvent.GameStart, false, false, null),
     ];
 
     /// <summary>The setup words: name, id, arguments (name, type, least, most, default, what on is); Lobby: the coordinator's alone, not in the package; Form: how the file writes it (range, text, list; empty: its arguments).</summary>
@@ -905,11 +908,29 @@ public static partial class ModeWords
         ("boost off", ModeAction.BoostOff, [ModeType.Seat]),
     ];
 
+    /// <summary>The actions that need a running step, which game_start refuses.</summary>
+    public static readonly IReadOnlySet<ModeAction> ActionsNeedingAStep =
+        new HashSet<ModeAction>
+        {
+            ModeAction.SeatSpeed,
+            ModeAction.Retire,
+            ModeAction.Explode,
+            ModeAction.CpuMode,
+            ModeAction.EndRace,
+            ModeAction.StopAll,
+            ModeAction.Boost,
+            ModeAction.Push,
+            ModeAction.SeatVelocity,
+            ModeAction.StockBanner,
+            ModeAction.BreakDown,
+            ModeAction.Damage,
+        };
+
     /// <summary>The choices: an argument of one takes one of its names, its value the name's place.</summary>
     public static readonly IReadOnlyDictionary<string, IReadOnlyList<string>> Choices =
         new Dictionary<string, IReadOnlyList<string>>
         {
-            ["part"] = ["TIMER", "DISTANCE", "DIGIT", "WARNING", "SUCCESS", "FAILED", "TIME_OVER", "SPEED_GAUGE", "OBJECTS", "RANK", "LAPS", "SPEED", "ENERGY", "LAP_TIMES", "RACE_TIME", "FACES"],
+            ["part"] = ["TIMER", "DISTANCE", "DIGIT", "WARNING", "SUCCESS", "FAILED", "TIME_OVER", "SPEED_GAUGE", "OBJECTS", "LEADER_GAP", "RANK", "LAPS", "SPEED", "ENERGY", "LAP_TIMES", "RACE_TIME", "FACES"],
             ["banner"] = ["FINAL_LAP", "BOOST_POWER", "TIME_BONUS", "GAP", "WRONG_WAY", "TICK"],
             ["look"] = ["normal", "ghost", "invisible"],
         };

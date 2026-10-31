@@ -1,4 +1,4 @@
-FZMP format 1 api 1, 2487 bytes, hash b4b27577bb399a53857164b7055c0dbdbae839c35d9e63a2aec191f7cbe33364
+FZMP format 1 api 1, 2495 bytes, hash 29924b02f4774fedbed4b5649bb879567bfc407e45b6426d31b09d01d20c0e43
 HEAD name "Stats" badge "" about "A vector of the stat words."
 PARM 2
   0 bad "A real that is not finite" switch int 0..1 step 1 default 0
@@ -10,7 +10,7 @@ VARS globals 1, seat words 1
 RULE 4
   0 "Writes" event each seat, locals 1, when none, while 0000, body 000e
   1 "Reads" event every step, locals 1, when none, while 00e2, body 00e5
-  2 "Hurts" event go, locals 1, when none, while none, body 0135
+  2 "Hurts" event race_start, locals 1, when none, while none, body 0135
   3 "Map" event every step, locals 3, when none, while none, body 0166
 CODE 476 bytes
   ; rule 0 while
@@ -218,4 +218,4 @@ CODE 476 bytes
   01d4  StoreLocal 0
   01d6  Jump 016d
   01db  End
-SRC  1714 bytes
+SRC  1722 bytes

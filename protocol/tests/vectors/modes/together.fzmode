@@ -2,4 +2,4 @@
 mode "Together" { api 1; }
 start_together;
 global int ghosts;
-rule "Count" { event race_start; do { for each seat where seat.ghost { ghosts = ghosts + 1; } } }
+rule "Count" { event game_start; do { for each seat where seat.ghost { ghosts = ghosts + 1; } } }

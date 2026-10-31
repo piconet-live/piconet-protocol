@@ -43,7 +43,7 @@ rule "Reads" {
   }
 }
 
-rule "Hurts" { event go; do { for each seat { damage seat, hurt; damage seat, 1.0; } } }
+rule "Hurts" { event race_start; do { for each seat { damage seat, hurt; damage seat, 1.0; } } }
 
 rule "Map" {
   event every step;

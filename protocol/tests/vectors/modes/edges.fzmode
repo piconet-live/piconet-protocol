@@ -6,4 +6,4 @@ mode "Edges" {
 laps unlimited;
 cpus on;
 
-rule "Scripted" { event race_start; do { for each seat where seat.is_cpu { cpu_mode seat, 18; } } }
+rule "Scripted" { event countdown; do { for each seat where seat.is_cpu { cpu_mode seat, 18; } } }

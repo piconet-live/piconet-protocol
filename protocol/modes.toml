@@ -434,16 +434,16 @@ comes to rest broken down); 4 retired (`retire`); 0 none of these)"""
 # kept in the block's engine page; language 6 gives their order in a step)
 
 [[event]]
-name = "race_start"
+name = "countdown"
 id = 3
 kind = "discrete"
-doc = "the first step after the start gate (the countdown begins): the mode's first run"
+doc = "the first step the machines' tasks run in (the 3-2-1 begins; under rolling_start, at once): every rule that needs a running step can start here"
 
 [[event]]
-name = "go"
+name = "race_start"
 id = 4
 kind = "discrete"
-doc = "the game's GO: race.started became true this step"
+doc = "the race starts, the game's GO: race.started became true this step"
 
 [[event]]
 name = "lap"
@@ -567,6 +567,12 @@ id = 20
 kind = "discrete"
 binds = "seat"
 doc = "the seat began going the wrong way (P+0x10C became not 0)"
+
+[[event]]
+name = "game_start"
+id = 21
+kind = "discrete"
+doc = """the game starts: once, in the step before the first picture with the machines in it, on every game alike, with the setup words already in force. For what the players must see or feel from that first picture. No step of the machines has run and none will until countdown, so what needs one (the words listed in language 6) is refused here, as is wait"""
 
 [[setup]]
 name = "laps"
@@ -1277,6 +1283,7 @@ doc = "the course's number (the game's, as `laps by course` names it)"
 
 [[action]]
 name = "seat.speed"
+needs_step = true
 id = 0
 args = ["seat", "real"]
 where = "site L (main.rel 0x23854, after the air drag) in the next step's machine step, and the rescale at the mode point"
@@ -1287,6 +1294,7 @@ down, destroyed, finished, retired or restoring is not held"""
 
 [[action]]
 name = "retire"
+needs_step = true
 id = 2
 args = ["seat"]
 where = "the mode point: flag 0x08000000 and flag 0x1 cleared in one write (never on a finished seat)"
@@ -1294,6 +1302,7 @@ doc = "the seat is out of the race: it is retired, the game's verdict books it o
 
 [[action]]
 name = "explode"
+needs_step = true
 id = 3
 args = ["seat"]
 where = """the mode point, after the run (the image's mode_point): story action 16, fn_1_25004(M) with the momentum \
@@ -1331,6 +1340,7 @@ doc = "every seat handed to the CPU is given back"
 
 [[action]]
 name = "cpu_mode"
+needs_step = true
 id = 8
 args = ["seat", "int"]
 where = """the mode point: story action 14 on a CPU seat's driver block CB = M+0x484: n 0, word 0 &= ~1 and CB+0x32 = 0 (the \
@@ -1347,6 +1357,7 @@ doc = "the seat's place in the results when the race ends, 1 first (0: the mode'
 
 [[action]]
 name = "end_race"
+needs_step = true
 id = 10
 where = """the end clause, after every other queued action of the run: the mode's order into the standing and the results \
 (R+0xE, R+0x2C, P+0x115, CM+0x23C, CM+0x21C, the record's place, time, skulls, max speed and points), held every step \
@@ -1363,6 +1374,7 @@ doc = "adds points to the seat; a negative total reads as it is and shows as 0 o
 
 [[action]]
 name = "stop_all"
+needs_step = true
 id = 12
 where = "the mode point: rule 0x80 (fn_1_331EC 0x33354: every machine brakes), from the next step"
 doc = "every machine brakes. Ends nothing: the compiler refuses a mode that has it without end_race or clock_limit"
@@ -1376,6 +1388,7 @@ doc = "sets the seat's energy"
 
 [[action]]
 name = "boost"
+needs_step = true
 id = 14
 args = ["seat"]
 where = "the stand-in routine, before the game's rule hook fn_1_331EC, the next step: flag 0x40 (the game's own request)"
@@ -1383,6 +1396,7 @@ doc = "asks for the game's own energy boost; refused by its own rules (lap 1, en
 
 [[action]]
 name = "push"
+needs_step = true
 id = 15
 args = ["seat", "vec"]
 where = "site L (main.rel 0x23854) in the next machine step: the momentum M+0x94.. += v x W / 216"
@@ -1390,6 +1404,7 @@ doc = "an impulse of v km/h, a vector, added to the seat's motion in the next st
 
 [[action]]
 name = "seat.velocity"
+needs_step = true
 id = 16
 args = ["seat", "vec"]
 where = "site L (main.rel 0x23854) in the next machine step: the momentum M+0x94.. = v x W / 216"
@@ -1567,10 +1582,10 @@ doc = "every racer starts on the same spot, slot 0's, and nobody touches anybody
 
 [[choice]]
 name = "part"
-values = ["TIMER", "DISTANCE", "DIGIT", "WARNING", "SUCCESS", "FAILED", "TIME_OVER", "SPEED_GAUGE", "OBJECTS", "RANK", "LAPS", "SPEED", "ENERGY", "LAP_TIMES", "RACE_TIME", "FACES"]
+values = ["TIMER", "DISTANCE", "DIGIT", "WARNING", "SUCCESS", "FAILED", "TIME_OVER", "SPEED_GAUGE", "OBJECTS", "LEADER_GAP", "RANK", "LAPS", "SPEED", "ENERGY", "LAP_TIMES", "RACE_TIME", "FACES"]
 doc = """a part of the game's own race HUD: TIMER the timed mode's clock (clock_limit's time, R+0xA4: seconds, 0 to \
 999); DISTANCE the metres to the finish (the seat's own); DIGIT the story's big digit (danger_zone's seconds, 3 2 1); \
-WARNING, SUCCESS, FAILED, TIME_OVER, SPEED_GAUGE, OBJECTS the story's pictures, off until shown; RANK, LAPS, SPEED, ENERGY, \
+WARNING, SUCCESS, FAILED, TIME_OVER, SPEED_GAUGE, OBJECTS the story's pictures, off until shown; LEADER_GAP the game's own time gap to the leader, off until shown: at each lap line, for a second, the seat's time behind the leader, and the leader's own lead when second place crosses; RANK, LAPS, SPEED, ENERGY, \
 LAP_TIMES, RACE_TIME, FACES the standard HUD (the mask .data 0x3D544; FACES the board fn_1_D27B8), on until hidden"""
 
 [[choice]]
@@ -1606,6 +1621,7 @@ doc = "a whole number beside the spare-machine icon, two digits (07); above 99 s
 
 [[action]]
 name = "stock_banner"
+needs_step = true
 id = 28
 args = ["seat", "banner"]
 where = "the display record's banner for this step; raised for the local seat by the image after the mode point"
@@ -1658,6 +1674,7 @@ doc = "the clock `show s, TIMER` draws reads these steps as seconds, rounded up 
 
 [[action]]
 name = "break_down"
+needs_step = true
 id = 35
 args = ["seat"]
 where = """the mode point: what fn_1_24F10 does when damage takes the last energy (energy 0, base speed 0, flag 0x80, M+0x593 60 \
@@ -1751,6 +1768,7 @@ doc = "body, the damage multiplier; read at every hit; held to the stat pack's r
 
 [[action]]
 name = "damage"
+needs_step = true
 id = 48
 args = ["seat", "real"]
 where = "the mode point, after the run (the image's mode_point): the game's own fn_1_24F10(M, x)"

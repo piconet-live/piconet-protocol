@@ -1,5 +1,6 @@
-// A ghost race: a time trial raced together. Everyone starts on one spot and nobody touches anybody; you see the
-// others as ghosts and your own machine as it is. The results are the game's own, by time.
+// A ghost race: a time trial raced together. Everyone starts on one spot and nobody touches anybody. Until the race starts
+// you see only your own machine; from GO the others are ghosts. No place and no faces: the only comparison is the game's
+// own gap to the leader, for a second at each lap line. The results are the game's own, by time.
 
 mode "Ghost race" {
   api 1;
@@ -13,12 +14,29 @@ start_together;
 contact off;
 laps lap_count;
 
+rule "Alone on the grid, no standings" {
+  event game_start;
+  do {
+    for each seat {
+      seat.look = invisible;
+      seat.own_look = normal;
+      hide seat, FACES;
+      hide seat, RANK;
+      show seat, LEADER_GAP;
+    }
+  }
+}
+
 rule "The others are ghosts" {
   event race_start;
   do {
     for each seat {
       seat.look = ghost;
-      seat.own_look = normal;
     }
   }
+}
+
+rule "Whoever finishes is gone" {
+  event finish(s);
+  do { s.look = invisible; }   // the CPU drives a finished seat on: nobody should race that
 }

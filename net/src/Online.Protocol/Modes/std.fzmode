@@ -20,7 +20,7 @@ macro at(time t, block body) {
 // begun, whichever of the two the step shows first, and respawns off lets a restore under way finish.
 macro lives(int n) {
   seat int lives_left;
-  rule { event race_start; do { for each seat { seat.lives_left = n; if (n > 1) { respawns seat; } } } }
+  rule { event game_start; do { for each seat { seat.lives_left = n; show_number seat, n; if (n > 1) { respawns seat; } } } }
   rule { event destroyed(s); do { if (s.lives_left > 0) { s.lives_left -= 1; } } }
   rule { event each seat; when seat.restoring and seat.lives_left <= 1; do { respawns seat off; } }
   rule { event out(s); do { s.lives_left = 0; } }

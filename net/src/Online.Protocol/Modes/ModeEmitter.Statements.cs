@@ -17,6 +17,7 @@ internal sealed partial class ModeEmitter
 
     private void Statement(ModeStatement statement)
     {
+        _line = statement.Line;
         switch (statement)
         {
             case ModeLocal local:
@@ -416,6 +417,10 @@ internal sealed partial class ModeEmitter
     /// the wait record, with the saved locals), then t, then Wait, which keeps the slots in use.</summary>
     private void Wait(ModeWait wait)
     {
+        if (_gameStart)
+        {
+            throw new ModeCompileException(wait.Line, "a wait counts steps, and game_start comes before the first one: use countdown or race_start");
+        }
         if (_noWait > 0)
         {
             throw new ModeCompileException(wait.Line, "a wait stands in a rule's body (or a sub called with call), not in a sub called inside an expression or a condition");
