@@ -3,7 +3,7 @@
 mode "Knockout" {
   api 1;
   badge "KNOCKOUT";
-  about "The racer in last place is out at every cut.";
+  about "The racer in last place is out at every cut. A point for every cut you survive.";
 }
 
 param length    "Race length" delay 4min..10min step 30s default 7min;
@@ -15,7 +15,7 @@ cpus on;
 laps unlimited;
 rolling_start 1000 km/h;       // speed at the gate, CPU steers through the countdown at 60% accelerator, control at GO
 race_waits everyone;           // the race goes on until the mode ends it, not until the last player is out
-results_title "KNOCKOUT";
+results_title "KNOCKOUT";       // the points page: a point for every cut survived, ties in the order below
 
 global int interval;           // steps between cuts, worked out once at go
 global int next_cut;
@@ -40,6 +40,7 @@ rule "Cut the last racer" {
     cuts += 1;
     v.cut_order = cuts;
     next_cut = race.steps + interval;
+    for each seat where racing and seat.cut_order == 0 { award seat, 1; }   // a point for every cut survived
   }
 }
 
