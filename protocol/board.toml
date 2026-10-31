@@ -26,7 +26,7 @@
 [board]
 name = "status board"
 magic = "FZSB"          # the file's first four bytes
-version = 3             # a new layout is a new version: a game and a launcher of different versions refuse each other
+version = 4             # a new layout is a new version: a game and a launcher of different versions refuse each other
 endian = "little"
 block_align = 64
 
@@ -285,12 +285,13 @@ kind = "seqlock"
 writer = "game"
 doc = """The values of the mode's `board` lines, every picture drawn of a race, a practice, a watched race and a replay: \
 what the mode's block holds at the moment the picture shows (a practice's rewind shows the moment's). Rollback can \
-correct them a moment later, as the Snapshot's. Not written when the mode has no `board` line. Read from the mode's \
+correct them a moment later, as the Snapshot's. Not written when the mode has no `board` line and has not broken. Read from the mode's \
 block after the frame's steps; nothing of the race reads this. A line's Column says where its values are: Globals \
 [Column], Seats[seat * 8 + Column], Teams[team * 8 + Column]."""
 fields = [
     { name = "Serial", type = "u32", doc = "written so far (0: none yet)" },
     { name = "Frame", type = "u32", doc = "the race's step of the picture" },
+    { name = "Fault", type = "u32", doc = "what ended the race when the mode broke (mode.h's Fault, D6): 0 while it runs as it should" },
     { name = "Globals", type = "ModeValue", count = 8 },
     { name = "Seats", type = "ModeValue", count = 240 },
     { name = "Teams", type = "ModeValue", count = 240 },

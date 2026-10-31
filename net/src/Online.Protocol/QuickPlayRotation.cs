@@ -23,14 +23,15 @@ public sealed record RotationMode(string File, ModePackage Package, string Hash,
     public ModeStart Start() => Package.Start(Values);
 
     /// <summary>The vote card of this mode on a course (<see cref="CourseVote.RandomCourse"/>: laps not known); a spicy
-    /// mode's carries its badge and its line.</summary>
+    /// mode's carries its badge, its line and the rules it changes.</summary>
     /// <param name="course">The card's course.</param>
-    /// <param name="spicy">A spicy option's: its badge and its line.</param>
+    /// <param name="spicy">A spicy option's: its badge, its line and its rules.</param>
     /// <param name="lobbyLaps">The lobby's laps, for a mode that states none.</param>
     public VoteCard Card(int course, bool spicy, int lobbyLaps = 3) => new(Package.Name,
         course == CourseVote.RandomCourse ? null : Laps(course) ?? lobbyLaps,
         spicy && Package.Badge.Length > 0 ? Package.Badge : null,
-        spicy && Package.About.Length > 0 ? Package.About : null);
+        spicy && Package.About.Length > 0 ? Package.About : null,
+        spicy && ModeRuleLines.Of(Package) is { Count: > 0 } rules ? rules : null);
 }
 
 /// <summary>A spicy option of the rotation: its mode, the courses it is raced on (null: the pool) and its weight in

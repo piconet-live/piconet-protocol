@@ -481,4 +481,39 @@ public sealed class ModeTermsTests
         Assert.Null(result.Mode);
         Assert.Contains(says, Assert.Single(result.Errors), StringComparison.Ordinal);
     }
+
+    [Fact]
+    public void TheRuleLinesSayWhatTheModeChanges()
+    {
+        var result = ModeCompiler.Compile("""
+            mode "M" { api 1; about "A."; }
+            param time "Time" delay 1min..10min step 30s default 3min;
+            laps 3;
+            boost off;
+            restore off;
+            clock_limit time;
+            damage 150%;
+            spin_attacks off;
+            spin_immunity off;
+            time_bonus 10;
+            racers 2..8;
+            """);
+        Assert.True(result.Succeeded, string.Join(" ", result.Errors));
+        Assert.Equal(
+            ["No boost", "No restore", "Time limit 3:00", "Damage 150%", "No spin attacks", "Time bonus 10 seconds", "Up to 8 racers"],
+            ModeRuleLines.Of(result.Mode!));
+    }
+
+    [Fact]
+    public void ARuleNotChangedSaysNothing()
+    {
+        var result = ModeCompiler.Compile("""
+            mode "M" { api 1; about "A."; }
+            laps 3;
+            boost on;
+            contact on;
+            """);
+        Assert.True(result.Succeeded, string.Join(" ", result.Errors));
+        Assert.Empty(ModeRuleLines.Of(result.Mode!));
+    }
 }

@@ -476,11 +476,12 @@ public sealed record CourseVote(string MatchId, IReadOnlyList<int> Options, int 
 
 /// <summary>What a vote's option races (<see cref="CourseVote.Cards"/>): its mode's name and its laps (0: unlimited;
 /// null: not known before the draw, "Random course"), and for a mode that changes the race (a spicy card) the mode's
-/// one-word badge and its line of what it changes (the header's <c>badge</c> and <c>about</c>); a normal card has
-/// neither.</summary>
+/// one-word badge, its line of what it changes (the header's <c>badge</c> and <c>about</c>) and the rules its setup
+/// words change (<see cref="ModeRuleLines"/>); a normal card has none of them.</summary>
 public sealed record VoteCard(string Mode, int? Laps,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Badge = null,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? About = null);
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? About = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<string>? Rules = null);
 
 /// <summary>The course vote as it stands (the counts are visible to everyone during the vote):
 /// the votes per option, in the options' order, and who has voted (player ids), sent to everyone in the lobby who

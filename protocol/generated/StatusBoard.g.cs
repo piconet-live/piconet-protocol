@@ -11,7 +11,7 @@ public static class BoardLayout
 {
     /// <summary>"FZSB": the board's first four bytes.</summary>
     public const uint Magic = 0x42535A46;
-    public const uint Version = 3;
+    public const uint Version = 4;
     public const int Size = 14912;
     public const int Header = 0;
     public const int HeaderMagic = 0;
@@ -280,13 +280,14 @@ public sealed class BoardModeHead
 
 /// <summary> The values of the mode's `board` lines, every picture drawn of a race, a practice, a watched race and a
 /// replay: what the mode's block holds at the moment the picture shows (a practice's rewind shows the moment's).
-/// Rollback can correct them a moment later, as the Snapshot's. Not written when the mode has no `board` line. Read
-/// from the mode's block after the frame's steps; nothing of the race reads this. A line's Column says where its values
-/// are: Globals [Column], Seats[seat * 8 + Column], Teams[team * 8 + Column].</summary>
+/// Rollback can correct them a moment later, as the Snapshot's. Not written when the mode has no `board` line and has
+/// not broken. Read from the mode's block after the frame's steps; nothing of the race reads this. A line's Column says
+/// where its values are: Globals [Column], Seats[seat * 8 + Column], Teams[team * 8 + Column].</summary>
 public sealed class BoardModeValues
 {
     public uint Serial;
     public uint Frame;
+    public uint Fault;
     public BoardModeValue[] Globals = new BoardModeValue[8];
     public BoardModeValue[] Seats = new BoardModeValue[240];
     public BoardModeValue[] Teams = new BoardModeValue[240];
@@ -568,17 +569,18 @@ public readonly unsafe struct BoardView
         Interlocked.MemoryBarrier();
         Volatile.Write(ref *(uint*)(_at + BoardLayout.ModeValues + 4), v.Serial);
         Volatile.Write(ref *(uint*)(_at + BoardLayout.ModeValues + 8), v.Frame);
+        Volatile.Write(ref *(uint*)(_at + BoardLayout.ModeValues + 12), v.Fault);
         for (var i = 0; i < 8; i++)
         {
-            StoreModeValue(BoardLayout.ModeValues + 12 + i * 4, in v.Globals[i]);
+            StoreModeValue(BoardLayout.ModeValues + 16 + i * 4, in v.Globals[i]);
         }
         for (var i = 0; i < 240; i++)
         {
-            StoreModeValue(BoardLayout.ModeValues + 44 + i * 4, in v.Seats[i]);
+            StoreModeValue(BoardLayout.ModeValues + 48 + i * 4, in v.Seats[i]);
         }
         for (var i = 0; i < 240; i++)
         {
-            StoreModeValue(BoardLayout.ModeValues + 1004 + i * 4, in v.Teams[i]);
+            StoreModeValue(BoardLayout.ModeValues + 1008 + i * 4, in v.Teams[i]);
         }
         Volatile.Write(ref seq, s + 2);
     }
@@ -597,17 +599,18 @@ public readonly unsafe struct BoardView
             }
             into.Serial = Volatile.Read(ref *(uint*)(_at + BoardLayout.ModeValues + 4));
             into.Frame = Volatile.Read(ref *(uint*)(_at + BoardLayout.ModeValues + 8));
+            into.Fault = Volatile.Read(ref *(uint*)(_at + BoardLayout.ModeValues + 12));
             for (var i = 0; i < 8; i++)
             {
-                LoadModeValue(BoardLayout.ModeValues + 12 + i * 4, ref into.Globals[i]);
+                LoadModeValue(BoardLayout.ModeValues + 16 + i * 4, ref into.Globals[i]);
             }
             for (var i = 0; i < 240; i++)
             {
-                LoadModeValue(BoardLayout.ModeValues + 44 + i * 4, ref into.Seats[i]);
+                LoadModeValue(BoardLayout.ModeValues + 48 + i * 4, ref into.Seats[i]);
             }
             for (var i = 0; i < 240; i++)
             {
-                LoadModeValue(BoardLayout.ModeValues + 1004 + i * 4, ref into.Teams[i]);
+                LoadModeValue(BoardLayout.ModeValues + 1008 + i * 4, ref into.Teams[i]);
             }
             Interlocked.MemoryBarrier();
             if (Volatile.Read(ref seq) == s)

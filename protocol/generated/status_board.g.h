@@ -12,7 +12,7 @@
 namespace fzgx::board
 {
 inline constexpr std::uint32_t MAGIC = 0x42535A46;  // "FZSB" as its first four bytes
-inline constexpr std::uint32_t VERSION = 3;
+inline constexpr std::uint32_t VERSION = 4;
 inline constexpr std::size_t SIZE = 14912;  // the whole board, in bytes
 
 // Where the game is. Set by the game; the launcher reads it to judge a heartbeat that stands.
@@ -192,13 +192,14 @@ struct ModeHead
 
 // The values of the mode's `board` lines, every picture drawn of a race, a practice, a watched race and a replay: what
 // the mode's block holds at the moment the picture shows (a practice's rewind shows the moment's). Rollback can correct
-// them a moment later, as the Snapshot's. Not written when the mode has no `board` line. Read from the mode's block
-// after the frame's steps; nothing of the race reads this. A line's Column says where its values are: Globals [Column],
-// Seats[seat * 8 + Column], Teams[team * 8 + Column].
+// them a moment later, as the Snapshot's. Not written when the mode has no `board` line and has not broken. Read from
+// the mode's block after the frame's steps; nothing of the race reads this. A line's Column says where its values are:
+// Globals [Column], Seats[seat * 8 + Column], Teams[team * 8 + Column].
 struct ModeValues
 {
   std::uint32_t serial = 0;  // written so far (0: none yet)
   std::uint32_t frame = 0;  // the race's step of the picture
+  std::uint32_t fault = 0;
   std::array<ModeValue, 8> globals{};
   std::array<ModeValue, 240> seats{};
   std::array<ModeValue, 240> teams{};
@@ -224,7 +225,7 @@ inline constexpr std::size_t PULSE = 64;  // 16 bytes, plain
 inline constexpr std::size_t STATUS = 128;  // 24 bytes, seqlock
 inline constexpr std::size_t SNAPSHOT = 192;  // 1580 bytes, seqlock
 inline constexpr std::size_t MODE_HEAD = 1792;  // 8824 bytes, seqlock
-inline constexpr std::size_t MODE_VALUES = 10624;  // 1964 bytes, seqlock
+inline constexpr std::size_t MODE_VALUES = 10624;  // 1968 bytes, seqlock
 inline constexpr std::size_t EVENTS = 12608;  // 2056 bytes, ring
 inline constexpr std::size_t MAILBOX = 14720;  // 144 bytes, seqlock
 inline constexpr std::size_t HEADER_MAGIC = 0;
@@ -543,12 +544,13 @@ public:
     std::atomic_thread_fence(std::memory_order_release);
     Store<std::uint32_t>(at::MODE_VALUES + 4, v.serial, std::memory_order_relaxed);
     Store<std::uint32_t>(at::MODE_VALUES + 8, v.frame, std::memory_order_relaxed);
+    Store<std::uint32_t>(at::MODE_VALUES + 12, v.fault, std::memory_order_relaxed);
     for (std::size_t i = 0; i < 8; ++i)
-      StoreModeValue(at::MODE_VALUES + 12 + i * 4, v.globals[i], std::memory_order_relaxed);
+      StoreModeValue(at::MODE_VALUES + 16 + i * 4, v.globals[i], std::memory_order_relaxed);
     for (std::size_t i = 0; i < 240; ++i)
-      StoreModeValue(at::MODE_VALUES + 44 + i * 4, v.seats[i], std::memory_order_relaxed);
+      StoreModeValue(at::MODE_VALUES + 48 + i * 4, v.seats[i], std::memory_order_relaxed);
     for (std::size_t i = 0; i < 240; ++i)
-      StoreModeValue(at::MODE_VALUES + 1004 + i * 4, v.teams[i], std::memory_order_relaxed);
+      StoreModeValue(at::MODE_VALUES + 1008 + i * 4, v.teams[i], std::memory_order_relaxed);
     seq.store(s + 2, std::memory_order_release);
   }
   // False when every try met the writer at work (or the board was never written: Seq 0 reads as written).
@@ -563,12 +565,13 @@ public:
       ModeValues v;
       v.serial = Load<std::uint32_t>(at::MODE_VALUES + 4, std::memory_order_relaxed);
       v.frame = Load<std::uint32_t>(at::MODE_VALUES + 8, std::memory_order_relaxed);
+      v.fault = Load<std::uint32_t>(at::MODE_VALUES + 12, std::memory_order_relaxed);
       for (std::size_t i = 0; i < 8; ++i)
-        LoadModeValue(at::MODE_VALUES + 12 + i * 4, &v.globals[i], std::memory_order_relaxed);
+        LoadModeValue(at::MODE_VALUES + 16 + i * 4, &v.globals[i], std::memory_order_relaxed);
       for (std::size_t i = 0; i < 240; ++i)
-        LoadModeValue(at::MODE_VALUES + 44 + i * 4, &v.seats[i], std::memory_order_relaxed);
+        LoadModeValue(at::MODE_VALUES + 48 + i * 4, &v.seats[i], std::memory_order_relaxed);
       for (std::size_t i = 0; i < 240; ++i)
-        LoadModeValue(at::MODE_VALUES + 1004 + i * 4, &v.teams[i], std::memory_order_relaxed);
+        LoadModeValue(at::MODE_VALUES + 1008 + i * 4, &v.teams[i], std::memory_order_relaxed);
       std::atomic_thread_fence(std::memory_order_acquire);
       if (seq.load(std::memory_order_relaxed) == s)
       {
