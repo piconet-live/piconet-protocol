@@ -265,9 +265,33 @@ public sealed class ModeWordFormsTests
     [InlineData("rule \"R\" { event race_start; do { map_hide nth(seats, 0) from (seats where racing); } }")]
     [InlineData("rule \"R\" { event race_start; do { for each s in (seats where racing) { retire s; } } }")]
     [InlineData("rule \"R\" { event race_start; do { int a = count((seats where racing) - nth(seats, 0)); } }")]
+    [InlineData("rule \"R\" { event each seat; do { seat.stat.drift_rotation_resistance = seat.stat.base.drift_rotation_resistance * 2; } }")]
+    [InlineData("rule \"R\" { event each seat; do { seat.stat.drift_friction += 0.1; } }")]
+    [InlineData("rule \"R\" { event each seat; do { seat.stat.turn_resistance *= 0.5; } }")]
+    [InlineData("rule \"R\" { event each seat; do { seat.stat.turn_response = 10; } }")]
+    [InlineData("rule \"R\" { event each seat; do { seat.stat.strafe_turn -= 5; } }")]
+    [InlineData("rule \"R\" { event each seat; do { seat.stat.drift_accel = 2.0; } }")]
+    [InlineData("rule \"R\" { event each seat; do { seat.stat.turn_decel /= 2; } }")]
+    [InlineData("rule \"R\" { event each seat; do { seat.stat.grip_window = 3; } }")]
     public void AStatWordOrASetValueCompiles(string body)
     {
         Assert.Empty(Compile(body).Errors);
+    }
+
+    [Fact]
+    public void OnlyAWriteOfAStatOnTheStatsPageAsksForThePage()
+    {
+        static bool Page(string body)
+        {
+            var result = Compile(body);
+            Assert.Empty(result.Errors);
+            return result.Mode!.Setups.Any(s => s.Id == ModeSetup.StatsPage);
+        }
+        Assert.False(Page("rule \"R\" { event each seat; do { seat.stat.body = 1.0; } }"));
+        Assert.False(Page("rule \"R\" { event each seat; do { real a = seat.stat.base.drift_rotation_resistance; real b = seat.stat.grip_window; } }"));
+        Assert.True(Page("rule \"R\" { event each seat; do { seat.stat.drift_rotation_resistance = 1.0; } }"));
+        Assert.True(Page("rule \"R\" { event each seat; do { seat.stat.grip_window = 3; } }"));
+        Assert.Contains(Compile("stats_page;\nrule \"R\" { event each seat; do { } }").Errors, e => e.Contains("the compiler's own", StringComparison.Ordinal));
     }
 
     [Theory]

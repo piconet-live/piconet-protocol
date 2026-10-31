@@ -1,0 +1,38 @@
+// The stats page's words: a value for each past its pack's range on seat 1, in range on seat 0; every read. Compiling
+// this asks for the setup word stats_page; the stats vector, without them, does not.
+mode "Stats page" {
+  api 1;
+}
+
+global real seen = 0.0;
+
+rule "Change" {
+  event each seat;
+  while race.started;
+  do {
+    if (seat.index == 0) {
+      seat.stat.drift_rotation_resistance = seat.stat.base.drift_rotation_resistance + 1.0;
+      seat.stat.drift_friction = 0.25;
+      seat.stat.turn_resistance = 0.125;
+      seat.stat.turn_response = 20.0;
+      seat.stat.strafe_turn = 30.0;
+      seat.stat.drift_accel = 2.0;
+      seat.stat.turn_decel = 0.5;
+      seat.stat.grip_window = 3.7;
+    }
+    if (seat.index == 1) {
+      seat.stat.drift_rotation_resistance = 100.0;
+      seat.stat.drift_friction = 100.0;
+      seat.stat.turn_resistance = 100.0;
+      seat.stat.turn_response = 1000.0;
+      seat.stat.strafe_turn = 9000.0;
+      seat.stat.drift_accel = 100.0;
+      seat.stat.turn_decel = 100.0;
+      seat.stat.grip_window = 1000.0;
+    }
+    seen = seat.stat.drift_rotation_resistance + seat.stat.drift_friction + seat.stat.turn_resistance + seat.stat.turn_response
+         + seat.stat.strafe_turn + seat.stat.drift_accel + seat.stat.turn_decel + seat.stat.grip_window
+         + seat.stat.base.drift_friction + seat.stat.base.turn_resistance + seat.stat.base.turn_response
+         + seat.stat.base.strafe_turn + seat.stat.base.drift_accel + seat.stat.base.turn_decel + seat.stat.base.grip_window;
+  }
+}

@@ -76,6 +76,13 @@ public static class ModeResultsTitle
     public static string Text(IEnumerable<ModeSetupValue> cells) => new([.. cells.Select(c => (char)c.Value)]);
 }
 
+/// <summary>The stats that live on the mode block's stats page: a rule that writes one makes the compiler's setup word
+/// <c>stats_page</c>, so a mode without them has the block of before, byte for byte.</summary>
+public static class ModeStatsPage
+{
+    public static bool Uses(ModeAction action) => action is >= ModeAction.SeatStatDriftRotationResistance and <= ModeAction.SeatStatGripWindow;
+}
+
 /// <summary>The texts the <c>tag</c> word draws, which the package carries in the setup word <c>tag_texts</c>: a value a
 /// character, a 0 between texts; a <c>tag</c> names one by its place, from 1. They are drawn by the game's font 5 as the
 /// name tags are (the characters tested in piconet-docs archive/research/spike-names.md): A to Z, 0 to 9, the space,
