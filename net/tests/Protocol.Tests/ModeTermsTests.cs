@@ -375,7 +375,7 @@ public sealed class ModeTermsTests
     [InlineData("solo on;\nsave_state on;", "says rewind")]
     [InlineData("solo p;\ncpus p;", "one seat")]
     [InlineData("time_limit 5min;", "not a word of api")]
-    [InlineData("rule \"R\" { event go; do { eliminate seat; } }", "eliminate")]
+    [InlineData("rule \"R\" { event race_start; do { eliminate seat; } }", "eliminate")]
     public void AnOnOffWordGivenAnythingElseIsRefused(string body, string says)
     {
         var result = ModeCompiler.Compile(Sw + body + "\n");
@@ -423,7 +423,7 @@ public sealed class ModeTermsTests
     [Fact]
     public void AModeWithoutTagsHasNoTagTexts()
     {
-        var mode = ModeCompiler.Compile("mode \"S\" { api 1; }\nrule \"R\" { event go; do { } }\n");
+        var mode = ModeCompiler.Compile("mode \"S\" { api 1; }\nrule \"R\" { event race_start; do { } }\n");
         Assert.DoesNotContain(ModePackage.Read(mode.Package!).Setups, s => s.Id == ModeSetup.TagTexts);
     }
 

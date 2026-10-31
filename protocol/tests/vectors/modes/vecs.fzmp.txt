@@ -1,10 +1,10 @@
-FZMP format 1 api 1, 499 bytes, hash db06f41f3ba3272247a3253bd5891674af6628117c683b19b7559e75b0c5358b
+FZMP format 1 api 1, 507 bytes, hash dbeab58fb02fcdbb86f3185db6b49f3dfea9553b6dcb9409ef589b126fbe03b3
 HEAD name "Vecs" badge "" about "A vector of vec and cross."
 PARM 0
 SETP 0
 VARS globals 0, seat words 0
 RULE 1
-  0 "Sideways" event go, locals 7, when none, while none, body 0000
+  0 "Sideways" event race_start, locals 7, when none, while none, body 0000
 CODE 147 bytes
   ; rule 0 body
   0000  Push 0
@@ -75,4 +75,4 @@ CODE 147 bytes
   008b  StoreLocal 0
   008d  Jump 0007
   0092  End
-SRC  216 bytes
+SRC  224 bytes

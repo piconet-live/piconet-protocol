@@ -1,4 +1,4 @@
-FZMP format 1 api 1, 406 bytes, hash 6fb8121c1fd839e2ab3863488a26a317da5d439061cf6a41041d1cf299f8d7c6
+FZMP format 1 api 1, 406 bytes, hash c6f10b8f305b3ece75a7ba7f3f9d53611b48f52feb4eff0dd37a71c92d77990d
 HEAD name "Together" badge "" about ""
 PARM 0
 SETP 1
@@ -6,7 +6,7 @@ SETP 1
 VARS globals 1, seat words 0
   global 0 = 0
 RULE 1
-  0 "Count" event race_start, locals 1, when none, while none, body 0000
+  0 "Count" event game_start, locals 1, when none, while none, body 0000
 CODE 54 bytes
   ; rule 0 body
   0000  Push 0

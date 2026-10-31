@@ -29,7 +29,7 @@ public sealed class ModeLanguageTests
     [Fact]
     public void ARuleWithNothingToKeepStillHasItsLocal()
     {
-        var rule = Assert.Single(Compile("global int n;\nrule { event go; do { n += 1; } }\n").Mode!.Rules);
+        var rule = Assert.Single(Compile("global int n;\nrule { event race_start; do { n += 1; } }\n").Mode!.Rules);
         Assert.Equal(1, rule.Locals);                             // the runner's reader refuses 0
     }
 

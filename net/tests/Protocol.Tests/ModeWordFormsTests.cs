@@ -117,13 +117,13 @@ public sealed class ModeWordFormsTests
     [InlineData("results_title \"ABCDEFGHIJKLMNOPQRSTUVWX\";")]
     [InlineData("results_title \"Low\";")]
     [InlineData("results_title \" A\";")]
-    [InlineData("clock_limit 600; rule \"R\" { event go; do { show_clock 5; } }")]
-    [InlineData("rule \"R\" { event go; while race.started; do { } }")]
+    [InlineData("clock_limit 600; rule \"R\" { event race_start; do { show_clock 5; } }")]
+    [InlineData("rule \"R\" { event race_start; while race.started; do { } }")]
     [InlineData("global vec v;")]
     [InlineData("global int series;")]
     [InlineData("global int race;")]
     [InlineData("macro m() { }")]
-    [InlineData("seat int z; rule \"R\" { event go; do { for each seat by z { retire seat; } } }")]
+    [InlineData("seat int z; rule \"R\" { event race_start; do { for each seat by z { retire seat; } } }")]
     [InlineData("rule \"R\" { event each seat; do { int a = 2 − 3; } }")]
     public void AFormTheDocumentsRefuseIsRefused(string body)
     {
@@ -133,12 +133,12 @@ public sealed class ModeWordFormsTests
     [Theory]
     [InlineData("damage 200%; knockback 300%; wall_damage 50%; wall_bounce 1000%; spin_attacks off; side_attacks off; spin_immunity on;")]
     [InlineData("param p \"D\" number 0.5..2.0 default 1.0; damage p;")]
-    [InlineData("rule \"R\" { event go; do { race.damage = 2.0; race.knockback *= 2; race.spin_attacks = off; race.side_attacks = not race.side_attacks; race.spin_immunity = on; race.wall_damage = 50%; race.wall_bounce += 1; } }")]
+    [InlineData("rule \"R\" { event race_start; do { race.damage = 2.0; race.knockback *= 2; race.spin_attacks = off; race.side_attacks = not race.side_attacks; race.spin_immunity = on; race.wall_damage = 50%; race.wall_bounce += 1; } }")]
     [InlineData("time_bonus off;")]
     [InlineData("clock_limit 2min; time_bonus on;")]
     [InlineData("clock_limit 2min; time_bonus 10;")]
     [InlineData("clock_limit 2min; points_table game;")]
-    [InlineData("points_table [100, 80, 60]; rule \"R\" { event go; do { end_race; } }")]
+    [InlineData("points_table [100, 80, 60]; rule \"R\" { event race_start; do { end_race; } }")]
     [InlineData("clock_limit 2min; points_table game; results points;")]
     public void ACombatOrPointsWordCompiles(string body)
     {
@@ -153,8 +153,8 @@ public sealed class ModeWordFormsTests
     [InlineData("points_table game;")]
     [InlineData("clock_limit 2min; points_table [];")]
     [InlineData("clock_limit 2min; points_table [1000];")]
-    [InlineData("rule \"R\" { event go; do { race.steps = 1; } }")]
-    [InlineData("rule \"R\" { event go; do { race.spin_attacks = 1.0; } }")]
+    [InlineData("rule \"R\" { event race_start; do { race.steps = 1; } }")]
+    [InlineData("rule \"R\" { event race_start; do { race.spin_attacks = 1.0; } }")]
     public void ACombatOrPointsFormIsRefused(string body)
     {
         Assert.NotEmpty(Compile(body).Errors);
@@ -206,7 +206,7 @@ public sealed class ModeWordFormsTests
             seat int infected_at;
 
             rule "Patient zero" {
-              event go;
+              event race_start;
               do {
                 seat z = nth(seats where racing, random(count(seats where racing)));
                 z.infected_at = 1;
@@ -259,10 +259,10 @@ public sealed class ModeWordFormsTests
     [InlineData("rule \"R\" { event each seat; do { real a = seat.stat.base.body; } }")]
     [InlineData("rule \"R\" { event each seat; do { seat.stat.max_speed = 1.0; } }")]
     [InlineData("rule \"R\" { event each seat; do { seat.stat.drag *= 2; } }")]
-    [InlineData("rule \"R\" { event go; do { seat a = first(seats); a.stat.boost_length -= 0.5; } }")]
-    [InlineData("rule \"R\" { event go; do { map_hide nth(seats, 0) from (seats where racing); } }")]
-    [InlineData("rule \"R\" { event go; do { for each s in (seats where racing) { retire s; } } }")]
-    [InlineData("rule \"R\" { event go; do { int a = count((seats where racing) - nth(seats, 0)); } }")]
+    [InlineData("rule \"R\" { event race_start; do { seat a = first(seats); a.stat.boost_length -= 0.5; } }")]
+    [InlineData("rule \"R\" { event race_start; do { map_hide nth(seats, 0) from (seats where racing); } }")]
+    [InlineData("rule \"R\" { event race_start; do { for each s in (seats where racing) { retire s; } } }")]
+    [InlineData("rule \"R\" { event race_start; do { int a = count((seats where racing) - nth(seats, 0)); } }")]
     public void AStatWordOrASetValueCompiles(string body)
     {
         Assert.Empty(Compile(body).Errors);
@@ -281,7 +281,7 @@ public sealed class ModeWordFormsTests
 
     [Theory]
     [InlineData("rule \"R\" { event each seat; do { show_number seat off; } }")]
-    [InlineData("rule \"R\" { event go; do { int a = race.humans_left; } }")]
+    [InlineData("rule \"R\" { event race_start; do { int a = race.humans_left; } }")]
     public void AWordTheDocumentsMarkNotBuiltIsRefused(string body)
     {
         Assert.NotEmpty(Compile(body).Errors);

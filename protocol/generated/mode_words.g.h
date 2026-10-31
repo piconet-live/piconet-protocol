@@ -189,8 +189,8 @@ enum Event : std::uint8_t
   EVENT_EVERYSTEP = 0,  // every step
   EVENT_EACHSEAT = 1,  // each seat
   EVENT_OUT = 2,  // out
-  EVENT_RACESTART = 3,  // race_start
-  EVENT_GO = 4,  // go
+  EVENT_COUNTDOWN = 3,  // countdown
+  EVENT_RACESTART = 4,  // race_start
   EVENT_LAP = 5,  // lap
   EVENT_CHECKPOINT = 6,  // checkpoint
   EVENT_FINISH = 7,  // finish
@@ -207,7 +207,8 @@ enum Event : std::uint8_t
   EVENT_LAND = 18,  // land
   EVENT_BOOSTEND = 19,  // boost_end
   EVENT_WRONGWAY = 20,  // wrong_way
-  EVENT_COUNT = 21,
+  EVENT_GAMESTART = 21,  // game_start
+  EVENT_COUNT = 22,
 };
 
 // a setup word
@@ -416,7 +417,7 @@ enum Action : std::uint8_t
   ACTION_COUNT = 57,
 };
 
-// the choice `part`: a part of the game's own race HUD: TIMER the timed mode's clock (clock_limit's time, R+0xA4: seconds, 0 to 999); DISTANCE the metres to the finish (the seat's own); DIGIT the story's big digit (danger_zone's seconds, 3 2 1); WARNING, SUCCESS, FAILED, TIME_OVER, SPEED_GAUGE, OBJECTS the story's pictures, off until shown; RANK, LAPS, SPEED, ENERGY, LAP_TIMES, RACE_TIME, FACES the standard HUD (the mask .data 0x3D544; FACES the board fn_1_D27B8), on until hidden
+// the choice `part`: a part of the game's own race HUD: TIMER the timed mode's clock (clock_limit's time, R+0xA4: seconds, 0 to 999); DISTANCE the metres to the finish (the seat's own); DIGIT the story's big digit (danger_zone's seconds, 3 2 1); WARNING, SUCCESS, FAILED, TIME_OVER, SPEED_GAUGE, OBJECTS the story's pictures, off until shown; LEADER_GAP the game's own time gap to the leader, off until shown: at each lap line, for a second, the seat's time behind the leader, and the leader's own lead when second place crosses; RANK, LAPS, SPEED, ENERGY, LAP_TIMES, RACE_TIME, FACES the standard HUD (the mask .data 0x3D544; FACES the board fn_1_D27B8), on until hidden
 enum Part : std::uint8_t
 {
   PART_TIMER = 0,
@@ -428,14 +429,15 @@ enum Part : std::uint8_t
   PART_TIME_OVER = 6,
   PART_SPEED_GAUGE = 7,
   PART_OBJECTS = 8,
-  PART_RANK = 9,
-  PART_LAPS = 10,
-  PART_SPEED = 11,
-  PART_ENERGY = 12,
-  PART_LAP_TIMES = 13,
-  PART_RACE_TIME = 14,
-  PART_FACES = 15,
-  PART_COUNT = 16,
+  PART_LEADER_GAP = 9,
+  PART_RANK = 10,
+  PART_LAPS = 11,
+  PART_SPEED = 12,
+  PART_ENERGY = 13,
+  PART_LAP_TIMES = 14,
+  PART_RACE_TIME = 15,
+  PART_FACES = 16,
+  PART_COUNT = 17,
 };
 
 // the choice `banner`: a banner of the game's own race HUD, shown once, as the game shows it; TICK the timed mode's countdown beep, heard by that seat's player
@@ -536,8 +538,8 @@ constexpr bool Continuous(std::uint8_t event)
     case EVENT_EVERYSTEP: return true;
     case EVENT_EACHSEAT: return true;
     case EVENT_OUT: return false;
+    case EVENT_COUNTDOWN: return false;
     case EVENT_RACESTART: return false;
-    case EVENT_GO: return false;
     case EVENT_LAP: return false;
     case EVENT_CHECKPOINT: return false;
     case EVENT_FINISH: return false;
@@ -554,6 +556,7 @@ constexpr bool Continuous(std::uint8_t event)
     case EVENT_LAND: return false;
     case EVENT_BOOSTEND: return false;
     case EVENT_WRONGWAY: return false;
+    case EVENT_GAMESTART: return false;
     default: return false;
   }
 }
@@ -566,8 +569,8 @@ constexpr int EventBinds(std::uint8_t event)
     case EVENT_EVERYSTEP: return 0;
     case EVENT_EACHSEAT: return 1;
     case EVENT_OUT: return 2;
+    case EVENT_COUNTDOWN: return 0;
     case EVENT_RACESTART: return 0;
-    case EVENT_GO: return 0;
     case EVENT_LAP: return 1;
     case EVENT_CHECKPOINT: return 1;
     case EVENT_FINISH: return 1;
@@ -584,6 +587,7 @@ constexpr int EventBinds(std::uint8_t event)
     case EVENT_LAND: return 1;
     case EVENT_BOOSTEND: return 1;
     case EVENT_WRONGWAY: return 1;
+    case EVENT_GAMESTART: return 0;
     default: return 0;
   }
 }
