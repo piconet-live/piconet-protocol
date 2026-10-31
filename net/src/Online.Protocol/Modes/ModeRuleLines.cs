@@ -54,7 +54,6 @@ public static class ModeRuleLines
     private static string? Lobby(ModeLobbyWord word) => word.Id switch
     {
         ModeSetup.Course => "One course",
-        ModeSetup.Courses => "Set courses",
         ModeSetup.Racers => word.Values is [_, var most] ? $"Up to {Say(most.Value)} racers" : null,
         ModeSetup.Machines => "Set machines",
         ModeSetup.MachineSetting => "Set machine setting",

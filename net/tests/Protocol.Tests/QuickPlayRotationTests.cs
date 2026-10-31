@@ -37,7 +37,7 @@ public sealed class QuickPlayRotationTests : IDisposable
         Assert.Equal("Quick Play", rotation.Normal.Package.Name);
         var spicy = Assert.Single(rotation.Spicy);
         Assert.Equal("OVERDRIVE", spicy.Mode.Package.Badge);
-        Assert.Equal([8], spicy.Courses!);
+        Assert.Equal([8], spicy.Mode.Terms.Courses!);
         Assert.Equal(1, rotation.Api);
         Assert.True(rotation.CpusAllowed);
     }
@@ -102,7 +102,6 @@ public sealed class QuickPlayRotationTests : IDisposable
             mode = "competitive.fzmode"
             [[spicy]]
             mode = "overdrive.fzmode"
-            courses = [8]
             """));
         var random = new Random(5);
         Assert.DoesNotContain(Enumerable.Range(0, 2000).Select(_ => rotation.Random(CoursePool.Default, random.Next)), d => d.Spicy);
@@ -125,12 +124,106 @@ public sealed class QuickPlayRotationTests : IDisposable
     [InlineData("random_spicy_chance = 1.5\n[normal]\nmode = \"competitive.fzmode\"", "a chance from 0 to 1")]
     [InlineData("[normal]\nmode = \"missing.fzmode\"", "missing.fzmode is not there")]
     [InlineData("[normal]\nmode = \"../competitive.fzmode\"", "is not a mode file beside it")]
-    [InlineData("[normal]\nmode = \"competitive.fzmode\"\ncourses = [2]", "2 is not a course of the pool")]
+    [InlineData("[normal]\nmode = \"competitive.fzmode\"\ncourses = [2]", "the mode file says them")]
+    [InlineData("spicy_cards = 0\n[normal]\nmode = \"competitive.fzmode\"\ncourses = \"pool\"", "the mode file says them")]
+    [InlineData("[normal]\nmode = \"competitive.fzmode\"\n[[spicy]]\nmode = \"overdrive.fzmode\"\ncourses = [8]", "the mode file says them")]
     [InlineData("[normal]\nmode = \"competitive.fzmode\"", "spicy_cards is 1, and there is no [[spicy]] option")]
     public void AFileThatDoesNotLoadSaysWhy(string toml, string says)
     {
         var error = Assert.Throws<InvalidDataException>(() => QuickPlayRotation.Read(WithFile(toml)));
         Assert.Contains(says, error.Message, StringComparison.Ordinal);
+    }
+
+    /// <summary>A rotation of a normal mode and a spicy one, whose words are the test's: the normal says nothing unless told.</summary>
+    private QuickPlayRotation WithCourses(string spicyWords, string normalWords = "", int cards = 5)
+    {
+        var folder = WithFile($"cards = {cards}\nrandom_spicy_chance = 0.5\n[normal]\nmode = \"n.fzmode\"\n[[spicy]]\nmode = \"s.fzmode\"\n");
+        File.WriteAllText(Path.Combine(folder, "n.fzmode"), $"mode \"N\" {{ api 1; }}\n{normalWords}\n");
+        File.WriteAllText(Path.Combine(folder, "s.fzmode"), $"mode \"S\" {{ api 1; badge \"S\"; }}\n{spicyWords}\n");
+        return QuickPlayRotation.Read(folder);
+    }
+
+    private const string TwoCourses = "courses [\"Lightning: Loop Cross\", \"Mute City: Sonic Oval\"];";
+
+    /// <summary>A list of several: one card for the mode each vote, on a course drawn from the list (both come up), and
+    /// no course on two cards. Random's spicy draw takes one course of the list too.</summary>
+    [Fact]
+    public void AListOfSeveralIsOneCardOnOneOfItsCourses()
+    {
+        var rotation = WithCourses(TwoCourses);
+        var random = new Random(4);
+        var seen = new HashSet<int>();
+        for (var round = 0; round < 300; round++)
+        {
+            var vote = rotation.Vote(CoursePool.Default, random.Next);
+            var spicy = Assert.Single(vote, o => o.Spicy);
+            Assert.True(spicy.Course is 8 or 36);
+            seen.Add(spicy.Course);
+            Assert.Equal(5, vote.Take(5).Select(o => o.Course).Distinct().Count());
+        }
+        Assert.Equal([8, 36], seen.Order());
+        var draws = Enumerable.Range(0, 2000).Select(_ => rotation.Random(CoursePool.Default, random.Next)).ToList();
+        Assert.Equal([8, 36], draws.Where(d => d.Spicy).Select(d => d.Course).Distinct().Order());
+        Assert.Contains(draws, d => !d.Spicy && d.Course is not (8 or 36));
+    }
+
+    /// <summary>A spicy mode without a list is on any course of the pool; <c>courses all</c> the same.</summary>
+    [Theory]
+    [InlineData("")]
+    [InlineData("courses all;")]
+    public void ASpicyModeWithoutAListIsOnAnyCourse(string words)
+    {
+        var rotation = WithCourses(words);
+        var random = new Random(6);
+        var seen = Enumerable.Range(0, 1000).Select(_ => Assert.Single(rotation.Vote(CoursePool.Default, random.Next), o => o.Spicy).Course).ToHashSet();
+        Assert.Equal(CoursePool.Default.Order(), seen.Order());
+    }
+
+    /// <summary>The spicy card is drawn first: a normal mode whose list is the spicy one's course and one other shows the
+    /// other alone, never the same course twice. Random stays on the normal mode's list.</summary>
+    [Fact]
+    public void TheNormalCardsDrawFromWhatTheSpicyCardLeft()
+    {
+        var rotation = WithCourses("courses [\"Lightning: Loop Cross\"];", TwoCourses);
+        var random = new Random(8);
+        for (var round = 0; round < 100; round++)
+        {
+            var vote = rotation.Vote(CoursePool.Default, random.Next);
+            Assert.Equal(8, Assert.Single(vote, o => o.Spicy).Course);
+            Assert.Equal(36, Assert.Single(vote, o => !o.Spicy && o.Course != CourseVote.RandomCourse).Course);
+            Assert.Equal(CourseVote.RandomCourse, vote[^1].Course);
+            var drawn = rotation.Random(CoursePool.Default, random.Next);
+            Assert.True(drawn.Course is 8 or 36);
+        }
+    }
+
+    /// <summary>A course outside the pool (each game would differ on 37, 38, 41) stops the load with the file and its line.</summary>
+    [Theory]
+    [InlineData("Story: Chapter 1")]
+    [InlineData("Story: Chapter 2")]
+    [InlineData("Story: Chapter 5")]
+    public void AModeListingACourseOutsideThePoolIsRefusedAtLoad(string course)
+    {
+        var error = Assert.Throws<InvalidDataException>(() => WithCourses($"courses [\"{course}\"];"));
+        Assert.StartsWith("s.fzmode line ", error.Message, StringComparison.Ordinal);
+        Assert.Contains("no course of the pool", error.Message, StringComparison.Ordinal);
+    }
+
+    /// <summary>A pin is still no mode of the rotation's.</summary>
+    [Fact]
+    public void AModePinningACourseIsRefusedAtLoad()
+    {
+        var error = Assert.Throws<InvalidDataException>(() => WithCourses("course \"Lightning: Loop Cross\";"));
+        Assert.Contains("says neither course nor racers", error.Message, StringComparison.Ordinal);
+    }
+
+    /// <summary>The official lists: Knockout on Loop Cross, the normal mode on the whole pool.</summary>
+    [Fact]
+    public void TheOfficialListsAreInTheModeFiles()
+    {
+        var rotation = Official();
+        Assert.Equal([8], rotation.Spicy[0].Mode.Terms.Courses);
+        Assert.Null(rotation.Normal.Terms.Courses);
     }
 
     [Fact]
@@ -152,7 +245,7 @@ public sealed class QuickPlayRotationTests : IDisposable
         Assert.Equal("Quick Play", rotation.Normal.Package.Name);
         var spicy = Assert.Single(rotation.Spicy);
         Assert.Equal("Knockout", spicy.Mode.Package.Name);
-        Assert.Equal([8], spicy.Courses!);
+        Assert.Equal([8], spicy.Mode.Terms.Courses!);
         Assert.True(rotation.CpusAllowed);
     }
 

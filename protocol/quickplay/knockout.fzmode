@@ -11,6 +11,7 @@ param first_cut "First cut"   delay 20s..120s step 5s default 45s;   // a 30-mac
 param keep      "Racers left" number 1..29 default 1;
 param warn_from "Warn from"   number 3..9 default 5;                  // seconds before the cut
 
+courses ["Lightning: Loop Cross"];
 cpus on;
 laps unlimited;
 rolling_start 1000 km/h;       // speed at the gate, CPU steers through the countdown at 60% accelerator, control at GO
