@@ -233,7 +233,7 @@ public sealed class ModeCompilerTests
     [Fact]
     public void TheOldWordGoIsGone()
     {
-        Assert.Contains("'go' is not an event", Errors(Head + "rule \"R\" { event go; do { } }\n"));
+        Assert.Contains("'go' is called race_start now: write event race_start", Errors(Head + "rule \"R\" { event go; do { } }\n"));
     }
 
     private static string Errors(string source) => string.Join("\n", ModeCompiler.Compile(source).Errors.Select(e => e.ToString()));

@@ -512,6 +512,10 @@ public static class ModeCompiler
                 throw new ModeCompileException(item.Line, $"a mode has at most {ModeWords.Rules} rules");
             }
             var e = ModeWords.Events.FirstOrDefault(x => x.Name == item.Event);
+            if (item.Event == "go")
+            {
+                throw new ModeCompileException(item.Line, "'go' is called race_start now: write event race_start");
+            }
             if (e.Name is null)
             {
                 throw new ModeCompileException(item.Line, $"'{item.Event}' is not an event of api {ModeWords.Api}: {string.Join(", ", ModeWords.Events.Select(x => x.Name))}");
