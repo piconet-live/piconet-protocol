@@ -254,7 +254,8 @@ enum Setup : std::uint8_t
   SETUP_SPINIMMUNITY = 42,  // spin_immunity
   SETUP_TIMEBONUS = 43,  // time_bonus
   SETUP_POINTSTABLE = 44,  // points_table
-  SETUP_COUNT = 45,
+  SETUP_STARTTOGETHER = 45,  // start_together
+  SETUP_COUNT = 46,
 };
 
 // a read of a seat (OP_SEATREAD)

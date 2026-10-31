@@ -34,6 +34,8 @@ public sealed class ModeWordFormsTests
     [InlineData("pedals locked accel 0.6 brake 0.0;")]
     [InlineData("clock_limit 5min;")]
     [InlineData("rolling_start 1000 km/h;")]
+    [InlineData("start_together;")]
+    [InlineData("start_together; contact off;")]
     [InlineData("param c \"C\" switch default on; cpus c;")]
     [InlineData("param l \"L\" delay 1min..10min step 30s default 3min; clock_limit l;")]
     [InlineData("results_title \"ABCDEFGHIJKLMNOPQRSTUVW\";")]
@@ -156,6 +158,15 @@ public sealed class ModeWordFormsTests
     public void ACombatOrPointsFormIsRefused(string body)
     {
         Assert.NotEmpty(Compile(body).Errors);
+    }
+
+    [Theory]
+    [InlineData("start_together; contact on;")]
+    [InlineData("param c \"C\" switch default off; start_together; contact c;")]
+    public void StartTogetherRefusesAContactThatCanBeOn(string body)
+    {
+        var error = Assert.Single(Compile(body).Errors);
+        Assert.Contains("start_together", error.ToString());
     }
 
     /// <summary>The design's example 9.3, as it stands there: inside the budget by squares, with no square root in its loop.</summary>
