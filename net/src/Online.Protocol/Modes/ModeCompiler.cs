@@ -45,6 +45,11 @@ public static class ModeCompiler
         var warnings = new List<string>();
         try
         {
+            // (each char is at least a byte of the package's source)
+            if (source.Length > ModeWords.PackageBytes)
+            {
+                throw new ModeCompileException(1, $"the file is {source.Length} characters, past api {ModeWords.Api}'s {ModeWords.PackageBytes} bytes for a whole package");
+            }
             var items = ModeParser.Parse(ModeLexer.Tokens(source, warnings), macros);
             var (mode, budget) = new Build(warnings, subs).File(items, source);
             var package = mode.Write();

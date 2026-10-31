@@ -37,6 +37,10 @@ internal sealed class ModeParser
     /// <summary>The helpers whose first argument is a set of seats (the others' is a value for each seat).</summary>
     private static readonly HashSet<string> OverSets = ["count", "first", "last", "nth"];
 
+    /// <summary>The setup words, each with its parts, the longest first: "laps by course" is tried before "laps".</summary>
+    private static readonly (string Name, string[] Parts)[] SetupWords =
+        [.. ModeWords.Setups.Select(s => s.Name).OrderByDescending(n => n.Length).Select(n => (n, n.Split(' ')))];
+
     private static readonly string[] Comparisons = ["==", "!=", "<", "<=", ">", ">="];
 
     private static readonly string[] Assignments = ["=", "+=", "-=", "*=", "/="];
@@ -46,15 +50,38 @@ internal sealed class ModeParser
     private readonly int _depth;
     // A macro's expansion: the label its rules take when they have none ("every 10s").
     private readonly string _label;
+    // The tokens macros' expansions have put in so far, shared with the expansions' own parsers.
+    private readonly ExpandedTokens _expanded;
     private int _at;
+    // The brackets, blocks and prefix words open around this token (ModeLimits).
+    private int _nesting;
 
-    private ModeParser(List<ModeToken> tokens, IReadOnlyDictionary<string, ModeMacro> macros, int depth = 0, string label = "")
+    private sealed class ExpandedTokens
+    {
+        public int Count;
+    }
+
+    private ModeParser(List<ModeToken> tokens, IReadOnlyDictionary<string, ModeMacro> macros, int depth = 0, string label = "",
+        ExpandedTokens? expanded = null)
     {
         _tokens = tokens;
         _macros = macros;
         _depth = depth;
         _label = label;
+        _expanded = expanded ?? new ExpandedTokens();
     }
+
+    /// <summary>One level further in; the parser recurses only through here, so the limit holds before the stack is
+    /// spent. A refusal ends the parse, so only the way out of a level that was read goes through <see cref="Out"/>.</summary>
+    private void In()
+    {
+        if (++_nesting > ModeLimits.MostNesting)
+        {
+            throw ModeLimits.TooDeep(Current.Line);
+        }
+    }
+
+    private void Out() => _nesting--;
 
     /// <summary>The file's items in its order, the header first; the uses of <paramref name="macros"/> expanded.</summary>
     public static List<ModeItem> Parse(List<ModeToken> tokens, IReadOnlyDictionary<string, ModeMacro> macros) =>
@@ -503,8 +530,13 @@ internal sealed class ModeParser
             }
         }
         body.Add(new ModeToken(ModeTokenKind.End, $"the end of {macro.Name}", use.Line));
+        _expanded.Count += body.Count;
+        if (_expanded.Count > ModeLimits.MostExpandedTokens)
+        {
+            throw new ModeCompileException(use.Line, $"the macros' uses so far come to more than {ModeLimits.MostExpandedTokens} words and symbols: this file uses them too many times");
+        }
         var label = string.Join(", ", arguments.Where(a => a.Value is not null).Select(a => string.Join(' ', a.Tokens.Select(t => t.Text))));
-        var expansion = new ModeParser(body, _macros, _depth + 1, label.Length > 0 ? $"{macro.Name} {label}" : macro.Name);
+        var expansion = new ModeParser(body, _macros, _depth + 1, label.Length > 0 ? $"{macro.Name} {label}" : macro.Name, _expanded);
         expansion.Items(items);
         return items;
     }
@@ -513,9 +545,12 @@ internal sealed class ModeParser
     private ModeSetupItem Setup()
     {
         var line = Current.Line;
-        var word = ModeWords.Setups.Select(s => s.Name).OrderByDescending(n => n.Length).FirstOrDefault(StartsHere)
-            ?? throw Error($"'{Current.Text}' is not a word of api {ModeWords.Api}");
-        _at += word.Split(' ').Length;
+        var (word, parts) = SetupWords.FirstOrDefault(w => StartsHere(w.Parts));
+        if (word is null)
+        {
+            throw Error($"'{Current.Text}' is not a word of api {ModeWords.Api}");
+        }
+        _at += parts.Length;
         if (ModeWords.Setups.Single(s => s.Name == word).Id == ModeSetup.LapsByCourse)
         {
             return SetupTable(line, word);
@@ -644,9 +679,8 @@ internal sealed class ModeParser
         return new ModeSetupItem(line, word, arguments, rows);
     }
 
-    private bool StartsHere(string words)
+    private bool StartsHere(string[] parts)
     {
-        var parts = words.Split(' ');
         for (var i = 0; i < parts.Length; i++)
         {
             if (!PeekToken(i).Is(parts[i]))
@@ -728,6 +762,7 @@ internal sealed class ModeParser
     private List<ModeStatement> Block()
     {
         Expect("{");
+        In();
         var statements = new List<ModeStatement>();
         while (!Accept("}"))
         {
@@ -737,6 +772,7 @@ internal sealed class ModeParser
             }
             statements.Add(Statement());
         }
+        Out();
         return statements;
     }
 
@@ -900,9 +936,17 @@ internal sealed class ModeParser
         List<ModeStatement>? otherwise = null;
         if (Accept("else"))
         {
-            otherwise = Current.Is("if") ? [If()] : Block();
+            otherwise = Current.Is("if") ? [ElseIf()] : Block();
         }
         return new ModeIf(line, condition, then, otherwise);
+    }
+
+    private ModeIf ElseIf()
+    {
+        In();
+        var branch = If();
+        Out();
+        return branch;
     }
 
     private ModeForEach ForEach()
@@ -946,7 +990,18 @@ internal sealed class ModeParser
 
     // Expressions, the loosest first (the language's section 8).
 
-    public ModeExpr Expression() => Or();
+    public ModeExpr Expression()
+    {
+        In();
+        var expr = Or();
+        Out();
+        // the blocks and brackets around it and the tree it is, together
+        if (_nesting + expr.Depth > ModeLimits.MostNesting)
+        {
+            throw ModeLimits.TooDeep(expr.Line);
+        }
+        return expr;
+    }
 
     private ModeExpr Or()
     {
@@ -975,7 +1030,10 @@ internal sealed class ModeParser
         if (Current.Is("not"))
         {
             var line = Take().Line;
-            return new ModeUnary(line, "not", Not());
+            In();
+            var operand = Not();
+            Out();
+            return new ModeUnary(line, "not", operand);
         }
         return Comparison();
     }
@@ -1019,7 +1077,9 @@ internal sealed class ModeParser
         if (Current.Kind == ModeTokenKind.Symbol && Current.Text == "-")
         {
             var line = Take().Line;
+            In();
             var operand = Unary();
+            Out();
             // A negative literal is a literal: -1 is one Push.
             return operand is ModeLiteral literal && Negate(literal) is { } negative ? negative : new ModeUnary(line, "-", operand);
         }
