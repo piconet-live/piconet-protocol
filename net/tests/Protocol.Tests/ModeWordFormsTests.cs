@@ -114,6 +114,7 @@ public sealed class ModeWordFormsTests
     [InlineData("pause on;")]
     [InlineData("solo on; cpus on;")]
     [InlineData("solo on; save_state on;")]
+    [InlineData("hud modern;")]
     [InlineData("results points;")]
     [InlineData("race_waits everyone;")]
     [InlineData("results_title \"ABCDEFGHIJKLMNOPQRSTUVWX\";")]
