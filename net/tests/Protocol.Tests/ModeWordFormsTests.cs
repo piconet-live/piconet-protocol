@@ -13,6 +13,8 @@ public sealed class ModeWordFormsTests
 
     [Theory]
     [InlineData("course \"Mute City: Sonic Oval\";")]
+    [InlineData("courses all;")]
+    [InlineData("courses [\"Mute City: Sonic Oval\"];")]
     [InlineData("laps unlimited;")]
     [InlineData("racers 2..8;")]
     [InlineData("machines all;")]

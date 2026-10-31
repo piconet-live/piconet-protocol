@@ -282,9 +282,9 @@ public sealed class QuickPlayRotation
         }
         // the rotation's cards name the courses, and a Quick Play lobby's seats are its own
         var terms = ModeTerms.Of(compiled.Mode!);
-        if (terms.Course is not null || terms.Racers is not null)
+        if (terms.Course is not null || terms.Courses is not null || terms.Racers is not null)
         {
-            throw new InvalidDataException($"{file}: a mode of Quick Play's rotation says neither course nor racers: the rotation's cards name the courses, and its lobby the seats");
+            throw new InvalidDataException($"{file}: a mode of Quick Play's rotation says neither course, courses nor racers: the rotation's cards name the courses, and its lobby the seats");
         }
         if (terms.Solo)
         {

@@ -9,7 +9,7 @@ public static partial class HostRules
 {
     public static HostRule CourseSelect { get; } = new("course-select", "Course", RuleReach.Together, RuleKind.Course, SetupWord: "course");
 
-    public static HostRule CoursePool { get; } = new("course-pool", "Course pool", RuleReach.Together, RuleKind.Courses);
+    public static HostRule CoursePool { get; } = new("course-pool", "Course pool", RuleReach.Together, RuleKind.Courses, SetupWord: "courses");
 
     public static HostRule Racers { get; } = new("racers", "Racers", RuleReach.Together, RuleKind.Number, GameFacts.Limits.RacersMin, GameFacts.Limits.Seats, Default: GameFacts.Limits.Seats, SetupWord: "racers");
 

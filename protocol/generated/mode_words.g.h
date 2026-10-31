@@ -257,7 +257,9 @@ enum Setup : std::uint8_t
   SETUP_TIMEBONUS = 43,  // time_bonus
   SETUP_POINTSTABLE = 44,  // points_table
   SETUP_STARTTOGETHER = 45,  // start_together
-  SETUP_COUNT = 46,
+  SETUP_COURSESALL = 46,  // courses all
+  SETUP_COURSES = 47,  // courses
+  SETUP_COUNT = 48,
 };
 
 // a read of a seat (OP_SEATREAD)

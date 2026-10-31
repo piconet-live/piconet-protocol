@@ -44,6 +44,10 @@ public sealed record ModeTerms
     /// <summary>The pinned course; null: the lobby's way.</summary>
     public int? Course { get; init; }
 
+    /// <summary>The courses it may race on, by number, in order: what its vote and Random draw from, and what a lobby's
+    /// fixed course must be one of. Null: as the lobby's pool; empty: the whole pool (<c>courses all</c>).</summary>
+    public IReadOnlyList<int>? Courses { get; init; }
+
     /// <summary>The racers the mode races with: below Least the race is refused, Most is the lobby's seats.</summary>
     public (int Least, int Most)? Racers { get; init; }
 
@@ -101,6 +105,8 @@ public sealed record ModeTerms
             terms = word.Id switch
             {
                 ModeSetup.Course => terms with { Course = Cell(a[0]) },
+                ModeSetup.CoursesAll => terms with { Courses = [] },
+                ModeSetup.Courses => terms with { Courses = [.. a.Select(Cell).Order()] },
                 ModeSetup.Racers => terms with { Racers = (Cell(a[0]), Cell(a[1])) },
                 ModeSetup.MachinesAll => terms with { Machines = [] },
                 ModeSetup.Machines => terms with { Machines = [.. a.Select(Cell).Order()] },
@@ -118,8 +124,8 @@ public sealed record ModeTerms
     }
 
     /// <summary>The rules the mode owns, as <see cref="LobbyRules.Values"/> holds a rule: what goes over the host's
-    /// values, and what a lobby's panel shows as the mode's. The stat pack and the machines are no number: see
-    /// <see cref="Pack"/>, <see cref="Machines"/>.</summary>
+    /// values, and what a lobby's panel shows as the mode's. The stat pack, the machines and a list of courses are no number:
+    /// see <see cref="Pack"/>, <see cref="Machines"/>, <see cref="Courses"/>.</summary>
     public IReadOnlyDictionary<string, int> Rules()
     {
         var rules = new Dictionary<string, int>(StringComparer.Ordinal)
