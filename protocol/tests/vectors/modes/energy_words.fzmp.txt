@@ -1,13 +1,14 @@
-FZMP format 1 api 1, 919 bytes, hash 33242377aa70a52c15b131fada67970b3fb17e2c7f59e7cae986b31132d4a3f2
+FZMP format 1 api 1, 1098 bytes, hash d56282067575aa80dc055b31791470ac0010d391725c841d52f74d23f407b86b
 HEAD name "Energy words" badge "" about ""
-PARM 0
+PARM 1
+  0 bad "A real that is not finite" switch int 0..1 step 1 default 0
 SETP 1
   max_energy 150
 VARS globals 1, seat words 0
   global 0 = 0
 RULE 1
   0 "Each seat" event each seat, locals 1, when none, while 0000, body 0003
-CODE 140 bytes
+CODE 162 bytes
   ; rule 0 while
   0000  RaceRead started
   0002  Ret
@@ -62,5 +63,12 @@ CODE 140 bytes
   0087  IToF
   0088  FAdd
   0089  Action seat.max_energy
-  008b  End
-SRC  649 bytes
+  008b  Param 0 (bad)
+  008d  JumpIfZero 00a1
+  0092  LoadLocal 0
+  0094  Push 1065353216 (0x3f800000, real 1)
+  0099  Push 0
+  009e  FDiv
+  009f  Action seat.max_energy
+  00a1  End
+SRC  754 bytes

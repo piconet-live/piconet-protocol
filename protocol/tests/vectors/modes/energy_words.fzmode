@@ -4,6 +4,8 @@ mode "Energy words" {
   api 1;
 }
 
+param bad "A real that is not finite" switch default off;
+
 max_energy 150;
 
 global int left = 0;
@@ -18,5 +20,6 @@ rule "Each seat" {
     if (seat.index == 3) { seat.max_energy = 5000; }
     if (seat.index == 4) { seat.max_energy = -3; }
     if (seat.index == 5) { seat.max_energy += 10; }
+    if (bad) { seat.max_energy = 1.0 / 0.0; }
   }
 }
