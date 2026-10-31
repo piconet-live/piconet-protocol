@@ -967,7 +967,7 @@ has given its seat up and loses the race (a wait, a race that ends under it, `st
 The channel between the launcher and one running game (a file both map, never a localhost
 socket or a pipe). Defined once in `protocol/board.toml`, generated into the launcher's `BoardView`
 (`protocol/generated/StatusBoard.g.cs`, compiled into Launcher.Core) and the core's `View`
-(`protocol/generated/status_board.g.h`); `protocol/README.md` says how it is checked. **Version 2, 7,168 bytes** (version 1, 4,096 bytes, had no mode blocks),
+(`protocol/generated/status_board.g.h`); `protocol/README.md` says how it is checked. **Version 4, 14,912 bytes** (version 1, 4,096 bytes, had no mode blocks; 2 had them at 7,168 bytes; 3 grew them to this size for the board's lines and their words; 4 has ModeValues' `Fault`),
 little-endian, every word naturally aligned, every block on a 64-byte line:
 
 | Block | At | Kind, writer | Holds |
@@ -977,7 +977,7 @@ little-endian, every word naturally aligned, every block on a 64-byte line:
 | Status | 128 | seqlock; game | `Phase` (None, Starting, Offline, Loading, Joining, Gate, Countdown, Racing, Finished, Playback, Left, Stopping), `Flags` (waits for the relay, practice, watching, rejoin), `Step`, `StopSeen`, `NoticeSeen` |
 | Snapshot | 192 | seqlock; game | the race every displayed race frame (not a replay's): `Serial`, `Frame` (the step), `LocalSeat`, `Count`, 30 racer records of 52 bytes (seat, state, rank, flags, lap, knockouts, maximum energy, lap time, race time, best lap, speed, energy, top speed, x, y, z, distance): what the UDP feed carried as JSON before |
 | ModeHead | 1792 | seqlock; game | the race's game mode, once, at its first picture: `Serial` (1; 0 no mode), `NameLength`, `Name` (64 bytes UTF-8), `Hash` (the content hash's first 8 bytes), `Count`, 24 lines of 44 bytes: `Scope` (Global, Seat, Team), `Type` (Int, Real, Bool, Seat, Seats), `Column` (0 to 7), `LabelLength`, `Label` (32 bytes UTF-8), `WordCount` (0 to 16), the file's `board` lines in its order; then `Words`, 384 records of 20 bytes, `Length` and `Text` (16 bytes UTF-8): `Words[line * 16 + value]` is what a line with words shows for a value from 0 to `WordCount` - 1; `Length` 0 shows a blank; any other value shows the number. No word is ever part of the simulation |
-| ModeValues | 10624 | seqlock; game | the `board` lines' values every picture drawn, of a race, a practice, a watched race and a replay alike, from the mode's block: `Serial`, `Frame` (the step of the picture), `Globals[Column]`, `Seats[seat * 8 + Column]`, `Teams[team * 8 + Column]`, each a word read as its line's type. Not written for a mode with no line. Picture only: nothing a step reads |
+| ModeValues | 10624 | seqlock; game | the `board` lines' values every picture drawn, of a race, a practice, a watched race and a replay alike, from the mode's block, and `Fault`, what ended the race when the mode broke: `Serial`, `Frame` (the step of the picture), `Globals[Column]`, `Seats[seat * 8 + Column]`, `Teams[team * 8 + Column]`, each a word read as its line's type. Not written for a mode with no line. Picture only: nothing a step reads |
 | Events | 12608 | ring of 64 records of 32 bytes; game (several threads) | `Head`, then events: Phase, Stop, Stands and Moves (the runner's freeze reports), Notice (taken), Desync, Camera (the local racer's chase camera view, 1 to 3, said at its first reading in a race and at each change while the racer races: the launcher keeps the last for the next race's `match.camera`); overwrite-oldest, the reader counts what it lost |
 | Mailbox | 14720 | seqlock; launcher | `StopSerial` (one more: stop gracefully), `NoticeSerial`, `NoticeLength`, `NoticeText` (128 bytes UTF-8) |
 
@@ -988,7 +988,7 @@ odd or changed reads again (as iRacing's and Assetto Corsa's shared memory). Nei
 launcher that ended are removed when the next is made) and names it in the launch file (`board`). The core maps it at
 Init (`port/core/src/board.cpp`, `board_map.cpp`) and takes it: no magic, nothing written; another version, or too
 small a file: its own version, size and process id written, then nothing else, and the log says `fzgx: board:
-FILE refused: ...`; else `fzgx: board: taken (FILE, version 2)`. A launcher whose game refused goes without (no live
+FILE refused: ...`; else `fzgx: board: taken (FILE, version 4)`. A launcher whose game refused goes without (no live
 race, no freeze detection) and says so in its log; the exit code and the log's stop lines stay the floor.
 
 **What the launcher does with it** (`net/src/Launcher.Core/Board/`): looks every 15 ms; passes each new snapshot on
