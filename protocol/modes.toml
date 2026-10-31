@@ -19,7 +19,7 @@
 # is refused and never read as another word. A setup argument of type "switch" is an on or off: `on`, `off` or a switch
 # parameter (1 or 0); an int argument with `on = N` also takes those: off 0, on N, and a switch parameter's 1 reads as N.
 #
-# A word: `name` as a mode file writes it, `id` its number in the bytecode (Action, SeatRead, RaceRead) or the package
+# A word: `name` as a mode file writes it (`spelled`: the generated code's name, when two names would spell the same), `id` its number in the bytecode (Action, SeatRead, RaceRead) or the package
 # (setup words, events), `type` what a read gives (int, real, bool, seat, seats, vec), `args` an action's or setup word's
 # arguments in order, `doc`, and `where`: the game's site or the part that applies it (vocabulary.md's). A setup word
 # with `table` takes a table of pairs after its arguments (the package: two more arguments a pair, `table`'s value
@@ -58,6 +58,7 @@ board_label = 32       # a `board` line's label, in UTF-8 bytes
 board_words = 16       # the words a `board` line may name
 board_word = 16        # one of those words, in UTF-8 bytes
 package_bytes = 65536  # a package's whole size, the source included
+presets = 16           # `preset`s a file declares (the compiler's: no preset reaches a package's bytes)
 seats = 30
 
 [[op]]
@@ -920,10 +921,10 @@ type = "int"
 doc = "steps from GO to the seat's finish, or to now while it races (the mode's own count, in the block)"
 
 [[seat_read]]
-name = "lap_time"
+name = "mode_lap_steps"
 id = 24
 type = "int"
-doc = "steps since the seat's last lap (or GO): the mode's own count"
+doc = "steps since the seat's last lap (or GO): the mode's own count, in the block"
 
 [[seat_read]]
 name = "best_lap"
@@ -980,10 +981,10 @@ type = "real"
 doc = "the way between this checkpoint and the next, P+0xE8"
 
 [[seat_read]]
-name = "lap_steps"
+name = "game_lap_steps"
 id = 34
 type = "int"
-doc = "the game's lap clock, P+0x160"
+doc = "the game's own lap clock, P+0x160"
 
 [[seat_read]]
 name = "wrong_way"
@@ -1076,13 +1077,13 @@ type = "int"
 doc = "the seat's skulls, M+0x482 (u8)"
 
 [[seat_read]]
-name = "is_player"
+name = "is_human"
 id = 50
 type = "bool"
-doc = "a player drives the seat (the match start's player seats)"
+doc = "a person drives the seat (the match start's player seats)"
 
 [[seat_read]]
-name = "ghost"
+name = "no_contact"
 id = 51
 type = "bool"
 doc = "nobody touches the seat (its no-contact row is every seat)"
@@ -1281,6 +1282,18 @@ id = 11
 type = "int"
 doc = "the course's number (the game's, as `laps by course` names it)"
 
+[[race_read]]
+name = "humans_left"
+id = 12
+type = "int"
+doc = "the seats a person drives that are neither finished nor out, counted from the seats' own state at the mode point (not R+0xD, which stays 1 in our image)"
+
+[[race_read]]
+name = "human_finished"
+id = 13
+type = "int"
+doc = "the seats a person drives that have finished, counted from machine flag 0x10000 (not R+0xC, which stays 0 in our image)"
+
 [[action]]
 name = "seat.speed"
 needs_step = true
@@ -1427,14 +1440,16 @@ where = "the block"
 doc = "a frozen seat drives again"
 
 [[action]]
-name = "ghost"
+name = "no_contact"
+spelled = "no_contact_seat"
 id = 19
 args = ["seat"]
 where = "the pair gate (main.rel 0x8514C): the seat's no-contact row is every seat"
 doc = "nobody touches the seat (and it touches nobody), from the next step's contact pass"
 
 [[action]]
-name = "ghost off"
+name = "no_contact off"
+spelled = "no_contact_seat off"
 id = 20
 args = ["seat"]
 where = "the pair gate: the seat's row back to its team's no-contact bits (none, without team no contact)"
@@ -1570,7 +1585,7 @@ id = 45
 where = """the grid's placing (main.rel fn_1_85934 0x85BF4, `mr r3, r28`, the slot for fn_1_85C58) under the window's flag TOGETHER: every \
 machine takes slot 0's place, through the game's own fn_1_85C58 and fn_1_23500; the list and the rank tables stay the game's. Contact is off from before the first \
 contact pass: mode_preload fills every no-contact row and their OR as it takes the block (a mode's first run comes only after that step's pairs), and the \
-first run writes them again. `ghost s off` or `no contact` can bring a pair back; `contact on` is refused"""
+first run writes them again. `no_contact s off` or `no contact` can bring a pair back; `contact on` is refused"""
 doc = "every racer starts on the same spot, slot 0's, and nobody touches anybody from before the first step"
 
 # ---- The displays (vocabulary 5): presentation only. An action writes the seat's display record in the block (the
@@ -1582,10 +1597,10 @@ doc = "every racer starts on the same spot, slot 0's, and nobody touches anybody
 
 [[choice]]
 name = "part"
-values = ["TIMER", "DISTANCE", "DIGIT", "WARNING", "SUCCESS", "FAILED", "TIME_OVER", "SPEED_GAUGE", "OBJECTS", "LEADER_GAP", "RANK", "LAPS", "SPEED", "ENERGY", "LAP_TIMES", "RACE_TIME", "FACES"]
+values = ["TIMER", "DISTANCE", "DIGIT", "WARNING", "SUCCESS", "FAILED", "TIME_OVER", "SPEED_GAUGE", "OBJECTS", "LEADER_GAP", "GHOST_GAP", "RANK", "LAPS", "SPEED", "ENERGY", "LAP_TIMES", "RACE_TIME", "FACES"]
 doc = """a part of the game's own race HUD: TIMER the timed mode's clock (clock_limit's time, R+0xA4: seconds, 0 to \
 999); DISTANCE the metres to the finish (the seat's own); DIGIT the story's big digit (danger_zone's seconds, 3 2 1); \
-WARNING, SUCCESS, FAILED, TIME_OVER, SPEED_GAUGE, OBJECTS the story's pictures, off until shown; LEADER_GAP the game's own time gap to the leader, off until shown: at each lap line, for a second, the seat's time behind the leader, and the leader's own lead when second place crosses; RANK, LAPS, SPEED, ENERGY, \
+WARNING, SUCCESS, FAILED, TIME_OVER, SPEED_GAUGE, OBJECTS the story's pictures, off until shown; LEADER_GAP the game's own time gap to the leader, off until shown: at each lap line, for a second, the seat's time behind the leader, and the leader's own lead when second place crosses; GHOST_GAP Time Attack's live gap, off until shown: signed minutes, seconds and thousandths at the right edge (617, 270), all race, against the seat furthest ahead, red while it is ahead, blue while you are; RANK, LAPS, SPEED, ENERGY, \
 LAP_TIMES, RACE_TIME, FACES the standard HUD (the mask .data 0x3D544; FACES the board fn_1_D27B8), on until hidden"""
 
 [[choice]]
@@ -1596,7 +1611,7 @@ doc = "a banner of the game's own race HUD, shown once, as the game shows it; TI
 [[choice]]
 name = "look"
 values = ["normal", "ghost", "invisible"]
-doc = "how a machine is drawn: as the game draws it; as Time Attack draws its ghost (a blue hologram); not at all"
+doc = "how a machine is drawn: as the game draws it; as Time Attack draws its ghost (additive, with a depth pass, alpha by the camera's distance, 60 frames' fade from GO, no shadow, yellow unless seat.ghost_tint says otherwise; no machine sound unless seat.ghost_sound says otherwise); not at all"
 
 [[action]]
 name = "show"
@@ -1617,7 +1632,7 @@ name = "show_number"
 id = 27
 args = ["seat", "int"]
 where = "the display record; drawn by the Grand Prix spare-machine icon (its getter's call, main.rel 0xCA920)"
-doc = "a whole number beside the spare-machine icon, two digits (07); above 99 shows 99, a negative number hides it"
+doc = "a whole number beside the spare-machine icon, two digits (07); above 99 shows 99, a negative number or `show_number s off` hides it"
 
 [[action]]
 name = "stock_banner"
@@ -1830,3 +1845,26 @@ id = 56
 args = ["seat"]
 where = "a mask in the mode's block (mode.h BOOST_OFF_SEATS), which the seat's record takes every step: the stand-in routine clears the boost request (flag 0x40) as the setup word does"
 doc = "the seat can no longer ask for a boost, to the race's end; a running boost and a dash plate are not stopped"
+
+# --- the owner's words of 2026-10-31: everything a choice in the mode file, the default the game's own
+
+[[action]]
+name = "show_number off"
+id = 57
+args = ["seat"]
+where = "the display record"
+doc = "the number show_number showed is no longer shown"
+
+[[action]]
+name = "seat.ghost_tint"
+id = 58
+args = ["seat", "int"]
+where = "the display page's GHOST_TINTS; the core's HUD pass gives the ghost draw (sites_ghostdraw.py) the seat's word, every drawn frame"
+doc = "the tint of the seat's machine when drawn with the look ghost, as 0xRRGGBBAA (the alpha byte is not read); 0, the default, is Time Attack's yellow (1, 1, 0.7)"
+
+[[action]]
+name = "seat.ghost_sound"
+id = 59
+args = ["seat", "bool"]
+where = "the display page's GHOST_SOUNDS; the HUD pass's silent seats, read at fn_1_A3D5C 0xA3E00 (a silent seat's voice is out of hearing, as past 300 units)"
+doc = "on: the seat's machine keeps its voice when drawn with the look ghost. Off, the default, is Time Attack's: its ghosts have no machine voice. The machine the camera follows always has its voice"

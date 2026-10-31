@@ -98,6 +98,12 @@ internal sealed record ModeParamItem(int Line, string Name, string Label, ModePa
     ModeLiteral? Most, ModeLiteral? Step, ModeLiteral? Default, IReadOnlyList<string> Choices, string? DefaultChoice)
     : ModeItem(Line);
 
+/// <summary>A parameter's value in a preset: a literal, or (<see cref="Choice"/>) the name of one of a choice's values.</summary>
+internal sealed record ModePresetValue(int Line, string Param, ModeLiteral? Literal, string? Choice);
+
+/// <summary><c>preset "NAME" { param = value; ... }</c>.</summary>
+internal sealed record ModePresetItem(int Line, string Name, IReadOnlyList<ModePresetValue> Values) : ModeItem(Line);
+
 /// <summary>A setup argument: its name (empty for the unnamed one) and its value, a literal or a parameter's name.</summary>
 internal sealed record ModeSetupArgument(int Line, string Name, ModeExpr Value);
 

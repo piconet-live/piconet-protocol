@@ -27,7 +27,7 @@ rule "Start" {
   do {
     for each seat {
       respawns seat;
-      ghost seat;
+      no_contact seat;
       if (seat.is_cpu) { cpu_mode seat, 23; hand_to_cpu seat; }
     }
     team 0 no contact;
@@ -39,7 +39,7 @@ rule "Go" {
   event race_start;
   do {
     pads_back;
-    for each seat { ghost seat off; release seat; }
+    for each seat { no_contact seat off; release seat; }
   }
 }
 
@@ -70,12 +70,12 @@ rule "Out" {
 rule "Reads" {
   event each seat;
   while seat.restoring or seat.airborne or seat.boosting or seat.spinning or seat.side_attack or seat.in_pit
-    or seat.fallen or seat.wrong_way or seat.ghost or seat.is_player;
+    or seat.fallen or seat.wrong_way or seat.no_contact or seat.is_human;
   do {
     real r = seat.input.steer + seat.input.strafe + seat.input.pitch + seat.lap_distance + seat.checkpoint_fraction
       + seat.top_speed + seat.max_energy + seat.last_hit_energy + length(seat.velocity) + dot(seat.forward, seat.up);
-    int n = seat.race_time + seat.lap_time + seat.best_lap + seat.machine + seat.hits + seat.lap_steps
-      + seat.standing + seat.place + seat.points + seat.kos;
+    int n = seat.race_time + seat.mode_lap_steps + seat.best_lap + seat.machine + seat.hits + seat.game_lap_steps
+      + seat.standing + seat.place + seat.points + seat.kos + race.humans_left + race.human_finished;
     if (r > n and count(seat.touching) > 2) { end_race; }
   }
 }

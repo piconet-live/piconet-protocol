@@ -33,6 +33,11 @@ public sealed record ModeParam(string Name, string Label, ModeParamKind Kind, Mo
     public bool Fits(int value) => Holds(value) && (Type == ModeType.Real || Step <= 1 || ((long)value - Least) % Step == 0);
 }
 
+/// <summary>A preset (the design's section 5): a name, and a value for each of the mode's parameters in the package's order,
+/// the preset's own or the parameter's default. What a preset chooses travels as any host's values do, in
+/// <c>setup.mode.params</c>: the race, the replay and the share code know no presets.</summary>
+public sealed record ModePreset(string Name, IReadOnlyList<int> Values);
+
 /// <summary>A setup word's argument: a constant cell, or the index of the parameter that gives it.</summary>
 public sealed record ModeSetupValue(bool FromParam, int Value);
 
@@ -158,6 +163,9 @@ public sealed class ModePackage
     /// <summary>The words of the coordinator's, from the compile (not in the bytes: <see cref="Read"/> gives none;
     /// everyone that uses them compiles the file).</summary>
     public IReadOnlyList<ModeLobbyWord> LobbyWords { get; init; } = [];
+    /// <summary>The file's presets, in its order, from the compile (not in the bytes, as <see cref="LobbyWords"/>: the host's
+    /// launcher compiles the file, and <see cref="Read"/> gives none).</summary>
+    public IReadOnlyList<ModePreset> Presets { get; init; } = [];
     /// <summary>Each global's start value.</summary>
     public IReadOnlyList<int> Globals { get; init; } = [];
     /// <summary>Each seat word's start value.</summary>

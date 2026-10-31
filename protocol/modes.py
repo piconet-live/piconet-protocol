@@ -10,13 +10,13 @@ SCHEMA = os.path.join(here, "modes.toml")
 
 TOP_KEYS = {"codec", "api", "op", "event", "setup", "seat_read", "race_read", "action", "choice"}
 API_KEYS = {"number", "budget", "queue", "globals", "seat_words", "locals", "rules", "sorts", "package_bytes", "seats",
-            "team_words", "teams", "waits", "wait_locals", "subs", "board", "board_label", "board_words", "board_word", "fsqrt_cost", "results_title", "tag_text", "tag_texts"}
+            "team_words", "teams", "waits", "wait_locals", "subs", "board", "board_label", "board_words", "board_word", "fsqrt_cost", "results_title", "tag_text", "tag_texts", "presets"}
 OP_KEYS = {"name", "code", "operands", "doc"}
 EVENT_KEYS = {"name", "id", "kind", "binds", "doc"}
 SETUP_KEYS = {"name", "id", "args", "where", "doc", "table", "lobby", "form"}
 ARG_KEYS = {"type", "name", "least", "most", "default", "on"}
 READ_KEYS = {"name", "id", "type", "doc"}
-ACTION_KEYS = {"name", "id", "args", "where", "doc", "join", "needs_step"}
+ACTION_KEYS = {"name", "spelled", "id", "args", "where", "doc", "join", "needs_step"}
 CHOICE_KEYS = {"name", "values", "doc"}
 OPERANDS = {"u8": 1, "u16": 2, "u32": 4, "i32": 4}
 TYPES = {"int", "real", "bool", "seat", "seats", "vec"}
@@ -56,7 +56,8 @@ def numbered(raw, allowed, what, high=255, gaps=False):
         ident = whole(entry.get("id"), f"{what} {name}: id", 0, high)
         if ident <= (out[-1]["id"] if out else -1) if gaps else ident != i:
             raise SchemaError(f"{what} {name}: the ids run 0, 1, 2 ... in the file's order (got {entry['id']})")
-        out.append(dict(entry, pascal=pascal(name, what)))
+        # (`spelled`: the code's name when two words would spell the same: `no_contact` and `no contact`)
+        out.append(dict(entry, pascal=pascal(entry.get("spelled", name), what)))
     if len({e["pascal"] for e in out}) != len(out):
         raise SchemaError(f"{what}: two names spell the same")
     return out

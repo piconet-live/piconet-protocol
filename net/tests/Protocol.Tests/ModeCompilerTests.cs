@@ -166,7 +166,7 @@ public sealed class ModeCompilerTests
         Assert.Empty(ModeCompiler.Compile(Head + "rule \"R\" { event race_start; do { stop_all; end_race; } }\n").Errors);
         Assert.Empty(ModeCompiler.Compile(Head + "clock_limit 2min;\nrule \"R\" { event race_start; do { stop_all; } }\n").Errors);
         // the action words: several words, commas or none, an off form, the team action
-        Assert.Empty(ModeCompiler.Compile(Head + "rule \"R\" { event lap(s); do { respawns s off; ghost s off; no contact s, seats; no contact s seats; team 2 no contact; cpu_mode s, 4; } }\n").Errors);
+        Assert.Empty(ModeCompiler.Compile(Head + "rule \"R\" { event lap(s); do { respawns s off; no_contact s off; no contact s, seats; no contact s seats; team 2 no contact; cpu_mode s, 4; } }\n").Errors);
         Assert.NotEmpty(Errors(Head + "rule \"R\" { event lap(s); do { real x = s.input.speed; } }\n"));
         // the library's race macros compile now
         Assert.Empty(ModeCompiler.Compile(Head + "lives 3;\nclock_limit 5min;\npits_off;\n").Errors);
@@ -221,7 +221,7 @@ public sealed class ModeCompilerTests
               do {
                 for each seat {
                   seat.look = invisible; seat.own_look = normal; hide seat, FACES; show seat, LEADER_GAP;
-                  respawns seat; ghost seat; seat.energy = 50.0; show_number seat, 3;
+                  respawns seat; no_contact seat; seat.energy = 50.0; show_number seat, 3;
                 }
               }
             }
@@ -234,6 +234,75 @@ public sealed class ModeCompilerTests
     public void TheOldWordGoIsGone()
     {
         Assert.Contains("'go' is called race_start now: write event race_start", Errors(Head + "rule \"R\" { event go; do { } }\n"));
+    }
+
+    [Theory]
+    [InlineData("rule \"R\" { event lap(s); do { ghost s; } }\n", "'ghost' is called no_contact now")]
+    [InlineData("rule \"R\" { event lap(s); do { ghost s off; } }\n", "'ghost' is called no_contact now")]
+    [InlineData("rule \"R\" { event each seat; while seat.is_player; do { } }\n", "'.is_player' is called .is_human now")]
+    [InlineData("rule \"R\" { event each seat; while seat.lap_time > 1; do { } }\n", "'.lap_time' is called .mode_lap_steps now")]
+    [InlineData("rule \"R\" { event each seat; while seat.lap_steps > 1; do { } }\n", "'.lap_steps' is called .game_lap_steps now")]
+    [InlineData("rule \"R\" { event each seat; while seat.ghost; do { } }\n", "'.ghost' is called .no_contact now")]
+    public void TheOldNamesSayTheNewOnes(string rule, string said)
+    {
+        Assert.Contains(said, Errors(Head + rule));
+    }
+
+    [Fact]
+    public void AGhostIsStillALookAndTheNamesAreFree()
+    {
+        Assert.Empty(ModeCompiler.Compile(Head + "seat int lap_time;\nglobal int ghost;\nrule \"R\" { event each seat; do { seat.look = ghost; ghost = seat.lap_time; } }\n").Errors);
+    }
+
+    private const string PresetHead = Head + "param n \"N\" number 1..9 default 3;\nparam on_off \"S\" switch default off;\nparam pick \"P\" choice [\"A\", \"B\"] default \"A\";\nparam hold \"W\" delay 1s..10s step 1s default 2s;\nparam f \"F\" number 0.5..2.0 default 1.0;\n";
+
+    [Fact]
+    public void APresetGivesEveryParameterAValue()
+    {
+        var compiled = ModeCompiler.Compile(PresetHead + "preset \"One\" { n = 5; pick = \"B\"; }\npreset \"Two\" { on_off = on; hold = 5s; f = 1.5; }\n");
+        Assert.Empty(compiled.Errors);
+        var mode = compiled.Mode!;
+        Assert.Equal(["One", "Two"], mode.Presets.Select(p => p.Name));
+        var defaults = mode.Params.Select(p => p.Default).ToList();
+        Assert.Equal([5, 0, 1, defaults[3], defaults[4]], mode.Presets[0].Values);
+        Assert.Equal([3, 1, 0, 300, BitConverter.SingleToInt32Bits(1.5f)], mode.Presets[1].Values);
+        Assert.All(mode.Presets, p => Assert.Null(mode.ValuesRefusal(p.Values)));
+    }
+
+    [Fact]
+    public void PresetsAreNotInThePackagesBytes()
+    {
+        var source = PresetHead + "preset \"One\" { n = 5; }\n";
+        var compiled = ModeCompiler.Compile(source);
+        var read = ModePackage.Read(compiled.Package!);
+        Assert.Empty(read.Presets);
+        Assert.Equal(compiled.Package, read.Write());
+        Assert.Equal(source, read.Source);
+    }
+
+    [Theory]
+    [InlineData("preset \"One\" { missing = 1; }\n", "names 'missing'")]
+    [InlineData("preset \"One\" { n = 1; n = 2; }\n", "names n twice")]
+    [InlineData("preset \"One\" { n = 10; }\n", "outside what the parameter allows")]
+    [InlineData("preset \"One\" { n = 1.5; }\n", "is a whole number")]
+    [InlineData("preset \"One\" { n = \"A\"; }\n", "is not a choice")]
+    [InlineData("preset \"One\" { pick = \"C\"; }\n", "is one of its choices")]
+    [InlineData("preset \"One\" { on_off = 1; }\n", "is a switch")]
+    [InlineData("preset \"One\" { hold = 3; }\n", "is a time")]
+    [InlineData("preset \"One\" { }\n", "sets nothing")]
+    [InlineData("preset \"One\" { n = 1; }\npreset \"One\" { n = 2; }\n", "a name of its own")]
+    public void ABadPresetIsRefused(string preset, string said)
+    {
+        Assert.Contains(said, Errors(PresetHead + preset));
+    }
+
+    [Fact]
+    public void AGhostRaceOffersItsPresets()
+    {
+        var mode = ModeCompiler.Compile(File.ReadAllText(RepositoryFolder.Protocol("protocol", "quickplay", "ghost_race.fzmode"))).Mode!;
+        Assert.Equal(["Sprint", "Blind"], mode.Presets.Select(p => p.Name));
+        Assert.Equal(3, mode.Params[0].Default);
+        Assert.Equal(("Show", "Live"), (mode.Params[1].Choices[mode.Params[1].Default], mode.Params[2].Choices[mode.Params[2].Default]));
     }
 
     private static string Errors(string source) => string.Join("\n", ModeCompiler.Compile(source).Errors.Select(e => e.ToString()));
@@ -324,8 +393,8 @@ public sealed class ModeCompilerTests
     [InlineData("rule \"R\" { event every step; do { int x = 3 % 1.5; } }\n", "line 2: '%' takes whole numbers: use floor, ceil, round or trunc first")]
     [InlineData("param p \"P\" number 1..3;\nevery(p) { }\n", "line 3: every takes a time of at least one step (every(10s)) or a delay parameter")]
     [InlineData("pedals locked accel 1.5;\n", "line 2: pedals locked's accel is 0..1")]
-    [InlineData("rule \"R\" { event each seat; do { show seat, 3; } }\n", "line 2: show takes one of TIMER, DISTANCE, DIGIT, WARNING, SUCCESS, FAILED, TIME_OVER, SPEED_GAUGE, OBJECTS, LEADER_GAP, RANK, LAPS, SPEED, ENERGY, LAP_TIMES, RACE_TIME, FACES")]
-    [InlineData("rule \"R\" { event each seat; do { show seat, ghost; } }\n", "line 2: show takes one of TIMER, DISTANCE, DIGIT, WARNING, SUCCESS, FAILED, TIME_OVER, SPEED_GAUGE, OBJECTS, LEADER_GAP, RANK, LAPS, SPEED, ENERGY, LAP_TIMES, RACE_TIME, FACES")]
+    [InlineData("rule \"R\" { event each seat; do { show seat, 3; } }\n", "line 2: show takes one of TIMER, DISTANCE, DIGIT, WARNING, SUCCESS, FAILED, TIME_OVER, SPEED_GAUGE, OBJECTS, LEADER_GAP, GHOST_GAP, RANK, LAPS, SPEED, ENERGY, LAP_TIMES, RACE_TIME, FACES")]
+    [InlineData("rule \"R\" { event each seat; do { show seat, ghost; } }\n", "line 2: show takes one of TIMER, DISTANCE, DIGIT, WARNING, SUCCESS, FAILED, TIME_OVER, SPEED_GAUGE, OBJECTS, LEADER_GAP, GHOST_GAP, RANK, LAPS, SPEED, ENERGY, LAP_TIMES, RACE_TIME, FACES")]
     [InlineData("rule \"R\" { event each seat; do { seat.look = TIMER; } }\n", "line 2: seat.look takes one of normal, ghost, invisible")]
     [InlineData("rule \"R\" { event each seat; do { seat.look += ghost; } }\n", "line 2: seat.look takes a name: write seat.look = normal;")]
     [InlineData("rule \"R\" { event each seat; do { map_hide seat, seats; } }\n", "line 2: map_hide writes 'from' before its second argument: map_hide s from seats;")]

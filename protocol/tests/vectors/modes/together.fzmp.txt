@@ -1,4 +1,4 @@
-FZMP format 1 api 1, 406 bytes, hash c6f10b8f305b3ece75a7ba7f3f9d53611b48f52feb4eff0dd37a71c92d77990d
+FZMP format 1 api 1, 411 bytes, hash 53cdfed2f023d9b6d3cb3d0d629704af022d199c6f5b06e2a7962eaf1aa3a96e
 HEAD name "Together" badge "" about ""
 PARM 0
 SETP 1
@@ -16,7 +16,7 @@ CODE 54 bytes
   000b  ILt
   000c  JumpIfZero 0035
   0011  LoadLocal 0
-  0013  SeatRead ghost
+  0013  SeatRead no_contact
   0015  JumpIfZero 0026
   001a  LoadGlobal 0
   001d  Push 1
@@ -28,4 +28,4 @@ CODE 54 bytes
   002e  StoreLocal 0
   0030  Jump 0007
   0035  End
-SRC  235 bytes
+SRC  240 bytes

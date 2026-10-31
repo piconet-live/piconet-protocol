@@ -71,6 +71,7 @@ public static class ModeCompiler
     {
         private readonly ModeNames _names = new();
         private readonly List<ModeParam> _params = [];
+        private readonly List<ModePreset> _presets = [];
         private readonly List<ModeSetupWord> _setups = [];
         private readonly List<ModeLobbyWord> _lobbyWords = [];
         private readonly List<int> _globals = [];
@@ -140,6 +141,7 @@ public static class ModeCompiler
                 Badge = header.Badge,
                 About = header.About,
                 Params = _params,
+                Presets = _presets,
                 Setups = _setups,
                 LobbyWords = _lobbyWords,
                 Globals = _globals,
@@ -159,6 +161,9 @@ public static class ModeCompiler
             {
                 case ModeParamItem param:
                     Param(param);
+                    break;
+                case ModePresetItem preset:
+                    Preset(preset);
                     break;
                 case ModeSetupItem setup:
                     Setup(setup);
@@ -289,6 +294,39 @@ public static class ModeCompiler
             var type = item.Kind == ModeParamKind.Switch ? ModeType.Bool : param.Type;
             _names.Declare(item.Line, item.Name, new ModeDeclared(ModeNameKind.Param, type, _params.Count, Param: param));
             _params.Add(param);
+        }
+
+        /// <summary>A preset, after the parameters it names (each thing is declared before it is used). Every parameter it
+        /// leaves out keeps its default.</summary>
+        private void Preset(ModePresetItem item)
+        {
+            if (_presets.Count >= ModeWords.Presets)
+            {
+                throw new ModeCompileException(item.Line, $"a mode has at most {ModeWords.Presets} presets");
+            }
+            if (item.Name.Trim().Length == 0 || _presets.Any(p => p.Name == item.Name))
+            {
+                throw new ModeCompileException(item.Line, $"a preset has a name of its own, not \"{item.Name}\"");
+            }
+            if (item.Values.Count == 0)
+            {
+                throw new ModeCompileException(item.Line, $"the preset \"{item.Name}\" sets nothing");
+            }
+            var cells = _params.Select(p => p.Default).ToArray();
+            var given = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var value in item.Values)
+            {
+                if (_names.Find(value.Param) is not { Kind: ModeNameKind.Param } declared)
+                {
+                    throw new ModeCompileException(value.Line, $"the preset \"{item.Name}\" names '{value.Param}', which is no parameter declared before it");
+                }
+                if (!given.Add(value.Param))
+                {
+                    throw new ModeCompileException(value.Line, $"the preset \"{item.Name}\" names {value.Param} twice");
+                }
+                cells[declared.Index] = ModeParams.PresetCell(declared.Param!, value);
+            }
+            _presets.Add(new ModePreset(item.Name, cells));
         }
 
         /// <summary>The Grand Prix's points for places 1 to 30, main.rel .rodata 0xDB38 (design D9).</summary>

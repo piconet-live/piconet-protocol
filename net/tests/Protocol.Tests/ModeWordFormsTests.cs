@@ -57,7 +57,7 @@ public sealed class ModeWordFormsTests
     [InlineData("danger_zone seat, 500.0, 800.0, 3;")]
     [InlineData("danger_zone seat off;")]
     [InlineData("respawns seat off;")]
-    [InlineData("ghost seat off;")]
+    [InlineData("no_contact seat off;")]
     [InlineData("no contact seats, seats;")]
     [InlineData("team seat.team no contact;")]
     [InlineData("map_hide seat from seats - seat;")]
@@ -281,10 +281,11 @@ public sealed class ModeWordFormsTests
 
     [Theory]
     [InlineData("rule \"R\" { event each seat; do { show_number seat off; } }")]
-    [InlineData("rule \"R\" { event race_start; do { int a = race.humans_left; } }")]
-    public void AWordTheDocumentsMarkNotBuiltIsRefused(string body)
+    [InlineData("rule \"R\" { event race_start; do { int a = race.humans_left; int b = race.human_finished; } }")]
+    [InlineData("rule \"R\" { event each seat; do { show seat, GHOST_GAP; seat.ghost_tint = 0x80FF80FF; seat.ghost_sound = on; } }")]
+    public void TheWordsPromisedAreBuilt(string body)
     {
-        Assert.NotEmpty(Compile(body).Errors);
+        Assert.Empty(Compile(body).Errors);
     }
 
     [Theory]

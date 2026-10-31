@@ -63,6 +63,37 @@ internal static class ModeParams
         return new ModeParam(item.Name, item.Label, ModeParamKind.Choice, ModeType.Int, 0, item.Choices.Count - 1, 1, index, item.Choices);
     }
 
+    /// <summary>A preset's value for a parameter, as its cell: a choice's by name, a switch's on or off, a delay's a time, a
+    /// number's a number on the parameter's range and steps.</summary>
+    public static int PresetCell(ModeParam p, ModePresetValue value)
+    {
+        string Word() => $"the preset's {p.Name}";
+        if (p.Kind == ModeParamKind.Choice)
+        {
+            var index = value.Choice is null ? -1 : p.Choices.ToList().IndexOf(value.Choice);
+            return index >= 0 ? index
+                : throw new ModeCompileException(value.Line, $"{Word()} is one of its choices: {string.Join(", ", p.Choices.Select(c => $"\"{c}\""))}");
+        }
+        if (value.Literal is not { } literal)
+        {
+            throw new ModeCompileException(value.Line, $"{Word()} is not a choice: it takes {(p.Kind == ModeParamKind.Switch ? "on or off" : "a value of its range")}");
+        }
+        if (p.Kind == ModeParamKind.Switch)
+        {
+            return literal.Type == ModeType.Bool ? literal.Bits : throw new ModeCompileException(value.Line, $"{Word()} is a switch: on or off");
+        }
+        if (p.Kind == ModeParamKind.Delay != literal.Time || literal.Type is not (ModeType.Int or ModeType.Real))
+        {
+            throw new ModeCompileException(value.Line, $"{Word()} is {(p.Kind == ModeParamKind.Delay ? "a time (30s)" : "a number")}");
+        }
+        var cell = p.Type == ModeType.Real && literal.Type == ModeType.Int ? ModeOperators.Cell(literal.Bits) : literal.Bits;
+        if (p.Type == ModeType.Int && literal.Type == ModeType.Real)
+        {
+            throw new ModeCompileException(value.Line, $"{Word()} is a whole number");
+        }
+        return p.Fits(cell) ? cell : throw new ModeCompileException(value.Line, $"{Word()} {literal.Text} is outside what the parameter allows");
+    }
+
     private static ModeParam Checked(ModeParamItem item, ModeParam p, bool stepWritten)
     {
         string Show(int cell) => p.Type == ModeType.Real

@@ -175,6 +175,10 @@ internal sealed partial class ModeEmitter
             Op(ModeOp.LoadSeatVar, variable.Index);
             return variable.Type;
         }
+        if (ModeOldWords.Reads.TryGetValue(field.Field, out var now))
+        {
+            throw new ModeCompileException(field.Line, $"'.{field.Field}' is called .{now} now: write seat.{now}");
+        }
         throw new ModeCompileException(field.Line, $"a seat has no '{field.Field}' (neither a read of api {ModeWords.Api} nor a seat variable)");
     }
 

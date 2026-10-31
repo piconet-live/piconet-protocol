@@ -47,3 +47,15 @@ rule "Out of sight" {
     show_number s, -1;
   }
 }
+
+rule "The owner's words of 2026-10-31" {
+  event finish(s);
+  do {
+    show_number s off;
+    show s, GHOST_GAP;
+    hide s, GHOST_GAP;
+    s.ghost_tint = 0x80FF80FF;
+    s.ghost_sound = on;
+    s.ghost_sound = off;
+  }
+}

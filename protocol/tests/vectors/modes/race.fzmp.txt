@@ -1,4 +1,4 @@
-FZMP format 1 api 1, 4712 bytes, hash 242da0bb1b644e70bf184c216018ac50c57c580cd7936368739115d4c26b1a86
+FZMP format 1 api 1, 4784 bytes, hash 0a92c41b16dac99c041c38c8eae429cbe8873b5865a697386e18236dff07d1d1
 HEAD name "Race words" badge "" about "Every race-side word of api 1."
 PARM 1
   0 limit "Time" delay int 3600..36000 step 1800 default 18000
@@ -37,7 +37,7 @@ RULE 21
   18 "From the first picture" event game_start, locals 1, when none, while none, body 01dc
   19 "Out" event out, locals 2, when 020f, while none, body 0218
   20 "Reads" event each seat, locals 7, when none, while 0229, body 0291
-CODE 911 bytes
+CODE 917 bytes
   ; rule 0 body
   0000  Push 0
   0005  StoreLocal 0
@@ -48,7 +48,7 @@ CODE 911 bytes
   0011  LoadLocal 0
   0013  Action respawns
   0015  LoadLocal 0
-  0017  Action ghost
+  0017  Action no_contact
   0019  LoadLocal 0
   001b  SeatRead is_cpu
   001d  JumpIfZero 002f
@@ -78,7 +78,7 @@ CODE 911 bytes
   005a  ILt
   005b  JumpIfZero 0077
   0060  LoadLocal 0
-  0062  Action ghost off
+  0062  Action no_contact off
   0064  LoadLocal 0
   0066  Action release
   0068  LoadLocal 0
@@ -346,12 +346,12 @@ CODE 911 bytes
   027b  JumpIfNotZero 0285
   0280  Pop
   0281  LoadLocal 0
-  0283  SeatRead ghost
+  0283  SeatRead no_contact
   0285  Dup
   0286  JumpIfNotZero 0290
   028b  Pop
   028c  LoadLocal 0
-  028e  SeatRead is_player
+  028e  SeatRead is_human
   0290  Ret
   ; rule 20 body
   0291  LoadLocal 0
@@ -421,7 +421,7 @@ CODE 911 bytes
   02fd  LoadLocal 0
   02ff  SeatRead race_time
   0301  LoadLocal 0
-  0303  SeatRead lap_time
+  0303  SeatRead mode_lap_steps
   0305  IAdd
   0306  LoadLocal 0
   0308  SeatRead best_lap
@@ -433,7 +433,7 @@ CODE 911 bytes
   0312  SeatRead hits
   0314  IAdd
   0315  LoadLocal 0
-  0317  SeatRead lap_steps
+  0317  SeatRead game_lap_steps
   0319  IAdd
   031a  LoadLocal 0
   031c  SeatRead standing
@@ -447,43 +447,47 @@ CODE 911 bytes
   0329  LoadLocal 0
   032b  SeatRead kos
   032d  IAdd
-  032e  StoreLocal 2
-  0330  LoadLocal 1
-  0332  LoadLocal 2
-  0334  IToF
-  0335  FGt
-  0336  Dup
-  0337  JumpIfZero 0387
-  033c  Pop
-  033d  Push 0
-  0342  StoreLocal 3
-  0344  LoadLocal 0
-  0346  SeatRead touching
-  0348  StoreLocal 4
-  034a  Push 0
-  034f  StoreLocal 5
-  0351  LoadLocal 5
-  0353  RaceRead seats
-  0355  ILt
-  0356  JumpIfZero 037f
-  035b  LoadLocal 5
-  035d  SeatBit
-  035e  LoadLocal 4
-  0360  BitAnd
-  0361  JumpIfZero 0370
-  0366  LoadLocal 3
-  0368  Push 1
-  036d  IAdd
-  036e  StoreLocal 3
-  0370  LoadLocal 5
-  0372  Push 1
-  0377  IAdd
-  0378  StoreLocal 5
-  037a  Jump 0351
-  037f  LoadLocal 3
-  0381  Push 2
-  0386  IGt
-  0387  JumpIfZero 038e
-  038c  Action end_race
-  038e  End
-SRC  3073 bytes
+  032e  RaceRead humans_left
+  0330  IAdd
+  0331  RaceRead human_finished
+  0333  IAdd
+  0334  StoreLocal 2
+  0336  LoadLocal 1
+  0338  LoadLocal 2
+  033a  IToF
+  033b  FGt
+  033c  Dup
+  033d  JumpIfZero 038d
+  0342  Pop
+  0343  Push 0
+  0348  StoreLocal 3
+  034a  LoadLocal 0
+  034c  SeatRead touching
+  034e  StoreLocal 4
+  0350  Push 0
+  0355  StoreLocal 5
+  0357  LoadLocal 5
+  0359  RaceRead seats
+  035b  ILt
+  035c  JumpIfZero 0385
+  0361  LoadLocal 5
+  0363  SeatBit
+  0364  LoadLocal 4
+  0366  BitAnd
+  0367  JumpIfZero 0376
+  036c  LoadLocal 3
+  036e  Push 1
+  0373  IAdd
+  0374  StoreLocal 3
+  0376  LoadLocal 5
+  0378  Push 1
+  037d  IAdd
+  037e  StoreLocal 5
+  0380  Jump 0357
+  0385  LoadLocal 3
+  0387  Push 2
+  038c  IGt
+  038d  JumpIfZero 0394
+  0392  Action end_race
+  0394  End
+SRC  3139 bytes

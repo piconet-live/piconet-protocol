@@ -263,6 +263,7 @@ internal sealed class ModeParser
         return token.Text switch
         {
             "param" => Param(),
+            "preset" => Preset(),
             "const" => Const(),
             "global" or "seat" or "team" => Variable(),
             "sub" => Sub(),
@@ -303,6 +304,30 @@ internal sealed class ModeParser
         }
         Expect(";");
         return new ModeBoardItem(line, scope, nameToken.Text, label, words);
+    }
+
+    /// <summary><c>preset "Sprint" { laps_asked = 1; dots = "Hidden"; }</c>: a named set of parameter values (the design's
+    /// section 5, a preset is a named mode with parameter values).</summary>
+    private ModePresetItem Preset()
+    {
+        var line = Take().Line;
+        var name = Text();
+        Expect("{");
+        var values = new List<ModePresetValue>();
+        while (!Accept("}"))
+        {
+            var token = Take();
+            if (token.Kind != ModeTokenKind.Name)
+            {
+                throw new ModeCompileException(token.Line, $"a preset gives parameters values, not {Describe(token)}");
+            }
+            Expect("=");
+            values.Add(Current.Kind == ModeTokenKind.Text
+                ? new ModePresetValue(token.Line, token.Text, null, Text())
+                : new ModePresetValue(token.Line, token.Text, Literal(), null));
+            Expect(";");
+        }
+        return new ModePresetItem(line, name, values);
     }
 
     private ModeParamItem Param()
@@ -793,6 +818,8 @@ internal sealed class ModeParser
             "return" when token.Kind == ModeTokenKind.Name => Return(),
             "team" when token.Kind == ModeTokenKind.Name => TeamAction(),
             _ when IsActionWord(token) => ActionStatement(),
+            "ghost" when !PeekToken(1).Is(".") && !Assignments.Any(a => PeekToken(1).Is(a)) =>
+                throw Error("'ghost' is called no_contact now: write no_contact s; or no_contact s off;"),
             _ => Assignment(),
         };
     }
@@ -865,7 +892,7 @@ internal sealed class ModeParser
 
     /// <summary>An action: its words (<c>no contact</c>), its arguments with commas or without (<c>no contact a b</c>,
     /// <c>cpu_mode s, 4</c>), and a last <c>off</c> that names the word's <c>off</c> form (<c>respawns s off</c>,
-    /// <c>ghost s off</c>).</summary>
+    /// <c>no_contact s off</c>).</summary>
     private ModeActionStatement ActionStatement()
     {
         var token = Take();

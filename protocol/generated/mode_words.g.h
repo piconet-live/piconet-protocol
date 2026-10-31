@@ -31,6 +31,7 @@ inline constexpr int BOARD_LABEL = 32;
 inline constexpr int BOARD_WORDS = 16;
 inline constexpr int BOARD_WORD = 16;
 inline constexpr int PACKAGE_BYTES = 65536;
+inline constexpr int PRESETS = 16;
 inline constexpr int SEATS = 30;
 
 // the bytecode's operations: the byte, then the operands' bytes (big-endian)
@@ -286,7 +287,7 @@ enum Seat : std::uint8_t
   SEAT_INPUTSTRAFE = 21,  // input.strafe
   SEAT_INPUTPITCH = 22,  // input.pitch
   SEAT_RACETIME = 23,  // race_time
-  SEAT_LAPTIME = 24,  // lap_time
+  SEAT_MODELAPSTEPS = 24,  // mode_lap_steps
   SEAT_BESTLAP = 25,  // best_lap
   SEAT_MACHINE = 26,  // machine
   SEAT_ISCPU = 27,  // is_cpu
@@ -296,7 +297,7 @@ enum Seat : std::uint8_t
   SEAT_LAPDISTANCE = 31,  // lap_distance
   SEAT_CHECKPOINT = 32,  // checkpoint
   SEAT_CHECKPOINTFRACTION = 33,  // checkpoint_fraction
-  SEAT_LAPSTEPS = 34,  // lap_steps
+  SEAT_GAMELAPSTEPS = 34,  // game_lap_steps
   SEAT_WRONGWAY = 35,  // wrong_way
   SEAT_TOPSPEED = 36,  // top_speed
   SEAT_MAXENERGY = 37,  // max_energy
@@ -312,8 +313,8 @@ enum Seat : std::uint8_t
   SEAT_PLACE = 47,  // place
   SEAT_POINTS = 48,  // points
   SEAT_KOS = 49,  // kos
-  SEAT_ISPLAYER = 50,  // is_player
-  SEAT_GHOST = 51,  // ghost
+  SEAT_ISHUMAN = 50,  // is_human
+  SEAT_NOCONTACT = 51,  // no_contact
   SEAT_STATWEIGHT = 52,  // stat.weight
   SEAT_STATACCEL = 53,  // stat.accel
   SEAT_STATMAXSPEED = 54,  // stat.max_speed
@@ -352,7 +353,9 @@ enum Race : std::uint8_t
   RACE_SIDEATTACKS = 9,  // side_attacks
   RACE_SPINIMMUNITY = 10,  // spin_immunity
   RACE_COURSE = 11,  // course
-  RACE_COUNT = 12,
+  RACE_HUMANSLEFT = 12,  // humans_left
+  RACE_HUMANFINISHED = 13,  // human_finished
+  RACE_COUNT = 14,
 };
 
 // an action (OP_ACTION)
@@ -376,8 +379,8 @@ enum Action : std::uint8_t
   ACTION_SEATVELOCITY = 16,  // seat.velocity
   ACTION_FREEZE = 17,  // freeze
   ACTION_RELEASE = 18,  // release
-  ACTION_GHOST = 19,  // ghost
-  ACTION_GHOSTOFF = 20,  // ghost off
+  ACTION_NOCONTACTSEAT = 19,  // no_contact
+  ACTION_NOCONTACTSEATOFF = 20,  // no_contact off
   ACTION_NOCONTACT = 21,  // no contact
   ACTION_TEAMNOCONTACT = 22,  // team no contact
   ACTION_DANGERZONE = 23,  // danger_zone
@@ -414,10 +417,13 @@ enum Action : std::uint8_t
   ACTION_RACESIDEATTACKS = 54,  // race.side_attacks
   ACTION_RACESPINIMMUNITY = 55,  // race.spin_immunity
   ACTION_BOOSTOFF = 56,  // boost off
-  ACTION_COUNT = 57,
+  ACTION_SHOWNUMBEROFF = 57,  // show_number off
+  ACTION_SEATGHOSTTINT = 58,  // seat.ghost_tint
+  ACTION_SEATGHOSTSOUND = 59,  // seat.ghost_sound
+  ACTION_COUNT = 60,
 };
 
-// the choice `part`: a part of the game's own race HUD: TIMER the timed mode's clock (clock_limit's time, R+0xA4: seconds, 0 to 999); DISTANCE the metres to the finish (the seat's own); DIGIT the story's big digit (danger_zone's seconds, 3 2 1); WARNING, SUCCESS, FAILED, TIME_OVER, SPEED_GAUGE, OBJECTS the story's pictures, off until shown; LEADER_GAP the game's own time gap to the leader, off until shown: at each lap line, for a second, the seat's time behind the leader, and the leader's own lead when second place crosses; RANK, LAPS, SPEED, ENERGY, LAP_TIMES, RACE_TIME, FACES the standard HUD (the mask .data 0x3D544; FACES the board fn_1_D27B8), on until hidden
+// the choice `part`: a part of the game's own race HUD: TIMER the timed mode's clock (clock_limit's time, R+0xA4: seconds, 0 to 999); DISTANCE the metres to the finish (the seat's own); DIGIT the story's big digit (danger_zone's seconds, 3 2 1); WARNING, SUCCESS, FAILED, TIME_OVER, SPEED_GAUGE, OBJECTS the story's pictures, off until shown; LEADER_GAP the game's own time gap to the leader, off until shown: at each lap line, for a second, the seat's time behind the leader, and the leader's own lead when second place crosses; GHOST_GAP Time Attack's live gap, off until shown: signed minutes, seconds and thousandths at the right edge (617, 270), all race, against the seat furthest ahead, red while it is ahead, blue while you are; RANK, LAPS, SPEED, ENERGY, LAP_TIMES, RACE_TIME, FACES the standard HUD (the mask .data 0x3D544; FACES the board fn_1_D27B8), on until hidden
 enum Part : std::uint8_t
 {
   PART_TIMER = 0,
@@ -430,14 +436,15 @@ enum Part : std::uint8_t
   PART_SPEED_GAUGE = 7,
   PART_OBJECTS = 8,
   PART_LEADER_GAP = 9,
-  PART_RANK = 10,
-  PART_LAPS = 11,
-  PART_SPEED = 12,
-  PART_ENERGY = 13,
-  PART_LAP_TIMES = 14,
-  PART_RACE_TIME = 15,
-  PART_FACES = 16,
-  PART_COUNT = 17,
+  PART_GHOST_GAP = 10,
+  PART_RANK = 11,
+  PART_LAPS = 12,
+  PART_SPEED = 13,
+  PART_ENERGY = 14,
+  PART_LAP_TIMES = 15,
+  PART_RACE_TIME = 16,
+  PART_FACES = 17,
+  PART_COUNT = 18,
 };
 
 // the choice `banner`: a banner of the game's own race HUD, shown once, as the game shows it; TICK the timed mode's countdown beep, heard by that seat's player
@@ -452,7 +459,7 @@ enum Banner : std::uint8_t
   BANNER_COUNT = 6,
 };
 
-// the choice `look`: how a machine is drawn: as the game draws it; as Time Attack draws its ghost (a blue hologram); not at all
+// the choice `look`: how a machine is drawn: as the game draws it; as Time Attack draws its ghost (additive, with a depth pass, alpha by the camera's distance, 60 frames' fade from GO, no shadow, yellow unless seat.ghost_tint says otherwise; no machine sound unless seat.ghost_sound says otherwise); not at all
 enum Look : std::uint8_t
 {
   LOOK_NORMAL = 0,
@@ -488,8 +495,8 @@ constexpr int ActionArguments(std::uint8_t action)
     case ACTION_SEATVELOCITY: return 2;
     case ACTION_FREEZE: return 1;
     case ACTION_RELEASE: return 1;
-    case ACTION_GHOST: return 1;
-    case ACTION_GHOSTOFF: return 1;
+    case ACTION_NOCONTACTSEAT: return 1;
+    case ACTION_NOCONTACTSEATOFF: return 1;
     case ACTION_NOCONTACT: return 2;
     case ACTION_TEAMNOCONTACT: return 1;
     case ACTION_DANGERZONE: return 4;
@@ -526,6 +533,9 @@ constexpr int ActionArguments(std::uint8_t action)
     case ACTION_RACESIDEATTACKS: return 1;
     case ACTION_RACESPINIMMUNITY: return 1;
     case ACTION_BOOSTOFF: return 1;
+    case ACTION_SHOWNUMBEROFF: return 1;
+    case ACTION_SEATGHOSTTINT: return 2;
+    case ACTION_SEATGHOSTSOUND: return 2;
     default: return -1;
   }
 }
