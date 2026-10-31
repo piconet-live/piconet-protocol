@@ -1,4 +1,4 @@
-FZMP format 1 api 1, 1911 bytes, hash afc7f4b250d026269a660380adc71eba6324404fe6e03d73935a2dd812f1538b
+FZMP format 1 api 1, 1899 bytes, hash c7289476ce8fb88c17a66cb9d0c930c59ed0fd0ba82896c8ddf4a9bae8559875
 HEAD name "Stats page" badge "" about ""
 PARM 0
 SETP 1
@@ -28,10 +28,10 @@ CODE 260 bytes
   0027  Action seat.stat.drift_friction
   0029  LoadLocal 0
   002b  Push 1040187392 (0x3e000000, real 0.125)
-  0030  Action seat.stat.turn_resistance
+  0030  Action seat.stat.turn_tension
   0032  LoadLocal 0
   0034  Push 1101004800 (0x41a00000, real 20)
-  0039  Action seat.stat.turn_response
+  0039  Action seat.stat.turn_reaction
   003b  LoadLocal 0
   003d  Push 1106247680 (0x41f00000, real 30)
   0042  Action seat.stat.strafe_turn
@@ -57,10 +57,10 @@ CODE 260 bytes
   007e  Action seat.stat.drift_friction
   0080  LoadLocal 0
   0082  Push 1120403456 (0x42c80000, real 100)
-  0087  Action seat.stat.turn_resistance
+  0087  Action seat.stat.turn_tension
   0089  LoadLocal 0
   008b  Push 1148846080 (0x447a0000, real 1000)
-  0090  Action seat.stat.turn_response
+  0090  Action seat.stat.turn_reaction
   0092  LoadLocal 0
   0094  Push 1175232512 (0x460ca000, real 9000)
   0099  Action seat.stat.strafe_turn
@@ -79,10 +79,10 @@ CODE 260 bytes
   00bc  SeatRead stat.drift_friction
   00be  FAdd
   00bf  LoadLocal 0
-  00c1  SeatRead stat.turn_resistance
+  00c1  SeatRead stat.turn_tension
   00c3  FAdd
   00c4  LoadLocal 0
-  00c6  SeatRead stat.turn_response
+  00c6  SeatRead stat.turn_reaction
   00c8  FAdd
   00c9  LoadLocal 0
   00cb  SeatRead stat.strafe_turn
@@ -100,10 +100,10 @@ CODE 260 bytes
   00df  SeatRead stat.base.drift_friction
   00e1  FAdd
   00e2  LoadLocal 0
-  00e4  SeatRead stat.base.turn_resistance
+  00e4  SeatRead stat.base.turn_tension
   00e6  FAdd
   00e7  LoadLocal 0
-  00e9  SeatRead stat.base.turn_response
+  00e9  SeatRead stat.base.turn_reaction
   00eb  FAdd
   00ec  LoadLocal 0
   00ee  SeatRead stat.base.strafe_turn
@@ -119,4 +119,4 @@ CODE 260 bytes
   00ff  FAdd
   0100  StoreGlobal 0
   0103  End
-SRC  1531 bytes
+SRC  1519 bytes

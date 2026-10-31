@@ -340,16 +340,16 @@ enum Seat : std::uint8_t
   SEAT_STATBASEBODY = 71,  // stat.base.body
   SEAT_STATDRIFTROTATIONRESISTANCE = 72,  // stat.drift_rotation_resistance
   SEAT_STATDRIFTFRICTION = 73,  // stat.drift_friction
-  SEAT_STATTURNRESISTANCE = 74,  // stat.turn_resistance
-  SEAT_STATTURNRESPONSE = 75,  // stat.turn_response
+  SEAT_STATTURNTENSION = 74,  // stat.turn_tension
+  SEAT_STATTURNREACTION = 75,  // stat.turn_reaction
   SEAT_STATSTRAFETURN = 76,  // stat.strafe_turn
   SEAT_STATDRIFTACCEL = 77,  // stat.drift_accel
   SEAT_STATTURNDECEL = 78,  // stat.turn_decel
   SEAT_STATGRIPWINDOW = 79,  // stat.grip_window
   SEAT_STATBASEDRIFTROTATIONRESISTANCE = 80,  // stat.base.drift_rotation_resistance
   SEAT_STATBASEDRIFTFRICTION = 81,  // stat.base.drift_friction
-  SEAT_STATBASETURNRESISTANCE = 82,  // stat.base.turn_resistance
-  SEAT_STATBASETURNRESPONSE = 83,  // stat.base.turn_response
+  SEAT_STATBASETURNTENSION = 82,  // stat.base.turn_tension
+  SEAT_STATBASETURNREACTION = 83,  // stat.base.turn_reaction
   SEAT_STATBASESTRAFETURN = 84,  // stat.base.strafe_turn
   SEAT_STATBASEDRIFTACCEL = 85,  // stat.base.drift_accel
   SEAT_STATBASETURNDECEL = 86,  // stat.base.turn_decel
@@ -441,8 +441,8 @@ enum Action : std::uint8_t
   ACTION_SEATGHOSTSOUND = 59,  // seat.ghost_sound
   ACTION_SEATSTATDRIFTROTATIONRESISTANCE = 60,  // seat.stat.drift_rotation_resistance
   ACTION_SEATSTATDRIFTFRICTION = 61,  // seat.stat.drift_friction
-  ACTION_SEATSTATTURNRESISTANCE = 62,  // seat.stat.turn_resistance
-  ACTION_SEATSTATTURNRESPONSE = 63,  // seat.stat.turn_response
+  ACTION_SEATSTATTURNTENSION = 62,  // seat.stat.turn_tension
+  ACTION_SEATSTATTURNREACTION = 63,  // seat.stat.turn_reaction
   ACTION_SEATSTATSTRAFETURN = 64,  // seat.stat.strafe_turn
   ACTION_SEATSTATDRIFTACCEL = 65,  // seat.stat.drift_accel
   ACTION_SEATSTATTURNDECEL = 66,  // seat.stat.turn_decel
@@ -565,8 +565,8 @@ constexpr int ActionArguments(std::uint8_t action)
     case ACTION_SEATGHOSTSOUND: return 2;
     case ACTION_SEATSTATDRIFTROTATIONRESISTANCE: return 2;
     case ACTION_SEATSTATDRIFTFRICTION: return 2;
-    case ACTION_SEATSTATTURNRESISTANCE: return 2;
-    case ACTION_SEATSTATTURNRESPONSE: return 2;
+    case ACTION_SEATSTATTURNTENSION: return 2;
+    case ACTION_SEATSTATTURNREACTION: return 2;
     case ACTION_SEATSTATSTRAFETURN: return 2;
     case ACTION_SEATSTATDRIFTACCEL: return 2;
     case ACTION_SEATSTATTURNDECEL: return 2;

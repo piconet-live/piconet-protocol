@@ -416,10 +416,10 @@ public enum ModeSeatRead : byte
     StatDriftRotationResistance = 72,
     /// <summary><c>stat.drift_friction</c></summary>
     StatDriftFriction = 73,
-    /// <summary><c>stat.turn_resistance</c></summary>
-    StatTurnResistance = 74,
-    /// <summary><c>stat.turn_response</c></summary>
-    StatTurnResponse = 75,
+    /// <summary><c>stat.turn_tension</c></summary>
+    StatTurnTension = 74,
+    /// <summary><c>stat.turn_reaction</c></summary>
+    StatTurnReaction = 75,
     /// <summary><c>stat.strafe_turn</c></summary>
     StatStrafeTurn = 76,
     /// <summary><c>stat.drift_accel</c></summary>
@@ -432,10 +432,10 @@ public enum ModeSeatRead : byte
     StatBaseDriftRotationResistance = 80,
     /// <summary><c>stat.base.drift_friction</c></summary>
     StatBaseDriftFriction = 81,
-    /// <summary><c>stat.base.turn_resistance</c></summary>
-    StatBaseTurnResistance = 82,
-    /// <summary><c>stat.base.turn_response</c></summary>
-    StatBaseTurnResponse = 83,
+    /// <summary><c>stat.base.turn_tension</c></summary>
+    StatBaseTurnTension = 82,
+    /// <summary><c>stat.base.turn_reaction</c></summary>
+    StatBaseTurnReaction = 83,
     /// <summary><c>stat.base.strafe_turn</c></summary>
     StatBaseStrafeTurn = 84,
     /// <summary><c>stat.base.drift_accel</c></summary>
@@ -604,10 +604,10 @@ public enum ModeAction : byte
     SeatStatDriftRotationResistance = 60,
     /// <summary><c>seat.stat.drift_friction</c></summary>
     SeatStatDriftFriction = 61,
-    /// <summary><c>seat.stat.turn_resistance</c></summary>
-    SeatStatTurnResistance = 62,
-    /// <summary><c>seat.stat.turn_response</c></summary>
-    SeatStatTurnResponse = 63,
+    /// <summary><c>seat.stat.turn_tension</c></summary>
+    SeatStatTurnTension = 62,
+    /// <summary><c>seat.stat.turn_reaction</c></summary>
+    SeatStatTurnReaction = 63,
     /// <summary><c>seat.stat.strafe_turn</c></summary>
     SeatStatStrafeTurn = 64,
     /// <summary><c>seat.stat.drift_accel</c></summary>
@@ -899,16 +899,16 @@ public static partial class ModeWords
         ("stat.base.body", ModeSeatRead.StatBaseBody, ModeType.Real),
         ("stat.drift_rotation_resistance", ModeSeatRead.StatDriftRotationResistance, ModeType.Real),
         ("stat.drift_friction", ModeSeatRead.StatDriftFriction, ModeType.Real),
-        ("stat.turn_resistance", ModeSeatRead.StatTurnResistance, ModeType.Real),
-        ("stat.turn_response", ModeSeatRead.StatTurnResponse, ModeType.Real),
+        ("stat.turn_tension", ModeSeatRead.StatTurnTension, ModeType.Real),
+        ("stat.turn_reaction", ModeSeatRead.StatTurnReaction, ModeType.Real),
         ("stat.strafe_turn", ModeSeatRead.StatStrafeTurn, ModeType.Real),
         ("stat.drift_accel", ModeSeatRead.StatDriftAccel, ModeType.Real),
         ("stat.turn_decel", ModeSeatRead.StatTurnDecel, ModeType.Real),
         ("stat.grip_window", ModeSeatRead.StatGripWindow, ModeType.Real),
         ("stat.base.drift_rotation_resistance", ModeSeatRead.StatBaseDriftRotationResistance, ModeType.Real),
         ("stat.base.drift_friction", ModeSeatRead.StatBaseDriftFriction, ModeType.Real),
-        ("stat.base.turn_resistance", ModeSeatRead.StatBaseTurnResistance, ModeType.Real),
-        ("stat.base.turn_response", ModeSeatRead.StatBaseTurnResponse, ModeType.Real),
+        ("stat.base.turn_tension", ModeSeatRead.StatBaseTurnTension, ModeType.Real),
+        ("stat.base.turn_reaction", ModeSeatRead.StatBaseTurnReaction, ModeType.Real),
         ("stat.base.strafe_turn", ModeSeatRead.StatBaseStrafeTurn, ModeType.Real),
         ("stat.base.drift_accel", ModeSeatRead.StatBaseDriftAccel, ModeType.Real),
         ("stat.base.turn_decel", ModeSeatRead.StatBaseTurnDecel, ModeType.Real),
@@ -998,8 +998,8 @@ public static partial class ModeWords
         ("seat.ghost_sound", ModeAction.SeatGhostSound, [ModeType.Seat, ModeType.Bool]),
         ("seat.stat.drift_rotation_resistance", ModeAction.SeatStatDriftRotationResistance, [ModeType.Seat, ModeType.Real]),
         ("seat.stat.drift_friction", ModeAction.SeatStatDriftFriction, [ModeType.Seat, ModeType.Real]),
-        ("seat.stat.turn_resistance", ModeAction.SeatStatTurnResistance, [ModeType.Seat, ModeType.Real]),
-        ("seat.stat.turn_response", ModeAction.SeatStatTurnResponse, [ModeType.Seat, ModeType.Real]),
+        ("seat.stat.turn_tension", ModeAction.SeatStatTurnTension, [ModeType.Seat, ModeType.Real]),
+        ("seat.stat.turn_reaction", ModeAction.SeatStatTurnReaction, [ModeType.Seat, ModeType.Real]),
         ("seat.stat.strafe_turn", ModeAction.SeatStatStrafeTurn, [ModeType.Seat, ModeType.Real]),
         ("seat.stat.drift_accel", ModeAction.SeatStatDriftAccel, [ModeType.Seat, ModeType.Real]),
         ("seat.stat.turn_decel", ModeAction.SeatStatTurnDecel, [ModeType.Seat, ModeType.Real]),

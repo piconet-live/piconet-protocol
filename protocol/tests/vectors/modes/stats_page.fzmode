@@ -13,8 +13,8 @@ rule "Change" {
     if (seat.index == 0) {
       seat.stat.drift_rotation_resistance = seat.stat.base.drift_rotation_resistance + 1.0;
       seat.stat.drift_friction = 0.25;
-      seat.stat.turn_resistance = 0.125;
-      seat.stat.turn_response = 20.0;
+      seat.stat.turn_tension = 0.125;
+      seat.stat.turn_reaction = 20.0;
       seat.stat.strafe_turn = 30.0;
       seat.stat.drift_accel = 2.0;
       seat.stat.turn_decel = 0.5;
@@ -23,16 +23,16 @@ rule "Change" {
     if (seat.index == 1) {
       seat.stat.drift_rotation_resistance = 100.0;
       seat.stat.drift_friction = 100.0;
-      seat.stat.turn_resistance = 100.0;
-      seat.stat.turn_response = 1000.0;
+      seat.stat.turn_tension = 100.0;
+      seat.stat.turn_reaction = 1000.0;
       seat.stat.strafe_turn = 9000.0;
       seat.stat.drift_accel = 100.0;
       seat.stat.turn_decel = 100.0;
       seat.stat.grip_window = 1000.0;
     }
-    seen = seat.stat.drift_rotation_resistance + seat.stat.drift_friction + seat.stat.turn_resistance + seat.stat.turn_response
+    seen = seat.stat.drift_rotation_resistance + seat.stat.drift_friction + seat.stat.turn_tension + seat.stat.turn_reaction
          + seat.stat.strafe_turn + seat.stat.drift_accel + seat.stat.turn_decel + seat.stat.grip_window
-         + seat.stat.base.drift_friction + seat.stat.base.turn_resistance + seat.stat.base.turn_response
+         + seat.stat.base.drift_friction + seat.stat.base.turn_tension + seat.stat.base.turn_reaction
          + seat.stat.base.strafe_turn + seat.stat.base.drift_accel + seat.stat.base.turn_decel + seat.stat.base.grip_window;
   }
 }

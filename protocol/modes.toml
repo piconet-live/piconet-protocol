@@ -1222,13 +1222,13 @@ type = "real"
 doc = "M+0x28, this step's: grip 3, the strafe's end and the sliding corners' sideways limit (fn_1_278B8 0x27A48..0x27A78, every step)"
 
 [[seat_read]]
-name = "stat.turn_resistance"
+name = "stat.turn_tension"
 id = 74
 type = "real"
 doc = "M+0x10, this step's: turn tension, the corners' sideways force (fn_1_278B8 0x27B9C, every step)"
 
 [[seat_read]]
-name = "stat.turn_response"
+name = "stat.turn_reaction"
 id = 75
 type = "real"
 doc = "M+0x20, this step's: turn reaction, how far the machine leans into the steering (fn_1_289B4 0x28DD4, fn_1_278B8 0x27928, fn_1_25480 0x25668, every step)"
@@ -1270,16 +1270,16 @@ type = "real"
 doc = "the machine's own drift_friction, M+0x28 before the mode's change"
 
 [[seat_read]]
-name = "stat.base.turn_resistance"
+name = "stat.base.turn_tension"
 id = 82
 type = "real"
-doc = "the machine's own turn_resistance, M+0x10 before the mode's change"
+doc = "the machine's own turn_tension, M+0x10 before the mode's change"
 
 [[seat_read]]
-name = "stat.base.turn_response"
+name = "stat.base.turn_reaction"
 id = 83
 type = "real"
-doc = "the machine's own turn_response, M+0x20 before the mode's change"
+doc = "the machine's own turn_reaction, M+0x20 before the mode's change"
 
 [[seat_read]]
 name = "stat.base.strafe_turn"
@@ -1999,14 +1999,14 @@ where = "the seat's second stat record (the block's stats page); the stand-in ro
 doc = "grip 3, the strafe's end and the sliding corners' sideways limit (fn_1_278B8 0x27A48..0x27A78, every step); held to the stat pack's range. It lasts until written again or the race ends"
 
 [[action]]
-name = "seat.stat.turn_resistance"
+name = "seat.stat.turn_tension"
 id = 62
 args = ["seat", "real"]
 where = "the seat's second stat record (the block's stats page); the stand-in routine writes M+0x10 after the game's rule hook fn_1_331EC rebuilt it, from the next step on"
 doc = "turn tension, the corners' sideways force (fn_1_278B8 0x27B9C, every step); held to the stat pack's range. It lasts until written again or the race ends"
 
 [[action]]
-name = "seat.stat.turn_response"
+name = "seat.stat.turn_reaction"
 id = 63
 args = ["seat", "real"]
 where = "the seat's second stat record (the block's stats page); the stand-in routine writes M+0x20 after the game's rule hook fn_1_331EC rebuilt it, from the next step on"
