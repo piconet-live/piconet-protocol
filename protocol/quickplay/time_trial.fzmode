@@ -1,4 +1,4 @@
-// A time trial: alone against the clock, the laps the player sets, no rewind. Nothing starts it yet: the launcher has no page for it.
+// A time trial: alone against the clock, the laps the player sets, no rewind. The launcher starts it itself: Play's Time Trial page.
 
 mode "Time trial" {
   api 1;

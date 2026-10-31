@@ -835,6 +835,7 @@ the worst; `-` where nothing was counted.
 | `race` only | `rollbacks`, `depth` | how many, and the steps gone back: median/deepest |
 | | `catchups` | steps added to catch up with the schedule (one a frame at most, and none on top of a rollback deeper than 6 steps: `port/core/src/schedule.cpp`) |
 | | `held` | frames that ran no new step, to fall back to the schedule |
+| | `bursts`, `burstseats`, `burstlast` | official rows that reached one check of the predictions together, from 4 rows up. `bursts`: `size:count` by the burst's size, 16 and larger as `16+`, comma separated, `-` for none. `burstseats`: the seats named so far, a seat being named when a row of the burst differs from what the game ran its machine on. `burstlast`: the newest 64 of those as `step/seat/rows/depth` (the displayed frame's step, the seat, the burst's size, the frame's rollback in steps, 0 for none), comma separated, oldest first, `-` for none (`port/core/src/summary.h` `BurstTally`) |
 
 The phases: `countdown` from the relay's go to the first frame that runs ahead on predicted inputs (the course's
 introduction and the countdown: lockstep); `race` from there to the frame that settles the race; `after` what

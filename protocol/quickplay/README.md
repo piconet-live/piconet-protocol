@@ -12,4 +12,4 @@ it at its start (a file that does not load stops the start), and the launcher's 
 | `competitive.fzmode` | The normal option: the game's own rules with the competitive scene's laps (`laps by course`) |
 | `knockout.fzmode` | A spicy option: a rolling start, then the last racer is out every interval |
 | `practice.fzmode` | Not in the rotation: Play's Practice, raced alone (`solo`); the launcher starts it itself, beside the program in this folder |
-| `time_trial.fzmode` | Not in the rotation: a time trial, raced alone (`solo`); no launcher page starts it yet |
+| `time_trial.fzmode` | Not in the rotation: a time trial, raced alone (`solo`); Play's Time Trial page starts it |
