@@ -263,6 +263,8 @@ public enum ModeSetup : byte
     Courses = 47,
     /// <summary><c>stats_page</c></summary>
     StatsPage = 48,
+    /// <summary><c>max_energy</c></summary>
+    MaxEnergy = 49,
 }
 
 /// <summary>A read of a seat (protocol/modes.toml).</summary>
@@ -444,6 +446,8 @@ public enum ModeSeatRead : byte
     StatBaseTurnDecel = 86,
     /// <summary><c>stat.base.grip_window</c></summary>
     StatBaseGripWindow = 87,
+    /// <summary><c>boost_left</c></summary>
+    BoostLeft = 88,
 }
 
 /// <summary>A read of the race (protocol/modes.toml).</summary>
@@ -616,6 +620,8 @@ public enum ModeAction : byte
     SeatStatTurnDecel = 66,
     /// <summary><c>seat.stat.grip_window</c></summary>
     SeatStatGripWindow = 67,
+    /// <summary><c>seat.max_energy</c></summary>
+    SeatMaxEnergy = 68,
 }
 
 /// <summary>The vocabulary of one api, by the names a mode file writes (protocol/modes.toml).</summary>
@@ -820,6 +826,7 @@ public static partial class ModeWords
         ("courses all", ModeSetup.CoursesAll, [], true, ""),
         ("courses", ModeSetup.Courses, [], true, "list"),
         ("stats_page", ModeSetup.StatsPage, [], false, ""),
+        ("max_energy", ModeSetup.MaxEnergy, [new ModeArgument("", ModeType.Int, 1, 1000, null)], false, ""),
     ];
 
     /// <summary>The reads of a seat (<c>seat.NAME</c>): name, id, type.</summary>
@@ -913,6 +920,7 @@ public static partial class ModeWords
         ("stat.base.drift_accel", ModeSeatRead.StatBaseDriftAccel, ModeType.Real),
         ("stat.base.turn_decel", ModeSeatRead.StatBaseTurnDecel, ModeType.Real),
         ("stat.base.grip_window", ModeSeatRead.StatBaseGripWindow, ModeType.Real),
+        ("boost_left", ModeSeatRead.BoostLeft, ModeType.Int),
     ];
 
     /// <summary>The reads of the race (<c>race.NAME</c>): name, id, type.</summary>
@@ -1004,6 +1012,7 @@ public static partial class ModeWords
         ("seat.stat.drift_accel", ModeAction.SeatStatDriftAccel, [ModeType.Seat, ModeType.Real]),
         ("seat.stat.turn_decel", ModeAction.SeatStatTurnDecel, [ModeType.Seat, ModeType.Real]),
         ("seat.stat.grip_window", ModeAction.SeatStatGripWindow, [ModeType.Seat, ModeType.Real]),
+        ("seat.max_energy", ModeAction.SeatMaxEnergy, [ModeType.Seat, ModeType.Real]),
     ];
 
     /// <summary>The actions that need a running step, which game_start refuses.</summary>

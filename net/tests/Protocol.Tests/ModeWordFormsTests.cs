@@ -278,6 +278,42 @@ public sealed class ModeWordFormsTests
         Assert.Empty(Compile(body).Errors);
     }
 
+    [Theory]
+    [InlineData("max_energy 1;")]
+    [InlineData("max_energy 150;")]
+    [InlineData("max_energy 1000;")]
+    [InlineData("param most \"Most\" number 1..1000 default 150;\nmax_energy most;")]
+    [InlineData("rule \"R\" { event game_start; do { for each s in seats { s.max_energy = 150; s.energy = 150; } } }")]
+    [InlineData("rule \"R\" { event each seat; do { seat.max_energy = 150; } }")]
+    [InlineData("rule \"R\" { event each seat; do { seat.max_energy += 1.5; } }")]
+    [InlineData("rule \"R\" { event each seat; do { seat.max_energy *= 2; } }")]
+    [InlineData("rule \"R\" { event each seat; do { int left = seat.boost_left; } }")]
+    public void TheEnergyWordsCompile(string body)
+    {
+        Assert.Empty(Compile(body).Errors);
+    }
+
+    [Theory]
+    [InlineData("max_energy 0;")]
+    [InlineData("max_energy 1001;")]
+    [InlineData("max_energy;")]
+    [InlineData("max_energy 150.5;")]
+    [InlineData("rule \"R\" { event each seat; do { seat.boost_left = 3; } }")]
+    [InlineData("rule \"R\" { event each seat; do { seat.max_energy = true; } }")]
+    [InlineData("rule \"R\" { event each seat; do { seat.stat.max_energy = 150; } }")]
+    public void TheEnergyWordsAreRefusedWhereTheyDoNotFit(string body)
+    {
+        Assert.NotEmpty(Compile(body).Errors);
+    }
+
+    [Fact]
+    public void AModeWithoutTheEnergyWordsHasNoSetupWordForThem()
+    {
+        var result = Compile("rule \"R\" { event each seat; do { real a = seat.max_energy; } }");
+        Assert.Empty(result.Errors);
+        Assert.DoesNotContain(result.Mode!.Setups, s => s.Id == ModeSetup.MaxEnergy);
+    }
+
     [Fact]
     public void OnlyAWriteOfAStatOnTheStatsPageAsksForThePage()
     {

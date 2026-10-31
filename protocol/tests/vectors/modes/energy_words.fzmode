@@ -1,0 +1,22 @@
+// The energy words: max_energy for every seat, seat.max_energy for one (held to 1..1000, a real cut), and boost_left.
+// Run by the interpreter's test as well (port/core/tests/test_mode.cpp, TestTheEnergyWords).
+mode "Energy words" {
+  api 1;
+}
+
+max_energy 150;
+
+global int left = 0;
+
+rule "Each seat" {
+  event each seat;
+  while race.started;
+  do {
+    left = seat.boost_left;
+    if (seat.index == 1) { seat.max_energy = 300; }
+    if (seat.index == 2) { seat.max_energy = 50.75; }
+    if (seat.index == 3) { seat.max_energy = 5000; }
+    if (seat.index == 4) { seat.max_energy = -3; }
+    if (seat.index == 5) { seat.max_energy += 10; }
+  }
+}

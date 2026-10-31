@@ -1,0 +1,66 @@
+FZMP format 1 api 1, 919 bytes, hash 33242377aa70a52c15b131fada67970b3fb17e2c7f59e7cae986b31132d4a3f2
+HEAD name "Energy words" badge "" about ""
+PARM 0
+SETP 1
+  max_energy 150
+VARS globals 1, seat words 0
+  global 0 = 0
+RULE 1
+  0 "Each seat" event each seat, locals 1, when none, while 0000, body 0003
+CODE 140 bytes
+  ; rule 0 while
+  0000  RaceRead started
+  0002  Ret
+  ; rule 0 body
+  0003  LoadLocal 0
+  0005  SeatRead boost_left
+  0007  StoreGlobal 0
+  000a  LoadLocal 0
+  000c  SeatRead index
+  000e  Push 1
+  0013  IEq
+  0014  JumpIfZero 0023
+  0019  LoadLocal 0
+  001b  Push 300
+  0020  IToF
+  0021  Action seat.max_energy
+  0023  LoadLocal 0
+  0025  SeatRead index
+  0027  Push 2
+  002c  IEq
+  002d  JumpIfZero 003b
+  0032  LoadLocal 0
+  0034  Push 1112211456 (0x424b0000, real 50.75)
+  0039  Action seat.max_energy
+  003b  LoadLocal 0
+  003d  SeatRead index
+  003f  Push 3
+  0044  IEq
+  0045  JumpIfZero 0054
+  004a  LoadLocal 0
+  004c  Push 5000
+  0051  IToF
+  0052  Action seat.max_energy
+  0054  LoadLocal 0
+  0056  SeatRead index
+  0058  Push 4
+  005d  IEq
+  005e  JumpIfZero 006d
+  0063  LoadLocal 0
+  0065  Push -3
+  006a  IToF
+  006b  Action seat.max_energy
+  006d  LoadLocal 0
+  006f  SeatRead index
+  0071  Push 5
+  0076  IEq
+  0077  JumpIfZero 008b
+  007c  LoadLocal 0
+  007e  LoadLocal 0
+  0080  SeatRead max_energy
+  0082  Push 10
+  0087  IToF
+  0088  FAdd
+  0089  Action seat.max_energy
+  008b  End
+SRC  649 bytes

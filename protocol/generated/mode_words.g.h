@@ -260,7 +260,8 @@ enum Setup : std::uint8_t
   SETUP_COURSESALL = 46,  // courses all
   SETUP_COURSES = 47,  // courses
   SETUP_STATSPAGE = 48,  // stats_page
-  SETUP_COUNT = 49,
+  SETUP_MAXENERGY = 49,  // max_energy
+  SETUP_COUNT = 50,
 };
 
 // a read of a seat (OP_SEATREAD)
@@ -354,7 +355,8 @@ enum Seat : std::uint8_t
   SEAT_STATBASEDRIFTACCEL = 85,  // stat.base.drift_accel
   SEAT_STATBASETURNDECEL = 86,  // stat.base.turn_decel
   SEAT_STATBASEGRIPWINDOW = 87,  // stat.base.grip_window
-  SEAT_COUNT = 88,
+  SEAT_BOOSTLEFT = 88,  // boost_left
+  SEAT_COUNT = 89,
 };
 
 // a read of the race (OP_RACEREAD)
@@ -447,7 +449,8 @@ enum Action : std::uint8_t
   ACTION_SEATSTATDRIFTACCEL = 65,  // seat.stat.drift_accel
   ACTION_SEATSTATTURNDECEL = 66,  // seat.stat.turn_decel
   ACTION_SEATSTATGRIPWINDOW = 67,  // seat.stat.grip_window
-  ACTION_COUNT = 68,
+  ACTION_SEATMAXENERGY = 68,  // seat.max_energy
+  ACTION_COUNT = 69,
 };
 
 // the choice `part`: a part of the game's own race HUD: TIMER the timed mode's clock (clock_limit's time, R+0xA4: seconds, 0 to 999); DISTANCE the metres to the finish (the seat's own); DIGIT the story's big digit (danger_zone's seconds, 3 2 1); WARNING, SUCCESS, FAILED, TIME_OVER, SPEED_GAUGE, OBJECTS the story's pictures, off until shown; LEADER_GAP the game's own time gap to the leader, off until shown: at each lap line, for a second, the seat's time behind the leader, and the leader's own lead when second place crosses; GHOST_GAP Time Attack's live gap, off until shown: signed minutes, seconds and thousandths at the right edge (617, 270), all race, against the seat furthest ahead, red while it is ahead, blue while you are; RANK, LAPS, SPEED, ENERGY, LAP_TIMES, RACE_TIME, FACES the standard HUD (the mask .data 0x3D544; FACES the board fn_1_D27B8), on until hidden
@@ -571,6 +574,7 @@ constexpr int ActionArguments(std::uint8_t action)
     case ACTION_SEATSTATDRIFTACCEL: return 2;
     case ACTION_SEATSTATTURNDECEL: return 2;
     case ACTION_SEATSTATGRIPWINDOW: return 2;
+    case ACTION_SEATMAXENERGY: return 2;
     default: return -1;
   }
 }

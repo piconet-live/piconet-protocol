@@ -1002,7 +1002,7 @@ doc = "the race's highest speed so far, M+0xD8 (km/h; the results' max speed)"
 name = "max_energy"
 id = 37
 type = "real"
-doc = "the full energy, M+0x5DA (u16; 100 for every machine)"
+doc = "the full energy, M+0x5DA (u16; the game's 100 unless the mode changed it)"
 
 [[seat_read]]
 name = "last_hit_energy"
@@ -1304,6 +1304,12 @@ name = "stat.base.grip_window"
 id = 87
 type = "real"
 doc = "the machine's own grip_window, M+0x477 before the mode's change"
+
+[[seat_read]]
+name = "boost_left"
+id = 88
+type = "int"
+doc = "M+0x18A, a byte: the steps left on the boost, 60 a second. fn_1_26F34 counts it down once a step while flag 0x20 is on (0x27444); a boost of n steps reads n - 1 at the mode point of its first step and 0 at its last (boosting still true), then 0 with boosting false. Energy boost: int(A + B x D); dash plate: max(it, int(A + B x D)); energy under 0.01 ends it (0x274B8: half the length with flag 0x200000), a wall's stop and a Restore clear it"
 
 [[race_read]]
 name = "steps"
@@ -1710,6 +1716,13 @@ id = 48
 where = "the compiler's own, when a rule writes a stat of the stats page (seat.stat.drift_rotation_resistance and after): the race's mode block has one page more, which the undo log and the checksum then cover; a mode without it has the block of before, byte for byte"
 doc = "the block's stats page, which a file never writes itself"
 
+[[setup]]
+name = "max_energy"
+id = 49
+args = [{ type = "int", least = 1, most = 1000 }]
+where = "the mode's first pass (mode.cpp Begin): every machine's M+0x5DA and M+0x184, before the first picture"
+doc = "every seat's full energy, and every seat begins full. Left out: the game's 100, the field and the bits as they are. seat.max_energy changes one seat after it"
+
 [[choice]]
 name = "part"
 values = ["TIMER", "DISTANCE", "DIGIT", "WARNING", "SUCCESS", "FAILED", "TIME_OVER", "SPEED_GAUGE", "OBJECTS", "LEADER_GAP", "GHOST_GAP", "RANK", "LAPS", "SPEED", "ENERGY", "LAP_TIMES", "RACE_TIME", "FACES"]
@@ -2039,4 +2052,11 @@ id = 67
 args = ["seat", "real"]
 where = "the seat's second stat record (the block's stats page); the stand-in routine writes M+0x477 after the game's rule hook fn_1_331EC rebuilt it, from the next step on"
 doc = "the full-grip window in steps, a whole number 0 to 255 (the car data's byte +0x48): read when the accelerator is newly full on the ground (fn_1_25870 0x258E0), so a running window keeps its count; held to the stat pack's range. It lasts until written again or the race ends"
+
+[[action]]
+name = "seat.max_energy"
+id = 68
+args = ["seat", "real"]
+where = "the mode point (game_start's pass too): M+0x5DA, a whole number 1 to 1000 (a real is cut, a value outside held to the range; not finite: a mode error); M+0x184 only when it is above the new value, then the new value"
+doc = "the seat's full energy, from the next step: the pit's cap, a restore's half, a hit's most, the KO credit's cap, and the meter's full. Energy stays where it is unless it is over: to fill too, write seat.max_energy first and then seat.energy with the same number (a read in the run gives the old maximum)"
 
