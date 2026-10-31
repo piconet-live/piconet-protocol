@@ -146,7 +146,15 @@ internal sealed partial class ModeEmitter
     {
         if (IsRace(field.Target))
         {
-            throw new ModeCompileException(assign.Line, $"race.{field.Field} is the game's to say: it cannot be assigned");
+            var live = ModeWords.Actions.FirstOrDefault(a => a.Name == "race." + field.Field);
+            if (live.Name is null)
+            {
+                throw new ModeCompileException(assign.Line, $"race.{field.Field} is the game's to say: it cannot be assigned");
+            }
+            var liveRead = ModeWords.RaceReads.First(r => r.Name == field.Field);
+            Work(assign, live.Args[0], $"race.{field.Field}", () => Op(ModeOp.RaceRead, (long)liveRead.Id));
+            Op(ModeOp.Action, (long)live.Id);
+            return;
         }
         if (field.Target is ModeField { Field: "team" } team && names.Variable(field.Field, ModeNameKind.TeamVariable) is { } kept)
         {

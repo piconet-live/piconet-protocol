@@ -128,6 +128,36 @@ public sealed class ModeWordFormsTests
         Assert.NotEmpty(Compile(body).Errors);
     }
 
+    [Theory]
+    [InlineData("damage 200%; knockback 300%; wall_damage 50%; wall_bounce 1000%; spin_attacks off; side_attacks off; spin_immunity on;")]
+    [InlineData("param p \"D\" number 0.5..2.0 default 1.0; damage p;")]
+    [InlineData("rule \"R\" { event go; do { race.damage = 2.0; race.knockback *= 2; race.spin_attacks = off; race.side_attacks = not race.side_attacks; race.spin_immunity = on; race.wall_damage = 50%; race.wall_bounce += 1; } }")]
+    [InlineData("time_bonus off;")]
+    [InlineData("clock_limit 2min; time_bonus on;")]
+    [InlineData("clock_limit 2min; time_bonus 10;")]
+    [InlineData("clock_limit 2min; points_table game;")]
+    [InlineData("points_table [100, 80, 60]; rule \"R\" { event go; do { end_race; } }")]
+    [InlineData("clock_limit 2min; points_table game; results points;")]
+    public void ACombatOrPointsWordCompiles(string body)
+    {
+        Assert.Empty(Compile(body).Errors);
+    }
+
+    [Theory]
+    [InlineData("damage 5%;")]
+    [InlineData("knockback 1001%;")]
+    [InlineData("spin_attacks 2;")]
+    [InlineData("time_bonus on;")]
+    [InlineData("points_table game;")]
+    [InlineData("clock_limit 2min; points_table [];")]
+    [InlineData("clock_limit 2min; points_table [1000];")]
+    [InlineData("rule \"R\" { event go; do { race.steps = 1; } }")]
+    [InlineData("rule \"R\" { event go; do { race.spin_attacks = 1.0; } }")]
+    public void ACombatOrPointsFormIsRefused(string body)
+    {
+        Assert.NotEmpty(Compile(body).Errors);
+    }
+
     /// <summary>The design's example 9.5, as it stands there.</summary>
     [Fact]
     public void InfectionCompiles()
@@ -216,14 +246,6 @@ public sealed class ModeWordFormsTests
     }
 
     [Theory]
-    [InlineData("points_table game;")]
-    [InlineData("time_bonus off;")]
-    [InlineData("knockback 50%;")]
-    [InlineData("wall_damage 50%;")]
-    [InlineData("wall_bounce 50%;")]
-    [InlineData("spin_attacks off;")]
-    [InlineData("side_attacks off;")]
-    [InlineData("spin_immunity off;")]
     [InlineData("rule \"R\" { event each seat; do { boost seat off; } }")]
     [InlineData("rule \"R\" { event each seat; do { show_number seat off; } }")]
     [InlineData("rule \"R\" { event go; do { int a = race.course; } }")]

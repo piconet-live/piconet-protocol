@@ -497,19 +497,9 @@ public sealed class ModePackage
                 1 => true,
                 _ => throw new InvalidDataException($"the setup word {word.Name}'s argument has an unknown source"),
             }, s.I32())).ToList();
-            if (word.Id == ModeSetup.ResultsTitle)
+            if (word.Id is ModeSetup.ResultsTitle or ModeSetup.TagTexts or ModeSetup.PointsTable)
             {
-                if (arguments.Any(a => a.FromParam || a.Value is < 0 or > 127) || ModeResultsTitle.Refusal(ModeResultsTitle.Text(arguments)) is not null)
-                {
-                    throw new InvalidDataException($"the setup word {word.Name}'s arguments are not its own");
-                }
-                list.Add(new ModeSetupWord(word.Id, arguments));
-                continue;
-            }
-            if (word.Id == ModeSetup.TagTexts)
-            {
-                if (arguments.Any(a => a.FromParam || a.Value is < 0 or > 127) || ModeTagTexts.Texts(arguments) is var texts
-                    && (texts.Length > ModeWords.TagTexts || texts.Distinct().Count() != texts.Length || texts.Any(t => ModeTagTexts.Refusal(t) is not null)))
+                if (!OwnValues(word.Id, arguments))
                 {
                     throw new InvalidDataException($"the setup word {word.Name}'s arguments are not its own");
                 }
@@ -528,6 +518,25 @@ public sealed class ModePackage
         }
         s.End();
         return list;
+    }
+
+    /// <summary>Whether a word of many values holds what the compiler would write for it.</summary>
+    private static bool OwnValues(ModeSetup id, List<ModeSetupValue> arguments)
+    {
+        if (id == ModeSetup.PointsTable)
+        {
+            return arguments.Count is > 0 and <= ModeWords.Seats && !arguments.Any(a => a.FromParam || a.Value is < 0 or > 999);
+        }
+        if (arguments.Any(a => a.FromParam || a.Value is < 0 or > 127))
+        {
+            return false;
+        }
+        if (id == ModeSetup.ResultsTitle)
+        {
+            return ModeResultsTitle.Refusal(ModeResultsTitle.Text(arguments)) is null;
+        }
+        var texts = ModeTagTexts.Texts(arguments);
+        return texts.Length <= ModeWords.TagTexts && texts.Distinct().Count() == texts.Length && !texts.Any(t => ModeTagTexts.Refusal(t) is not null);
     }
 
     private static List<int> ReadVars(ModeReader s, out List<int> seatWordValues, out List<int> teamWordValues)

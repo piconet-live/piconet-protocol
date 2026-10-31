@@ -102,8 +102,19 @@ public static class ModeCompiler
             {
                 throw new ModeCompileException(waits.Line, "race_waits everyone waits for every machine: a mode with it needs end_race or clock_limit, or its race may never end");
             }
+            if (items.OfType<ModeSetupItem>().FirstOrDefault(s => s.Word == "points_table") is { } table
+                && !_emitter.Used.ContainsKey(ModeAction.EndRace) && !_setups.Any(s => s.Id == ModeSetup.ClockLimit))
+            {
+                throw new ModeCompileException(table.Line, "points_table pays when the mode ends the race: a mode with it needs end_race or clock_limit");
+            }
+            if (items.OfType<ModeSetupItem>().FirstOrDefault(s => s.Word == "time_bonus") is { } bonus
+                && !_setups.Any(s => s.Id == ModeSetup.ClockLimit)
+                && _setups.First(s => s.Id == ModeSetup.TimeBonus).Arguments[0] is not { FromParam: false, Value: 0 })
+            {
+                throw new ModeCompileException(bonus.Line, "time_bonus adds to the clock: a mode with it needs clock_limit");
+            }
             if (items.OfType<ModeSetupItem>().FirstOrDefault(s => s.Word == "results points") is { } points
-                && !_emitter.Used.ContainsKey(ModeAction.Award))
+                && !_emitter.Used.ContainsKey(ModeAction.Award) && !_setups.Any(s => s.Id == ModeSetup.PointsTable))
             {
                 throw new ModeCompileException(points.Line, "results points shows the points page: a mode with it needs award");
             }
@@ -261,6 +272,24 @@ public static class ModeCompiler
             _params.Add(param);
         }
 
+        /// <summary>The Grand Prix's points for places 1 to 30, main.rel .rodata 0xDB38 (design D9).</summary>
+        private static readonly int[] GamePoints =
+        [
+            100, 93, 87, 81, 76, 71, 66, 62, 58, 54, 50, 47, 44, 41, 38, 35, 33, 31, 29, 27, 25, 23, 22, 21, 20, 19, 18, 17, 16, 15,
+        ];
+
+        private List<ModeSetupValue> PointsTableValues(ModeSetupItem item, (string Name, ModeSetup Id, IReadOnlyList<ModeArgument> Args, bool Lobby, string Form) word)
+        {
+            if (item.Arguments.Count > ModeWords.Seats)
+            {
+                throw new ModeCompileException(item.Line, $"points_table has a place for each of {ModeWords.Seats} seats at most");
+            }
+            var values = item.Arguments.Select(a => SetupValue(item, word.Name, word.Args[0], a)).ToList();
+            return values.Any(v => v.FromParam)
+                ? throw new ModeCompileException(item.Line, "points_table takes numbers, not a parameter")
+                : values;
+        }
+
         private void Setup(ModeSetupItem item)
         {
             var word = ModeWords.Setups.Single(s => s.Name == item.Word);
@@ -278,6 +307,13 @@ public static class ModeCompiler
             if (word.Id == ModeSetup.TagTexts)
             {
                 throw new ModeCompileException(item.Line, "tag_texts is the compiler's own: a rule writes tag s, \"TEXT\"; and the text is kept");
+            }
+            if (word.Id == ModeSetup.PointsTable)
+            {
+                _setups.Add(new ModeSetupWord(word.Id, item.Arguments.Count == 0
+                    ? GamePoints.Select(p => new ModeSetupValue(false, p)).ToList()
+                    : PointsTableValues(item, word)));
+                return;
             }
             if (word.Id == ModeSetup.ResultsTitle)
             {

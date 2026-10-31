@@ -235,6 +235,24 @@ public enum ModeSetup : byte
     ResultsTitle = 34,
     /// <summary><c>tag_texts</c></summary>
     TagTexts = 35,
+    /// <summary><c>damage</c></summary>
+    Damage = 36,
+    /// <summary><c>knockback</c></summary>
+    Knockback = 37,
+    /// <summary><c>wall_damage</c></summary>
+    WallDamage = 38,
+    /// <summary><c>wall_bounce</c></summary>
+    WallBounce = 39,
+    /// <summary><c>spin_attacks</c></summary>
+    SpinAttacks = 40,
+    /// <summary><c>side_attacks</c></summary>
+    SideAttacks = 41,
+    /// <summary><c>spin_immunity</c></summary>
+    SpinImmunity = 42,
+    /// <summary><c>time_bonus</c></summary>
+    TimeBonus = 43,
+    /// <summary><c>points_table</c></summary>
+    PointsTable = 44,
 }
 
 /// <summary>A read of a seat (protocol/modes.toml).</summary>
@@ -397,6 +415,20 @@ public enum ModeRaceRead : byte
     Seats = 2,
     /// <summary><c>laps</c></summary>
     Laps = 3,
+    /// <summary><c>damage</c></summary>
+    Damage = 4,
+    /// <summary><c>knockback</c></summary>
+    Knockback = 5,
+    /// <summary><c>wall_damage</c></summary>
+    WallDamage = 6,
+    /// <summary><c>wall_bounce</c></summary>
+    WallBounce = 7,
+    /// <summary><c>spin_attacks</c></summary>
+    SpinAttacks = 8,
+    /// <summary><c>side_attacks</c></summary>
+    SideAttacks = 9,
+    /// <summary><c>spin_immunity</c></summary>
+    SpinImmunity = 10,
 }
 
 /// <summary>An action (protocol/modes.toml).</summary>
@@ -498,6 +530,20 @@ public enum ModeAction : byte
     SeatStatBody = 47,
     /// <summary><c>damage</c></summary>
     Damage = 48,
+    /// <summary><c>race.damage</c></summary>
+    RaceDamage = 49,
+    /// <summary><c>race.knockback</c></summary>
+    RaceKnockback = 50,
+    /// <summary><c>race.wall_damage</c></summary>
+    RaceWallDamage = 51,
+    /// <summary><c>race.wall_bounce</c></summary>
+    RaceWallBounce = 52,
+    /// <summary><c>race.spin_attacks</c></summary>
+    RaceSpinAttacks = 53,
+    /// <summary><c>race.side_attacks</c></summary>
+    RaceSideAttacks = 54,
+    /// <summary><c>race.spin_immunity</c></summary>
+    RaceSpinImmunity = 55,
 }
 
 /// <summary>The vocabulary of one api, by the names a mode file writes (protocol/modes.toml).</summary>
@@ -686,6 +732,15 @@ public static partial class ModeWords
         ("results points", ModeSetup.ResultsPoints, [], false, ""),
         ("results_title", ModeSetup.ResultsTitle, [], false, "text"),
         ("tag_texts", ModeSetup.TagTexts, [], false, "text"),
+        ("damage", ModeSetup.Damage, [new ModeArgument("", ModeType.Real, 0.1f, 10.0f, null)], false, ""),
+        ("knockback", ModeSetup.Knockback, [new ModeArgument("", ModeType.Real, 0.1f, 10.0f, null)], false, ""),
+        ("wall_damage", ModeSetup.WallDamage, [new ModeArgument("", ModeType.Real, 0.1f, 10.0f, null)], false, ""),
+        ("wall_bounce", ModeSetup.WallBounce, [new ModeArgument("", ModeType.Real, 0.1f, 10.0f, null)], false, ""),
+        ("spin_attacks", ModeSetup.SpinAttacks, [new ModeArgument("", ModeType.Bool, 0, 1, null)], false, ""),
+        ("side_attacks", ModeSetup.SideAttacks, [new ModeArgument("", ModeType.Bool, 0, 1, null)], false, ""),
+        ("spin_immunity", ModeSetup.SpinImmunity, [new ModeArgument("", ModeType.Bool, 0, 1, null)], false, ""),
+        ("time_bonus", ModeSetup.TimeBonus, [new ModeArgument("", ModeType.Int, 1, 120, null, 5)], false, ""),
+        ("points_table", ModeSetup.PointsTable, [new ModeArgument("", ModeType.Int, 0, 999, null)], false, ""),
     ];
 
     /// <summary>The reads of a seat (<c>seat.NAME</c>): name, id, type.</summary>
@@ -772,6 +827,13 @@ public static partial class ModeWords
         ("started", ModeRaceRead.Started, ModeType.Bool),
         ("seats", ModeRaceRead.Seats, ModeType.Int),
         ("laps", ModeRaceRead.Laps, ModeType.Int),
+        ("damage", ModeRaceRead.Damage, ModeType.Real),
+        ("knockback", ModeRaceRead.Knockback, ModeType.Real),
+        ("wall_damage", ModeRaceRead.WallDamage, ModeType.Real),
+        ("wall_bounce", ModeRaceRead.WallBounce, ModeType.Real),
+        ("spin_attacks", ModeRaceRead.SpinAttacks, ModeType.Bool),
+        ("side_attacks", ModeRaceRead.SideAttacks, ModeType.Bool),
+        ("spin_immunity", ModeRaceRead.SpinImmunity, ModeType.Bool),
     ];
 
     /// <summary>The actions: name, id, the types of their arguments in order.</summary>
@@ -825,6 +887,13 @@ public static partial class ModeWords
         ("seat.stat.boost_length", ModeAction.SeatStatBoostLength, [ModeType.Seat, ModeType.Real]),
         ("seat.stat.body", ModeAction.SeatStatBody, [ModeType.Seat, ModeType.Real]),
         ("damage", ModeAction.Damage, [ModeType.Seat, ModeType.Real]),
+        ("race.damage", ModeAction.RaceDamage, [ModeType.Real]),
+        ("race.knockback", ModeAction.RaceKnockback, [ModeType.Real]),
+        ("race.wall_damage", ModeAction.RaceWallDamage, [ModeType.Real]),
+        ("race.wall_bounce", ModeAction.RaceWallBounce, [ModeType.Real]),
+        ("race.spin_attacks", ModeAction.RaceSpinAttacks, [ModeType.Bool]),
+        ("race.side_attacks", ModeAction.RaceSideAttacks, [ModeType.Bool]),
+        ("race.spin_immunity", ModeAction.RaceSpinImmunity, [ModeType.Bool]),
     ];
 
     /// <summary>The choices: an argument of one takes one of its names, its value the name's place.</summary>

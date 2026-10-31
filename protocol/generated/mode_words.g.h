@@ -245,7 +245,16 @@ enum Setup : std::uint8_t
   SETUP_RESULTSPOINTS = 33,  // results points
   SETUP_RESULTSTITLE = 34,  // results_title
   SETUP_TAGTEXTS = 35,  // tag_texts
-  SETUP_COUNT = 36,
+  SETUP_DAMAGE = 36,  // damage
+  SETUP_KNOCKBACK = 37,  // knockback
+  SETUP_WALLDAMAGE = 38,  // wall_damage
+  SETUP_WALLBOUNCE = 39,  // wall_bounce
+  SETUP_SPINATTACKS = 40,  // spin_attacks
+  SETUP_SIDEATTACKS = 41,  // side_attacks
+  SETUP_SPINIMMUNITY = 42,  // spin_immunity
+  SETUP_TIMEBONUS = 43,  // time_bonus
+  SETUP_POINTSTABLE = 44,  // points_table
+  SETUP_COUNT = 45,
 };
 
 // a read of a seat (OP_SEATREAD)
@@ -333,7 +342,14 @@ enum Race : std::uint8_t
   RACE_STARTED = 1,  // started
   RACE_SEATS = 2,  // seats
   RACE_LAPS = 3,  // laps
-  RACE_COUNT = 4,
+  RACE_DAMAGE = 4,  // damage
+  RACE_KNOCKBACK = 5,  // knockback
+  RACE_WALLDAMAGE = 6,  // wall_damage
+  RACE_WALLBOUNCE = 7,  // wall_bounce
+  RACE_SPINATTACKS = 8,  // spin_attacks
+  RACE_SIDEATTACKS = 9,  // side_attacks
+  RACE_SPINIMMUNITY = 10,  // spin_immunity
+  RACE_COUNT = 11,
 };
 
 // an action (OP_ACTION)
@@ -387,7 +403,14 @@ enum Action : std::uint8_t
   ACTION_SEATSTATBOOSTLENGTH = 46,  // seat.stat.boost_length
   ACTION_SEATSTATBODY = 47,  // seat.stat.body
   ACTION_DAMAGE = 48,  // damage
-  ACTION_COUNT = 49,
+  ACTION_RACEDAMAGE = 49,  // race.damage
+  ACTION_RACEKNOCKBACK = 50,  // race.knockback
+  ACTION_RACEWALLDAMAGE = 51,  // race.wall_damage
+  ACTION_RACEWALLBOUNCE = 52,  // race.wall_bounce
+  ACTION_RACESPINATTACKS = 53,  // race.spin_attacks
+  ACTION_RACESIDEATTACKS = 54,  // race.side_attacks
+  ACTION_RACESPINIMMUNITY = 55,  // race.spin_immunity
+  ACTION_COUNT = 56,
 };
 
 // the choice `part`: a part of the game's own race HUD: TIMER the timed mode's clock (clock_limit's time, R+0xA4: seconds, 0 to 999); DISTANCE the metres to the finish (the seat's own); DIGIT the story's big digit (danger_zone's seconds, 3 2 1); WARNING, SUCCESS, FAILED, TIME_OVER, SPEED_GAUGE, OBJECTS the story's pictures, off until shown; RANK, LAPS, SPEED, ENERGY, LAP_TIMES, RACE_TIME, FACES the standard HUD (the mask .data 0x3D544; FACES the board fn_1_D27B8), on until hidden
@@ -435,6 +458,7 @@ enum Look : std::uint8_t
 
 // what `on` is for a setup word that also takes a value
 inline constexpr int SETUP_MINEREGEN_ON = 200;
+inline constexpr int SETUP_TIMEBONUS_ON = 5;
 
 // the arguments an action pops
 constexpr int ActionArguments(std::uint8_t action)
@@ -489,6 +513,13 @@ constexpr int ActionArguments(std::uint8_t action)
     case ACTION_SEATSTATBOOSTLENGTH: return 2;
     case ACTION_SEATSTATBODY: return 2;
     case ACTION_DAMAGE: return 2;
+    case ACTION_RACEDAMAGE: return 1;
+    case ACTION_RACEKNOCKBACK: return 1;
+    case ACTION_RACEWALLDAMAGE: return 1;
+    case ACTION_RACEWALLBOUNCE: return 1;
+    case ACTION_RACESPINATTACKS: return 1;
+    case ACTION_RACESIDEATTACKS: return 1;
+    case ACTION_RACESPINIMMUNITY: return 1;
     default: return -1;
   }
 }

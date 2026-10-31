@@ -520,6 +520,10 @@ internal sealed class ModeParser
         {
             return SetupTable(line, word);
         }
+        if (ModeWords.Setups.Single(s => s.Name == word).Id == ModeSetup.PointsTable)
+        {
+            return SetupPoints(line, word);
+        }
         switch (ModeWords.Setups.Single(s => s.Name == word).Form)
         {
             case "range":
@@ -540,6 +544,32 @@ internal sealed class ModeParser
             }
             arguments.Add(new ModeSetupArgument(argumentLine, name, SetupValue()));
         }
+        return new ModeSetupItem(line, word, arguments);
+    }
+
+    /// <summary><c>points_table game;</c> or <c>points_table [100, 80, ...];</c>: no arguments for the game's.</summary>
+    private ModeSetupItem SetupPoints(int line, string word)
+    {
+        var arguments = new List<ModeSetupArgument>();
+        if (Current.Is("game"))
+        {
+            _at++;
+        }
+        else
+        {
+            Expect("[");
+            do
+            {
+                arguments.Add(new ModeSetupArgument(Current.Line, "", Expression()));
+            }
+            while (Accept(","));
+            Expect("]");
+            if (arguments.Count == 0)
+            {
+                throw Error("points_table lists a place's points, or says game");
+            }
+        }
+        Expect(";");
         return new ModeSetupItem(line, word, arguments);
     }
 

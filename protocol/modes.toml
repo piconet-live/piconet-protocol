@@ -1226,6 +1226,49 @@ id = 3
 type = "int"
 doc = "the race's laps (0: unlimited)"
 
+
+[[race_read]]
+name = "damage"
+id = 4
+type = "real"
+doc = "the live damage: the setup word's, or the last race.damage written"
+
+[[race_read]]
+name = "knockback"
+id = 5
+type = "real"
+doc = "the live knockback: the setup word's, or the last race.knockback written"
+
+[[race_read]]
+name = "wall_damage"
+id = 6
+type = "real"
+doc = "the live wall_damage: the setup word's, or the last race.wall_damage written"
+
+[[race_read]]
+name = "wall_bounce"
+id = 7
+type = "real"
+doc = "the live wall_bounce: the setup word's, or the last race.wall_bounce written"
+
+[[race_read]]
+name = "spin_attacks"
+id = 8
+type = "bool"
+doc = "the live spin_attacks: the setup word's, or the last race.spin_attacks written"
+
+[[race_read]]
+name = "side_attacks"
+id = 9
+type = "bool"
+doc = "the live side_attacks: the setup word's, or the last race.side_attacks written"
+
+[[race_read]]
+name = "spin_immunity"
+id = 10
+type = "bool"
+doc = "the live spin_immunity: the setup word's, or the last race.spin_immunity written"
+
 [[action]]
 name = "seat.speed"
 id = 0
@@ -1437,6 +1480,69 @@ form = "text"
 where = """the mode's floating tags' texts, which the compiler writes from the file's `tag` words and a file never writes itself (in the package \
 a value a byte, a 0 between texts): the core copies them to the window for port/image/routines/nametags.py"""
 doc = "the texts `tag` draws, the first being text 1"
+[[setup]]
+name = "damage"
+id = 36
+args = [{ type = "real", least = 0.1, most = 10.0 }]
+where = "fn_1_239C4's two loads of 0.002 (0x24588, 0x24674) and fn_1_24F10's cap of 20 for a contact's call (0x24F50): sites_combat.py, through the live word race.damage"
+doc = "machine contact's damage, 10% to 1000%; the cap of 20 a hit moves with it. Walls, strips and mines are not machine contact"
+
+[[setup]]
+name = "knockback"
+id = 37
+args = [{ type = "real", least = 0.1, most = 10.0 }]
+where = "fn_1_239C4 0x242DC, the pair's push scales 1.0, 1.5, 2.2: sites_combat.py, through race.knockback"
+doc = "machine contact's push, 10% to 1000%, the attack's push with it"
+
+[[setup]]
+name = "wall_damage"
+id = 38
+args = [{ type = "real", least = 0.1, most = 10.0 }]
+where = "fn_1_266A8 0x269D4: sites_combat.py, through race.wall_damage"
+doc = "a wall's damage, 10% to 1000%, before its cap"
+
+[[setup]]
+name = "wall_bounce"
+id = 39
+args = [{ type = "real", least = 0.1, most = 10.0 }]
+where = "fn_1_266A8 0x26BC4, the bounce's e becomes 1 + B (e - 1): sites_combat.py, through race.wall_bounce"
+doc = "a wall's bounce, 10% to 1000%; the game's bounce only acts above about 400 km/h"
+
+[[setup]]
+name = "spin_attacks"
+id = 40
+args = [{ type = "switch" }]
+where = "fn_1_287E8 0x28840: off, the spin's flag 0x8 cleared before its test; every seat, through race.spin_attacks"
+doc = "off: no machine spin-attacks, CPUs included"
+
+[[setup]]
+name = "side_attacks"
+id = 41
+args = [{ type = "switch" }]
+where = "fn_1_287E8 0x28908: off, the side attack's flag 0x20000 cleared before its test; through race.side_attacks"
+doc = "off: no machine side-attacks"
+
+[[setup]]
+name = "spin_immunity"
+id = 42
+args = [{ type = "switch" }]
+where = "fn_1_239C4's two damage gates 0x245BC, 0x246A8: through race.spin_immunity"
+doc = "on: a spin-attacking machine takes no contact damage"
+
+[[setup]]
+name = "time_bonus"
+id = 43
+args = [{ type = "int", least = 1, most = 120, on = 5 }]
+where = "R+0x13FA..+0x1400 at set-up; the game's own fn at 0x32FA0 adds it to the timer R+0xA4 and raises its banner, the mode point keeps what it added (mode.cpp)"
+doc = "with clock_limit: seconds the game adds to the clock each time a machine first passes a new quarter of the race's laps; on is 5; off is none. One clock for the race"
+
+[[setup]]
+name = "points_table"
+id = 44
+args = [{ type = "int", least = 0, most = 999 }]
+where = "the package: the table, copied into the mode's block; never by switching the race type to Grand Prix (R+0x5 = 1 also turns on spares, cup layouts and FINAL LAP rules)"
+doc = "`points_table game` (the Grand Prix's, .rodata 0xDB38: the compiler writes them) or `points_table [100, 80, ...]` at most thirty: what a place earns when the mode ends the race, added to award's. Needs end_race or clock_limit"
+
 # ---- The displays (vocabulary 5): presentation only. An action writes the seat's display record in the block (the
 # runner's port/core/src/mode_hud.h), at the mode point like every action; the drawing reads it, every frame, from
 # what the step left (a rollback redraws). Nothing a step reads is written, and nothing draws from a generator.
@@ -1635,3 +1741,52 @@ args = ["seat", "real"]
 where = "the mode point, after the run (the image's mode_point): the game's own fn_1_24F10(M, x)"
 doc = """the game's damage: x times the body M+0x30, 20 at most for a player and 1.01 x max energy, nothing while restoring or \
 in a KO's wait; below 0 energy the machine breaks down as at a last hit. No KO credit. x below 0 counts as 0; more in one run add up"""
+
+[[action]]
+name = "race.damage"
+id = 49
+args = ["real"]
+where = "the live word in the mode's block (mode.h COMBAT), which sites_combat.py reads in the step"
+doc = "changes damage from the next step, held to 10% to 1000%"
+
+[[action]]
+name = "race.knockback"
+id = 50
+args = ["real"]
+where = "the live word in the mode's block (mode.h COMBAT), which sites_combat.py reads in the step"
+doc = "changes knockback from the next step, held to 10% to 1000%"
+
+[[action]]
+name = "race.wall_damage"
+id = 51
+args = ["real"]
+where = "the live word in the mode's block (mode.h COMBAT), which sites_combat.py reads in the step"
+doc = "changes wall_damage from the next step, held to 10% to 1000%"
+
+[[action]]
+name = "race.wall_bounce"
+id = 52
+args = ["real"]
+where = "the live word in the mode's block (mode.h COMBAT), which sites_combat.py reads in the step"
+doc = "changes wall_bounce from the next step, held to 10% to 1000%"
+
+[[action]]
+name = "race.spin_attacks"
+id = 53
+args = ["bool"]
+where = "the live word in the mode's block (mode.h COMBAT), which sites_combat.py reads in the step"
+doc = "changes spin_attacks from the next step"
+
+[[action]]
+name = "race.side_attacks"
+id = 54
+args = ["bool"]
+where = "the live word in the mode's block (mode.h COMBAT), which sites_combat.py reads in the step"
+doc = "changes side_attacks from the next step"
+
+[[action]]
+name = "race.spin_immunity"
+id = 55
+args = ["bool"]
+where = "the live word in the mode's block (mode.h COMBAT), which sites_combat.py reads in the step"
+doc = "changes spin_immunity from the next step"
