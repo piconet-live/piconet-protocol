@@ -158,6 +158,29 @@ public sealed class ModeWordFormsTests
         Assert.NotEmpty(Compile(body).Errors);
     }
 
+    /// <summary>The design's example 9.3, as it stands there: inside the budget by squares, with no square root in its loop.</summary>
+    [Fact]
+    public void ChainReactionCompiles()
+    {
+        var result = ModeCompiler.Compile("""
+            mode "Chain reaction" { api 1; badge "CHAIN"; about "An explosion takes everyone near it."; }
+            param radius "Blast radius" number 10..200 default 60;      // metres
+
+            rule "Blast" {
+              event destroyed(s);                                       // the explosion path, not a retire
+              do {
+                vec at = s.position;
+                real reach = radius * radius;                           // squares: no square root in a loop of 30
+                for each seat where racing and seat != s {
+                  vec apart = seat.position - at;
+                  if (dot(apart, apart) <= reach) { explode seat; }
+                }
+              }
+            }
+            """);
+        Assert.True(result.Succeeded, string.Join(" ", result.Errors));
+    }
+
     /// <summary>The design's example 9.5, as it stands there.</summary>
     [Fact]
     public void InfectionCompiles()
