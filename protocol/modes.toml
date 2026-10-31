@@ -1209,6 +1209,102 @@ id = 71
 type = "real"
 doc = "the machine's own body, M+0x30 before the mode's change"
 
+[[seat_read]]
+name = "stat.drift_rotation_resistance"
+id = 72
+type = "real"
+doc = "M+0x24, this step's: grip 2, the turn from a sliding corner (fn_1_278B8 0x27D98, every step on a slide, not in machine contact)"
+
+[[seat_read]]
+name = "stat.drift_friction"
+id = 73
+type = "real"
+doc = "M+0x28, this step's: grip 3, the strafe's end and the sliding corners' sideways limit (fn_1_278B8 0x27A48..0x27A78, every step)"
+
+[[seat_read]]
+name = "stat.turn_resistance"
+id = 74
+type = "real"
+doc = "M+0x10, this step's: turn tension, the corners' sideways force (fn_1_278B8 0x27B9C, every step)"
+
+[[seat_read]]
+name = "stat.turn_response"
+id = 75
+type = "real"
+doc = "M+0x20, this step's: turn reaction, how far the machine leans into the steering (fn_1_289B4 0x28DD4, fn_1_278B8 0x27928, fn_1_25480 0x25668, every step)"
+
+[[seat_read]]
+name = "stat.strafe_turn"
+id = 76
+type = "real"
+doc = "M+0x18, this step's: strafe turn, the yaw the strafe adds to the steering (fn_1_253A4 0x2541C, every step)"
+
+[[seat_read]]
+name = "stat.drift_accel"
+id = 77
+type = "real"
+doc = "M+0x2c, this step's: drift acceleration (fn_1_25480 0x2551C, every step). A CPU's driver read it once at its creation (fn_1_C489C) and keeps what it read"
+
+[[seat_read]]
+name = "stat.turn_decel"
+id = 78
+type = "real"
+doc = "M+0x238, this step's: turn deceleration, the speed lost to sideways momentum (fn_1_26F34 0x275FC, every step)"
+
+[[seat_read]]
+name = "stat.grip_window"
+id = 79
+type = "real"
+doc = "M+0x477, this step's: the full-grip window in steps, a whole number 0 to 255 (the car data's byte +0x48): read when the accelerator is newly full on the ground (fn_1_25870 0x258E0), so a running window keeps its count"
+
+[[seat_read]]
+name = "stat.base.drift_rotation_resistance"
+id = 80
+type = "real"
+doc = "the machine's own drift_rotation_resistance, M+0x24 before the mode's change"
+
+[[seat_read]]
+name = "stat.base.drift_friction"
+id = 81
+type = "real"
+doc = "the machine's own drift_friction, M+0x28 before the mode's change"
+
+[[seat_read]]
+name = "stat.base.turn_resistance"
+id = 82
+type = "real"
+doc = "the machine's own turn_resistance, M+0x10 before the mode's change"
+
+[[seat_read]]
+name = "stat.base.turn_response"
+id = 83
+type = "real"
+doc = "the machine's own turn_response, M+0x20 before the mode's change"
+
+[[seat_read]]
+name = "stat.base.strafe_turn"
+id = 84
+type = "real"
+doc = "the machine's own strafe_turn, M+0x18 before the mode's change"
+
+[[seat_read]]
+name = "stat.base.drift_accel"
+id = 85
+type = "real"
+doc = "the machine's own drift_accel, M+0x2c before the mode's change"
+
+[[seat_read]]
+name = "stat.base.turn_decel"
+id = 86
+type = "real"
+doc = "the machine's own turn_decel, M+0x238 before the mode's change"
+
+[[seat_read]]
+name = "stat.base.grip_window"
+id = 87
+type = "real"
+doc = "the machine's own grip_window, M+0x477 before the mode's change"
+
 [[race_read]]
 name = "steps"
 id = 0
@@ -1608,6 +1704,12 @@ where = "the coordinator: the courses its vote and its Random draw from, and a l
 # A choice ([[choice]]): the names an argument of that kind takes, its value the name's place in `values` (from 0).
 # An action's argument of a choice's name takes one of those names, never a number.
 
+[[setup]]
+name = "stats_page"
+id = 48
+where = "the compiler's own, when a rule writes a stat of the stats page (seat.stat.drift_rotation_resistance and after): the race's mode block has one page more, which the undo log and the checksum then cover; a mode without it has the block of before, byte for byte"
+doc = "the block's stats page, which a file never writes itself"
+
 [[choice]]
 name = "part"
 values = ["TIMER", "DISTANCE", "DIGIT", "WARNING", "SUCCESS", "FAILED", "TIME_OVER", "SPEED_GAUGE", "OBJECTS", "LEADER_GAP", "GHOST_GAP", "RANK", "LAPS", "SPEED", "ENERGY", "LAP_TIMES", "RACE_TIME", "FACES"]
@@ -1881,3 +1983,60 @@ id = 59
 args = ["seat", "bool"]
 where = "the display page's GHOST_SOUNDS; the HUD pass's silent seats, read at fn_1_A3D5C 0xA3E00 (a silent seat's voice is out of hearing, as past 300 units)"
 doc = "on: the seat's machine keeps its voice when drawn with the look ghost. Off, the default, is Time Attack's: its ghosts have no machine voice. The machine the camera follows always has its voice"
+
+[[action]]
+name = "seat.stat.drift_rotation_resistance"
+id = 60
+args = ["seat", "real"]
+where = "the seat's second stat record (the block's stats page); the stand-in routine writes M+0x24 after the game's rule hook fn_1_331EC rebuilt it, from the next step on"
+doc = "grip 2, the turn from a sliding corner (fn_1_278B8 0x27D98, every step on a slide, not in machine contact); held to the stat pack's range. It lasts until written again or the race ends"
+
+[[action]]
+name = "seat.stat.drift_friction"
+id = 61
+args = ["seat", "real"]
+where = "the seat's second stat record (the block's stats page); the stand-in routine writes M+0x28 after the game's rule hook fn_1_331EC rebuilt it, from the next step on"
+doc = "grip 3, the strafe's end and the sliding corners' sideways limit (fn_1_278B8 0x27A48..0x27A78, every step); held to the stat pack's range. It lasts until written again or the race ends"
+
+[[action]]
+name = "seat.stat.turn_resistance"
+id = 62
+args = ["seat", "real"]
+where = "the seat's second stat record (the block's stats page); the stand-in routine writes M+0x10 after the game's rule hook fn_1_331EC rebuilt it, from the next step on"
+doc = "turn tension, the corners' sideways force (fn_1_278B8 0x27B9C, every step); held to the stat pack's range. It lasts until written again or the race ends"
+
+[[action]]
+name = "seat.stat.turn_response"
+id = 63
+args = ["seat", "real"]
+where = "the seat's second stat record (the block's stats page); the stand-in routine writes M+0x20 after the game's rule hook fn_1_331EC rebuilt it, from the next step on"
+doc = "turn reaction, how far the machine leans into the steering (fn_1_289B4 0x28DD4, fn_1_278B8 0x27928, fn_1_25480 0x25668, every step); held to the stat pack's range. It lasts until written again or the race ends"
+
+[[action]]
+name = "seat.stat.strafe_turn"
+id = 64
+args = ["seat", "real"]
+where = "the seat's second stat record (the block's stats page); the stand-in routine writes M+0x18 after the game's rule hook fn_1_331EC rebuilt it, from the next step on"
+doc = "strafe turn, the yaw the strafe adds to the steering (fn_1_253A4 0x2541C, every step); held to the stat pack's range. It lasts until written again or the race ends"
+
+[[action]]
+name = "seat.stat.drift_accel"
+id = 65
+args = ["seat", "real"]
+where = "the seat's second stat record (the block's stats page); the stand-in routine writes M+0x2c after the game's rule hook fn_1_331EC rebuilt it, from the next step on"
+doc = "drift acceleration (fn_1_25480 0x2551C, every step). A CPU's driver read it once at its creation (fn_1_C489C) and keeps what it read; held to the stat pack's range. It lasts until written again or the race ends"
+
+[[action]]
+name = "seat.stat.turn_decel"
+id = 66
+args = ["seat", "real"]
+where = "the seat's second stat record (the block's stats page); the stand-in routine writes M+0x238 after the game's rule hook fn_1_331EC rebuilt it, from the next step on"
+doc = "turn deceleration, the speed lost to sideways momentum (fn_1_26F34 0x275FC, every step); held to the stat pack's range. It lasts until written again or the race ends"
+
+[[action]]
+name = "seat.stat.grip_window"
+id = 67
+args = ["seat", "real"]
+where = "the seat's second stat record (the block's stats page); the stand-in routine writes M+0x477 after the game's rule hook fn_1_331EC rebuilt it, from the next step on"
+doc = "the full-grip window in steps, a whole number 0 to 255 (the car data's byte +0x48): read when the accelerator is newly full on the ground (fn_1_25870 0x258E0), so a running window keeps its count; held to the stat pack's range. It lasts until written again or the race ends"
+

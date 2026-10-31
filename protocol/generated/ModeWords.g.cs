@@ -261,6 +261,8 @@ public enum ModeSetup : byte
     CoursesAll = 46,
     /// <summary><c>courses</c></summary>
     Courses = 47,
+    /// <summary><c>stats_page</c></summary>
+    StatsPage = 48,
 }
 
 /// <summary>A read of a seat (protocol/modes.toml).</summary>
@@ -410,6 +412,38 @@ public enum ModeSeatRead : byte
     StatBaseBoostLength = 70,
     /// <summary><c>stat.base.body</c></summary>
     StatBaseBody = 71,
+    /// <summary><c>stat.drift_rotation_resistance</c></summary>
+    StatDriftRotationResistance = 72,
+    /// <summary><c>stat.drift_friction</c></summary>
+    StatDriftFriction = 73,
+    /// <summary><c>stat.turn_resistance</c></summary>
+    StatTurnResistance = 74,
+    /// <summary><c>stat.turn_response</c></summary>
+    StatTurnResponse = 75,
+    /// <summary><c>stat.strafe_turn</c></summary>
+    StatStrafeTurn = 76,
+    /// <summary><c>stat.drift_accel</c></summary>
+    StatDriftAccel = 77,
+    /// <summary><c>stat.turn_decel</c></summary>
+    StatTurnDecel = 78,
+    /// <summary><c>stat.grip_window</c></summary>
+    StatGripWindow = 79,
+    /// <summary><c>stat.base.drift_rotation_resistance</c></summary>
+    StatBaseDriftRotationResistance = 80,
+    /// <summary><c>stat.base.drift_friction</c></summary>
+    StatBaseDriftFriction = 81,
+    /// <summary><c>stat.base.turn_resistance</c></summary>
+    StatBaseTurnResistance = 82,
+    /// <summary><c>stat.base.turn_response</c></summary>
+    StatBaseTurnResponse = 83,
+    /// <summary><c>stat.base.strafe_turn</c></summary>
+    StatBaseStrafeTurn = 84,
+    /// <summary><c>stat.base.drift_accel</c></summary>
+    StatBaseDriftAccel = 85,
+    /// <summary><c>stat.base.turn_decel</c></summary>
+    StatBaseTurnDecel = 86,
+    /// <summary><c>stat.base.grip_window</c></summary>
+    StatBaseGripWindow = 87,
 }
 
 /// <summary>A read of the race (protocol/modes.toml).</summary>
@@ -566,6 +600,22 @@ public enum ModeAction : byte
     SeatGhostTint = 58,
     /// <summary><c>seat.ghost_sound</c></summary>
     SeatGhostSound = 59,
+    /// <summary><c>seat.stat.drift_rotation_resistance</c></summary>
+    SeatStatDriftRotationResistance = 60,
+    /// <summary><c>seat.stat.drift_friction</c></summary>
+    SeatStatDriftFriction = 61,
+    /// <summary><c>seat.stat.turn_resistance</c></summary>
+    SeatStatTurnResistance = 62,
+    /// <summary><c>seat.stat.turn_response</c></summary>
+    SeatStatTurnResponse = 63,
+    /// <summary><c>seat.stat.strafe_turn</c></summary>
+    SeatStatStrafeTurn = 64,
+    /// <summary><c>seat.stat.drift_accel</c></summary>
+    SeatStatDriftAccel = 65,
+    /// <summary><c>seat.stat.turn_decel</c></summary>
+    SeatStatTurnDecel = 66,
+    /// <summary><c>seat.stat.grip_window</c></summary>
+    SeatStatGripWindow = 67,
 }
 
 /// <summary>The vocabulary of one api, by the names a mode file writes (protocol/modes.toml).</summary>
@@ -769,6 +819,7 @@ public static partial class ModeWords
         ("start_together", ModeSetup.StartTogether, [], false, ""),
         ("courses all", ModeSetup.CoursesAll, [], true, ""),
         ("courses", ModeSetup.Courses, [], true, "list"),
+        ("stats_page", ModeSetup.StatsPage, [], false, ""),
     ];
 
     /// <summary>The reads of a seat (<c>seat.NAME</c>): name, id, type.</summary>
@@ -846,6 +897,22 @@ public static partial class ModeWords
         ("stat.base.boost_strength", ModeSeatRead.StatBaseBoostStrength, ModeType.Real),
         ("stat.base.boost_length", ModeSeatRead.StatBaseBoostLength, ModeType.Real),
         ("stat.base.body", ModeSeatRead.StatBaseBody, ModeType.Real),
+        ("stat.drift_rotation_resistance", ModeSeatRead.StatDriftRotationResistance, ModeType.Real),
+        ("stat.drift_friction", ModeSeatRead.StatDriftFriction, ModeType.Real),
+        ("stat.turn_resistance", ModeSeatRead.StatTurnResistance, ModeType.Real),
+        ("stat.turn_response", ModeSeatRead.StatTurnResponse, ModeType.Real),
+        ("stat.strafe_turn", ModeSeatRead.StatStrafeTurn, ModeType.Real),
+        ("stat.drift_accel", ModeSeatRead.StatDriftAccel, ModeType.Real),
+        ("stat.turn_decel", ModeSeatRead.StatTurnDecel, ModeType.Real),
+        ("stat.grip_window", ModeSeatRead.StatGripWindow, ModeType.Real),
+        ("stat.base.drift_rotation_resistance", ModeSeatRead.StatBaseDriftRotationResistance, ModeType.Real),
+        ("stat.base.drift_friction", ModeSeatRead.StatBaseDriftFriction, ModeType.Real),
+        ("stat.base.turn_resistance", ModeSeatRead.StatBaseTurnResistance, ModeType.Real),
+        ("stat.base.turn_response", ModeSeatRead.StatBaseTurnResponse, ModeType.Real),
+        ("stat.base.strafe_turn", ModeSeatRead.StatBaseStrafeTurn, ModeType.Real),
+        ("stat.base.drift_accel", ModeSeatRead.StatBaseDriftAccel, ModeType.Real),
+        ("stat.base.turn_decel", ModeSeatRead.StatBaseTurnDecel, ModeType.Real),
+        ("stat.base.grip_window", ModeSeatRead.StatBaseGripWindow, ModeType.Real),
     ];
 
     /// <summary>The reads of the race (<c>race.NAME</c>): name, id, type.</summary>
@@ -929,6 +996,14 @@ public static partial class ModeWords
         ("show_number off", ModeAction.ShowNumberOff, [ModeType.Seat]),
         ("seat.ghost_tint", ModeAction.SeatGhostTint, [ModeType.Seat, ModeType.Int]),
         ("seat.ghost_sound", ModeAction.SeatGhostSound, [ModeType.Seat, ModeType.Bool]),
+        ("seat.stat.drift_rotation_resistance", ModeAction.SeatStatDriftRotationResistance, [ModeType.Seat, ModeType.Real]),
+        ("seat.stat.drift_friction", ModeAction.SeatStatDriftFriction, [ModeType.Seat, ModeType.Real]),
+        ("seat.stat.turn_resistance", ModeAction.SeatStatTurnResistance, [ModeType.Seat, ModeType.Real]),
+        ("seat.stat.turn_response", ModeAction.SeatStatTurnResponse, [ModeType.Seat, ModeType.Real]),
+        ("seat.stat.strafe_turn", ModeAction.SeatStatStrafeTurn, [ModeType.Seat, ModeType.Real]),
+        ("seat.stat.drift_accel", ModeAction.SeatStatDriftAccel, [ModeType.Seat, ModeType.Real]),
+        ("seat.stat.turn_decel", ModeAction.SeatStatTurnDecel, [ModeType.Seat, ModeType.Real]),
+        ("seat.stat.grip_window", ModeAction.SeatStatGripWindow, [ModeType.Seat, ModeType.Real]),
     ];
 
     /// <summary>The actions that need a running step, which game_start refuses.</summary>

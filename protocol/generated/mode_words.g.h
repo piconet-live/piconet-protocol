@@ -259,7 +259,8 @@ enum Setup : std::uint8_t
   SETUP_STARTTOGETHER = 45,  // start_together
   SETUP_COURSESALL = 46,  // courses all
   SETUP_COURSES = 47,  // courses
-  SETUP_COUNT = 48,
+  SETUP_STATSPAGE = 48,  // stats_page
+  SETUP_COUNT = 49,
 };
 
 // a read of a seat (OP_SEATREAD)
@@ -337,7 +338,23 @@ enum Seat : std::uint8_t
   SEAT_STATBASEBOOSTSTRENGTH = 69,  // stat.base.boost_strength
   SEAT_STATBASEBOOSTLENGTH = 70,  // stat.base.boost_length
   SEAT_STATBASEBODY = 71,  // stat.base.body
-  SEAT_COUNT = 72,
+  SEAT_STATDRIFTROTATIONRESISTANCE = 72,  // stat.drift_rotation_resistance
+  SEAT_STATDRIFTFRICTION = 73,  // stat.drift_friction
+  SEAT_STATTURNRESISTANCE = 74,  // stat.turn_resistance
+  SEAT_STATTURNRESPONSE = 75,  // stat.turn_response
+  SEAT_STATSTRAFETURN = 76,  // stat.strafe_turn
+  SEAT_STATDRIFTACCEL = 77,  // stat.drift_accel
+  SEAT_STATTURNDECEL = 78,  // stat.turn_decel
+  SEAT_STATGRIPWINDOW = 79,  // stat.grip_window
+  SEAT_STATBASEDRIFTROTATIONRESISTANCE = 80,  // stat.base.drift_rotation_resistance
+  SEAT_STATBASEDRIFTFRICTION = 81,  // stat.base.drift_friction
+  SEAT_STATBASETURNRESISTANCE = 82,  // stat.base.turn_resistance
+  SEAT_STATBASETURNRESPONSE = 83,  // stat.base.turn_response
+  SEAT_STATBASESTRAFETURN = 84,  // stat.base.strafe_turn
+  SEAT_STATBASEDRIFTACCEL = 85,  // stat.base.drift_accel
+  SEAT_STATBASETURNDECEL = 86,  // stat.base.turn_decel
+  SEAT_STATBASEGRIPWINDOW = 87,  // stat.base.grip_window
+  SEAT_COUNT = 88,
 };
 
 // a read of the race (OP_RACEREAD)
@@ -422,7 +439,15 @@ enum Action : std::uint8_t
   ACTION_SHOWNUMBEROFF = 57,  // show_number off
   ACTION_SEATGHOSTTINT = 58,  // seat.ghost_tint
   ACTION_SEATGHOSTSOUND = 59,  // seat.ghost_sound
-  ACTION_COUNT = 60,
+  ACTION_SEATSTATDRIFTROTATIONRESISTANCE = 60,  // seat.stat.drift_rotation_resistance
+  ACTION_SEATSTATDRIFTFRICTION = 61,  // seat.stat.drift_friction
+  ACTION_SEATSTATTURNRESISTANCE = 62,  // seat.stat.turn_resistance
+  ACTION_SEATSTATTURNRESPONSE = 63,  // seat.stat.turn_response
+  ACTION_SEATSTATSTRAFETURN = 64,  // seat.stat.strafe_turn
+  ACTION_SEATSTATDRIFTACCEL = 65,  // seat.stat.drift_accel
+  ACTION_SEATSTATTURNDECEL = 66,  // seat.stat.turn_decel
+  ACTION_SEATSTATGRIPWINDOW = 67,  // seat.stat.grip_window
+  ACTION_COUNT = 68,
 };
 
 // the choice `part`: a part of the game's own race HUD: TIMER the timed mode's clock (clock_limit's time, R+0xA4: seconds, 0 to 999); DISTANCE the metres to the finish (the seat's own); DIGIT the story's big digit (danger_zone's seconds, 3 2 1); WARNING, SUCCESS, FAILED, TIME_OVER, SPEED_GAUGE, OBJECTS the story's pictures, off until shown; LEADER_GAP the game's own time gap to the leader, off until shown: at each lap line, for a second, the seat's time behind the leader, and the leader's own lead when second place crosses; GHOST_GAP Time Attack's live gap, off until shown: signed minutes, seconds and thousandths at the right edge (617, 270), all race, against the seat furthest ahead, red while it is ahead, blue while you are; RANK, LAPS, SPEED, ENERGY, LAP_TIMES, RACE_TIME, FACES the standard HUD (the mask .data 0x3D544; FACES the board fn_1_D27B8), on until hidden
@@ -538,6 +563,14 @@ constexpr int ActionArguments(std::uint8_t action)
     case ACTION_SHOWNUMBEROFF: return 1;
     case ACTION_SEATGHOSTTINT: return 2;
     case ACTION_SEATGHOSTSOUND: return 2;
+    case ACTION_SEATSTATDRIFTROTATIONRESISTANCE: return 2;
+    case ACTION_SEATSTATDRIFTFRICTION: return 2;
+    case ACTION_SEATSTATTURNRESISTANCE: return 2;
+    case ACTION_SEATSTATTURNRESPONSE: return 2;
+    case ACTION_SEATSTATSTRAFETURN: return 2;
+    case ACTION_SEATSTATDRIFTACCEL: return 2;
+    case ACTION_SEATSTATTURNDECEL: return 2;
+    case ACTION_SEATSTATGRIPWINDOW: return 2;
     default: return -1;
   }
 }
