@@ -6,7 +6,9 @@ a Python reader, one (launch.toml) of the game's launch file, written out as the
 C# writer, and one (stats.toml) of a stat pack's ranges and code constants, written out as the game's C++ tables, the
 C# lists and the two tables of the handbook's pages (PAGES), and one (rules.toml) of a host's rules, written out as
 the C# rules list and race rules record and the game's C++ reader of a match start's rules into the race block's
-words, and one (courses.toml) of the courses' names, written out as a C# table and the game's C++ table, so that
+words, one (courses.toml) of the courses' names, written out as a C# table and the game's C++ table, and one
+(modes.toml) of the game mode system's vocabulary and bytecode, written out as the compiler's C# tables and the
+interpreter's C++ header, so that
 no layout or name is typed twice (README.md). Follows
 piconet-runner's port/facts/generate.py.
 
@@ -32,6 +34,9 @@ import courses_cxx
 import launch
 import launch_cs
 import launch_cxx
+import modes
+import modes_cs
+import modes_cxx
 import replay
 import replay_cs
 import replay_cxx
@@ -64,7 +69,8 @@ OUTPUTS = {"csharp": "generated/RelayPackets.g.cs", "cxx": "generated/relay_pack
            "rules_csharp": "generated/HostRules.g.cs", "rules_cxx": "generated/race_rules.g.h",
            "theme_axaml": "generated/Theme.g.axaml", "theme_cxx": "generated/theme_palette.g.h",
            "theme_css": "generated/theme.g.css",
-           "courses_csharp": "generated/CourseTable.g.cs", "courses_cxx": "generated/course_names.g.h"}
+           "courses_csharp": "generated/CourseTable.g.cs", "courses_cxx": "generated/course_names.g.h",
+           "modes_csharp": "generated/ModeWords.g.cs", "modes_cxx": "generated/mode_words.g.h"}
 # The pages whose tables are generated (between their marker lines, stats_md.py), from the repository's root: the
 # folder above this one.
 ROOT = os.path.dirname(here)
@@ -239,7 +245,7 @@ def flags(raw):
 
 def generated(path=SCHEMA, board_path=board.SCHEMA, replay_path=replay.SCHEMA, launch_path=launch.SCHEMA,
               stats_path=stats.SCHEMA, rules_path=rules.SCHEMA, theme_path=theme.SCHEMA,
-              courses_path=courses.SCHEMA):
+              courses_path=courses.SCHEMA, modes_path=modes.SCHEMA):
     protocol, packets = load(path)
     laid = board.load(board_path)
     file = replay.load(replay_path, protocol["record_size"])   # a step's records are the relay's
@@ -249,6 +255,7 @@ def generated(path=SCHEMA, board_path=board.SCHEMA, replay_path=replay.SCHEMA, l
     rules.check_replay(host, {v["feature"] for v in file["versions"] if v.get("feature")})
     tokens = theme.load(theme_path)
     named = courses.load(courses_path)
+    words = modes.load(modes_path)
     return {OUTPUTS["csharp"]: codec_cs.emit(protocol, packets), OUTPUTS["cxx"]: codec_cxx.emit(protocol, packets),
             OUTPUTS["cxx_describe"]: codec_cxx.emit_describe(protocol, packets),
             OUTPUTS["board_csharp"]: board_cs.emit(*laid), OUTPUTS["board_cxx"]: board_cxx.emit(*laid),
@@ -261,7 +268,8 @@ def generated(path=SCHEMA, board_path=board.SCHEMA, replay_path=replay.SCHEMA, l
             OUTPUTS["rules_csharp"]: rules_cs.emit(host), OUTPUTS["rules_cxx"]: rules_cxx.emit(host),
             OUTPUTS["theme_axaml"]: theme_axaml.emit(tokens), OUTPUTS["theme_cxx"]: theme_cxx.emit(tokens),
             OUTPUTS["theme_css"]: theme_css.emit(tokens),
-            OUTPUTS["courses_csharp"]: courses_cs.emit(named), OUTPUTS["courses_cxx"]: courses_cxx.emit(named)}
+            OUTPUTS["courses_csharp"]: courses_cs.emit(named), OUTPUTS["courses_cxx"]: courses_cxx.emit(named),
+            OUTPUTS["modes_csharp"]: modes_cs.emit(words), OUTPUTS["modes_cxx"]: modes_cxx.emit(words)}
 
 
 def pages(root=ROOT, stats_path=stats.SCHEMA):
@@ -284,7 +292,7 @@ def main(args, folder=here, path=SCHEMA, root=ROOT):
         files = {os.path.join(folder, name): text for name, text in generated(path).items()}
         files.update({os.path.join(root, name): text for name, text in pages(root).items()})
     except (SchemaError, board.SchemaError, replay.SchemaError, launch.SchemaError, stats.SchemaError,
-            rules.SchemaError, theme.SchemaError, courses.SchemaError) as e:
+            rules.SchemaError, theme.SchemaError, courses.SchemaError, modes.SchemaError) as e:
         print(f"generate.py: {e}", file=sys.stderr)
         return 1
     stale = []

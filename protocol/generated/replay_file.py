@@ -15,6 +15,7 @@ VERSION_CUSTOM = 4  # a seat raced a custom machine (a seat's match.setup.seats[
 VERSION_MINES = 5  # the race's mines came back (match.setup.rules.mineRegenMs gives a step or more)
 VERSION_SEATS = 6  # a seat raced a pack of its own (match.setup.packs, a seat's pack)
 VERSION_GRID = 7  # 0.4.0's set-up: the race started on the coordinator's grid (match.setup.grid) or raced wit
+VERSION_MODE = 9  # 0.6's set-up: the simulation's own generator (the header's simGenerator true: every race a
 COMPACT_VERSION = 8  # the compact file a recording becomes when it ends
 HEADER_MARK = b"FZRH"
 INPUTS_MARK = b"FZRI"
@@ -25,9 +26,9 @@ DICT_MIN = 4096
 DICT_MAX = 67108864
 XZ_MEMLIMIT = 134217728
 MAX_JSON = 1048576
-VERSION_WRITTEN = 7
-VERSIONS = (2, 3, 4, 5, 6, 7)
-FEATURES = ("stats", "custom", "mines", "seat_packs", "grid")
+VERSION_WRITTEN = 9
+VERSIONS = (2, 3, 4, 5, 6, 7, 9)
+FEATURES = ("stats", "custom", "mines", "seat_packs", "grid", "mode")
 HEAD_SIZE = 10
 FRAMES_SIZE = 12
 LINEUP_SIZE = 124
@@ -38,7 +39,7 @@ RESULTS_TAIL = 8
 MAX_BYTES = 268435456
 MAX_STEPS = 1296000
 MAX_SEATS = 30
-HEADER_KEYS = ("match", "seat", "mask", "delay", "flow", "rubberBand", "mod_sha1", "mod_commit", "game", "engine", "module_sha1", "recorded", "practice")
+HEADER_KEYS = ("match", "seat", "mask", "delay", "flow", "rubberBand", "simGenerator", "mod_sha1", "mod_commit", "game", "engine", "module_sha1", "recorded", "practice")
 RESULT_KEYS = ("seat", "rank", "finished", "out", "laps", "timeMs", "bestLapMs")
 # the lineup's block: (name, offset, count, struct format of one)
 LINEUP_FIELDS = (("machines", 0, 30, "B"), ("ranks", 30, 30, "B"), ("settings", 60, 30, "h"), ("control_mode", 120, 1, "B"), ("rel_d70", 121, 1, "B"),)
@@ -55,6 +56,8 @@ def version_of(**features):
     unknown = set(features) - set(FEATURES)
     if unknown:
         raise ValueError(f"no feature {sorted(unknown)}")
+    if features.get("mode"):
+        return VERSION_MODE
     if features.get("grid"):
         return VERSION_GRID
     if features.get("seat_packs"):

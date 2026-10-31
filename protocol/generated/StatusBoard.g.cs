@@ -11,8 +11,8 @@ public static class BoardLayout
 {
     /// <summary>"FZSB": the board's first four bytes.</summary>
     public const uint Magic = 0x42535A46;
-    public const uint Version = 1;
-    public const int Size = 4096;
+    public const uint Version = 4;
+    public const int Size = 14912;
     public const int Header = 0;
     public const int HeaderMagic = 0;
     public const int HeaderVersion = 4;
@@ -28,11 +28,13 @@ public static class BoardLayout
     public const int PulseStopReason = 76;
     public const int Status = 128;
     public const int Snapshot = 192;
-    public const int Events = 1792;
+    public const int ModeHead = 1792;
+    public const int ModeValues = 10624;
+    public const int Events = 12608;
     public const int EventsSlots = 64;
     public const int EventsSlot = 32;
-    public const int EventsFirst = 1800;
-    public const int Mailbox = 3904;
+    public const int EventsFirst = 12616;
+    public const int Mailbox = 14720;
 }
 
 /// <summary> Where the game is. Set by the game; the launcher reads it to judge a heartbeat that stands.</summary>
@@ -104,7 +106,7 @@ public enum BoardEventKind : uint
     Notice = 5,
     /// <summary>a step's checksum differed from the relay's: A the step</summary>
     Desync = 6,
-    /// <summary>the view of the local racer's chase camera changed while it races (the player's camera button, or the start): A the view (1 to 3), B the one before (0: none said yet in this start)</summary>
+    /// <summary>the view of the local racer's chase camera changed while it races (the player's camera button, or the start): A the view (1 to 3, 4 first person), B the one before (0: none said yet in this start)</summary>
     Camera = 7,
 }
 
@@ -117,6 +119,32 @@ public enum BoardRacerState : byte
     Finished = 1,
     /// <summary>knocked out or retired, by the game's own test</summary>
     Out = 2,
+}
+
+/// <summary> Whose value a `board` line of a mode file names (the language's section 10).</summary>
+public enum BoardModeBoardScope : byte
+{
+    /// <summary>one for the race</summary>
+    Global = 0,
+    /// <summary>one a seat</summary>
+    Seat = 1,
+    /// <summary>one a team</summary>
+    Team = 2,
+}
+
+/// <summary> How to read a mode value's word (the language's types; a vec is no `board` line's).</summary>
+public enum BoardModeBoardType : byte
+{
+    /// <summary>a whole number; a time is in steps, 60 a second</summary>
+    Int = 0,
+    /// <summary>binary32</summary>
+    Real = 1,
+    /// <summary>0 or 1</summary>
+    Bool = 2,
+    /// <summary>a seat, 0 to 29, or -1 none</summary>
+    Seat = 3,
+    /// <summary>a set of seats: bit i, seat i</summary>
+    Seats = 4,
 }
 
 /// <summary> The status block's Flags.</summary>
@@ -163,6 +191,32 @@ public struct BoardRacer
     public float Distance;
 }
 
+/// <summary> One `board` line of the mode's file, in the file's order.</summary>
+public struct BoardModeLine
+{
+    public BoardModeBoardScope Scope;
+    public BoardModeBoardType Type;
+    public ushort Column;
+    public uint LabelLength;
+    public byte[] Label = new byte[32];
+    public uint WordCount;
+    public BoardModeLine() { }
+}
+
+/// <summary> One word a `board` line names: what its variable shows when it holds that word's index.</summary>
+public struct BoardModeWord
+{
+    public uint Length;
+    public byte[] Text = new byte[16];
+    public BoardModeWord() { }
+}
+
+/// <summary> One value of a `board` line: a word, as its line's type says.</summary>
+public struct BoardModeValue
+{
+    public int Value;
+}
+
 /// <summary> One event of the ring. Seq is 2 * (its number + 1) once written, odd while it is written.</summary>
 public struct BoardEvent
 {
@@ -196,6 +250,47 @@ public sealed class BoardSnapshot
     public uint LocalSeat;
     public uint Count;
     public BoardRacer[] Racers = new BoardRacer[30];
+}
+
+/// <summary> The race's game mode, written once, when its first picture is drawn: its identity and the `board` lines of
+/// its file (D14 of the design). Serial 0: no mode (nothing below means anything). Picture only: nothing of the race
+/// reads it.</summary>
+public sealed class BoardModeHead
+{
+    public uint Serial;
+    public uint NameLength;
+    public byte[] Name = new byte[64];
+    public byte[] Hash = new byte[8];
+    public uint Count;
+    public BoardModeLine[] Lines = new BoardModeLine[24];
+    public BoardModeWord[] Words = new BoardModeWord[384];
+
+    public BoardModeHead()
+    {
+        for (var i = 0; i < Lines.Length; i++)
+        {
+            Lines[i] = new BoardModeLine();
+        }
+        for (var i = 0; i < Words.Length; i++)
+        {
+            Words[i] = new BoardModeWord();
+        }
+    }
+}
+
+/// <summary> The values of the mode's `board` lines, every picture drawn of a race, a practice, a watched race and a
+/// replay: what the mode's block holds at the moment the picture shows (a practice's rewind shows the moment's).
+/// Rollback can correct them a moment later, as the Snapshot's. Not written when the mode has no `board` line and has
+/// not broken. Read from the mode's block after the frame's steps; nothing of the race reads this. A line's Column says
+/// where its values are: Globals [Column], Seats[seat * 8 + Column], Teams[team * 8 + Column].</summary>
+public sealed class BoardModeValues
+{
+    public uint Serial;
+    public uint Frame;
+    public uint Fault;
+    public BoardModeValue[] Globals = new BoardModeValue[8];
+    public BoardModeValue[] Seats = new BoardModeValue[240];
+    public BoardModeValue[] Teams = new BoardModeValue[240];
 }
 
 /// <summary> The launcher's words to the game, which it reads once a frame. StopSerial: one more asks for a graceful
@@ -396,6 +491,136 @@ public readonly unsafe struct BoardView
         return false;
     }
 
+    /// <summary>ModeHead (game writes), as one group. Its writer alone calls this.</summary>
+    public void WriteModeHead(BoardModeHead v)
+    {
+        ref var seq = ref *(uint*)(_at + BoardLayout.ModeHead);
+        var s = Volatile.Read(ref seq) & ~1u;
+        Volatile.Write(ref seq, s + 1);
+        Interlocked.MemoryBarrier();
+        Volatile.Write(ref *(uint*)(_at + BoardLayout.ModeHead + 4), v.Serial);
+        Volatile.Write(ref *(uint*)(_at + BoardLayout.ModeHead + 8), v.NameLength);
+        for (var i = 0; i < 16; i++)
+        {
+            Volatile.Write(ref *(uint*)(_at + BoardLayout.ModeHead + 12 + i * 4), BinaryPrimitives.ReadUInt32LittleEndian(v.Name.AsSpan(i * 4)));
+        }
+        for (var i = 0; i < 2; i++)
+        {
+            Volatile.Write(ref *(uint*)(_at + BoardLayout.ModeHead + 76 + i * 4), BinaryPrimitives.ReadUInt32LittleEndian(v.Hash.AsSpan(i * 4)));
+        }
+        Volatile.Write(ref *(uint*)(_at + BoardLayout.ModeHead + 84), v.Count);
+        for (var i = 0; i < 24; i++)
+        {
+            StoreModeLine(BoardLayout.ModeHead + 88 + i * 44, in v.Lines[i]);
+        }
+        for (var i = 0; i < 384; i++)
+        {
+            StoreModeWord(BoardLayout.ModeHead + 1144 + i * 20, in v.Words[i]);
+        }
+        Volatile.Write(ref seq, s + 2);
+    }
+
+    /// <summary>Reads ModeHead into <paramref name="into"/>; false when every try met the writer at work (then <paramref name="into"/> holds nothing to use).</summary>
+    public bool TryReadModeHead(BoardModeHead into, int tries = 64)
+    {
+        ref var seq = ref *(uint*)(_at + BoardLayout.ModeHead);
+        for (var t = 0; t < tries; t++)
+        {
+            var s = Volatile.Read(ref seq);
+            if ((s & 1) != 0)
+            {
+                Thread.SpinWait(4);
+                continue;
+            }
+            into.Serial = Volatile.Read(ref *(uint*)(_at + BoardLayout.ModeHead + 4));
+            into.NameLength = Volatile.Read(ref *(uint*)(_at + BoardLayout.ModeHead + 8));
+            for (var i = 0; i < 16; i++)
+            {
+                BinaryPrimitives.WriteUInt32LittleEndian(into.Name.AsSpan(i * 4), Volatile.Read(ref *(uint*)(_at + BoardLayout.ModeHead + 12 + i * 4)));
+            }
+            for (var i = 0; i < 2; i++)
+            {
+                BinaryPrimitives.WriteUInt32LittleEndian(into.Hash.AsSpan(i * 4), Volatile.Read(ref *(uint*)(_at + BoardLayout.ModeHead + 76 + i * 4)));
+            }
+            into.Count = Volatile.Read(ref *(uint*)(_at + BoardLayout.ModeHead + 84));
+            for (var i = 0; i < 24; i++)
+            {
+                LoadModeLine(BoardLayout.ModeHead + 88 + i * 44, ref into.Lines[i]);
+            }
+            for (var i = 0; i < 384; i++)
+            {
+                LoadModeWord(BoardLayout.ModeHead + 1144 + i * 20, ref into.Words[i]);
+            }
+            Interlocked.MemoryBarrier();
+            if (Volatile.Read(ref seq) == s)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /// <summary>ModeValues (game writes), as one group. Its writer alone calls this.</summary>
+    public void WriteModeValues(BoardModeValues v)
+    {
+        ref var seq = ref *(uint*)(_at + BoardLayout.ModeValues);
+        var s = Volatile.Read(ref seq) & ~1u;
+        Volatile.Write(ref seq, s + 1);
+        Interlocked.MemoryBarrier();
+        Volatile.Write(ref *(uint*)(_at + BoardLayout.ModeValues + 4), v.Serial);
+        Volatile.Write(ref *(uint*)(_at + BoardLayout.ModeValues + 8), v.Frame);
+        Volatile.Write(ref *(uint*)(_at + BoardLayout.ModeValues + 12), v.Fault);
+        for (var i = 0; i < 8; i++)
+        {
+            StoreModeValue(BoardLayout.ModeValues + 16 + i * 4, in v.Globals[i]);
+        }
+        for (var i = 0; i < 240; i++)
+        {
+            StoreModeValue(BoardLayout.ModeValues + 48 + i * 4, in v.Seats[i]);
+        }
+        for (var i = 0; i < 240; i++)
+        {
+            StoreModeValue(BoardLayout.ModeValues + 1008 + i * 4, in v.Teams[i]);
+        }
+        Volatile.Write(ref seq, s + 2);
+    }
+
+    /// <summary>Reads ModeValues into <paramref name="into"/>; false when every try met the writer at work (then <paramref name="into"/> holds nothing to use).</summary>
+    public bool TryReadModeValues(BoardModeValues into, int tries = 64)
+    {
+        ref var seq = ref *(uint*)(_at + BoardLayout.ModeValues);
+        for (var t = 0; t < tries; t++)
+        {
+            var s = Volatile.Read(ref seq);
+            if ((s & 1) != 0)
+            {
+                Thread.SpinWait(4);
+                continue;
+            }
+            into.Serial = Volatile.Read(ref *(uint*)(_at + BoardLayout.ModeValues + 4));
+            into.Frame = Volatile.Read(ref *(uint*)(_at + BoardLayout.ModeValues + 8));
+            into.Fault = Volatile.Read(ref *(uint*)(_at + BoardLayout.ModeValues + 12));
+            for (var i = 0; i < 8; i++)
+            {
+                LoadModeValue(BoardLayout.ModeValues + 16 + i * 4, ref into.Globals[i]);
+            }
+            for (var i = 0; i < 240; i++)
+            {
+                LoadModeValue(BoardLayout.ModeValues + 48 + i * 4, ref into.Seats[i]);
+            }
+            for (var i = 0; i < 240; i++)
+            {
+                LoadModeValue(BoardLayout.ModeValues + 1008 + i * 4, ref into.Teams[i]);
+            }
+            Interlocked.MemoryBarrier();
+            if (Volatile.Read(ref seq) == s)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /// <summary>Events: how many events were written.</summary>
     public ulong EventsHead => Volatile.Read(ref *(ulong*)(_at + BoardLayout.Events));
 
@@ -556,6 +781,60 @@ public readonly unsafe struct BoardView
         Volatile.Write(ref *(float*)(_at + at + 40), v.Y);
         Volatile.Write(ref *(float*)(_at + at + 44), v.Z);
         Volatile.Write(ref *(float*)(_at + at + 48), v.Distance);
+    }
+
+    private void LoadModeLine(int at, ref BoardModeLine v)
+    {
+        v.Scope = (BoardModeBoardScope)Volatile.Read(ref *(byte*)(_at + at + 0));
+        v.Type = (BoardModeBoardType)Volatile.Read(ref *(byte*)(_at + at + 1));
+        v.Column = Volatile.Read(ref *(ushort*)(_at + at + 2));
+        v.LabelLength = Volatile.Read(ref *(uint*)(_at + at + 4));
+        for (var i = 0; i < 8; i++)
+        {
+            BinaryPrimitives.WriteUInt32LittleEndian(v.Label.AsSpan(i * 4), Volatile.Read(ref *(uint*)(_at + at + 8 + i * 4)));
+        }
+        v.WordCount = Volatile.Read(ref *(uint*)(_at + at + 40));
+    }
+
+    private void StoreModeLine(int at, in BoardModeLine v)
+    {
+        Volatile.Write(ref *(byte*)(_at + at + 0), (byte)v.Scope);
+        Volatile.Write(ref *(byte*)(_at + at + 1), (byte)v.Type);
+        Volatile.Write(ref *(ushort*)(_at + at + 2), v.Column);
+        Volatile.Write(ref *(uint*)(_at + at + 4), v.LabelLength);
+        for (var i = 0; i < 8; i++)
+        {
+            Volatile.Write(ref *(uint*)(_at + at + 8 + i * 4), BinaryPrimitives.ReadUInt32LittleEndian(v.Label.AsSpan(i * 4)));
+        }
+        Volatile.Write(ref *(uint*)(_at + at + 40), v.WordCount);
+    }
+
+    private void LoadModeWord(int at, ref BoardModeWord v)
+    {
+        v.Length = Volatile.Read(ref *(uint*)(_at + at + 0));
+        for (var i = 0; i < 4; i++)
+        {
+            BinaryPrimitives.WriteUInt32LittleEndian(v.Text.AsSpan(i * 4), Volatile.Read(ref *(uint*)(_at + at + 4 + i * 4)));
+        }
+    }
+
+    private void StoreModeWord(int at, in BoardModeWord v)
+    {
+        Volatile.Write(ref *(uint*)(_at + at + 0), v.Length);
+        for (var i = 0; i < 4; i++)
+        {
+            Volatile.Write(ref *(uint*)(_at + at + 4 + i * 4), BinaryPrimitives.ReadUInt32LittleEndian(v.Text.AsSpan(i * 4)));
+        }
+    }
+
+    private void LoadModeValue(int at, ref BoardModeValue v)
+    {
+        v.Value = Volatile.Read(ref *(int*)(_at + at + 0));
+    }
+
+    private void StoreModeValue(int at, in BoardModeValue v)
+    {
+        Volatile.Write(ref *(int*)(_at + at + 0), v.Value);
     }
 
     private void LoadEvent(int at, ref BoardEvent v)

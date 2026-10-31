@@ -11,7 +11,7 @@ namespace fzgx::launch_file
 {
 inline constexpr std::size_t MAX_BYTES = 1048576;
 inline constexpr std::size_t WINDOW_NAME_MOST_BYTES = 64;
-inline constexpr std::uint32_t MATCH_CAMERA_LOW = 1u, MATCH_CAMERA_HIGH = 3u;
+inline constexpr std::uint32_t MATCH_CAMERA_LOW = 1u, MATCH_CAMERA_HIGH = 4u;
 inline constexpr std::uint32_t WINDOW_NAME_PICTURE_WIDTH_LOW = 1u, WINDOW_NAME_PICTURE_WIDTH_HIGH = 512u;
 inline constexpr std::uint32_t WINDOW_NAME_PICTURE_HEIGHT_LOW = 1u, WINDOW_NAME_PICTURE_HEIGHT_HIGH = 64u;
 inline constexpr std::size_t TASKBAR_ID_MOST_BYTES = 128;
@@ -20,8 +20,8 @@ inline constexpr std::size_t TASKBAR_NAME_MOST_BYTES = 64;
 inline constexpr std::uint32_t DEBUG_TEST_LAG_MS_LOW = 0u, DEBUG_TEST_LAG_MS_HIGH = 10000u;
 
 // File: the launch file: every setting of one start of the game. Takes about, bundle, board, widescreen,
-// trueWidescreen, windowName, showFrameRate, rumble, present, refreshRate, verticalSync, fullScreen, controllerSetup;
-// by hand: windowNamePicture, taskbar, lanes, match, replay, debug.
+// trueWidescreen, windowName, showFrameRate, showInputs, rumble, present, refreshRate, verticalSync, fullScreen,
+// controllerSetup; by hand: windowNamePicture, taskbar, lanes, match, replay, debug.
 template <typename P, typename T>
 void ReadFile([[maybe_unused]] P& p, [[maybe_unused]] T* t)
 {
@@ -34,6 +34,7 @@ void ReadFile([[maybe_unused]] P& p, [[maybe_unused]] T* t)
   p.Flag("trueWidescreen", &t->true_widescreen);
   p.Words("windowName", &t->window_name);
   p.Flag("showFrameRate", &t->show_frame_rate);
+  p.Flag("showInputs", &t->show_inputs);
   p.Flag("rumble", &t->rumble);
   p.OneOf("present", &t->present, {"field", "console", "copy"});
   p.OneOf("refreshRate", &t->refresh_rate, {"60", "120", "240", "display"});
@@ -57,7 +58,7 @@ void ReadMatch([[maybe_unused]] P& p, [[maybe_unused]] T* t)
   p.Flag("rejoin", &t->rejoin);
   p.Flag("spectate", &t->spectate);
   p.Flag("practice", &t->practice);
-  p.Whole("camera", &t->camera, 1u, 3u);
+  p.Whole("camera", &t->camera, 1u, 4u);
 }
 
 // Replay ("replay"): a replay's playback, as the race. Takes scrubber, file, otherSounds.
@@ -101,8 +102,8 @@ void ReadTaskbar([[maybe_unused]] P& p, [[maybe_unused]] T* t)
 // testLagMs, jitterMs, autopilot, blackoutStep, blackoutSeconds, handbackAt, rollbackLog, alterStep, forcePatches,
 // drawnFrames, lateSteps, lateSeats, lateNoise, skipDraws, trace, keepScratch, bufferShare, bufferSteps, replayMemory,
 // replayNear, replayScript, replayEndQuits, hitLog, undoLog, fullScreenWithoutFocus, singleCore, jit, cheats, mods,
-// automation, loadState, userSettings; by hand: forceRollback, clock, redraw, traceStates, dump, slowSteps, undoTrace,
-// standStill, partialRollback.
+// automation, loadState, userSettings, renderer, auroraShots, auroraScale, auroraLog; by hand: forceRollback, clock,
+// redraw, traceStates, dump, slowSteps, undoTrace, standStill, partialRollback.
 template <typename P, typename T>
 void ReadDebug([[maybe_unused]] P& p, [[maybe_unused]] T* t)
 {
@@ -138,6 +139,10 @@ void ReadDebug([[maybe_unused]] P& p, [[maybe_unused]] T* t)
   p.Flag("automation", &t->automation);
   p.Flag("loadState", &t->load_state);
   p.Flag("userSettings", &t->user_settings);
+  p.OneOf("renderer", &t->renderer, {"dolphin", "aurora"});
+  p.Wholes("auroraShots", &t->aurora_shots, 1u, 4294967295u, 1, 32);
+  p.Whole("auroraScale", &t->aurora_scale, 1u, 8u);
+  p.Words("auroraLog", &t->aurora_log);
 }
 
 // ForceRollback ("forceRollback"): rollbacks on purpose: every so many frames, of these depths in turn (both needed).

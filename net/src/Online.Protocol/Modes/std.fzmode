@@ -1,0 +1,59 @@
+// The standard library of api 1 (piconet-docs research/game-modes/language.md section 9): written in the mode
+// language and compiled with every mode file (ModeLibrary.cs). A macro is expanded where a file uses it, its
+// arguments put in for its parameters' names; a sub is written where it is called. A use of a word the build does
+// not have yet is an error at the use's line, as the same word written in the file would be.
+
+// every(t) { ... }: runs on each multiple of t of the race clock after GO.
+macro every(time t, block body) {
+  rule { event every step; while race.started and race.steps > 0 and race.steps % t == 0; do body }
+}
+
+// at(t) { ... }: once, at t on the race clock.
+macro at(time t, block body) {
+  rule { event every step; when race.started and race.steps >= t; do body }
+}
+
+// lives n: each explosion (destroyed) costs a life, and the count shows beside the spare-machine icon while the seat
+// races. A fall or a breakdown is restored free while the seat has more than one life. On its last life nothing is
+// restored, so any wreck is final (the game's own out verdict books it): the game cannot refuse a restore by the kind
+// of wreck without a new site. The off waits for the restore that left one life: `when` holds it until that restore has
+// begun, whichever of the two the step shows first, and respawns off lets a restore under way finish.
+macro lives(int n) {
+  seat int lives_left;
+  rule { event game_start; do { for each seat { seat.lives_left = n; show_number seat, n; if (n > 1) { respawns seat; } } } }
+  rule { event destroyed(s); do { if (s.lives_left > 0) { s.lives_left -= 1; } } }
+  rule { event each seat; when seat.restoring and seat.lives_left <= 1; do { respawns seat off; } }
+  rule { event out(s); do { s.lives_left = 0; } }
+  rule { event each seat; do {
+    if (seat.racing) { show_number seat, seat.lives_left; } else { show_number seat, -1; }
+  } }
+}
+
+// pits_off: the pit strips give no energy. A seat in a pit keeps the energy it came in with (less, when it is hit
+// there); out of the pits its energy is what the game says.
+macro pits_off() {
+  seat real pits_off_energy;
+  rule { event each seat; do {
+    if (seat.in_pit and seat.energy > seat.pits_off_energy) {
+      seat.energy = seat.pits_off_energy;
+    } else {
+      seat.pits_off_energy = seat.energy;
+    }
+  } }
+}
+
+// gap_to(a, b): the distance along the course from a to b, wrapped at the finish line, the shorter way round. From the
+// laps' own distances, so a pair takes a tenth of what the whole race's distance and a floor did: thirty seats may each
+// look at thirty others in one step (design 9.5).
+sub real gap_to(seat a, seat b) {
+  real d = abs(a.lap_distance - b.lap_distance);
+  return min(d, a.lap_length - d);
+}
+
+// dist(a, b): the straight-line distance between two seats.
+sub real dist(seat a, seat b) {
+  real dx = a.position.x - b.position.x;
+  real dy = a.position.y - b.position.y;
+  real dz = a.position.z - b.position.z;
+  return sqrt(dx * dx + dy * dy + dz * dz);
+}

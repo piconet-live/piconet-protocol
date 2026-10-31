@@ -9,6 +9,7 @@
     "rgba": "/wAA/wECA4A="
   },
   "showFrameRate": true,
+  "showInputs": true,
   "rumble": false,
   "present": "field",
   "verticalSync": true,

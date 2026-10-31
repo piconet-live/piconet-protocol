@@ -1,0 +1,81 @@
+// Every race-side word of api 1 (wave 2A: the events, reads, actions and setup words that act on the race), at least
+// once: a vector for the compiler's tests and the runner's interpreter tests (protocol/README.md), not a mode to race.
+// words.fzmode holds the first slice's words; the two together are the api's.
+
+mode "Race words" {
+  api 1;
+  about "Every race-side word of api 1.";
+}
+
+param limit "Time" delay 1min..10min step 30s default 5min;
+
+finish_limit 30;
+mine_regen off;
+cpu_level 2;
+restore on;
+contact off;
+clock_limit limit;
+rolling_start 1000 km/h;
+
+global int laps_seen;
+global seat last_by = none;
+seat int falls;
+seat int passes;
+
+rule "Start" {
+  event countdown;
+  do {
+    for each seat {
+      respawns seat;
+      no_contact seat;
+      if (seat.is_cpu) { cpu_mode seat, 23; hand_to_cpu seat; }
+    }
+    team 0 no contact;
+    no contact seats, last_by;
+  }
+}
+
+rule "Go" {
+  event race_start;
+  do {
+    pads_back;
+    for each seat { no_contact seat off; release seat; }
+  }
+}
+
+rule "Lap" { event lap(s); do { laps_seen += 1; award s, 10; } }
+rule "Checkpoint" { event checkpoint(s); when s.checkpoint > 3; do { boost s; } }
+rule "Finish" { event finish(s); do { s.place = 1; } }
+rule "Fall" { event fall(s); do { s.falls += 1; respawns s off; } }
+rule "Destroyed" { event destroyed(s); do { s.energy = 50; } }
+rule "KO" { event ko(v, k); do { last_by = k; award k, 5; retire v; } }
+rule "Hit" { event hit(a, b); do { push a, b.velocity - a.velocity; } }
+rule "Damaged" { event damaged(s); when s.damage_taken > 50.0; do { explode s; } }
+rule "Boost" { event boost(s); do { s.energy -= 1; danger_zone s off; } }
+rule "Wall" { event wall(s); do { freeze s; danger_zone s, 300 km/h, 600 km/h, 3; } }
+rule "Pit" { event pit(s); when s.used_pit and s.surface == 1; do { retire s; } }
+rule "Overtake" { event overtake(a, b); do { a.passes += 1; } }
+rule "Respawned" { event respawned(s); do { s.velocity = s.forward * 500.0; } }
+rule "Land" { event land(s); when s.up.y < 0.5; do { stop_all; } }
+rule "Boost end" { event boost_end(s); when s.input.accel > 0.5 and s.input.brake < 0.1; do { s.energy += 1; } }
+rule "Wrong way" { event wrong_way(s); do { s.place = 30; } }
+rule "From the first picture" { event game_start; do { for each seat { seat.look = invisible; seat.own_look = normal; } } }
+
+rule "Out" {
+  event out(s, cause);
+  when cause == 3;
+  do { s.falls += 1; }
+}
+
+rule "Reads" {
+  event each seat;
+  while seat.restoring or seat.airborne or seat.boosting or seat.spinning or seat.side_attack or seat.in_pit
+    or seat.fallen or seat.wrong_way or seat.no_contact or seat.is_human;
+  do {
+    real r = seat.input.steer + seat.input.strafe + seat.input.pitch + seat.lap_distance + seat.checkpoint_fraction
+      + seat.top_speed + seat.max_energy + seat.last_hit_energy + length(seat.velocity) + dot(seat.forward, seat.up);
+    int n = seat.race_time + seat.mode_lap_steps + seat.best_lap + seat.machine + seat.hits + seat.game_lap_steps
+      + seat.standing + seat.place + seat.points + seat.kos + race.humans_left + race.human_finished;
+    if (r > n and count(seat.touching) > 2) { end_race; }
+  }
+}

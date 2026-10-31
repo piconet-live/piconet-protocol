@@ -1,0 +1,5 @@
+// start_together: the setup word, with a rule that reads what it implies.
+mode "Together" { api 1; }
+start_together;
+global int ghosts;
+rule "Count" { event game_start; do { for each seat where seat.no_contact { ghosts = ghosts + 1; } } }

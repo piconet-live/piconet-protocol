@@ -18,7 +18,7 @@
 #
 # The compact file ([compact], version 8), which the game makes of the file above when the recording ends: the mark,
 # u16 the version, u16 the version of the recording it was made of (its race's: the features' rules are that
-# version's; the game makes it of version 7 alone), then five sections, each its mark, u32 its length and its bytes, in this order, then the results
+# version's; the game makes it of version 9 alone), then five sections, each its mark, u32 its length and its bytes, in this order, then the results
 # as above:
 #   header    [compact]'s header_mark: the header's JSON, xz
 #   frames    [frames]'s mark: its fields (the player seats' mask, the recorder's seat)
@@ -34,8 +34,8 @@
 # A version (`[[version]]`) is the same layout under another number: each says what its race holds (`feature`), so
 # that a program from before that feature refuses the file. A file's version is the highest whose feature its
 # header's race holds, or the first (no feature) when it holds none; a reader of the game refuses a file whose
-# version is another (formats.md section 1). The writer writes `written` only: every race and practice since 0.4.0
-# is 0.4.0's set-up (the rubber band off). Older versions stay readable: older replays keep playing.
+# version is another (formats.md section 1). The writer writes `written` only: every race and practice since 0.6 is
+# 0.6's set-up (the rubber band off, the simulation's own generator). Older versions stay readable: older replays keep playing.
 #
 # A reader plays both forms; the compact one compares a step's folded checksum, and the whole one where it has it.
 #
@@ -48,14 +48,14 @@
 name = "replay file"
 mark = "FZRP"
 endian = "big"
-written = 7
+written = 9
 max_bytes = 268435456    # 256 MiB: an hour of 30 seats is 40 MiB
 max_steps = 1296000      # six hours at 60 steps a second
 max_json = 1048576       # the longest header, and results block, the launcher reads (1 MiB)
 max_seats = 30           # the game's seats: a mask names seats 0 to 29, the recorder's seat is one of them
 
 [compact]
-version = 8              # the file a recording becomes when it ends (0.5.2 on); a program from before refuses it
+version = 8              # the file a recording becomes when it ends (0.5.2 on); a program from before refuses it; no recording's version
 header_mark = "FZRH"
 inputs_mark = "FZRI"
 checksums_mark = "FZRC"
@@ -108,6 +108,15 @@ name = "Grid"
 feature = "grid"
 doc = """0.4.0's set-up: the race started on the coordinator's grid (match.setup.grid) or raced with no rubber band \
 (the header's rubberBand false: every race and practice from 0.4.0)"""
+
+[[version]]
+number = 9
+name = "Mode"
+feature = "mode"
+doc = """0.6's set-up: the simulation's own generator (the header's simGenerator true: every race and practice from 0.6), \
+which may be a race of a game mode (the header's match.setup.mode: the package, its hash, its api and its parameters, \
+formats.md section 9): one growable section, so a later mode word needs no version of its own. A program from before \
+would race it with the wrong draws, or on the host's rules alone. 8 is the compact file's, never a recording's"""
 
 [head]
 fields = [
@@ -227,6 +236,12 @@ key = "rubberBand"
 type = "bool"
 optional = true
 doc = "false from 0.4.0 on; absent (or true) in recordings before, which race with the band"
+
+[[header]]
+key = "simGenerator"
+type = "bool"
+optional = true
+doc = "true: the simulation's draws came from its own generator (race block +104); absent (or false) in recordings before, which race with the one the executable shares with the effects and cameras"
 
 [[header]]
 key = "mod_sha1"

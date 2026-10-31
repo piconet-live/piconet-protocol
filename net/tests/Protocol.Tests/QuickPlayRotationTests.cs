@@ -1,0 +1,381 @@
+using Online.Protocol;
+using TestSupport;
+
+namespace Protocol.Tests;
+
+/// <summary>Quick Play's rotation (QuickPlayRotation) over protocol/tests/vectors/quickplay/, a rotation of today's
+/// words, and the official protocol/quickplay/ as far as today's compiler takes it: the cards of a vote, Random's draw,
+/// the laps and the CPU flag, what a file that does not load says, and the messages that carry a mode.</summary>
+public sealed class QuickPlayRotationTests : IDisposable
+{
+    private readonly string _folder = Directory.CreateTempSubdirectory("rotation-").FullName;
+
+    public void Dispose() => Directory.Delete(_folder, recursive: true);
+
+    private static string Vectors => RepositoryFolder.Protocol("protocol", "tests", "vectors", "quickplay");
+
+    private static QuickPlayRotation Rotation() => QuickPlayRotation.Read(Vectors);
+
+    /// <summary>The vectors' rotation copied to a folder of the test's own, its file replaced by <paramref name="toml"/>.</summary>
+    private string WithFile(string toml)
+    {
+        foreach (var file in Directory.GetFiles(Vectors, "*.fzmode"))
+        {
+            File.Copy(file, Path.Combine(_folder, Path.GetFileName(file)), overwrite: true);
+        }
+        File.WriteAllText(Path.Combine(_folder, QuickPlayRotation.FileName), toml);
+        return _folder;
+    }
+
+    [Fact]
+    public void TheVectorsRotationReads()
+    {
+        var rotation = Rotation();
+        Assert.Equal(5, rotation.Cards);
+        Assert.Equal(1, rotation.SpicyCards);
+        Assert.Equal(0.15, rotation.RandomSpicyChance);
+        Assert.Equal("Quick Play", rotation.Normal.Package.Name);
+        var spicy = Assert.Single(rotation.Spicy);
+        Assert.Equal("OVERDRIVE", spicy.Mode.Package.Badge);
+        Assert.Equal([8], spicy.Mode.Terms.Courses!);
+        Assert.Equal(1, rotation.Api);
+        Assert.True(rotation.CpusAllowed);
+    }
+
+    [Fact]
+    public void EveryVoteHasFiveCardsOneSpicyAndRandom()
+    {
+        var rotation = Rotation();
+        var random = new Random(7);
+        for (var round = 0; round < 200; round++)
+        {
+            var vote = rotation.Vote(CoursePool.Default, random.Next);
+            Assert.Equal(6, vote.Count);
+            Assert.Equal(CourseVote.RandomCourse, vote[^1].Course);
+            var spicy = Assert.Single(vote, o => o.Spicy);
+            Assert.Equal(8, spicy.Course);
+            Assert.Equal("OVERDRIVE", spicy.Card.Badge);
+            Assert.Equal(0, spicy.Card.Laps);   // laps unlimited
+            Assert.Equal(5, vote.Take(5).Select(o => o.Course).Distinct().Count());
+            Assert.All(vote.Take(5).Where(o => !o.Spicy), o => Assert.Equal((3, (string?)null), (o.Card.Laps!.Value, o.Card.Badge)));
+            Assert.Null(vote[^1].Card.Laps);
+        }
+    }
+
+    [Fact]
+    public void TheSpicyCardTakesEveryPlace()
+    {
+        var rotation = Rotation();
+        var random = new Random(3);
+        var places = Enumerable.Range(0, 400).Select(_ => rotation.Vote(CoursePool.Default, random.Next).ToList().FindIndex(o => o.Spicy));
+        Assert.Equal([0, 1, 2, 3, 4], places.Distinct().Order());
+    }
+
+    [Fact]
+    public void APoolWithoutTheSpicyCourseShowsNormalCardsOnly()
+    {
+        var pool = CoursePool.Default.Where(c => c != 8).ToList();
+        var vote = Rotation().Vote(pool, new Random(1).Next);
+        Assert.Equal(6, vote.Count);
+        Assert.DoesNotContain(vote, o => o.Spicy);
+        Assert.All(vote.Take(5), o => Assert.Contains(o.Course, pool));
+    }
+
+    [Fact]
+    public void RandomLandsOnSpicyAtItsChance()
+    {
+        var rotation = Rotation();
+        var random = new Random(11);
+        var draws = Enumerable.Range(0, 20_000).Select(_ => rotation.Random(CoursePool.Default, random.Next)).ToList();
+        var spicy = draws.Count(d => d.Spicy) / (double)draws.Count;
+        Assert.InRange(spicy, 0.13, 0.17);
+        Assert.All(draws.Where(d => d.Spicy), d => Assert.Equal(8, d.Course));
+        Assert.All(draws.Where(d => !d.Spicy), d => Assert.Same(rotation.Normal, d.Mode));
+    }
+
+    [Fact]
+    public void AChanceOfNoneNeverLandsOnSpicy()
+    {
+        var rotation = QuickPlayRotation.Read(WithFile("""
+            random_spicy_chance = 0
+            [normal]
+            mode = "competitive.fzmode"
+            [[spicy]]
+            mode = "overdrive.fzmode"
+            """));
+        var random = new Random(5);
+        Assert.DoesNotContain(Enumerable.Range(0, 2000).Select(_ => rotation.Random(CoursePool.Default, random.Next)), d => d.Spicy);
+    }
+
+    [Fact]
+    public void TheMatchStartCarriesTheModeOnItsDefaults()
+    {
+        var spicy = Rotation().Spicy[0].Mode;
+        var start = spicy.Start();
+        Assert.Equal(spicy.Hash, start.Hash);
+        Assert.Equal([10], start.Params);
+        Assert.Equal(spicy.Hash, ModePackage.Hash(Convert.FromBase64String(start.Package)));
+    }
+
+    [Theory]
+    [InlineData("leaderboards = true\n[normal]\nmode = \"competitive.fzmode\"", "never has leaderboards")]
+    [InlineData("cards = 5", "no [normal] option")]
+    [InlineData("votes = 3\n[normal]\nmode = \"competitive.fzmode\"", "'votes' is not a key")]
+    [InlineData("random_spicy_chance = 1.5\n[normal]\nmode = \"competitive.fzmode\"", "a chance from 0 to 1")]
+    [InlineData("[normal]\nmode = \"missing.fzmode\"", "missing.fzmode is not there")]
+    [InlineData("[normal]\nmode = \"../competitive.fzmode\"", "is not a mode file beside it")]
+    [InlineData("[normal]\nmode = \"competitive.fzmode\"\ncourses = [2]", "the mode file says them")]
+    [InlineData("spicy_cards = 0\n[normal]\nmode = \"competitive.fzmode\"\ncourses = \"pool\"", "the mode file says them")]
+    [InlineData("[normal]\nmode = \"competitive.fzmode\"\n[[spicy]]\nmode = \"overdrive.fzmode\"\ncourses = [8]", "the mode file says them")]
+    [InlineData("[normal]\nmode = \"competitive.fzmode\"", "spicy_cards is 1, and there is no [[spicy]] option")]
+    public void AFileThatDoesNotLoadSaysWhy(string toml, string says)
+    {
+        var error = Assert.Throws<InvalidDataException>(() => QuickPlayRotation.Read(WithFile(toml)));
+        Assert.Contains(says, error.Message, StringComparison.Ordinal);
+    }
+
+    /// <summary>A rotation of a normal mode and a spicy one, whose words are the test's: the normal says nothing unless told.</summary>
+    private QuickPlayRotation WithCourses(string spicyWords, string normalWords = "", int cards = 5)
+    {
+        var folder = WithFile($"cards = {cards}\nrandom_spicy_chance = 0.5\n[normal]\nmode = \"n.fzmode\"\n[[spicy]]\nmode = \"s.fzmode\"\n");
+        File.WriteAllText(Path.Combine(folder, "n.fzmode"), $"mode \"N\" {{ api 1; }}\n{normalWords}\n");
+        File.WriteAllText(Path.Combine(folder, "s.fzmode"), $"mode \"S\" {{ api 1; badge \"S\"; }}\n{spicyWords}\n");
+        return QuickPlayRotation.Read(folder);
+    }
+
+    private const string TwoCourses = "courses [\"Lightning: Loop Cross\", \"Mute City: Sonic Oval\"];";
+
+    /// <summary>A list of several: one card for the mode each vote, on a course drawn from the list (both come up), and
+    /// no course on two cards. Random's spicy draw takes one course of the list too.</summary>
+    [Fact]
+    public void AListOfSeveralIsOneCardOnOneOfItsCourses()
+    {
+        var rotation = WithCourses(TwoCourses);
+        var random = new Random(4);
+        var seen = new HashSet<int>();
+        for (var round = 0; round < 300; round++)
+        {
+            var vote = rotation.Vote(CoursePool.Default, random.Next);
+            var spicy = Assert.Single(vote, o => o.Spicy);
+            Assert.True(spicy.Course is 8 or 36);
+            seen.Add(spicy.Course);
+            Assert.Equal(5, vote.Take(5).Select(o => o.Course).Distinct().Count());
+        }
+        Assert.Equal([8, 36], seen.Order());
+        var draws = Enumerable.Range(0, 2000).Select(_ => rotation.Random(CoursePool.Default, random.Next)).ToList();
+        Assert.Equal([8, 36], draws.Where(d => d.Spicy).Select(d => d.Course).Distinct().Order());
+        Assert.Contains(draws, d => !d.Spicy && d.Course is not (8 or 36));
+    }
+
+    /// <summary>A spicy mode without a list is on any course of the pool; <c>courses all</c> the same.</summary>
+    [Theory]
+    [InlineData("")]
+    [InlineData("courses all;")]
+    public void ASpicyModeWithoutAListIsOnAnyCourse(string words)
+    {
+        var rotation = WithCourses(words);
+        var random = new Random(6);
+        var seen = Enumerable.Range(0, 1000).Select(_ => Assert.Single(rotation.Vote(CoursePool.Default, random.Next), o => o.Spicy).Course).ToHashSet();
+        Assert.Equal(CoursePool.Default.Order(), seen.Order());
+    }
+
+    /// <summary>The spicy card is drawn first: a normal mode whose list is the spicy one's course and one other shows the
+    /// other alone, never the same course twice. Random stays on the normal mode's list.</summary>
+    [Fact]
+    public void TheNormalCardsDrawFromWhatTheSpicyCardLeft()
+    {
+        var rotation = WithCourses("courses [\"Lightning: Loop Cross\"];", TwoCourses);
+        var random = new Random(8);
+        for (var round = 0; round < 100; round++)
+        {
+            var vote = rotation.Vote(CoursePool.Default, random.Next);
+            Assert.Equal(8, Assert.Single(vote, o => o.Spicy).Course);
+            Assert.Equal(36, Assert.Single(vote, o => !o.Spicy && o.Course != CourseVote.RandomCourse).Course);
+            Assert.Equal(CourseVote.RandomCourse, vote[^1].Course);
+            var drawn = rotation.Random(CoursePool.Default, random.Next);
+            Assert.True(drawn.Course is 8 or 36);
+        }
+    }
+
+    /// <summary>A course outside the pool (each game would differ on 37, 38, 41) stops the load with the file and its line.</summary>
+    [Theory]
+    [InlineData("Story: Chapter 1")]
+    [InlineData("Story: Chapter 2")]
+    [InlineData("Story: Chapter 5")]
+    public void AModeListingACourseOutsideThePoolIsRefusedAtLoad(string course)
+    {
+        var error = Assert.Throws<InvalidDataException>(() => WithCourses($"courses [\"{course}\"];"));
+        Assert.StartsWith("s.fzmode line ", error.Message, StringComparison.Ordinal);
+        Assert.Contains("no course of the pool", error.Message, StringComparison.Ordinal);
+    }
+
+    /// <summary>A pin is still no mode of the rotation's.</summary>
+    [Fact]
+    public void AModePinningACourseIsRefusedAtLoad()
+    {
+        var error = Assert.Throws<InvalidDataException>(() => WithCourses("course \"Lightning: Loop Cross\";"));
+        Assert.Contains("says neither course nor racers", error.Message, StringComparison.Ordinal);
+    }
+
+    /// <summary>The official lists: Knockout on Loop Cross, the normal mode on the whole pool.</summary>
+    [Fact]
+    public void TheOfficialListsAreInTheModeFiles()
+    {
+        var rotation = Official();
+        Assert.Equal([8], rotation.Spicy[0].Mode.Terms.Courses);
+        Assert.Null(rotation.Normal.Terms.Courses);
+    }
+
+    [Fact]
+    public void AModeThatDoesNotCompileIsNamedWithItsLine()
+    {
+        var folder = WithFile("spicy_cards = 0\n[normal]\nmode = \"broken.fzmode\"");
+        File.WriteAllText(Path.Combine(folder, "broken.fzmode"), "mode \"Broken\" {\n  api 1;\n}\n\nlaps 100;\n");
+        var error = Assert.Throws<InvalidDataException>(() => QuickPlayRotation.Read(folder));
+        Assert.StartsWith("broken.fzmode line 5: ", error.Message, StringComparison.Ordinal);
+    }
+
+    private static QuickPlayRotation Official() => QuickPlayRotation.Read(RepositoryFolder.Protocol("protocol", "quickplay"));
+
+    [Fact]
+    public void TheOfficialRotationLoads()
+    {
+        var rotation = Official();
+        Assert.Equal((5, 1, 0.15, true), (rotation.Cards, rotation.SpicyCards, rotation.RandomSpicyChance, rotation.ShowLaps));
+        Assert.Equal("Quick Play", rotation.Normal.Package.Name);
+        var spicy = Assert.Single(rotation.Spicy);
+        Assert.Equal("Knockout", spicy.Mode.Package.Name);
+        Assert.Equal([8], spicy.Mode.Terms.Courses!);
+        Assert.True(rotation.CpusAllowed);
+    }
+
+    /// <summary>Every (course, mode) of the rotation compiles to a package every game can read, its match start's
+    /// hash the package's, on the parameters' defaults.</summary>
+    [Fact]
+    public void EveryOfficialCardCompiles()
+    {
+        var rotation = Official();
+        var random = new Random(9);
+        var seen = new HashSet<(int, string)>();
+        for (var round = 0; round < 300; round++)
+        {
+            foreach (var option in rotation.Vote(CoursePool.Default, random.Next))
+            {
+                seen.Add((option.Course, option.Mode.File));
+            }
+        }
+        Assert.Equal(CoursePool.Default.Count + 1, seen.Count);   // every course of the pool (the spicy one spicy), Random
+        foreach (var mode in rotation.Modes)
+        {
+            var again = ModeCompiler.Compile(File.ReadAllText(RepositoryFolder.Protocol("protocol", "quickplay", mode.File)));
+            Assert.True(again.Succeeded, string.Join("; ", again.Errors));
+            Assert.Equal(mode.Hash, again.Hash);
+            var start = mode.Start();
+            var package = Convert.FromBase64String(start.Package);
+            Assert.Equal(mode.Hash, ModePackage.Hash(package));
+            Assert.Equal(mode.Package.Params.Select(p => p.Default), start.Params);
+            Assert.Equal(mode.Package.Name, ModePackage.Read(package).Name);
+        }
+    }
+
+    /// <summary>Design 6's table, course by course: the scene's laps where it has them, else 3.</summary>
+    [Fact]
+    public void TheOfficialCardsLapsGoByCourse()
+    {
+        var table = new Dictionary<string, int>
+        {
+            ["Sonic Oval"] = 8,
+            ["Screw Drive"] = 6,
+            ["Drift Highway"] = 6,
+            ["Split Oval"] = 6,
+            ["Twist Road"] = 6,
+            ["Mobius Ring"] = 4,
+            ["Meteor Stream"] = 4,
+        };
+        var normal = Official().Normal;
+        foreach (var course in CourseTable.Courses)
+        {
+            var laps = table.GetValueOrDefault(course.Track, 3);
+            Assert.Equal(laps, normal.Laps(course.Course));
+            Assert.Equal((laps, (string?)null, (string?)null), (normal.Card(course.Course, spicy: false).Laps!.Value,
+                normal.Card(course.Course, spicy: false).Badge, normal.Card(course.Course, spicy: false).About));
+        }
+        Assert.Null(normal.Card(CourseVote.RandomCourse, spicy: false).Laps);
+    }
+
+    [Fact]
+    public void TheOfficialVoteHasOneKnockoutCardOnItsCourse()
+    {
+        var rotation = Official();
+        var random = new Random(13);
+        var places = new HashSet<int>();
+        for (var round = 0; round < 300; round++)
+        {
+            var vote = rotation.Vote(CoursePool.Default, random.Next);
+            Assert.Equal(6, vote.Count);
+            Assert.Equal(CourseVote.RandomCourse, vote[^1].Course);
+            var spicy = Assert.Single(vote, o => o.Spicy);
+            places.Add(vote.ToList().IndexOf(spicy));
+            Assert.Equal((8, "Knockout", "KNOCKOUT", 0), (spicy.Course, spicy.Mode.Package.Name, spicy.Card.Badge, spicy.Card.Laps!.Value));
+            Assert.NotNull(spicy.Card.About);
+            Assert.All(vote.Where(o => !o.Spicy), o => Assert.Equal(("Quick Play", (string?)null), (o.Mode.Package.Name, o.Card.Badge)));
+            Assert.All(vote.Take(5).Where(o => !o.Spicy), o => Assert.Equal(rotation.Normal.Laps(o.Course), o.Card.Laps));
+        }
+        Assert.Equal([0, 1, 2, 3, 4], places.Order());
+    }
+
+    [Fact]
+    public void TheOfficialRandomLandsOnKnockoutAtItsChance()
+    {
+        var rotation = Official();
+        var random = new Random(17);
+        var draws = Enumerable.Range(0, 20_000).Select(_ => rotation.Random(CoursePool.Default, random.Next)).ToList();
+        Assert.InRange(draws.Count(d => d.Spicy) / (double)draws.Count, 0.13, 0.17);
+        Assert.All(draws.Where(d => d.Spicy), d => Assert.Equal((8, "Knockout"), (d.Course, d.Mode.Package.Name)));
+    }
+
+    /// <summary>Its terms: no lap count, a race the mode ends, CPUs only by the vote.</summary>
+    [Fact]
+    public void KnockoutsTermsAreItsWords()
+    {
+        var terms = Official().Spicy[0].Mode.Terms;
+        Assert.Equal(0, terms.Laps(8));
+        Assert.Equal(0, terms.FinishLimit);
+        Assert.True(terms.CpusAllowed);
+    }
+
+    /// <summary>Quick Play's own end stays: a mode's race has no finish limit unless it states it.</summary>
+    [Fact]
+    public void TheOfficialNormalModeStatesTheFinishLimit()
+    {
+        var compiled = ModeCompiler.Compile(File.ReadAllText(RepositoryFolder.Protocol("protocol", "quickplay", "competitive.fzmode")));
+        Assert.True(compiled.Succeeded, string.Join("; ", compiled.Errors));
+        var terms = ModeTerms.Of(compiled.Mode!);
+        Assert.Equal(90, terms.FinishLimit);
+        Assert.True(terms.CpusAllowed);
+        Assert.Equal(8, terms.Laps(CourseTable.Courses.First(c => c.Track == "Sonic Oval").Course));
+    }
+
+    [Fact]
+    public void AModeTravelsInTheMessagesAndAnOlderEndReadsNone()
+    {
+        var spicy = Rotation().Spicy[0].Mode;
+        var setup = new RaceSetup(8, 0, [], 1, 2, Mode: spicy.Start());
+        var start = ControlProtocol.Encode(new MatchStart("m1", new RelayEndpoint("r", "h", 1), "t", 0, setup));
+        Assert.Contains("\"mode\":{\"package\":", start, StringComparison.Ordinal);
+        var back = Assert.IsType<MatchStart>(ControlProtocol.DecodeServer(start));
+        Assert.Equal(spicy.Hash, back.Setup.Mode!.Hash);
+        Assert.DoesNotContain("\"mode\"", ControlProtocol.Encode(new MatchStart("m1", new RelayEndpoint("r", "h", 1), "t", 0,
+            new RaceSetup(8, 3, [], 1, 2))), StringComparison.Ordinal);
+
+        var vote = ControlProtocol.Encode(new CourseVote("m1", [8, CourseVote.RandomCourse], 10_000,
+            [spicy.Card(8, spicy: true), new VoteCard("Quick Play", null)]));
+        Assert.Contains("\"cards\":[{\"mode\":\"Overdrive\",\"laps\":0,\"badge\":\"OVERDRIVE\"", vote, StringComparison.Ordinal);
+        Assert.Equal("OVERDRIVE", Assert.IsType<CourseVote>(ControlProtocol.DecodeServer(vote)).Cards![0].Badge);
+        Assert.DoesNotContain("cards", ControlProtocol.Encode(new CourseVote("m1", [8], 10_000)), StringComparison.Ordinal);
+
+        Assert.Contains("\"modes\":1", ControlProtocol.Encode(new Hello("p", ControlProtocol.Version, Modes: 1)), StringComparison.Ordinal);
+        Assert.DoesNotContain("modes", ControlProtocol.Encode(new Hello("p", ControlProtocol.Version)), StringComparison.Ordinal);
+        Assert.Equal(0, Assert.IsType<Hello>(ControlProtocol.DecodeClient($$"""{"type":"hello","name":"p","version":{{ControlProtocol.Version}}}""")).Modes);
+    }
+}

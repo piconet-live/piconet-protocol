@@ -13,7 +13,7 @@ public static class LaunchFormat
     /// <summary>The most bytes of "windowName" (UTF-8) the game's reader takes.</summary>
     public const int WindowNameMostBytes = 64;
     /// <summary>The range of "camera" the game's reader takes.</summary>
-    public const int MatchCameraLow = 1, MatchCameraHigh = 3;
+    public const int MatchCameraLow = 1, MatchCameraHigh = 4;
     /// <summary>The range of "width" the game's reader takes.</summary>
     public const int WindowNamePictureWidthLow = 1, WindowNamePictureWidthHigh = 512;
     /// <summary>The range of "height" the game's reader takes.</summary>
@@ -29,7 +29,7 @@ public static class LaunchFormat
 }
 
 /// <summary>The launch file's part File: the launch file: every setting of one start of the game.
-/// The launcher writes "about", "bundle", "widescreen", "trueWidescreen", "lanes", "controllerSetup", "match", "replay", "windowName", "windowNamePicture", "showFrameRate", "rumble", "present", "verticalSync", "fullScreen", "refreshRate", "taskbar", "board", "debug".</summary>
+/// The launcher writes "about", "bundle", "widescreen", "trueWidescreen", "lanes", "controllerSetup", "match", "replay", "windowName", "windowNamePicture", "showFrameRate", "showInputs", "rumble", "present", "verticalSync", "fullScreen", "refreshRate", "taskbar", "board", "debug".</summary>
 public sealed record LaunchFile(
     string About,
     string? Bundle = null,
@@ -41,6 +41,7 @@ public sealed record LaunchFile(
     string? WindowName = null,
     LaunchNamePicture? WindowNamePicture = null,
     bool? ShowFrameRate = null,
+    bool ShowInputs = false,
     bool Rumble = true,
     string? Present = null,
     bool VerticalSync = false,
@@ -91,6 +92,10 @@ public sealed record LaunchFile(
         if (ShowFrameRate is { } showFrameRate)
         {
             o["showFrameRate"] = showFrameRate;
+        }
+        if (ShowInputs)
+        {
+            o["showInputs"] = true;
         }
         if (!Rumble)
         {

@@ -1,0 +1,30 @@
+FZMP format 1 api 1, 439 bytes, hash 9d4bb104053c5e2b1b652e7b1dee31a58ed0d4d42971e6679297929719d3d43a
+HEAD name "Edges" badge "" about ""
+PARM 0
+SETP 2
+  laps 0
+  cpus on
+VARS globals 0, seat words 0
+RULE 1
+  0 "Scripted" event countdown, locals 1, when none, while none, body 0000
+CODE 51 bytes
+  ; rule 0 body
+  0000  Push 0
+  0005  StoreLocal 0
+  0007  LoadLocal 0
+  0009  RaceRead seats
+  000b  ILt
+  000c  JumpIfZero 0032
+  0011  LoadLocal 0
+  0013  SeatRead is_cpu
+  0015  JumpIfZero 0023
+  001a  LoadLocal 0
+  001c  Push 18
+  0021  Action cpu_mode
+  0023  LoadLocal 0
+  0025  Push 1
+  002a  IAdd
+  002b  StoreLocal 0
+  002d  Jump 0007
+  0032  End
+SRC  263 bytes

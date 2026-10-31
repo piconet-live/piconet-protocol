@@ -1,0 +1,27 @@
+// Overdrive (the game modes' design 9.2, the owner's of 29 October): the speed is locked and rises from 1000 km/h,
+// a little more every step; the accelerator, the brake and boost do nothing; racers are out the normal way (energy,
+// off the course). The first slice's form: no rolling start and no end of its own yet (those words come next).
+
+mode "Overdrive" {
+  api 1;
+  badge "OVERDRIVE";
+  about "Speed locked and rising. Last one alive wins.";
+}
+
+param rise "Speed added every 10 s" number 5..50 step 5 default 10;
+
+courses ["Lightning: Loop Cross"];
+cpus on;
+laps unlimited;
+pedals locked accel 1.0;       // at least 0.5, so side attacks still work
+boost off;
+
+seat int out_step;
+
+rule "Lock the speed" {
+  event each seat;
+  while race.started and seat.racing;
+  do { seat.speed = min(9000.0, 1000.0 + rise * race.steps / 600.0); }   // smooth: a little more every step
+}
+
+rule "Out" { event out(s); do { s.out_step = race.steps; } }

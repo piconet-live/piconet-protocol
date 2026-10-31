@@ -1,0 +1,23 @@
+// Play's Practice: alone, unlimited laps unless the player sets a count, a minute's rewind and one saved moment. The launcher starts it itself.
+
+mode "Practice" {
+  api 1;
+  about "Race alone with a minute's rewind and one save.";
+}
+
+param restore_on "Restore" switch default off;
+param lap_count "Laps" number 0..99 default 0;  // 0: unlimited
+
+solo on;
+laps lap_count;
+rewind 1min;
+pause on;
+save_state on;
+resume_countdown 1s;
+
+// The seat's own restore: a machine that crashes or falls is put back on the track.
+rule "Restore" {
+  event game_start;
+  when restore_on;
+  do { for each seat { respawns seat; } }
+}

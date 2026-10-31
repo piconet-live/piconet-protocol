@@ -1,0 +1,111 @@
+FZMP format 1 api 1, 1707 bytes, hash ec53ee3f9975b6ce6e9654d650b4b2b848fb3fde513940325bedebd7c93b2627
+HEAD name "Displays" badge "" about "Every display word of api 1."
+PARM 0
+SETP 1
+  tag_texts "OUT"
+VARS globals 0, seat words 1
+  seat 0 = 3
+RULE 5
+  0 "Parts" event every step, locals 1, when 0000, while none, body 0003
+  1 "The number" event each seat, locals 1, when none, while none, body 003f
+  2 "Looks" event each seat, locals 1, when 004f, while none, body 0060
+  3 "Out of sight" event out, locals 1, when none, while none, body 007c
+  4 "The owner's words of 2026-10-31" event finish, locals 1, when none, while none, body 00b7
+CODE 233 bytes
+  ; rule 0 when
+  0000  RaceRead started
+  0002  Ret
+  ; rule 0 body
+  0003  Push 0
+  0008  StoreLocal 0
+  000a  LoadLocal 0
+  000c  RaceRead seats
+  000e  ILt
+  000f  JumpIfZero 003e
+  0014  LoadLocal 0
+  0016  Push 0
+  001b  Action show
+  001d  LoadLocal 0
+  001f  Push 1
+  0024  Action show
+  0026  LoadLocal 0
+  0028  Push 1
+  002d  Action hide
+  002f  LoadLocal 0
+  0031  Push 1
+  0036  IAdd
+  0037  StoreLocal 0
+  0039  Jump 000a
+  003e  End
+  ; rule 1 body
+  003f  LoadLocal 0
+  0041  Push 0
+  0046  LoadLocal 0
+  0048  LoadSeatVar 0
+  004b  IMax
+  004c  Action show_number
+  004e  End
+  ; rule 2 when
+  004f  LoadLocal 0
+  0051  SeatRead index
+  0053  Push 3
+  0058  IMod
+  0059  Push 1
+  005e  IEq
+  005f  Ret
+  ; rule 2 body
+  0060  LoadLocal 0
+  0062  Push 1
+  0067  Action seat.look
+  0069  LoadLocal 0
+  006b  Push 0
+  0070  Action seat.own_look
+  0072  LoadLocal 0
+  0074  AllSeats
+  0075  LoadLocal 0
+  0077  SeatBit
+  0078  BitAndNot
+  0079  Action map_hide
+  007b  End
+  ; rule 3 body
+  007c  LoadLocal 0
+  007e  Push 2
+  0083  Action seat.look
+  0085  LoadLocal 0
+  0087  Push -14671617 (0xff2020ff, real -2.128478E+38)
+  008c  Action seat.colour
+  008e  LoadLocal 0
+  0090  Push 16711680 (0x00ff0000, real 2.3418052E-38)
+  0095  Action map_mark
+  0097  LoadLocal 0
+  0099  Action tag off
+  009b  LoadLocal 0
+  009d  Push 1
+  00a2  Action tag
+  00a4  LoadLocal 0
+  00a6  Push 0
+  00ab  Action stock_banner
+  00ad  LoadLocal 0
+  00af  Push -1
+  00b4  Action show_number
+  00b6  End
+  ; rule 4 body
+  00b7  LoadLocal 0
+  00b9  Action show_number off
+  00bb  LoadLocal 0
+  00bd  Push 10
+  00c2  Action show
+  00c4  LoadLocal 0
+  00c6  Push 10
+  00cb  Action hide
+  00cd  LoadLocal 0
+  00cf  Push -2130738945 (0x80ff80ff, real -2.3464327E-38)
+  00d4  Action seat.ghost_tint
+  00d6  LoadLocal 0
+  00d8  Push 1
+  00dd  Action seat.ghost_sound
+  00df  LoadLocal 0
+  00e1  Push 0
+  00e6  Action seat.ghost_sound
+  00e8  End
+SRC  1184 bytes

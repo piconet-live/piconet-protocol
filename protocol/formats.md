@@ -16,7 +16,7 @@ are not public, nor are the project's test scripts named here (`launch-file.py`,
 | Race summaries, `race-summary.txt` (section 6) | the game, one line when it stops after a race: `net::WriteSummary` (`port/core/src/summary.cpp`, `files_summary.cpp`) | a person, or a tool that reads section 6's format; the game reads it only as lines, to keep the last 300 |
 | Bundle (a folder) | `port/image/build.py` (native form); `bundle.py` beside the image's generators (the JIT reference's) | the game: `boot::TheBundle`, `ReadPatches`, `ReadCodes` (`files_bundle.cpp`); the launcher: `RecompLaunch.cs` |
 
-## 1. The replay file (version 2; version 3 for a race with a stat pack; version 4 for a race with a custom machine; version 5 for a race whose mines come back; version 6 for a race with a pack a seat; version 7 for a race of 0.4.0's set-up: the coordinator's start grid, or no rubber band; version 8, the compact file a recording becomes when it ends)
+## 1. The replay file (version 2; version 3 for a race with a stat pack; version 4 for a race with a custom machine; version 5 for a race whose mines come back; version 6 for a race with a pack a seat; version 7 for a race of 0.4.0's set-up: the coordinator's start grid, or no rubber band; version 8, the compact file a recording becomes when it ends; version 9 for a race of 0.6's set-up: the simulation's own generator, a game mode or not)
 
 A replay holds everything that rebuilds its race: the race's set-up, every player seat's input for every step, and
 the checksum the recording game kept for each step. CPU racers are not recorded; they are computed again.
@@ -82,6 +82,8 @@ held at that step; the game's list and the launcher's say "Disqualified".
 
 **Version 7.** A race of 0.4.0's set-up, one that started on the coordinator's grid (its header's match names `setup.grid`) or raced with no rubber band (its header's `rubberBand` false: every race and practice from 0.4.0), is written as version 7 whatever else it holds (a stat pack, a custom machine, mines that come back, a pack a seat), so that a program from before the grid refuses it and does not start the race from the game's own grid; the grid is the header's match start's as it came. A race with neither (a recording made before 0.4.0) kept its version, and plays the game's own sort and the band. Since every race and practice from 0.4.0 has no rubber band, the game writes version 7 alone (replay.toml's `written`); versions 2 to 6 are read, never written. A version 7 file with neither, or another version's with either, is refused (both readers of the game; the launcher lists version 7). Its lineup's starting ranks (bytes 30-59) are the grid as the game placed it: a seat's rank at go is its slot.
 
+**Version 9.** 0.6's set-up: a race on the simulation's own generator (the header's `simGenerator` true: every race and practice from 0.6, whose draws no longer share the executable's word with the effects and cameras), which may also be a race of a game mode (the header's match names `setup.mode`, section 9). One version covers both, so that a program from before refuses the file and does not race it with the wrong draws or on the host's rules alone. The header decides how a recording plays: `simGenerator` absent or false is the executable's word, as every version 2 to 8 raced; a version before 9 that says true, or names a mode, is refused. A version 9 file with neither is refused too. (A development recording of a mode from before the generator, version 9 with a mode and no `simGenerator`, plays with the executable's word.)
+
 **Version 8, the compact file.** When a recording ends (the session's end: a race, a practice) the game makes the
 file compact: it writes the compact file beside it (`NAME.fzrp.compact`) and moves it over the recording, so the file is
 at every moment one or the other, and a game that stops on the way leaves the recording of the steps written so far
@@ -93,7 +95,7 @@ step at its end) stays as it is. On the 135 replays of one player's folder (295.
 |---|---|---|
 | Mark | 4 | `FZRP` |
 | Version | u16 | 8 |
-| Recording's version | u16 | the version of the recording it was made of, 2 to 7 (the game makes it of version 7): the features' rules above are that version's |
+| Recording's version | u16 | the version of the recording it was made of, 2 to 7 or 9 (the game makes it of version 9): the features' rules above are that version's |
 | Header | 4 + u32 + n | `FZRH`, n, the header's JSON as one xz stream |
 | Frames | 4 + u32 + 8 | `FZRF`, 8, the player seats' mask, the recorder's seat |
 | Lineup | 4 + u32 + 124 | `FZRL`, 124, the block (the lineup's part above, byte for byte) |
@@ -109,7 +111,7 @@ checksums hold their folded byte; a playback compares each step's byte, and the 
 it (`ChecksumMatches`). The first step that differs is still found: a game that differed stays different (nothing is
 repaired), so a difference the byte cannot see (1 in 256) shows a step or a few later, and the next whole checksum is
 at most 60 steps on. A program from before version 8 refuses the file by its version (0.5.2's replays need 0.5.2 or
-later); every program from 0.5.2 reads versions 2 to 8.
+later); every program from 0.5.2 reads versions 2 to 8, every program from 0.6 version 9 too.
 
 **Version 5.** A race whose mines came back is written as version 5 so that a program from before the rule refuses it and does not play the race with its mines gone; the rule is the header's match start's as it came. A race without it keeps its version, byte for byte as before. A version 5 file without the rule, or another version's with it, is refused (both readers of the game, and the launcher's list says so).
 
@@ -118,7 +120,7 @@ knows only version 2) refuses the file and does not play the race on the disc's 
 header as it came, and a playback lays it through the same reader as a race. A race without a pack is version 2,
 byte for byte as before.
 
-**Writing** (version 7 while the race runs, then version 8). With the launch file's `match.record` the game writes the header and the frames mark when the session starts,
+**Writing** (version 9 while the race runs, then version 8). With the launch file's `match.record` the game writes the header and the frames mark when the session starts,
 appends the lineup at go, appends every step once it is final (it has run with the relay's official inputs), and
 appends the results at the end. A file the game closed always ends on a whole step. Then it makes the file compact
 (version 8, above).
@@ -127,9 +129,9 @@ appends the results at the end. A file the game closed always ends on a whole st
 
 | Reader | Refuses |
 |---|---|
-| `boot::ReadReplay` (sets up the race of a playback) | a file over 256 MiB; more than 1,296,000 steps (six hours); no `FZRP` or a version other than 2 to 8; a version 8 file that does not expand (a part missing, out of its place or of another length, an xz stream that does not read or check, a recording's version other than 2 to 7, a whole checksum whose byte disagrees), and then what follows of the recording it was made of; a version 7 file whose set-up names no start grid and keeps the rubber band, or another version's with a grid or without the band; a version 5 file whose set-up names no mine rule or another version's that names one; a version 3 file whose set-up names no stat pack, a version 2 file whose set-up names one, a version 4 file whose set-up names no custom machine or another version's that names one, a stat pack the game refuses (section 2); no `FZRF`; no `FZRL` or fewer than 122 bytes after it; a header that is not a JSON object, or one nested more than 32 levels deep; a `game` other than `GFZE01` (a header without `game` is accepted); a frames mark whose mask has no seat or a seat above 29, or whose recorder's seat is above 29; no step, or a part of a step, between the lineup and the results; a header without `match`, its `setup` or its `seats`; a set-up the game does not have (section 2: seats, course, laps, seeds, a seat's machine); a header's `seat` (0-29), `delay` (0-60), `mask` (seats 0-29 only) or `flow` (0-1) that is not a whole number in its range; a lineup machine above 40 in any of the 30 slots, the race's racers and the slots after them (0 in every recording written: all 30 go into the race block), but 0x32 in the slot of a seat whose set-up names a custom machine |
-| `net::ReadRecording` (the steps a playback runs and compares) | a file over 256 MiB; more than 1,296,000 steps (six hours); no `FZRP` version 2 to 8; a version 8 file that does not expand; no `FZRF`; a mask with no seat or a seat above 29; a recorder's seat above 29. The lineup and the results are skipped when present, and a part of a step at the end is not read |
-| `ReplayFile.Read`, `ReplayFile.Problem` (the launcher's list, and why a file is not played) | a version other than 2 to 8 (a version 8 file is judged by its recording's version, and one of a recording's version other than 2 to 7 is another version's), a version 8 file whose parts are not whole or whose header does not read, another game, a version and a mine rule that disagree, a file that ends early, each as a sentence for the player; a header or results block longer than 1 MiB; a header or results whose members are missing, of another kind or out of a number's range ("not a replay", never an exception in the window). A missing lineup is not refused here |
+| `boot::ReadReplay` (sets up the race of a playback) | a file over 256 MiB; more than 1,296,000 steps (six hours); no `FZRP` or a version other than 2 to 9; a version 8 file that does not expand (a part missing, out of its place or of another length, an xz stream that does not read or check, a recording's version other than 2 to 7, a whole checksum whose byte disagrees), and then what follows of the recording it was made of; a version 7 file whose set-up names no start grid and keeps the rubber band, or another version's with a grid or without the band; a version 5 file whose set-up names no mine rule or another version's that names one; a version 3 file whose set-up names no stat pack, a version 2 file whose set-up names one, a version 4 file whose set-up names no custom machine or another version's that names one, a stat pack the game refuses (section 2); no `FZRF`; no `FZRL` or fewer than 122 bytes after it; a header that is not a JSON object, or one nested more than 32 levels deep; a `game` other than `GFZE01` (a header without `game` is accepted); a frames mark whose mask has no seat or a seat above 29, or whose recorder's seat is above 29; no step, or a part of a step, between the lineup and the results; a header without `match`, its `setup` or its `seats`; a set-up the game does not have (section 2: seats, course, laps, seeds, a seat's machine); a header's `seat` (0-29), `delay` (0-60), `mask` (seats 0-29 only) or `flow` (0-1) that is not a whole number in its range; a lineup machine above 40 in any of the 30 slots, the race's racers and the slots after them (0 in every recording written: all 30 go into the race block), but 0x32 in the slot of a seat whose set-up names a custom machine |
+| `net::ReadRecording` (the steps a playback runs and compares) | a file over 256 MiB; more than 1,296,000 steps (six hours); no `FZRP` version 2 to 9; a version 8 file that does not expand; no `FZRF`; a mask with no seat or a seat above 29; a recorder's seat above 29. The lineup and the results are skipped when present, and a part of a step at the end is not read |
+| `ReplayFile.Read`, `ReplayFile.Problem` (the launcher's list, and why a file is not played) | a version other than 2 to 9 (a version 8 file is judged by its recording's version, and one of a recording's version other than 2 to 7 is another version's), a version 8 file whose parts are not whole or whose header does not read, another game, a version and a mine rule that disagree, a file that ends early, each as a sentence for the player; a header or results block longer than 1 MiB; a header or results whose members are missing, of another kind or out of a number's range ("not a replay", never an exception in the window). A missing lineup is not refused here |
 | `RecompLaunch.RecordedWithThisImage` (the launcher only; the game does not check) | a `mod_sha1` that is neither the bundle's image nor named for it in `same-race.json` (section 3). A replay that names no image is played |
 
 - A header's `mask` replaces the mask worked out from the seats. Seats are 0 to 29: the game's two readers refuse a
@@ -188,6 +190,7 @@ turns it into UTF-8 (a letter the code page does not have is lost before the run
 | `windowName` | text, at most 64 bytes: the name in the game window's strip (the launcher's own; the runner has none compiled in) | the strip shows no name |
 | `windowNamePicture` | `{"width": 1-512, "height": 1-64, "rgba": TEXT}`: the name as a picture, drawn in place of its text: the pixels row by row from the top, four bytes each (red, green, blue, opacity), as base64. The launcher gives its title bar's lettering, which it makes from the player's disc | the name's text |
 | `showFrameRate` | `true` or `false`: the game window's strip shows the frame rate (the player's setting in the launcher). Always `true` in a test: a test build's launcher (a review or try copy) and a launcher started with test settings write it whatever the setting says (`LauncherSettings.FrameRateShown`), and every file `launch-file.py` writes has it unless the named file or a `--set` says otherwise. The figure is the emulator's count of pictures presented (`Core::Callback_FramePresented` on `after_present_event`, `PerformanceMetrics::CountFrame`), so pictures drawn between steps count too | `false` |
+| `showInputs` | `true` or `false`: a controller drawn in the picture's bottom right shows the inputs of the racer in view (the player's setting in the launcher). Picture only: it reads, it writes nothing a step uses. Written only when `true` | `false` |
 | `rumble` | `true` or `false`: the player's controllers may rumble (the launcher's Settings, Game, "Rumble"; it writes the key only as `false`, so a runner from before the key takes its files while the switch is on). `false`: no command that runs a motor reaches a pad in this start. `true`: only while the player drives ("Rumble", below). A player's key: no test setting | `true` |
 | `present` | when a picture goes to the screen: `console` (at the time a console puts its first line out), or one of the two ways kept for comparison, which the log calls test settings: `field` (as up to 0.2.0) or `copy` (when the game copies it out). "The picture's moment and the delay", below. Outside `debug`: a launcher writes it from its settings file | `console` |
 | `verticalSync` | `true` or `false`: pictures wait for the display's refresh (the player's setting in the launcher). The runner sets the video backend's own setting by it, whatever the user folder's `GFX.ini` says | `false` |
@@ -262,7 +265,7 @@ rumbles while the player drives only.
 | `otherSounds` | `full`, `quieter` or `off`: other racers' player-only sounds | `quieter` |
 | `record` | the file the race is recorded to | not recorded |
 | `practice` | `true`: a practice (Play's Practice): the match names one seat, seat 0, a player's, and no relay or token; the race is raced alone with the rewind, each step's row the pad's (`port/core/src/practice_session.cpp`) | a race with a relay |
-| `camera` | 1, 2 or 3: the view of the chase camera the local racer's race starts in (the game's camera button, the D-pad's up and down by its default controls, moves between these three; `port/image/routines/raceview.py`): the player's last, which the launcher keeps from the status board's `Camera` events (section 8). The player's own picture: the core writes it, until the relay's go, where the game keeps its saved camera (the options record `[.bss 0x84420]` +8, which the race start's camera set-up reads); no step reads the view and the checksum does not cover the camera, so every game of a race may start in another. Not part of the match start, the recording or its header: a playback starts in the game's own view. Written only when the launcher holds one: a runner from before the key refuses it | the game's own (1) |
+| `camera` | 1, 2 or 3: the view of the chase camera the local racer's race starts in, or 4: the first person view, the game's view 0 (the game's camera button, the D-pad's up and down by its default controls, moves between these; `port/image/routines/raceview.py`): the player's last, which the launcher keeps from the status board's `Camera` events (section 8). The player's own picture: the core writes it, until the relay's go, where the game keeps its saved camera (the options record `[.bss 0x84420]` +8, which the race start's camera set-up reads); no step reads the view and the checksum does not cover the camera, so every game of a race may start in another. Not part of the match start, the recording or its header: a playback starts in the game's own view. Written only when the launcher holds one: a runner from before the key refuses it | the game's own (1) |
 
 **The picture's moment and the delay**. Neither is part of `debug`: a player's launcher sets them, on a server that takes no game with a
 `debug` setting. The game's log says both in plain lines (`PlayersSettingsSaid` in `files_launch.cpp`), and names
@@ -342,6 +345,9 @@ names it. The log's first line of ours says which are on (`fzgx: TEST: launch fi
 | `trace`, `traceStates` | a file with a line for every checksum kept: the step, how it ran (`L` a frame's last or only step, `F` its first, `M` one between), the checksum, the game's race clock after it; `[FROM, TO]`: those steps' machine state into `<trace>.states` |
 | `standStill` | `{"steps": [N, ...], "tenths": [T, ...]}`, one to four of each, the steps ascending: before the displayed frame that begins at each step the game's thread sleeps for so many tenths of a second (1 to 1,200), once each. A freeze on purpose, for the freeze report (section 7; `freeze-run.sh`); nothing of the game is read or written, so the race is the same race, late |
 | `dump` | `{"step": N, "prefix": TEXT}`: whole memory, the locked cache and the data window before and after that step. A game with this key also tells the image to keep its three test logs in the data window (control block +0x3C4); no other game's image writes them |
+| `renderer` | `"dolphin"` (the default) or `"aurora"`: who draws the picture the window shows. With `"aurora"` the runner loads Aurora (`aurora-present.dll` beside it, GXRuntime's), hands it a copy of every burst of the command stream the emulator's GPU thread reads, and shows Aurora's newest finished picture in place of the emulator's own; Aurora's caches go to `Aurora` in the user folder. Presentation only: the emulator's GPU still runs every command (its EFB, peeks, draw-done, tokens, copies to RAM, counters), so nothing the game reads changes; a missing library, an Aurora that falls more than 4 frames behind, or a fatal error of Aurora's, leaves the emulator's own pictures (a line at the end says which) |
+| `auroraScale` | with `renderer` `"aurora"`: the render scale, 1 to 8: the game's EFB drawn at this many times its size (1: 640x528). Left out: the same as the emulator's internal resolution, so both draw the same pixels |
+| `auroraShots`, `auroraLog` | with `renderer` `"aurora"`, tests: the XFB copies (1 the first; up to 32) whose pictures are saved as `<auroraLog>-aurora-NNNNNN.png` (Aurora's) and `<auroraLog>-dolphin-NNNNNN.png` (the emulator's own, the same copy); `auroraLog` a file prefix: `<auroraLog>` a CSV line a frame from Aurora's thread (when each frame came, was fed, presented, its picture ready), `<auroraLog>-shown.csv` a line a present (the emulator's copy, the copy whose picture Aurora's was) |
 
 **The emulator's side of `debug`.** The runner's patched emulator and its runtime have test settings of their own,
 which were environment variables. Naming a launch file (`--config`) tells the emulator that this file rules the
@@ -609,7 +615,7 @@ a run's file from one, and the scripts that start a game name one (`CONFIG=`) an
 | `setup.course`, `setup.laps` | the stage number (default 1); the laps, 0-99 (default 3) |
 | `setup.shuffleSeed`, `setup.cpuSeed` | the two seeds every game starts the race from |
 | `setup.seats[]` | `seat` (0-29), `machine` (0-40, default 0), `setting` (0-100, default 50), `playerId` (a player seat when present), `name`, `cpu`, `stockColor` (0-3) or `color` (`r`, `g`, `b`), `custom` (optional: a garage-built machine raced in place of `machine`: `body` 0-24, `cockpit` 25-49, `booster` 50-74, `pilot` 0-40 (the stock machine whose pilot drives it), `colors` three 32-bit words (red, green, blue, the part's material byte; absent or 0: the part's own colour). The game races it as id 0x32 and reads it from the race block's table, `memmap.RACE_CUSTOM`, `port/image/sites_custom.py`) |
-| `setup.rules` | `cpuLevel` (0-3, default 3), `boostFromStart`, `restore`, `finishLimitSeconds` (0-600, default 0: the race ends for everyone that long after the first machine finishes; 0, and a set-up without it, as every replay from before the rule: when the last has finished or is out), `mineRegenMs` (0-5000, default 0: a mine that went off is armed again that long after; 0, and a set-up without it, as every replay from before the rule: it stays gone) |
+| `setup.rules` | `cpuLevel` (0-3, default 3), `boostFromStart`, `restore` (a practice's and old recordings' alone: no lobby or server sets it; under a mode, off), `finishLimitSeconds` (0-600, default 0: the race ends for everyone that long after the first machine finishes; 0, and a set-up without it, as every replay from before the rule: when the last has finished or is out), `mineRegenMs` (0-5000, default 0: a mine that went off is armed again that long after; 0, and a set-up without it, as every replay from before the rule: it stays gone) |
 | `setup.stats` | optional: the race's stat pack (`handbook/stat-packs.md`). `name` (1 to 40 characters of plain ASCII), `fingerprint` (40 hexadecimal digits) and `values`: base64 of 6 bytes a value (the block 0-115, the offset in the block, the word's 32 bits high byte first), in the order of block and offset, each word once; then the game's code constants the pack changes, each an entry of block 240 whose offset byte is its slot (0-4; a 64-bit number two entries, high word first: `handbook/stat-pack-constants.md`). Absent or `null`: the disc's own car data and the game's own constants, and nothing of the race differs from a game without stat packs |
 | `setup.packs` | optional: at most 4 packs, each as `setup.stats`, that a seat may race in place of the race's (`seats[].pack`). Absent or `null`: none (`handbook/stat-pack-constants.md`, "A pack a seat") |
 | `setup.grid` | optional: the start grid, the seats in starting order, pole first (the coordinator's rule: the players ahead of the CPUs, in reverse of the lobby's last finish; `Online.Server/Matchmaking/StartGrid.cs`). The core writes it into the race block (`memmap.py` `RACE_GRID_ON`, `RACE_GRID`), and the image hands it to the game's grid sort in place of its own (`port/image/sites_grid.py`). Absent or `null`: the game's own grid (the CPUs ahead of seat 0, which starts last), as every match and replay before it |
@@ -830,6 +836,7 @@ the worst; `-` where nothing was counted.
 | `race` only | `rollbacks`, `depth` | how many, and the steps gone back: median/deepest |
 | | `catchups` | steps added to catch up with the schedule (one a frame at most, and none on top of a rollback deeper than 6 steps: `port/core/src/schedule.cpp`) |
 | | `held` | frames that ran no new step, to fall back to the schedule |
+| | `bursts`, `burstseats`, `burstlast` | official rows that reached one check of the predictions together, from 4 rows up. `bursts`: `size:count` by the burst's size, 16 and larger as `16+`, comma separated, `-` for none. `burstseats`: the seats named so far, a seat being named when a row of the burst differs from what the game ran its machine on. `burstlast`: the newest 64 of those as `step/seat/rows/depth` (the displayed frame's step, the seat, the burst's size, the frame's rollback in steps, 0 for none), comma separated, oldest first, `-` for none (`port/core/src/summary.h` `BurstTally`) |
 
 The phases: `countdown` from the relay's go to the first frame that runs ahead on predicted inputs (the course's
 introduction and the countdown: lockstep); `race` from there to the frame that settles the race; `after` what
@@ -961,7 +968,7 @@ has given its seat up and loses the race (a wait, a race that ends under it, `st
 The channel between the launcher and one running game (a file both map, never a localhost
 socket or a pipe). Defined once in `protocol/board.toml`, generated into the launcher's `BoardView`
 (`protocol/generated/StatusBoard.g.cs`, compiled into Launcher.Core) and the core's `View`
-(`protocol/generated/status_board.g.h`); `protocol/README.md` says how it is checked. **Version 1, 4,096 bytes**,
+(`protocol/generated/status_board.g.h`); `protocol/README.md` says how it is checked. **Version 4, 14,912 bytes** (version 1, 4,096 bytes, had no mode blocks; 2 had them at 7,168 bytes; 3 grew them to this size for the board's lines and their words; 4 has ModeValues' `Fault`),
 little-endian, every word naturally aligned, every block on a 64-byte line:
 
 | Block | At | Kind, writer | Holds |
@@ -970,8 +977,10 @@ little-endian, every word naturally aligned, every block on a 64-byte line:
 | Pulse | 64 | single words; game | `Heartbeat` (u64): one more each game frame begun in a race's or replay's start (the frame tick), each picture in a plain start and while a race's course loads; `WatchBeat`: the runner's watching thread, four times a second; `StopReason`: the first stop asked for |
 | Status | 128 | seqlock; game | `Phase` (None, Starting, Offline, Loading, Joining, Gate, Countdown, Racing, Finished, Playback, Left, Stopping), `Flags` (waits for the relay, practice, watching, rejoin), `Step`, `StopSeen`, `NoticeSeen` |
 | Snapshot | 192 | seqlock; game | the race every displayed race frame (not a replay's): `Serial`, `Frame` (the step), `LocalSeat`, `Count`, 30 racer records of 52 bytes (seat, state, rank, flags, lap, knockouts, maximum energy, lap time, race time, best lap, speed, energy, top speed, x, y, z, distance): what the UDP feed carried as JSON before |
-| Events | 1792 | ring of 64 records of 32 bytes; game (several threads) | `Head`, then events: Phase, Stop, Stands and Moves (the runner's freeze reports), Notice (taken), Desync, Camera (the local racer's chase camera view, 1 to 3, said at its first reading in a race and at each change while the racer races: the launcher keeps the last for the next race's `match.camera`); overwrite-oldest, the reader counts what it lost |
-| Mailbox | 3904 | seqlock; launcher | `StopSerial` (one more: stop gracefully), `NoticeSerial`, `NoticeLength`, `NoticeText` (128 bytes UTF-8) |
+| ModeHead | 1792 | seqlock; game | the race's game mode, once, at its first picture: `Serial` (1; 0 no mode), `NameLength`, `Name` (64 bytes UTF-8), `Hash` (the content hash's first 8 bytes), `Count`, 24 lines of 44 bytes: `Scope` (Global, Seat, Team), `Type` (Int, Real, Bool, Seat, Seats), `Column` (0 to 7), `LabelLength`, `Label` (32 bytes UTF-8), `WordCount` (0 to 16), the file's `board` lines in its order; then `Words`, 384 records of 20 bytes, `Length` and `Text` (16 bytes UTF-8): `Words[line * 16 + value]` is what a line with words shows for a value from 0 to `WordCount` - 1; `Length` 0 shows a blank; any other value shows the number. No word is ever part of the simulation |
+| ModeValues | 10624 | seqlock; game | the `board` lines' values every picture drawn, of a race, a practice, a watched race and a replay alike, from the mode's block, and `Fault`, what ended the race when the mode broke: `Serial`, `Frame` (the step of the picture), `Globals[Column]`, `Seats[seat * 8 + Column]`, `Teams[team * 8 + Column]`, each a word read as its line's type. Not written for a mode with no line. Picture only: nothing a step reads |
+| Events | 12608 | ring of 64 records of 32 bytes; game (several threads) | `Head`, then events: Phase, Stop, Stands and Moves (the runner's freeze reports), Notice (taken), Desync, Camera (the local racer's chase camera view, 1 to 3, said at its first reading in a race and at each change while the racer races: the launcher keeps the last for the next race's `match.camera`); overwrite-oldest, the reader counts what it lost |
+| Mailbox | 14720 | seqlock; launcher | `StopSerial` (one more: stop gracefully), `NoticeSerial`, `NoticeLength`, `NoticeText` (128 bytes UTF-8) |
 
 A **seqlock** group starts with a sequence word: the writer makes it odd, writes, makes it even; a reader that saw it
 odd or changed reads again (as iRacing's and Assetto Corsa's shared memory). Neither side ever waits on the other.
@@ -980,7 +989,7 @@ odd or changed reads again (as iRacing's and Assetto Corsa's shared memory). Nei
 launcher that ended are removed when the next is made) and names it in the launch file (`board`). The core maps it at
 Init (`port/core/src/board.cpp`, `board_map.cpp`) and takes it: no magic, nothing written; another version, or too
 small a file: its own version, size and process id written, then nothing else, and the log says `fzgx: board:
-FILE refused: ...`; else `fzgx: board: taken (FILE, version 1)`. A launcher whose game refused goes without (no live
+FILE refused: ...`; else `fzgx: board: taken (FILE, version 4)`. A launcher whose game refused goes without (no live
 race, no freeze detection) and says so in its log; the exit code and the log's stop lines stay the floor.
 
 **What the launcher does with it** (`net/src/Launcher.Core/Board/`): looks every 15 ms; passes each new snapshot on
@@ -997,3 +1006,83 @@ publishes under a fixed name, read-only for others, with the same header and the
 from the game's board (a version of its own, so that a tool can refuse cleanly), never this board itself: this one
 is the launcher's private channel, in its own data folder, and the mailbox stays the launcher's alone.
 
+
+## 9. The mode package
+
+A game mode (piconet-docs `research/game-modes/`: the design, the vocabulary, the language) is a text file,
+`.fzmode`, which one compiler (`Online.Protocol` `ModeCompiler`, D11) turns into a **package**, `.fzmp`: the bytes a
+match start carries and every game runs. The words and the bytecode's operations are defined once,
+`protocol/modes.toml` (generated: `generated/ModeWords.g.cs` for the compiler, `generated/mode_words.g.h` for the
+runner's interpreter, `port/core/src/mode.cpp`). Api 1: the first slice's words (Overdrive's) and the whole language;
+the standard library (`net/src/Online.Protocol/Modes/std.fzmode`) is compiled with every file, so a
+package holds the code of every macro it used and every sub it called, and nothing of the library else.
+
+**The package.** Big-endian; a string is u16 its byte length and UTF-8. The mark `FZMP`, u16 the format (1), u16 the
+api; then seven sections in this order, and an eighth in a mode with `board` lines alone (so a mode without keeps the
+bytes and hash it had), each u32 its tag (four letters), u32 its length and its bytes:
+
+| Section | Content |
+|---|---|
+| `HEAD` | the header: name, badge, about (strings; an empty string when left out) |
+| `PARM` | u16 the parameters, then each: name, label (strings), u8 its kind (0 number, 1 delay, 2 switch, 3 choice), u8 its type (0 int, 1 real), i32 least, i32 most, i32 step, i32 default (a real's binary32 bits; a delay in steps; a switch 0 or 1; a choice its index), u16 the choices, each a string |
+| `SETP` | u16 the setup words the game applies (the coordinator's alone, `lobby` in modes.toml, are not here: what they set reaches the game as the match start's own fields, and the file's text in `SRC ` holds them), then each: u8 its id (`[[setup]]`), u8 its arguments, each u8 its source (0 a constant, 1 a parameter) and i32 the constant or the parameter's index; a word with a table (`laps by course`) has two constants more a row after its own arguments, the course's number and its value |
+| `VARS` | u16 the globals, u16 the words a seat; then each global's start value, then each seat word's (i32); then, only in a mode that keeps words a team, u16 those (1 to `[api] team_words`) and each one's start value |
+| `RULE` | u16 the rules, in the file's order; then each: its label (string), u8 its event (`[[event]]`), u8 0, u16 its locals (the event's binding is local 0), u32 its `when` condition, u32 its `while` condition (each an offset in `CODE`, 0xFFFFFFFF none: several `when`s are one condition, joined by `and`), u32 its body |
+| `CODE` | the bytecode (`[[op]]`): a condition ends with `Ret`, a body with `End` |
+| `SRC ` | the mode file's text, as it was compiled (a replay can show what was raced) |
+| `BORD` | only with `board` lines: u16 the lines (at most `[api] board` a scope), then each: u8 its scope (0 global, 1 seat, 2 team), u8 its type (0 int, 1 real, 2 bool, 3 seat, 4 seats), u16 its variable's word, its label (a string, 1 to `[api] board_label` bytes), u8 its words (at most `[api] board_words`), each a string of at most `[api] board_word` bytes (an empty one shows nothing). The status board's (section 8) |
+
+The **content hash** is the SHA-256 of the package's bytes; its **share code** the first 8 characters of the hash's
+base32 (RFC 4648, upper case, no padding). At most 64 KiB, the source included.
+
+**A mode's words over a lobby's rules** (`ModeTerms`): a word stated wins; left out, the lobby's rule stands, but for the finish limit (0 unless stated: a mode owns its ending) and CPUs (none without `cpus on`). The coordinator writes the result in the match start, so `setup.rules`, `laps` and the seats say what is raced.
+
+**In a match start**: `setup.mode` = `{"package": BASE64, "hash": HEX, "api": N, "params": [i32, ...], "teams":
+[team, ...]}`, the parameters in `PARM`'s order (a real's bits); `teams` each seat's team by seat, 0 to 29, set by
+the launcher or the host (left out, or a seat past its end: the seat's own number, every seat a team of one). The
+game refuses the race (section 2's refusals) when the hash is not the package's, its api is newer than the build's,
+a parameter is missing or outside its range, a team is not 0 to 29, or the package does not read. A replay carries it in its header's match as it came (section 1, version 9), so a replay plays with no
+download.
+
+**The run** (the language's section 6), once a step at the mode point (main.rel 0x8548C, every step, re-run ones
+too): every state the mode keeps is in its block in the game's main heap, under the undo log and in the checksum:
+the variables (global, a seat's, a team's), the edges, the waiting rules with the locals they keep, the generator;
+nothing is kept outside it. The rules run in this order: the discrete events (`out`, by seat), each rule on it in the
+file's order; then the waits (below); then the continuous rules in the file's order (`each seat`: by seat). A rule
+instance (a rule, and its seat for a rule on a seat) that waits neither fires nor has its conditions tested. `while` runs the body every step
+its condition holds; `when` on the step it becomes true (an edge, kept a rule and seat in the block); a discrete
+event's `when` is tested at each occurrence. Reads of the game see the step as it stood at the mode point; actions
+are queued and applied after the run in their order (the last write to a field wins). The operations of a step are
+counted (`[[op]]`'s cost; an `FSqrt` takes `[api] fsqrt_cost`); past `[api] budget`, a full queue, or a non-finite real for a game field is a **fault**:
+the race ends for everyone at that step with the results as they stand, and the log says `mode error` (D6).
+
+**Waits.** `Wait` (its operands: the live locals, the kind, the condition) pops the steps; more than 0, the instance
+takes a free wait record of the block (at most `[api] waits`; none free is a fault), with its first locals (at most
+`[api] wait_locals`; the compiler allows a wait only where the stack is empty and outside a sorted walk), the step it
+ends at and where its code goes on, and its run ends there. Every step, after the discrete events, the waiting
+instances in rule order, then seat order: from the step after a wait began, its condition (run with the kept locals)
+is tested every step: `abort when` true ends the instance there (the rest of its code is dropped); `restart when`
+true begins the wait again from this step. Then a wait whose step has come is freed and its instance goes on from it,
+the kept locals put back (the others 0). The compiler counts a rule that waits twice in the step's budget (it may go
+on from its wait and fire again in one step), and refuses a mode that could have more waiting instances than the api
+allows (a rule on a seat counted 30 times).
+
+**Sets and vecs.** A set of seats is one cell, bit i seat i (`SeatBit`, `AllSeats`, `BitAnd`, `BitOr`,
+`BitAndNot`); a vec three, x, y, z (a read of type vec pushes the three; the compiler works them one by one, so a vec
+is never more than its reals).
+
+**The square root** (`FSqrt`) is the game's own, main.dol 0x8006D0B4: a NaN stays one, +infinity itself, zero, a
+negative number, a denormal or -infinity 0; else, the processor's way, in its single-precision operations: h =
+fmuls(0.5, x); y = frsqrte(x) (Dolphin's table, `Common::ApproximateReciprocalSquareRoot`); twice: y = fmuls(y,
+fnmsubs(fmuls(y, y), h, 1.5)); then fmuls(y, x). fmuls rounds its second operand's mantissa to 25 bits before the
+multiply; fnmsubs is fused, rounded once to single. The compiler folds with the same steps (`ModeMaths.GameSqrt`);
+`tests/vectors/modes/sqrt.tsv` holds both sides to the same bits.
+
+**Random numbers** (`Random`, `RandomReal`): the mode's own generator, xoshiro128** (four words in the block),
+never the game's. Its first state, written with the start values at the race's first run: SHA-256 of the match
+start's `matchId` (its UTF-8 bytes) followed by the package's hash (its 32 bytes); the digest's first 16 bytes as
+four big-endian words w0 to w3; word k of the state is one step of SplitMix32 from wk (z = wk + 0x9E3779B9; z = (z ^
+z >> 16) × 0x85EBCA6B; z = (z ^ z >> 13) × 0xC2B2AE35; z ^ z >> 16, in 32 bits), and a state of four zeros has its
+first word 1. A draw is the generator's next(): `random(n)` gives (next() × n) >> 32 in 64 bits for n above 0 and 0,
+with no draw, for any other n; `random_real()` (next() >> 8) × 2^-24. `tests/vectors/modes/random.json` holds first
+states and draws from an independent reference.

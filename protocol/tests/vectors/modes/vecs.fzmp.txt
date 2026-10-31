@@ -1,0 +1,78 @@
+FZMP format 1 api 1, 507 bytes, hash dbeab58fb02fcdbb86f3185db6b49f3dfea9553b6dcb9409ef589b126fbe03b3
+HEAD name "Vecs" badge "" about "A vector of vec and cross."
+PARM 0
+SETP 0
+VARS globals 0, seat words 0
+RULE 1
+  0 "Sideways" event race_start, locals 7, when none, while none, body 0000
+CODE 147 bytes
+  ; rule 0 body
+  0000  Push 0
+  0005  StoreLocal 0
+  0007  LoadLocal 0
+  0009  RaceRead seats
+  000b  ILt
+  000c  JumpIfZero 0092
+  0011  LoadLocal 0
+  0013  Push 1
+  0018  IToF
+  0019  Push 2
+  001e  IToF
+  001f  Push 0
+  0024  IToF
+  0025  StoreLocal 3
+  0027  StoreLocal 2
+  0029  StoreLocal 1
+  002b  Push 0
+  0030  IToF
+  0031  Push 0
+  0036  IToF
+  0037  Push 1
+  003c  IToF
+  003d  StoreLocal 6
+  003f  StoreLocal 5
+  0041  StoreLocal 4
+  0043  LoadLocal 2
+  0045  LoadLocal 6
+  0047  FMul
+  0048  LoadLocal 3
+  004a  LoadLocal 5
+  004c  FMul
+  004d  FSub
+  004e  LoadLocal 3
+  0050  LoadLocal 4
+  0052  FMul
+  0053  LoadLocal 1
+  0055  LoadLocal 6
+  0057  FMul
+  0058  FSub
+  0059  LoadLocal 1
+  005b  LoadLocal 5
+  005d  FMul
+  005e  LoadLocal 2
+  0060  LoadLocal 4
+  0062  FMul
+  0063  FSub
+  0064  StoreLocal 3
+  0066  StoreLocal 2
+  0068  StoreLocal 1
+  006a  Push 216
+  006f  IToF
+  0070  StoreLocal 4
+  0072  LoadLocal 1
+  0074  LoadLocal 4
+  0076  FMul
+  0077  LoadLocal 2
+  0079  LoadLocal 4
+  007b  FMul
+  007c  LoadLocal 3
+  007e  LoadLocal 4
+  0080  FMul
+  0081  Action push
+  0083  LoadLocal 0
+  0085  Push 1
+  008a  IAdd
+  008b  StoreLocal 0
+  008d  Jump 0007
+  0092  End
+SRC  224 bytes

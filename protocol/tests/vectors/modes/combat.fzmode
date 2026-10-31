@@ -1,0 +1,31 @@
+// The combat values, the live words, a points table and the time bonus.
+mode "Combat" { api 1; about "A vector of the combat words."; }
+
+damage 200%;
+knockback 300%;
+wall_damage 50%;
+wall_bounce 1000%;
+spin_attacks off;
+side_attacks off;
+spin_immunity on;
+clock_limit 2min;
+time_bonus 10;
+points_table [100, 50, 25];
+
+global real seen;
+
+rule "Live" {
+  event every step;
+  when race.started and race.steps >= 60;
+  do {
+    seen = race.damage + race.knockback + race.wall_damage + race.wall_bounce;
+    race.damage = 100%;
+    race.knockback = race.knockback * 2;
+    race.wall_damage = 99.0;
+    race.wall_bounce = 0.0;
+    race.spin_attacks = on;
+    race.spin_attacks = race.spin_attacks;
+    race.side_attacks = not race.side_attacks;
+    race.spin_immunity = not race.spin_immunity;
+  }
+}

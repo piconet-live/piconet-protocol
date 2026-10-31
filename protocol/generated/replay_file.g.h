@@ -36,7 +36,13 @@ inline constexpr std::uint16_t VERSION_SEATS = 6;
 // version 7: 0.4.0's set-up: the race started on the coordinator's grid (match.setup.grid) or raced with no rubber band
 // (the header's rubberBand false: every race and practice from 0.4.0)
 inline constexpr std::uint16_t VERSION_GRID = 7;
-inline constexpr std::uint16_t VERSION_WRITTEN = 7;  // the only one written
+// version 9: 0.6's set-up: the simulation's own generator (the header's simGenerator true: every race and practice from
+// 0.6), which may be a race of a game mode (the header's match.setup.mode: the package, its hash, its api and its
+// parameters, formats.md section 9): one growable section, so a later mode word needs no version of its own. A program
+// from before would race it with the wrong draws, or on the host's rules alone. 8 is the compact file's, never a
+// recording's
+inline constexpr std::uint16_t VERSION_MODE = 9;
+inline constexpr std::uint16_t VERSION_WRITTEN = 9;  // the only one written
 
 inline constexpr std::size_t HEAD_SIZE = 10;  // the mark, the version, the header's length
 inline constexpr std::size_t FRAMES_SIZE = 12;  // the mark, the mask, the seat
@@ -54,7 +60,7 @@ inline constexpr std::uint32_t MAX_SEATS = 30;
 // Whether a reader of the game plays a file of this version.
 constexpr bool Played(std::uint32_t version)
 {
-  return version == 2 || version == 3 || version == 4 || version == 5 || version == 6 || version == 7;
+  return version == 2 || version == 3 || version == 4 || version == 5 || version == 6 || version == 7 || version == 9;
 }
 
 // What a race holds that a version says (replay.toml's features).
@@ -65,12 +71,15 @@ struct Features
   bool mines = false;  // Mines
   bool seat_packs = false;  // Seats
   bool grid = false;  // Grid
+  bool mode = false;  // Mode
 };
 
 // The version a race of these features is written as, and the only one its file may be: the highest whose
 // feature it holds, else the first.
 constexpr std::uint16_t VersionOf(const Features& f)
 {
+  if (f.mode)
+    return VERSION_MODE;
   if (f.grid)
     return VERSION_GRID;
   if (f.seat_packs)
@@ -104,6 +113,7 @@ inline constexpr std::uint32_t FLOW_LOW = 0;
 inline constexpr std::uint32_t FLOW_HIGH = 1u;
 inline constexpr std::uint32_t FLOW_DEFAULT = 0;
 inline constexpr const char* RUBBER_BAND = "rubberBand";
+inline constexpr const char* SIM_GENERATOR = "simGenerator";
 inline constexpr const char* MOD_SHA1 = "mod_sha1";  // the bundle's image
 inline constexpr const char* MOD_COMMIT = "mod_commit";  // the commit the image was built from
 inline constexpr const char* GAME = "game";  // the disc's ID, GFZE01 (absent: the fork's, which ran only this game)

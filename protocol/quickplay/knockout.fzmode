@@ -1,0 +1,97 @@
+// A spicy Quick Play option: a rolling start, then the last racer is out at every cut.
+
+mode "Knockout" {
+  api 1;
+  badge "KNOCKOUT";
+  about "The racer in last place is out at every cut. A point for every cut you survive.";
+}
+
+param length    "Race length" delay 4min..10min step 30s default 7min;
+param first_cut "First cut"   delay 20s..120s step 5s default 45s;   // a 30-machine grid is 374 m long
+param keep      "Racers left" number 1..29 default 1;
+param warn_from "Warn from"   number 3..9 default 5;                  // seconds before the cut
+
+courses ["Lightning: Loop Cross"];
+cpus on;
+laps unlimited;
+rolling_start 1000 km/h;       // speed at the gate, CPU steers through the countdown at 60% accelerator, control at GO
+race_waits everyone;           // the race goes on until the mode ends it, not until the last player is out
+results_title "KNOCKOUT";       // the points page: a point for every cut survived, ties in the order below
+
+global int interval;           // steps between cuts, worked out once at the race start
+global int next_cut;
+global int cut_in;             // seconds to the next cut
+global int cuts;
+seat   int cut_order;          // 0: never cut; 1: first out
+
+rule "Arm" {
+  event race_start;
+  do {
+    next_cut = first_cut;
+    interval = max(10s, (length - first_cut) / max(1, count(seats where racing) - keep - 1));
+  }
+}
+
+rule "Cut the last racer" {
+  event every step;
+  while race.started and race.steps >= next_cut and count(seats where racing and seat.cut_order == 0) > keep;
+  do {
+    seat v = last(seats where racing and seat.cut_order == 0 by standing);
+    break_down v;              // out of energy, as a last hit: it tumbles, comes to rest or explodes, and is out
+    cuts += 1;
+    v.cut_order = cuts;
+    next_cut = race.steps + interval;
+    for each seat where racing and seat.cut_order == 0 { award seat, 1; }   // a point for every cut survived
+  }
+}
+
+rule "Out on its own" {
+  event out(s);
+  do {
+    // a machine, its energy or a fall: ranked by when it went out, just as a cut is; a cut seat has its order already
+    if (s.cut_order == 0) { cuts += 1; s.cut_order = cuts; }
+  }
+}
+
+rule "Seconds to the cut" {
+  event every step;
+  while race.started;
+  do {
+    cut_in = ceil((next_cut - race.steps) / 60.0);
+    show_clock next_cut - race.steps;
+  }
+}
+
+rule "Everyone sees the clock" {
+  event each seat;
+  when race.started;
+  do { show seat, TIMER; }
+}
+
+rule "Warn the last racer" {
+  event each seat;
+  while race.started;
+  do {
+    if (seat.racing and seat.cut_order == 0 and cut_in <= warn_from
+        and seat == last(seats where racing and seat.cut_order == 0 by standing)) {
+      show seat, WARNING;
+      if ((next_cut - race.steps) % 60 == 0) { stock_banner seat, TICK; }
+    } else {
+      hide seat, WARNING;
+    }
+  }
+}
+
+rule "Winner" {
+  event every step;
+  when race.started and count(seats where racing) <= keep;
+  do {
+    // survivors first (end_race fills them in standing order), then the racers out, last out first
+    int n = keep + 1;
+    for each seat where seat.cut_order > 0 by seat.cut_order desc { seat.place = n; n += 1; }
+    end_race;
+  }
+}
+
+board seat cut_order "Out";
+board global cut_in "Next cut";
