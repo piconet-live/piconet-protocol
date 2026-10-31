@@ -127,6 +127,11 @@ public sealed class ModeBoardTests
         Assert.Equal(0, ModeTerms.Of(practice.Mode!).Laps(1));
         Assert.Equal(["restore_on", "lap_count"], practice.Mode!.Params.Select(p => p.Name));
         Assert.Equal(5, ModeTerms.Of(practice.Mode!, [0, 5]).Laps(1));
+        var trial = ModeCompiler.Compile(File.ReadAllText(Path.Combine(folder, "time_trial.fzmode")));
+        Assert.True(trial.Succeeded, string.Join(" ", trial.Errors));
+        Assert.True(ModeTerms.Of(trial.Mode!).Solo);
+        Assert.Equal(3, ModeTerms.Of(trial.Mode!).Laps(1));
+        Assert.Equal(7, ModeTerms.Of(trial.Mode!, [7]).Laps(1));
     }
 
     [Fact]

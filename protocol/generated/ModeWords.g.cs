@@ -429,6 +429,8 @@ public enum ModeRaceRead : byte
     SideAttacks = 9,
     /// <summary><c>spin_immunity</c></summary>
     SpinImmunity = 10,
+    /// <summary><c>course</c></summary>
+    Course = 11,
 }
 
 /// <summary>An action (protocol/modes.toml).</summary>
@@ -544,6 +546,8 @@ public enum ModeAction : byte
     RaceSideAttacks = 54,
     /// <summary><c>race.spin_immunity</c></summary>
     RaceSpinImmunity = 55,
+    /// <summary><c>boost off</c></summary>
+    BoostOff = 56,
 }
 
 /// <summary>The vocabulary of one api, by the names a mode file writes (protocol/modes.toml).</summary>
@@ -834,6 +838,7 @@ public static partial class ModeWords
         ("spin_attacks", ModeRaceRead.SpinAttacks, ModeType.Bool),
         ("side_attacks", ModeRaceRead.SideAttacks, ModeType.Bool),
         ("spin_immunity", ModeRaceRead.SpinImmunity, ModeType.Bool),
+        ("course", ModeRaceRead.Course, ModeType.Int),
     ];
 
     /// <summary>The actions: name, id, the types of their arguments in order.</summary>
@@ -894,6 +899,7 @@ public static partial class ModeWords
         ("race.spin_attacks", ModeAction.RaceSpinAttacks, [ModeType.Bool]),
         ("race.side_attacks", ModeAction.RaceSideAttacks, [ModeType.Bool]),
         ("race.spin_immunity", ModeAction.RaceSpinImmunity, [ModeType.Bool]),
+        ("boost off", ModeAction.BoostOff, [ModeType.Seat]),
     ];
 
     /// <summary>The choices: an argument of one takes one of its names, its value the name's place.</summary>

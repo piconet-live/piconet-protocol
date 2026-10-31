@@ -47,6 +47,7 @@ public sealed class ModeCompilerTests
     [InlineData("stats")]
     [InlineData("combat")]
     [InlineData("vecs")]
+    [InlineData("held_words")]
     public void AVectorCompilesToItsPackage(string name)
     {
         var result = CompileVector(name);
@@ -130,7 +131,7 @@ public sealed class ModeCompilerTests
         var cuts = CompileVector("cuts").Mode!;
         // every word, and with the language vector every operation (the words vector's are the first slice's, the
         // race vector's the race side's of wave 2A)
-        var code = Code("words").Concat(Code("race")).Concat(Code("cuts")).Concat(Code("stats")).Concat(Code("combat")).ToList();
+        var code = Code("words").Concat(Code("race")).Concat(Code("cuts")).Concat(Code("stats")).Concat(Code("combat")).Concat(Code("held_words")).ToList();
         var ops = code.Concat(Code("language")).Select(l => l.Split(' ')[0]).ToHashSet();
         Assert.Equal(Enum.GetNames<ModeOp>().Order(), ops.Order());
         Assert.All(ModeWords.SeatReads, r => Assert.Contains(code.Concat(Code("language")), l => l.EndsWith("SeatRead " + r.Name, StringComparison.Ordinal)));

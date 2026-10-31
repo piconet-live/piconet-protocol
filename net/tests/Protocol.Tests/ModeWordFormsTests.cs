@@ -246,9 +246,7 @@ public sealed class ModeWordFormsTests
     }
 
     [Theory]
-    [InlineData("rule \"R\" { event each seat; do { boost seat off; } }")]
     [InlineData("rule \"R\" { event each seat; do { show_number seat off; } }")]
-    [InlineData("rule \"R\" { event go; do { int a = race.course; } }")]
     [InlineData("rule \"R\" { event go; do { int a = race.humans_left; } }")]
     public void AWordTheDocumentsMarkNotBuiltIsRefused(string body)
     {

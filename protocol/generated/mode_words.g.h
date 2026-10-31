@@ -349,7 +349,8 @@ enum Race : std::uint8_t
   RACE_SPINATTACKS = 8,  // spin_attacks
   RACE_SIDEATTACKS = 9,  // side_attacks
   RACE_SPINIMMUNITY = 10,  // spin_immunity
-  RACE_COUNT = 11,
+  RACE_COURSE = 11,  // course
+  RACE_COUNT = 12,
 };
 
 // an action (OP_ACTION)
@@ -410,7 +411,8 @@ enum Action : std::uint8_t
   ACTION_RACESPINATTACKS = 53,  // race.spin_attacks
   ACTION_RACESIDEATTACKS = 54,  // race.side_attacks
   ACTION_RACESPINIMMUNITY = 55,  // race.spin_immunity
-  ACTION_COUNT = 56,
+  ACTION_BOOSTOFF = 56,  // boost off
+  ACTION_COUNT = 57,
 };
 
 // the choice `part`: a part of the game's own race HUD: TIMER the timed mode's clock (clock_limit's time, R+0xA4: seconds, 0 to 999); DISTANCE the metres to the finish (the seat's own); DIGIT the story's big digit (danger_zone's seconds, 3 2 1); WARNING, SUCCESS, FAILED, TIME_OVER, SPEED_GAUGE, OBJECTS the story's pictures, off until shown; RANK, LAPS, SPEED, ENERGY, LAP_TIMES, RACE_TIME, FACES the standard HUD (the mask .data 0x3D544; FACES the board fn_1_D27B8), on until hidden
@@ -520,6 +522,7 @@ constexpr int ActionArguments(std::uint8_t action)
     case ACTION_RACESPINATTACKS: return 1;
     case ACTION_RACESIDEATTACKS: return 1;
     case ACTION_RACESPINIMMUNITY: return 1;
+    case ACTION_BOOSTOFF: return 1;
     default: return -1;
   }
 }

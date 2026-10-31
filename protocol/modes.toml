@@ -1269,6 +1269,12 @@ id = 10
 type = "bool"
 doc = "the live spin_immunity: the setup word's, or the last race.spin_immunity written"
 
+[[race_read]]
+name = "course"
+id = 11
+type = "int"
+doc = "the course's number (the game's, as `laps by course` names it)"
+
 [[action]]
 name = "seat.speed"
 id = 0
@@ -1790,3 +1796,10 @@ id = 55
 args = ["bool"]
 where = "the live word in the mode's block (mode.h COMBAT), which sites_combat.py reads in the step"
 doc = "changes spin_immunity from the next step"
+
+[[action]]
+name = "boost off"
+id = 56
+args = ["seat"]
+where = "a mask in the mode's block (mode.h BOOST_OFF_SEATS), which the seat's record takes every step: the stand-in routine clears the boost request (flag 0x40) as the setup word does"
+doc = "the seat can no longer ask for a boost, to the race's end; a running boost and a dash plate are not stopped"
