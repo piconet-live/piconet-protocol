@@ -8,6 +8,7 @@ mode "Ghost race" {
 
 param lap_count "Laps" number 1..9 default 3;
 
+cpus on;          // players may vote CPUs in
 start_together;
 contact off;
 laps lap_count;
