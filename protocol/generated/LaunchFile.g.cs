@@ -29,7 +29,7 @@ public static class LaunchFormat
 }
 
 /// <summary>The launch file's part File: the launch file: every setting of one start of the game.
-/// The launcher writes "about", "bundle", "widescreen", "trueWidescreen", "lanes", "controllerSetup", "match", "replay", "windowName", "windowNamePicture", "showFrameRate", "rumble", "present", "verticalSync", "fullScreen", "refreshRate", "taskbar", "board", "debug".</summary>
+/// The launcher writes "about", "bundle", "widescreen", "trueWidescreen", "lanes", "controllerSetup", "match", "replay", "windowName", "windowNamePicture", "showFrameRate", "showInputs", "rumble", "present", "verticalSync", "fullScreen", "refreshRate", "taskbar", "board", "debug".</summary>
 public sealed record LaunchFile(
     string About,
     string? Bundle = null,
@@ -41,6 +41,7 @@ public sealed record LaunchFile(
     string? WindowName = null,
     LaunchNamePicture? WindowNamePicture = null,
     bool? ShowFrameRate = null,
+    bool ShowInputs = false,
     bool Rumble = true,
     string? Present = null,
     bool VerticalSync = false,
@@ -91,6 +92,10 @@ public sealed record LaunchFile(
         if (ShowFrameRate is { } showFrameRate)
         {
             o["showFrameRate"] = showFrameRate;
+        }
+        if (ShowInputs)
+        {
+            o["showInputs"] = true;
         }
         if (!Rumble)
         {
