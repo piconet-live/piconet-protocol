@@ -12,6 +12,7 @@
   "showInputs": true,
   "modernHud": true,
   "hudLayout": "D:\\Piconet\\hud-layout.json",
+  "hudMeter": "rev",
   "rumble": false,
   "present": "field",
   "verticalSync": true,

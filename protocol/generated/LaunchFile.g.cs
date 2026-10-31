@@ -29,7 +29,7 @@ public static class LaunchFormat
 }
 
 /// <summary>The launch file's part File: the launch file: every setting of one start of the game.
-/// The launcher writes "about", "bundle", "widescreen", "trueWidescreen", "lanes", "controllerSetup", "match", "replay", "windowName", "windowNamePicture", "showFrameRate", "showInputs", "modernHud", "hudLayout", "rumble", "present", "verticalSync", "fullScreen", "refreshRate", "taskbar", "board", "debug".</summary>
+/// The launcher writes "about", "bundle", "widescreen", "trueWidescreen", "lanes", "controllerSetup", "match", "replay", "windowName", "windowNamePicture", "showFrameRate", "showInputs", "modernHud", "hudLayout", "hudMeter", "rumble", "present", "verticalSync", "fullScreen", "refreshRate", "taskbar", "board", "debug".</summary>
 public sealed record LaunchFile(
     string About,
     string? Bundle = null,
@@ -44,6 +44,7 @@ public sealed record LaunchFile(
     bool ShowInputs = false,
     bool ModernHud = false,
     string? HudLayout = null,
+    string? HudMeter = null,
     bool Rumble = true,
     string? Present = null,
     bool VerticalSync = false,
@@ -106,6 +107,10 @@ public sealed record LaunchFile(
         if (HudLayout is { } hudLayout)
         {
             o["hudLayout"] = hudLayout;
+        }
+        if (HudMeter is { } hudMeter)
+        {
+            o["hudMeter"] = hudMeter;
         }
         if (!Rumble)
         {
