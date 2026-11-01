@@ -75,6 +75,10 @@ internal sealed record ModeRepeat(int Line, ModeExpr Count, IReadOnlyList<ModeSt
 /// <summary>The quoted text of <c>tag s, "TEXT"</c>: the one place a rule's code holds a string.</summary>
 internal sealed record ModeTagText(int Line, string Text) : ModeExpr(Line);
 
+/// <summary>The text of <c>show_text</c> as the file wrote it: its characters with a 1 or a 2 where each <c>{value}</c>
+/// stands, and those values' expressions.</summary>
+internal sealed record ModeHudText(int Line, string Text, IReadOnlyList<ModeExpr> Values) : ModeExpr(Line);
+
 internal sealed record ModeActionStatement(int Line, string Action, IReadOnlyList<ModeExpr> Arguments) : ModeStatement(Line);
 
 /// <summary><c>wait t;</c>, <c>wait t abort when c;</c> or <c>wait t restart when c;</c> (<see cref="Kind"/> "",

@@ -48,6 +48,8 @@ public static class ModeRuleLines
         ModeSetup.SpinImmunity => a[0] != 0 ? "Spin immunity" : null,
         ModeSetup.TimeBonus => $"Time bonus {Say(a[0])} seconds",
         ModeSetup.PointsTable => "Points by place",
+        ModeSetup.HudModern => "Modern HUD for everyone",
+        ModeSetup.TimeGaps => "Time gaps to other racers",
         _ => null,
     };
 

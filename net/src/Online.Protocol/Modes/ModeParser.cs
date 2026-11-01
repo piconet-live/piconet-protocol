@@ -1,3 +1,4 @@
+using System.Text;
 namespace Online.Protocol;
 
 /// <summary>Reads a mode file's tokens into its tree (the language's grammar, section 13). It knows the
@@ -930,10 +931,65 @@ internal sealed class ModeParser
             }
             arguments.Add(name == "tag" && Current.Kind == ModeTokenKind.Text
                 ? new ModeTagText(Current.Line, Take().Text)
+                : name == "show_text" && Current.Kind == ModeTokenKind.Text
+                ? HudText(Take())
                 : Expression());
         }
         Expect(";");
         return new ModeActionStatement(token.Line, name, arguments);
+    }
+
+    /// <summary>The text of <c>show_text</c>: what stands between braces is an expression of the language, read as any other.</summary>
+    private ModeHudText HudText(ModeToken token)
+    {
+        var text = new StringBuilder();
+        var values = new List<ModeExpr>();
+        for (var i = 0; i < token.Text.Length; i++)
+        {
+            var c = token.Text[i];
+            if (c == '}')
+            {
+                throw new ModeCompileException(token.Line, "show_text: a } with no { before it");
+            }
+            if (c != '{')
+            {
+                text.Append(c);
+                continue;
+            }
+            var end = token.Text.IndexOf('}', i);
+            if (end < 0)
+            {
+                throw new ModeCompileException(token.Line, "show_text: a { with no } after it");
+            }
+            if (values.Count == ModeWords.HudTextValues)
+            {
+                throw new ModeCompileException(token.Line, $"show_text: a text names at most {ModeWords.HudTextValues} values");
+            }
+            values.Add(Inner(token.Text[(i + 1)..end], token.Line));
+            text.Append((char)values.Count);
+            i = end;
+        }
+        return new ModeHudText(token.Line, text.ToString(), values);
+    }
+
+    /// <summary>An expression inside a text, on the text's line.</summary>
+    private ModeExpr Inner(string source, int line)
+    {
+        try
+        {
+            var warnings = new List<string>();
+            var inner = new ModeParser(ModeLexer.Tokens(source, warnings), _macros);
+            var value = inner.Expression();
+            if (inner.Current.Kind != ModeTokenKind.End)
+            {
+                throw new ModeCompileException(line, $"show_text: {{{source}}} is not one value");
+            }
+            return value;
+        }
+        catch (ModeCompileException e)
+        {
+            throw new ModeCompileException(line, $"show_text: {{{source}}}: {e.Message}");
+        }
     }
 
     /// <summary><c>team T no contact;</c>: the action <c>team no contact</c> on team T.</summary>

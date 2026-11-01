@@ -107,6 +107,10 @@ public static class ModeDisassembler
         {
             return table.Name + " " + string.Join(' ', ModeTagTexts.Texts(word.Arguments).Select(Quote));
         }
+        if (word.Id == ModeSetup.HudTexts)
+        {
+            return table.Name + " " + string.Join(' ', ModeHudTexts.Texts(word.Arguments).Select(t => Quote(t.Replace("\u0001", "{1}", StringComparison.Ordinal).Replace("\u0002", "{2}", StringComparison.Ordinal))));
+        }
         var parts = new List<string> { table.Name };
         for (var i = table.Args.Count; i + 1 < word.Arguments.Count; i += 2)  // a table's rows (laps by course)
         {
