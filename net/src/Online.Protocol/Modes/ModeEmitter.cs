@@ -150,7 +150,7 @@ internal sealed partial class ModeEmitter(ModeNames names, List<string> warnings
             var word = ModeWords.Actions.First(a => a.Id == (ModeAction)operands[0]).Name;
             throw new ModeCompileException(_line, $"{word} needs a running step, and game_start comes before the first one: use countdown or race_start");
         }
-        if (op == ModeOp.Action && (ModeAction)operands[0] is ModeAction.SeatSpeed or ModeAction.SeatVelocity or ModeAction.ShowClock or ModeAction.ShowNumber or ModeAction.ShowBar or ModeAction.ShowFigure or ModeAction.ShowText)
+        if (op == ModeOp.Action && (ModeAction)operands[0] is ModeAction.SeatSpeed or ModeAction.SeatVelocity or ModeAction.ShowClock or ModeAction.ShowNumber or ModeAction.ShowBar or ModeAction.ShowFigure)
         {
             _perStep ??= ModeWords.Actions.First(a => a.Id == (ModeAction)operands[0]).Name;
         }

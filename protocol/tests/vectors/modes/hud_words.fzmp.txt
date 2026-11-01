@@ -1,0 +1,126 @@
+FZMP format 1 api 1, 1700 bytes, hash 6845ebaffb19a8879dfdbedb11f0fdb8d82a43c657fd2b7515a5e3cce5640365
+HEAD name "HUD words" badge "" about "Every word of the modern HUD."
+PARM 0
+SETP 3
+  hud modern
+  hud_texts "R{1}/{2}" "Zweite Runde"
+  time_gaps
+VARS globals 1, seat words 1
+  global 0 = 1
+  seat 0 = 3
+RULE 2
+  0 "Slots" event race_start, locals 1, when none, while none, body 0000
+  1 "Bars" event every step, locals 1, when none, while 0092, body 0095
+CODE 331 bytes
+  ; rule 0 body
+  0000  Push 0
+  0005  StoreLocal 0
+  0007  LoadLocal 0
+  0009  RaceRead seats
+  000b  ILt
+  000c  JumpIfZero 0091
+  0011  LoadLocal 0
+  0013  Push 0
+  0018  Push 2
+  001d  Push -1
+  0022  Action show_gap
+  0024  LoadLocal 0
+  0026  Push 1
+  002b  Push 3
+  0030  Push 3
+  0035  Action show_gap
+  0037  LoadLocal 0
+  0039  Push 3
+  003e  Push 7
+  0043  Push -1
+  0048  Action show_gap
+  004a  LoadLocal 0
+  004c  Push 1
+  0051  LoadGlobal 0
+  0054  LoadLocal 0
+  0056  LoadSeatVar 0
+  0059  Push 0
+  005e  Push -1
+  0063  Action show_text
+  0065  LoadLocal 0
+  0067  Push 2
+  006c  Push 0
+  0071  Push 0
+  0076  Push 5
+  007b  Push 2
+  0080  Action show_text
+  0082  LoadLocal 0
+  0084  Push 1
+  0089  IAdd
+  008a  StoreLocal 0
+  008c  Jump 0007
+  0091  End
+  ; rule 1 while
+  0092  RaceRead started
+  0094  Ret
+  ; rule 1 body
+  0095  Push 0
+  009a  StoreLocal 0
+  009c  LoadLocal 0
+  009e  RaceRead seats
+  00a0  ILt
+  00a1  JumpIfZero 014a
+  00a6  LoadLocal 0
+  00a8  SeatRead racing
+  00aa  JumpIfZero 013b
+  00af  LoadLocal 0
+  00b1  Push 0
+  00b6  LoadLocal 0
+  00b8  SeatRead energy
+  00ba  LoadLocal 0
+  00bc  SeatRead max_energy
+  00be  Push 4
+  00c3  Push -1
+  00c8  Action show_bar
+  00ca  LoadLocal 0
+  00cc  Push 2
+  00d1  LoadLocal 0
+  00d3  LoadSeatVar 0
+  00d6  IToF
+  00d7  Push 5
+  00dc  IToF
+  00dd  Push 6
+  00e2  Push 1
+  00e7  Action show_bar
+  00e9  LoadLocal 0
+  00eb  LoadLocal 0
+  00ed  SeatRead game_lap_steps
+  00ef  Push 60
+  00f4  IDiv
+  00f5  Push 1
+  00fa  Push 4
+  00ff  Action show_figure
+  0101  LoadLocal 0
+  0103  SeatRead gap_ahead
+  0105  Push 300
+  010a  IGt
+  010b  Dup
+  010c  JumpIfNotZero 011c
+  0111  Pop
+  0112  LoadLocal 0
+  0114  SeatRead gap_behind
+  0116  Push 300
+  011b  IGt
+  011c  Dup
+  011d  JumpIfNotZero 012d
+  0122  Pop
+  0123  LoadLocal 0
+  0125  SeatRead gap_leader
+  0127  Push 3000
+  012c  IGt
+  012d  JumpIfZero 013b
+  0132  LoadLocal 0
+  0134  Push 3
+  0139  Action hud_clear
+  013b  LoadLocal 0
+  013d  Push 1
+  0142  IAdd
+  0143  StoreLocal 0
+  0145  Jump 009c
+  014a  End
+SRC  1107 bytes
