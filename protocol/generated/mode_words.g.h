@@ -261,7 +261,8 @@ enum Setup : std::uint8_t
   SETUP_COURSES = 47,  // courses
   SETUP_STATSPAGE = 48,  // stats_page
   SETUP_MAXENERGY = 49,  // max_energy
-  SETUP_COUNT = 50,
+  SETUP_HUDMODERN = 50,  // hud modern
+  SETUP_COUNT = 51,
 };
 
 // a read of a seat (OP_SEATREAD)

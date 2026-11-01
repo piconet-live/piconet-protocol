@@ -1723,6 +1723,12 @@ args = [{ type = "int", least = 1, most = 1000 }]
 where = "the mode's first pass (mode.cpp Begin): every machine's M+0x5DA and M+0x184, before the first picture"
 doc = "every seat's full energy, and every seat begins full. Left out: the game's 100, the field and the bits as they are. seat.max_energy changes one seat after it"
 
+[[setup]]
+name = "hud modern"
+id = 50
+where = """the window's flag HUD_MODERN (mode_hud.h): the core takes the game's energy meter, rank, lap counter, race time and lap list off the part mask at the drawing, and the runner's own HUD draws them, as the player's Modern setting does. Drawing only. Left out, the player's setting decides"""
+doc = "everyone races on the modern HUD; without it each player chooses Classic or Modern"
+
 [[choice]]
 name = "part"
 values = ["TIMER", "DISTANCE", "DIGIT", "WARNING", "SUCCESS", "FAILED", "TIME_OVER", "SPEED_GAUGE", "OBJECTS", "LEADER_GAP", "GHOST_GAP", "RANK", "LAPS", "SPEED", "ENERGY", "LAP_TIMES", "RACE_TIME", "FACES"]

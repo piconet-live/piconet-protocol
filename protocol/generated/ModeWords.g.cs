@@ -265,6 +265,8 @@ public enum ModeSetup : byte
     StatsPage = 48,
     /// <summary><c>max_energy</c></summary>
     MaxEnergy = 49,
+    /// <summary><c>hud modern</c></summary>
+    HudModern = 50,
 }
 
 /// <summary>A read of a seat (protocol/modes.toml).</summary>
@@ -827,6 +829,7 @@ public static partial class ModeWords
         ("courses", ModeSetup.Courses, [], true, "list"),
         ("stats_page", ModeSetup.StatsPage, [], false, ""),
         ("max_energy", ModeSetup.MaxEnergy, [new ModeArgument("", ModeType.Int, 1, 1000, null)], false, ""),
+        ("hud modern", ModeSetup.HudModern, [], false, ""),
     ];
 
     /// <summary>The reads of a seat (<c>seat.NAME</c>): name, id, type.</summary>
