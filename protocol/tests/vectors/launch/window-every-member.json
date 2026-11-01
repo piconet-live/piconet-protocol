@@ -9,6 +9,11 @@
     "rgba": "/wAA/wECA4A="
   },
   "showFrameRate": true,
+  "renderer": "aurora",
+  "auroraSize": "native",
+  "auroraEdges": 4,
+  "auroraTextures": 16,
+  "auroraColourblind": "deuteranopia",
   "rumble": false,
   "present": "field",
   "verticalSync": true,
