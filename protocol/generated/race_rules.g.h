@@ -11,7 +11,7 @@
 
 namespace fzgx::race_rules
 {
-inline constexpr std::uint32_t RACE_SIZE = 1280u;
+inline constexpr std::uint32_t RACE_SIZE = 1640u;
 inline constexpr std::uint32_t STEPS_A_SECOND = 60u;
 
 // cpu-level ("cpuLevel"): 0 Novice, 1 Standard, 2 Expert, 3 Master.
