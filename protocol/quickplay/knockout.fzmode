@@ -37,7 +37,13 @@ rule "Cut the last racer" {
   while race.started and race.steps >= next_cut and count(seats where racing and seat.cut_order == 0) > keep;
   do {
     seat v = last(seats where racing and seat.cut_order == 0 by standing);
-    break_down v;              // out of energy, as a last hit: it tumbles, comes to rest or explodes, and is out
+    if (!v.is_cpu and count(seats where !seat.is_cpu) == 1) {
+      // the only player's race ends here as a finish does: FINISH! and the place they earned, the CPU takes the machine
+      v.place = count(seats where racing and seat.cut_order == 0);
+      finish_seat v;
+    } else {
+      break_down v;            // out of energy, as a last hit: it tumbles, comes to rest or explodes, and is out
+    }
     cuts += 1;
     v.cut_order = cuts;
     next_cut = race.steps + interval;

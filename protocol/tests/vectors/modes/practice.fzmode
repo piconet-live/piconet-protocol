@@ -9,6 +9,7 @@ param restore_on "Restore" switch default off;
 param lap_count "Laps" number 0..99 default 0;  // 0: unlimited
 
 solo on;
+results_heading "PRACTICE";
 laps lap_count;
 rewind 1min;
 pause on;
