@@ -265,9 +265,69 @@ public sealed class ModeWordFormsTests
     [InlineData("rule \"R\" { event race_start; do { map_hide nth(seats, 0) from (seats where racing); } }")]
     [InlineData("rule \"R\" { event race_start; do { for each s in (seats where racing) { retire s; } } }")]
     [InlineData("rule \"R\" { event race_start; do { int a = count((seats where racing) - nth(seats, 0)); } }")]
+    [InlineData("rule \"R\" { event each seat; do { seat.stat.drift_rotation_resistance = seat.stat.base.drift_rotation_resistance * 2; } }")]
+    [InlineData("rule \"R\" { event each seat; do { seat.stat.drift_friction += 0.1; } }")]
+    [InlineData("rule \"R\" { event each seat; do { seat.stat.turn_tension *= 0.5; } }")]
+    [InlineData("rule \"R\" { event each seat; do { seat.stat.turn_reaction = 10; } }")]
+    [InlineData("rule \"R\" { event each seat; do { seat.stat.strafe_turn -= 5; } }")]
+    [InlineData("rule \"R\" { event each seat; do { seat.stat.drift_accel = 2.0; } }")]
+    [InlineData("rule \"R\" { event each seat; do { seat.stat.turn_decel /= 2; } }")]
+    [InlineData("rule \"R\" { event each seat; do { seat.stat.grip_window = 3; } }")]
     public void AStatWordOrASetValueCompiles(string body)
     {
         Assert.Empty(Compile(body).Errors);
+    }
+
+    [Theory]
+    [InlineData("max_energy 1;")]
+    [InlineData("max_energy 150;")]
+    [InlineData("max_energy 1000;")]
+    [InlineData("param most \"Most\" number 1..1000 default 150;\nmax_energy most;")]
+    [InlineData("rule \"R\" { event game_start; do { for each s in seats { s.max_energy = 150; s.energy = 150; } } }")]
+    [InlineData("rule \"R\" { event each seat; do { seat.max_energy = 150; } }")]
+    [InlineData("rule \"R\" { event each seat; do { seat.max_energy += 1.5; } }")]
+    [InlineData("rule \"R\" { event each seat; do { seat.max_energy *= 2; } }")]
+    [InlineData("rule \"R\" { event each seat; do { int left = seat.boost_left; } }")]
+    public void TheEnergyWordsCompile(string body)
+    {
+        Assert.Empty(Compile(body).Errors);
+    }
+
+    [Theory]
+    [InlineData("max_energy 0;")]
+    [InlineData("max_energy 1001;")]
+    [InlineData("max_energy;")]
+    [InlineData("max_energy 150.5;")]
+    [InlineData("rule \"R\" { event each seat; do { seat.boost_left = 3; } }")]
+    [InlineData("rule \"R\" { event each seat; do { seat.max_energy = true; } }")]
+    [InlineData("rule \"R\" { event each seat; do { seat.stat.max_energy = 150; } }")]
+    public void TheEnergyWordsAreRefusedWhereTheyDoNotFit(string body)
+    {
+        Assert.NotEmpty(Compile(body).Errors);
+    }
+
+    [Fact]
+    public void AModeWithoutTheEnergyWordsHasNoSetupWordForThem()
+    {
+        var result = Compile("rule \"R\" { event each seat; do { real a = seat.max_energy; } }");
+        Assert.Empty(result.Errors);
+        Assert.DoesNotContain(result.Mode!.Setups, s => s.Id == ModeSetup.MaxEnergy);
+    }
+
+    [Fact]
+    public void OnlyAWriteOfAStatOnTheStatsPageAsksForThePage()
+    {
+        static bool Page(string body)
+        {
+            var result = Compile(body);
+            Assert.Empty(result.Errors);
+            return result.Mode!.Setups.Any(s => s.Id == ModeSetup.StatsPage);
+        }
+        Assert.False(Page("rule \"R\" { event each seat; do { seat.stat.body = 1.0; } }"));
+        Assert.False(Page("rule \"R\" { event each seat; do { real a = seat.stat.base.drift_rotation_resistance; real b = seat.stat.grip_window; } }"));
+        Assert.True(Page("rule \"R\" { event each seat; do { seat.stat.drift_rotation_resistance = 1.0; } }"));
+        Assert.True(Page("rule \"R\" { event each seat; do { seat.stat.grip_window = 3; } }"));
+        Assert.Contains(Compile("stats_page;\nrule \"R\" { event each seat; do { } }").Errors, e => e.Contains("the compiler's own", StringComparison.Ordinal));
     }
 
     [Theory]

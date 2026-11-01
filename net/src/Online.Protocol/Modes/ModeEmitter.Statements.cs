@@ -188,6 +188,7 @@ internal sealed partial class ModeEmitter
                 Emit(stat.Target);
                 Op(ModeOp.SeatRead, (long)current.Id);
             });
+            Used.TryAdd(word.Id, assign.Line);
             Op(ModeOp.Action, (long)word.Id);
             return;
         }

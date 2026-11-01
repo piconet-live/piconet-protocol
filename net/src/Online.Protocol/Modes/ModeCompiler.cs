@@ -135,6 +135,10 @@ public static class ModeCompiler
             {
                 _setups.Add(new ModeSetupWord(ModeSetup.TagTexts, ModeTagTexts.Cells(_emitter.TagTexts)));
             }
+            if (_emitter.Used.Keys.Any(ModeStatsPage.Uses))
+            {
+                _setups.Add(new ModeSetupWord(ModeSetup.StatsPage, []));
+            }
             var mode = new ModePackage
             {
                 Api = api,
@@ -393,6 +397,10 @@ public static class ModeCompiler
             if (word.Id == ModeSetup.TagTexts)
             {
                 throw new ModeCompileException(item.Line, "tag_texts is the compiler's own: a rule writes tag s, \"TEXT\"; and the text is kept");
+            }
+            if (word.Id == ModeSetup.StatsPage)
+            {
+                throw new ModeCompileException(item.Line, "stats_page is the compiler's own: a rule writes the stat, and the page is kept");
             }
             if (word.Id == ModeSetup.PointsTable)
             {
