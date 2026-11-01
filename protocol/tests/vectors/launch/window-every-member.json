@@ -17,6 +17,7 @@
   "auroraSize": "native",
   "auroraEdges": 4,
   "auroraTextures": 16,
+  "auroraColourblind": "deuteranopia",
   "rumble": false,
   "present": "field",
   "verticalSync": true,

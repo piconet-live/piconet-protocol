@@ -23,8 +23,8 @@ inline constexpr std::uint32_t DEBUG_TEST_LAG_MS_LOW = 0u, DEBUG_TEST_LAG_MS_HIG
 
 // File: the launch file: every setting of one start of the game. Takes about, bundle, board, widescreen,
 // trueWidescreen, windowName, showFrameRate, showInputs, modernHud, hudLayout, hudMeter, renderer, auroraSize,
-// auroraEdges, auroraTextures, rumble, present, refreshRate, verticalSync, fullScreen, controllerSetup; by hand:
-// windowNamePicture, taskbar, lanes, match, replay, debug.
+// auroraEdges, auroraTextures, auroraColourblind, rumble, present, refreshRate, verticalSync, fullScreen,
+// controllerSetup; by hand: windowNamePicture, taskbar, lanes, match, replay, debug.
 template <typename P, typename T>
 void ReadFile([[maybe_unused]] P& p, [[maybe_unused]] T* t)
 {
@@ -45,6 +45,7 @@ void ReadFile([[maybe_unused]] P& p, [[maybe_unused]] T* t)
   p.OneOf("auroraSize", &t->aurora_size, {"auto", "2", "3", "4", "native"});
   p.Whole("auroraEdges", &t->aurora_edges, 1u, 4u);
   p.Whole("auroraTextures", &t->aurora_textures, 1u, 16u);
+  p.OneOf("auroraColourblind", &t->aurora_colourblind, {"off", "deuteranopia", "protanopia", "tritanopia"});
   p.Flag("rumble", &t->rumble);
   p.OneOf("present", &t->present, {"field", "console", "copy"});
   p.OneOf("refreshRate", &t->refresh_rate, {"60", "120", "240", "display"});

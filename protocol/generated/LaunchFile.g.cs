@@ -33,7 +33,7 @@ public static class LaunchFormat
 }
 
 /// <summary>The launch file's part File: the launch file: every setting of one start of the game.
-/// The launcher writes "about", "bundle", "widescreen", "trueWidescreen", "lanes", "controllerSetup", "match", "replay", "windowName", "windowNamePicture", "showFrameRate", "showInputs", "modernHud", "hudLayout", "hudMeter", "renderer", "auroraSize", "auroraEdges", "auroraTextures", "rumble", "present", "verticalSync", "fullScreen", "refreshRate", "taskbar", "board", "debug".</summary>
+/// The launcher writes "about", "bundle", "widescreen", "trueWidescreen", "lanes", "controllerSetup", "match", "replay", "windowName", "windowNamePicture", "showFrameRate", "showInputs", "modernHud", "hudLayout", "hudMeter", "renderer", "auroraSize", "auroraEdges", "auroraTextures", "auroraColourblind", "rumble", "present", "verticalSync", "fullScreen", "refreshRate", "taskbar", "board", "debug".</summary>
 public sealed record LaunchFile(
     string About,
     string? Bundle = null,
@@ -53,6 +53,7 @@ public sealed record LaunchFile(
     string? AuroraSize = null,
     int AuroraEdges = 0,
     int AuroraTextures = 0,
+    string? AuroraColourblind = null,
     bool Rumble = true,
     string? Present = null,
     bool VerticalSync = false,
@@ -135,6 +136,10 @@ public sealed record LaunchFile(
         if (AuroraTextures > 0)
         {
             o["auroraTextures"] = AuroraTextures;
+        }
+        if (AuroraColourblind is { } auroraColourblind)
+        {
+            o["auroraColourblind"] = auroraColourblind;
         }
         if (!Rumble)
         {
