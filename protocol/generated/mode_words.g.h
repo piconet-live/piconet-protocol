@@ -26,6 +26,8 @@ inline constexpr int FSQRT_COST = 8;
 inline constexpr int RESULTS_TITLE = 23;
 inline constexpr int TAG_TEXT = 10;
 inline constexpr int TAG_TEXTS = 8;
+inline constexpr int HUD_TEXTS = 10;
+inline constexpr int HUD_TEXT_VALUES = 2;
 inline constexpr int BOARD = 8;
 inline constexpr int BOARD_LABEL = 32;
 inline constexpr int BOARD_WORDS = 16;
@@ -260,7 +262,9 @@ enum Setup : std::uint8_t
   SETUP_COURSESALL = 46,  // courses all
   SETUP_COURSES = 47,  // courses
   SETUP_HUDMODERN = 48,  // hud modern
-  SETUP_COUNT = 49,
+  SETUP_HUDTEXTS = 49,  // hud_texts
+  SETUP_TIMEGAPS = 50,  // time_gaps
+  SETUP_COUNT = 51,
 };
 
 // a read of a seat (OP_SEATREAD)
@@ -338,7 +342,10 @@ enum Seat : std::uint8_t
   SEAT_STATBASEBOOSTSTRENGTH = 69,  // stat.base.boost_strength
   SEAT_STATBASEBOOSTLENGTH = 70,  // stat.base.boost_length
   SEAT_STATBASEBODY = 71,  // stat.base.body
-  SEAT_COUNT = 72,
+  SEAT_GAPAHEAD = 72,  // gap_ahead
+  SEAT_GAPBEHIND = 73,  // gap_behind
+  SEAT_GAPLEADER = 74,  // gap_leader
+  SEAT_COUNT = 75,
 };
 
 // a read of the race (OP_RACEREAD)
@@ -423,7 +430,12 @@ enum Action : std::uint8_t
   ACTION_SHOWNUMBEROFF = 57,  // show_number off
   ACTION_SEATGHOSTTINT = 58,  // seat.ghost_tint
   ACTION_SEATGHOSTSOUND = 59,  // seat.ghost_sound
-  ACTION_COUNT = 60,
+  ACTION_SHOWBAR = 60,  // show_bar
+  ACTION_SHOWFIGURE = 61,  // show_figure
+  ACTION_SHOWTEXT = 62,  // show_text
+  ACTION_SHOWGAP = 63,  // show_gap
+  ACTION_HUDCLEAR = 64,  // hud_clear
+  ACTION_COUNT = 65,
 };
 
 // the choice `part`: a part of the game's own race HUD: TIMER the timed mode's clock (clock_limit's time, R+0xA4: seconds, 0 to 999); DISTANCE the metres to the finish (the seat's own); DIGIT the story's big digit (danger_zone's seconds, 3 2 1); WARNING, SUCCESS, FAILED, TIME_OVER, SPEED_GAUGE, OBJECTS the story's pictures, off until shown; LEADER_GAP the game's own time gap to the leader, off until shown: at each lap line, for a second, the seat's time behind the leader, and the leader's own lead when second place crosses; GHOST_GAP Time Attack's live gap, off until shown: signed minutes, seconds and thousandths at the right edge (617, 270), all race, against the seat furthest ahead, red while it is ahead, blue while you are; RANK, LAPS, SPEED, ENERGY, LAP_TIMES, RACE_TIME, FACES the standard HUD (the mask .data 0x3D544; FACES the board fn_1_D27B8), on until hidden
@@ -469,6 +481,50 @@ enum Look : std::uint8_t
   LOOK_GHOST = 1,
   LOOK_INVISIBLE = 2,
   LOOK_COUNT = 3,
+};
+
+// the choice `slot`: a named place on the modern HUD (fzgx/hud_layout.h), which follows the player's layout; `limits`, the characters a text may take there. top6 takes only `show_gap seat, you, top6`: each row of the top 6 shows that racer's gap to you
+enum Slot : std::uint8_t
+{
+  SLOT_UNDER_PLACE = 0,
+  SLOT_BESIDE_PLACE = 1,
+  SLOT_UNDER_TIMES = 2,
+  SLOT_OVER_SPEED = 3,
+  SLOT_UNDER_SPEED = 4,
+  SLOT_MESSAGE = 5,
+  SLOT_UNDER_TOP6 = 6,
+  SLOT_TOP6 = 7,
+  SLOT_COUNT = 8,
+};
+
+// the choice `bar`: how `show_bar` draws: a thin slanted strip, a wedge widening as the energy meter does, or one cell a whole unit up to the most (at most 12)
+enum Bar : std::uint8_t
+{
+  BAR_STRIP = 0,
+  BAR_WEDGE = 1,
+  BAR_CELLS = 2,
+  BAR_COUNT = 3,
+};
+
+// the choice `target`: whose gap `show_gap` shows: the racer one place ahead, one place behind, the leader; you with the slot top6: each row's racer against you
+enum Target : std::uint8_t
+{
+  TARGET_AHEAD = 0,
+  TARGET_BEHIND = 1,
+  TARGET_LEADER = 2,
+  TARGET_YOU = 3,
+  TARGET_COUNT = 4,
+};
+
+// the choice `colour`: the HUD's palette (Direction D): text, accent, danger, gold, warn. Left out: white; for `show_gap`, green gaining, red losing, white holding
+enum Colour : std::uint8_t
+{
+  COLOUR_WHITE = 0,
+  COLOUR_GREEN = 1,
+  COLOUR_RED = 2,
+  COLOUR_GOLD = 3,
+  COLOUR_ORANGE = 4,
+  COLOUR_COUNT = 5,
 };
 
 // what `on` is for a setup word that also takes a value
@@ -539,6 +595,11 @@ constexpr int ActionArguments(std::uint8_t action)
     case ACTION_SHOWNUMBEROFF: return 1;
     case ACTION_SEATGHOSTTINT: return 2;
     case ACTION_SEATGHOSTSOUND: return 2;
+    case ACTION_SHOWBAR: return 6;
+    case ACTION_SHOWFIGURE: return 4;
+    case ACTION_SHOWTEXT: return 6;
+    case ACTION_SHOWGAP: return 4;
+    case ACTION_HUDCLEAR: return 2;
     default: return -1;
   }
 }

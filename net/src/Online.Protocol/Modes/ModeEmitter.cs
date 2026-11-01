@@ -50,6 +50,12 @@ internal sealed partial class ModeEmitter(ModeNames names, List<string> warnings
     /// <summary>The different texts the file's <c>tag</c> words use, in the order they came: the package's <c>tag_texts</c>.</summary>
     public List<string> TagTexts { get; } = [];
 
+    /// <summary>The different texts the file's <c>show_text</c> words use: the package's <c>hud_texts</c>.</summary>
+    public List<string> HudTexts { get; } = [];
+
+    /// <summary>A rule reads a time gap or shows one: the package says so (<c>time_gaps</c>) and the game keeps the arrivals.</summary>
+    public bool UsesGaps { get; private set; }
+
     /// <summary>The operations a step at worst of the rules written so far.</summary>
     public long Cost { get; private set; }
 
@@ -144,9 +150,13 @@ internal sealed partial class ModeEmitter(ModeNames names, List<string> warnings
             var word = ModeWords.Actions.First(a => a.Id == (ModeAction)operands[0]).Name;
             throw new ModeCompileException(_line, $"{word} needs a running step, and game_start comes before the first one: use countdown or race_start");
         }
-        if (op == ModeOp.Action && (ModeAction)operands[0] is ModeAction.SeatSpeed or ModeAction.SeatVelocity or ModeAction.ShowClock or ModeAction.ShowNumber)
+        if (op == ModeOp.Action && (ModeAction)operands[0] is ModeAction.SeatSpeed or ModeAction.SeatVelocity or ModeAction.ShowClock or ModeAction.ShowNumber or ModeAction.ShowBar or ModeAction.ShowFigure or ModeAction.ShowText)
         {
             _perStep ??= ModeWords.Actions.First(a => a.Id == (ModeAction)operands[0]).Name;
+        }
+        if (op == ModeOp.SeatRead && (ModeSeatRead)operands[0] is ModeSeatRead.GapAhead or ModeSeatRead.GapBehind or ModeSeatRead.GapLeader)
+        {
+            UsesGaps = true;
         }
         _code.U8((int)op);
         var kinds = ModeCode.Operands.GetValueOrDefault(op, []);

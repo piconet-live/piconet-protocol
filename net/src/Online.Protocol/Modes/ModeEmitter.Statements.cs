@@ -335,11 +335,18 @@ internal sealed partial class ModeEmitter
     private void Act(ModeActionStatement statement)
     {
         var action = ModeWords.Actions.First(a => a.Name == statement.Action);
-        if (statement.Arguments.Count != action.Args.Count)
+        if (action.Id == ModeAction.ShowText)
+        {
+            ShowText(statement);
+            return;
+        }
+        var left = ModeWords.ActionsWithOptionalLast.Contains(action.Id) && statement.Arguments.Count == action.Args.Count - 1;
+        if (statement.Arguments.Count != action.Args.Count && !left)
         {
             throw new ModeCompileException(statement.Line, $"{action.Name} takes {action.Args.Count} argument{(action.Args.Count == 1 ? "" : "s")}, not {statement.Arguments.Count}");
         }
-        for (var i = 0; i < action.Args.Count; i++)
+        HudSlotRules(statement, action.Id);
+        for (var i = 0; i < statement.Arguments.Count; i++)
         {
             if (statement.Arguments[i] is ModeLiteral { Type: ModeType.Seat, Bits: -1 })
             {
@@ -357,8 +364,146 @@ internal sealed partial class ModeEmitter
             }
             Value(statement.Arguments[i], action.Args[i], action.Name);
         }
+        if (left)
+        {
+            Push(-1);
+        }
         Op(ModeOp.Action, (long)action.Id);
         Used.TryAdd(action.Id, statement.Line);
+    }
+
+    /// <summary><c>show_text s, "ROUND {round}", slot[, colour];</c>: the seat, the text's number, its values (0 for those
+    /// it does not name), the slot, the colour.</summary>
+    private void ShowText(ModeActionStatement statement)
+    {
+        var word = statement.Action;
+        if (statement.Arguments.Count is not (3 or 4))
+        {
+            throw new ModeCompileException(statement.Line, $"{word} takes a seat, a text, a slot and maybe a colour");
+        }
+        if (statement.Arguments[1] is not ModeHudText text)
+        {
+            throw new ModeCompileException(statement.Arguments[1].Line, $"{word} takes its text in quotes: show_text s, \"ROUND {{round}}\", under_place;");
+        }
+        var slot = SlotOf(statement.Arguments[2], word);
+        HudSlotRules(statement, ModeAction.ShowText);
+        var limit = ModeWords.ChoiceLimits["slot"][slot];
+        if (ModeHudTexts.Refusal(text.Text, limit, ModeWords.Choices["slot"][slot]) is { } refused)
+        {
+            throw new ModeCompileException(text.Line, refused);
+        }
+        Value(statement.Arguments[0], ModeType.Seat, word);
+        Push(HudText(text));
+        foreach (var value in text.Values)
+        {
+            NoOtherEnergy(value, statement.Arguments[0], word);
+            Value(value, ModeType.Int, $"a {{value}} of {word}");
+        }
+        for (var i = text.Values.Count; i < ModeWords.HudTextValues; i++)
+        {
+            Push(0);
+        }
+        Choice(statement.Arguments[2], "slot", word);
+        if (statement.Arguments.Count == 4)
+        {
+            Choice(statement.Arguments[3], "colour", word);
+        }
+        else
+        {
+            Push(-1);
+        }
+        Op(ModeOp.Action, (long)ModeAction.ShowText);
+        Used.TryAdd(ModeAction.ShowText, statement.Line);
+    }
+
+    private int HudText(ModeHudText text)
+    {
+        var known = HudTexts.IndexOf(text.Text);
+        if (known >= 0)
+        {
+            return known + 1;
+        }
+        if (HudTexts.Count == ModeWords.HudTexts)
+        {
+            throw new ModeCompileException(text.Line, $"show_text: a mode uses at most {ModeWords.HudTexts} different texts");
+        }
+        HudTexts.Add(text.Text);
+        return HudTexts.Count;
+    }
+
+    private static int SlotOf(ModeExpr expr, string word)
+    {
+        var values = ModeWords.Choices["slot"];
+        var index = expr is ModeName name ? IndexOf(values, name.Name) : -1;
+        return index >= 0
+            ? index
+            : throw new ModeCompileException(expr.Line, $"{word} takes one of the slots: {string.Join(", ", values)}");
+    }
+
+    /// <summary>What the HUD's words may do with a slot, and what no bar, figure or text may show.</summary>
+    private void HudSlotRules(ModeActionStatement statement, ModeAction id)
+    {
+        var word = statement.Action;
+        var a = statement.Arguments;
+        switch (id)
+        {
+            case ModeAction.ShowBar:
+                NotInTop6(a[4], word);
+                NoOtherEnergy(a[2], a[0], word);
+                NoOtherEnergy(a[3], a[0], word);
+                break;
+            case ModeAction.ShowFigure:
+                NotInTop6(a[2], word);
+                NoOtherEnergy(a[1], a[0], word);
+                break;
+            case ModeAction.ShowText:
+                NotInTop6(a[2], word);
+                break;
+            case ModeAction.ShowGap:
+                UsesGaps = true;
+                var top6 = SlotOf(a[2], word) == ModeWords.Choices["slot"].ToList().IndexOf("top6");
+                var you = a[1] is ModeName { Name: "you" };
+                if (top6 != you)
+                {
+                    throw new ModeCompileException(statement.Line, "show_gap: the slot top6 goes with the target you, and you with the slot top6: show_gap s, you, top6;");
+                }
+                break;
+        }
+    }
+
+    private static void NotInTop6(ModeExpr slot, string word)
+    {
+        if (slot is ModeName { Name: "top6" })
+        {
+            throw new ModeCompileException(slot.Line, $"{word}: the slot top6 takes only show_gap s, you, top6");
+        }
+    }
+
+    /// <summary>The game shows no racer another's energy, so neither does the HUD: a value that reads the energy of any
+    /// seat but the one it is shown to is refused (what a mode keeps in its own variables is its own).</summary>
+    private static void NoOtherEnergy(ModeExpr value, ModeExpr seat, string word)
+    {
+        switch (value)
+        {
+            case ModeField { Field: "energy" or "boost_left" } field when !(field.Target is ModeName a && seat is ModeName b && a.Name == b.Name):
+                throw new ModeCompileException(value.Line, $"{word} may show the energy of the seat it shows to, never another racer's");
+            case ModeField field:
+                NoOtherEnergy(field.Target, seat, word);
+                break;
+            case ModeUnary unary:
+                NoOtherEnergy(unary.Operand, seat, word);
+                break;
+            case ModeBinary binary:
+                NoOtherEnergy(binary.Left, seat, word);
+                NoOtherEnergy(binary.Right, seat, word);
+                break;
+            case ModeCall call:
+                foreach (var argument in call.Arguments)
+                {
+                    NoOtherEnergy(argument, seat, word);
+                }
+                break;
+        }
     }
 
     /// <summary>The number <c>tag</c> names its text by, from 1: its place among the mode's texts, which a text joins the

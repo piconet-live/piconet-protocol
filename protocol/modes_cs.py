@@ -87,6 +87,16 @@ def emit(t):
             "        new HashSet<ModeAction>", "        {"]
     out += [f"            ModeAction.{a['pascal']}," for a in t["actions"] if a.get("needs_step")]
     out += ["        };", "",
+            "    /// <summary>The actions whose last argument a file may leave out: the compiler pushes -1, the word's default.</summary>",
+            "    public static readonly IReadOnlySet<ModeAction> ActionsWithOptionalLast =",
+            "        new HashSet<ModeAction>", "        {"]
+    out += [f"            ModeAction.{a['pascal']}," for a in t["actions"] if a.get("optional")]
+    out += ["        };", "",
+            "    /// <summary>A choice's limit by its value's place, for the choices that have them (a slot's characters).</summary>",
+            "    public static readonly IReadOnlyDictionary<string, IReadOnlyList<int>> ChoiceLimits =",
+            "        new Dictionary<string, IReadOnlyList<int>>", "        {"]
+    out += [f"            [{text(c['name'])}] = [{', '.join(str(v) for v in c['limits'])}]," for c in t["choices"] if c.get("limits")]
+    out += ["        };", "",
             "    /// <summary>The choices: an argument of one takes one of its names, its value the name's place.</summary>",
             "    public static readonly IReadOnlyDictionary<string, IReadOnlyList<string>> Choices =",
             "        new Dictionary<string, IReadOnlyList<string>>", "        {"]

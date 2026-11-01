@@ -263,6 +263,10 @@ public enum ModeSetup : byte
     Courses = 47,
     /// <summary><c>hud modern</c></summary>
     HudModern = 48,
+    /// <summary><c>hud_texts</c></summary>
+    HudTexts = 49,
+    /// <summary><c>time_gaps</c></summary>
+    TimeGaps = 50,
 }
 
 /// <summary>A read of a seat (protocol/modes.toml).</summary>
@@ -412,6 +416,12 @@ public enum ModeSeatRead : byte
     StatBaseBoostLength = 70,
     /// <summary><c>stat.base.body</c></summary>
     StatBaseBody = 71,
+    /// <summary><c>gap_ahead</c></summary>
+    GapAhead = 72,
+    /// <summary><c>gap_behind</c></summary>
+    GapBehind = 73,
+    /// <summary><c>gap_leader</c></summary>
+    GapLeader = 74,
 }
 
 /// <summary>A read of the race (protocol/modes.toml).</summary>
@@ -568,6 +578,16 @@ public enum ModeAction : byte
     SeatGhostTint = 58,
     /// <summary><c>seat.ghost_sound</c></summary>
     SeatGhostSound = 59,
+    /// <summary><c>show_bar</c></summary>
+    ShowBar = 60,
+    /// <summary><c>show_figure</c></summary>
+    ShowFigure = 61,
+    /// <summary><c>show_text</c></summary>
+    ShowText = 62,
+    /// <summary><c>show_gap</c></summary>
+    ShowGap = 63,
+    /// <summary><c>hud_clear</c></summary>
+    HudClear = 64,
 }
 
 /// <summary>The vocabulary of one api, by the names a mode file writes (protocol/modes.toml).</summary>
@@ -607,6 +627,10 @@ public static partial class ModeWords
     public const int TagText = 10;
     /// <summary>The api's limit <c>tag_texts</c>.</summary>
     public const int TagTexts = 8;
+    /// <summary>The api's limit <c>hud_texts</c>.</summary>
+    public const int HudTexts = 10;
+    /// <summary>The api's limit <c>hud_text_values</c>.</summary>
+    public const int HudTextValues = 2;
     /// <summary>The api's limit <c>board</c>.</summary>
     public const int Board = 8;
     /// <summary>The api's limit <c>board_label</c>.</summary>
@@ -772,6 +796,8 @@ public static partial class ModeWords
         ("courses all", ModeSetup.CoursesAll, [], true, ""),
         ("courses", ModeSetup.Courses, [], true, "list"),
         ("hud modern", ModeSetup.HudModern, [], false, ""),
+        ("hud_texts", ModeSetup.HudTexts, [], false, "text"),
+        ("time_gaps", ModeSetup.TimeGaps, [], false, ""),
     ];
 
     /// <summary>The reads of a seat (<c>seat.NAME</c>): name, id, type.</summary>
@@ -849,6 +875,9 @@ public static partial class ModeWords
         ("stat.base.boost_strength", ModeSeatRead.StatBaseBoostStrength, ModeType.Real),
         ("stat.base.boost_length", ModeSeatRead.StatBaseBoostLength, ModeType.Real),
         ("stat.base.body", ModeSeatRead.StatBaseBody, ModeType.Real),
+        ("gap_ahead", ModeSeatRead.GapAhead, ModeType.Int),
+        ("gap_behind", ModeSeatRead.GapBehind, ModeType.Int),
+        ("gap_leader", ModeSeatRead.GapLeader, ModeType.Int),
     ];
 
     /// <summary>The reads of the race (<c>race.NAME</c>): name, id, type.</summary>
@@ -932,6 +961,11 @@ public static partial class ModeWords
         ("show_number off", ModeAction.ShowNumberOff, [ModeType.Seat]),
         ("seat.ghost_tint", ModeAction.SeatGhostTint, [ModeType.Seat, ModeType.Int]),
         ("seat.ghost_sound", ModeAction.SeatGhostSound, [ModeType.Seat, ModeType.Bool]),
+        ("show_bar", ModeAction.ShowBar, [ModeType.Seat, ModeType.Int, ModeType.Real, ModeType.Real, ModeType.Int, ModeType.Int]),
+        ("show_figure", ModeAction.ShowFigure, [ModeType.Seat, ModeType.Int, ModeType.Int, ModeType.Int]),
+        ("show_text", ModeAction.ShowText, [ModeType.Seat, ModeType.Int, ModeType.Int, ModeType.Int, ModeType.Int, ModeType.Int]),
+        ("show_gap", ModeAction.ShowGap, [ModeType.Seat, ModeType.Int, ModeType.Int, ModeType.Int]),
+        ("hud_clear", ModeAction.HudClear, [ModeType.Seat, ModeType.Int]),
     ];
 
     /// <summary>The actions that need a running step, which game_start refuses.</summary>
@@ -952,6 +986,23 @@ public static partial class ModeWords
             ModeAction.Damage,
         };
 
+    /// <summary>The actions whose last argument a file may leave out: the compiler pushes -1, the word's default.</summary>
+    public static readonly IReadOnlySet<ModeAction> ActionsWithOptionalLast =
+        new HashSet<ModeAction>
+        {
+            ModeAction.ShowBar,
+            ModeAction.ShowFigure,
+            ModeAction.ShowText,
+            ModeAction.ShowGap,
+        };
+
+    /// <summary>A choice's limit by its value's place, for the choices that have them (a slot's characters).</summary>
+    public static readonly IReadOnlyDictionary<string, IReadOnlyList<int>> ChoiceLimits =
+        new Dictionary<string, IReadOnlyList<int>>
+        {
+            ["slot"] = [14, 8, 18, 18, 18, 24, 20, 0],
+        };
+
     /// <summary>The choices: an argument of one takes one of its names, its value the name's place.</summary>
     public static readonly IReadOnlyDictionary<string, IReadOnlyList<string>> Choices =
         new Dictionary<string, IReadOnlyList<string>>
@@ -959,6 +1010,10 @@ public static partial class ModeWords
             ["part"] = ["TIMER", "DISTANCE", "DIGIT", "WARNING", "SUCCESS", "FAILED", "TIME_OVER", "SPEED_GAUGE", "OBJECTS", "LEADER_GAP", "GHOST_GAP", "RANK", "LAPS", "SPEED", "ENERGY", "LAP_TIMES", "RACE_TIME", "FACES"],
             ["banner"] = ["FINAL_LAP", "BOOST_POWER", "TIME_BONUS", "GAP", "WRONG_WAY", "TICK"],
             ["look"] = ["normal", "ghost", "invisible"],
+            ["slot"] = ["under_place", "beside_place", "under_times", "over_speed", "under_speed", "message", "under_top6", "top6"],
+            ["bar"] = ["strip", "wedge", "cells"],
+            ["target"] = ["ahead", "behind", "leader", "you"],
+            ["colour"] = ["WHITE", "GREEN", "RED", "GOLD", "ORANGE"],
         };
 
     /// <summary>The actions' arguments that take a choice: (action, argument) to the choice's name.</summary>
@@ -970,6 +1025,17 @@ public static partial class ModeWords
             [(ModeAction.StockBanner, 1)] = "banner",
             [(ModeAction.SeatLook, 1)] = "look",
             [(ModeAction.SeatOwnLook, 1)] = "look",
+            [(ModeAction.ShowBar, 1)] = "bar",
+            [(ModeAction.ShowBar, 4)] = "slot",
+            [(ModeAction.ShowBar, 5)] = "colour",
+            [(ModeAction.ShowFigure, 2)] = "slot",
+            [(ModeAction.ShowFigure, 3)] = "colour",
+            [(ModeAction.ShowText, 4)] = "slot",
+            [(ModeAction.ShowText, 5)] = "colour",
+            [(ModeAction.ShowGap, 1)] = "target",
+            [(ModeAction.ShowGap, 2)] = "slot",
+            [(ModeAction.ShowGap, 3)] = "colour",
+            [(ModeAction.HudClear, 1)] = "slot",
         };
 
     /// <summary>The actions written with a word between their first two arguments in place of a comma.</summary>

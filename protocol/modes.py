@@ -10,14 +10,14 @@ SCHEMA = os.path.join(here, "modes.toml")
 
 TOP_KEYS = {"codec", "api", "op", "event", "setup", "seat_read", "race_read", "action", "choice"}
 API_KEYS = {"number", "budget", "queue", "globals", "seat_words", "locals", "rules", "sorts", "package_bytes", "seats",
-            "team_words", "teams", "waits", "wait_locals", "subs", "board", "board_label", "board_words", "board_word", "fsqrt_cost", "results_title", "tag_text", "tag_texts", "presets"}
+            "team_words", "teams", "waits", "wait_locals", "subs", "board", "board_label", "board_words", "board_word", "fsqrt_cost", "results_title", "hud_texts", "hud_text_values", "tag_text", "tag_texts", "presets"}
 OP_KEYS = {"name", "code", "operands", "doc"}
 EVENT_KEYS = {"name", "id", "kind", "binds", "doc"}
 SETUP_KEYS = {"name", "id", "args", "where", "doc", "table", "lobby", "form"}
 ARG_KEYS = {"type", "name", "least", "most", "default", "on"}
 READ_KEYS = {"name", "id", "type", "doc"}
-ACTION_KEYS = {"name", "spelled", "id", "args", "where", "doc", "join", "needs_step"}
-CHOICE_KEYS = {"name", "values", "doc"}
+ACTION_KEYS = {"name", "spelled", "id", "args", "where", "doc", "join", "needs_step", "optional"}
+CHOICE_KEYS = {"name", "values", "doc", "limits"}
 OPERANDS = {"u8": 1, "u16": 2, "u32": 4, "i32": 4}
 TYPES = {"int", "real", "bool", "seat", "seats", "vec"}
 PASCAL = re.compile(r"[A-Z][A-Za-z0-9]*\Z")
@@ -133,9 +133,11 @@ def load(path=SCHEMA):
         if not isinstance(name, str) or not re.fullmatch(r"[a-z]+", name) or name in TYPES or name in choices:
             raise SchemaError(f"choice {name!r}: a new lower-case name, not a type's")
         if (not isinstance(values, list) or not values or len(values) > 255
-                or any(not isinstance(v, str) or not re.fullmatch(r"[A-Za-z][A-Za-z_]*", v) for v in values)):
+                or any(not isinstance(v, str) or not re.fullmatch(r"[A-Za-z][A-Za-z0-9_]*", v) for v in values)):
             raise SchemaError(f"choice {name}: values are names")
-        choices[name] = {"name": name, "pascal": pascal(name, "choice"), "values": values, "doc": entry.get("doc", "")}
+        choices[name] = {"name": name, "pascal": pascal(name, "choice"), "values": values, "doc": entry.get("doc", ""), "limits": entry.get("limits")}
+        if entry.get("limits") is not None and (not isinstance(entry["limits"], list) or len(entry["limits"]) != len(values)):
+            raise SchemaError(f"choice {name}: limits, one a value")
     named = [v for c in choices.values() for v in c["values"]]
     if len(set(named)) != len(named):
         raise SchemaError("choice: a value's name twice")

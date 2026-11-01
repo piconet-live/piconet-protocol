@@ -135,6 +135,7 @@ public static class ModeCompiler
             {
                 _setups.Add(new ModeSetupWord(ModeSetup.TagTexts, ModeTagTexts.Cells(_emitter.TagTexts)));
             }
+            HudWords();
             var mode = new ModePackage
             {
                 Api = api,
@@ -239,7 +240,28 @@ public static class ModeCompiler
 
         /// <summary>The words of a race raced alone need <c>solo</c>; and <c>solo</c> is one seat. A word stated
         /// <c>off</c> asks for nothing; a switch parameter may be on, so it counts as on.</summary>
-        private void SoloWords(List<ModeItem> items)
+        /// <summary>The modern HUD's words: all of them need <c>hud modern</c>, the texts and the time gaps go in the package.</summary>
+    private void HudWords()
+    {
+        foreach (var word in new[] { ModeAction.ShowBar, ModeAction.ShowFigure, ModeAction.ShowText, ModeAction.ShowGap, ModeAction.HudClear })
+        {
+            if (_emitter!.Used.TryGetValue(word, out var line) && !_setups.Any(s => s.Id == ModeSetup.HudModern))
+            {
+                var name = ModeWords.Actions.First(a => a.Id == word).Name;
+                throw new ModeCompileException(line, $"{name} draws on the modern HUD: the mode needs the setup word hud modern;");
+            }
+        }
+        if (_emitter!.HudTexts.Count > 0)
+        {
+            _setups.Add(new ModeSetupWord(ModeSetup.HudTexts, ModeHudTexts.Cells(_emitter!.HudTexts)));
+        }
+        if (_emitter!.UsesGaps)
+        {
+            _setups.Add(new ModeSetupWord(ModeSetup.TimeGaps, []));
+        }
+    }
+
+    private void SoloWords(List<ModeItem> items)
         {
             int? Line(ModeSetup id) => items.OfType<ModeSetupItem>().FirstOrDefault(s => ModeWords.Setups.Single(w => w.Name == s.Word).Id == id)?.Line;
             int? On(ModeSetup id) => _setups.FirstOrDefault(s => s.Id == id)?.Arguments[0] is { FromParam: false, Value: 0 } ? null : Line(id);
@@ -393,6 +415,10 @@ public static class ModeCompiler
             if (word.Id == ModeSetup.TagTexts)
             {
                 throw new ModeCompileException(item.Line, "tag_texts is the compiler's own: a rule writes tag s, \"TEXT\"; and the text is kept");
+            }
+            if (word.Id is ModeSetup.HudTexts or ModeSetup.TimeGaps)
+            {
+                throw new ModeCompileException(item.Line, $"{word.Name} is the compiler's own: show_text, show_gap and the gap reads set it");
             }
             if (word.Id == ModeSetup.PointsTable)
             {

@@ -53,6 +53,8 @@ fsqrt_cost = 8         # what one FSqrt takes of the budget (the compiler's coun
 results_title = 23     # a results title's characters: the window's 24 bytes with the NUL (runner mode_hud.h)
 tag_text = 10          # a `tag` text's characters: at the tags' largest, 22 of the screen's 640 pixels a character, 220 in all
 tag_texts = 8          # the different texts of `tag` a mode may use (the window holds them, runner mode_hud.h)
+hud_texts = 10         # the different texts of `show_text` a mode may use: with their separators they fit a setup word's 255 values
+hud_text_values = 2    # the {values} one `show_text` text may name
 board = 8              # `board` lines a scope (global, seat, team): what the status board holds (board.toml)
 board_label = 32       # a `board` line's label, in UTF-8 bytes
 board_words = 16       # the words a `board` line may name
@@ -1209,6 +1211,24 @@ id = 71
 type = "real"
 doc = "the machine's own body, M+0x30 before the mode's change"
 
+[[seat_read]]
+name = "gap_ahead"
+id = 72
+type = "int"
+doc = "steps behind the racer one place ahead, by mini-sectors (64 a lap, from the course distance P+0xF8): how much later this seat reached the last place they both passed; -1 with no racer there. Race state: the same on every game, put back by a rollback. A racer a lap or more away reads as the time since it last passed here, less than the whole gap"
+
+[[seat_read]]
+name = "gap_behind"
+id = 73
+type = "int"
+doc = "steps ahead of the racer one place behind, by mini-sectors; -1 with no racer there"
+
+[[seat_read]]
+name = "gap_leader"
+id = 74
+type = "int"
+doc = "steps behind the leader, by mini-sectors; 0 for the leader, -1 before anyone has a time"
+
 [[race_read]]
 name = "steps"
 id = 0
@@ -1887,3 +1907,76 @@ id = 59
 args = ["seat", "bool"]
 where = "the display page's GHOST_SOUNDS; the HUD pass's silent seats, read at fn_1_A3D5C 0xA3E00 (a silent seat's voice is out of hearing, as past 300 units)"
 doc = "on: the seat's machine keeps its voice when drawn with the look ghost. Off, the default, is Time Attack's: its ghosts have no machine voice. The machine the camera follows always has its voice"
+
+[[setup]]
+name = "hud_texts"
+id = 49
+form = "text"
+where = """the texts `show_text` draws, which the compiler writes from the file's `show_text` words and a file never writes itself (in the package a value a UTF-16 unit, a 0 between texts, 1 and 2 where the {values} stand): the core hands the viewed seat's text to the runner's HUD (modern_hud.cpp), which draws it in Saira with a fallback font"""
+doc = "the texts `show_text` draws, the first being text 1"
+
+[[setup]]
+name = "time_gaps"
+id = 50
+where = """written by the compiler when a rule reads seat.gap_ahead, gap_behind, gap_leader or uses show_gap; a file never writes it: the core then keeps every seat's arrival at each of 64 mini-sectors a lap in the block's gap page at each step (mode_gap.h). SIM: the undo log and the checksum have it with the race"""
+doc = "the mode uses the time gaps"
+
+[[choice]]
+name = "slot"
+values = ["under_place", "beside_place", "under_times", "over_speed", "under_speed", "message", "under_top6", "top6"]
+limits = [14, 8, 18, 18, 18, 24, 20, 0]
+doc = """a named place on the modern HUD (fzgx/hud_layout.h), which follows the player's layout; `limits`, the characters a text may take there. top6 takes only `show_gap seat, you, top6`: each row of the top 6 shows that racer's gap to you"""
+
+[[choice]]
+name = "bar"
+values = ["strip", "wedge", "cells"]
+doc = "how `show_bar` draws: a thin slanted strip, a wedge widening as the energy meter does, or one cell a whole unit up to the most (at most 12)"
+
+[[choice]]
+name = "target"
+values = ["ahead", "behind", "leader", "you"]
+doc = "whose gap `show_gap` shows: the racer one place ahead, one place behind, the leader; you with the slot top6: each row's racer against you"
+
+[[choice]]
+name = "colour"
+values = ["WHITE", "GREEN", "RED", "GOLD", "ORANGE"]
+doc = "the HUD's palette (Direction D): text, accent, danger, gold, warn. Left out: white; for `show_gap`, green gaining, red losing, white holding"
+
+[[action]]
+name = "show_bar"
+id = 60
+args = ["seat", "bar", "real", "real", "slot", "colour"]
+optional = true
+where = "the block's HUD slots page (mode_gap.h); drawn by the runner's modern HUD, the seat's own and for whoever follows it. Needs `hud modern`"
+doc = "`show_bar s, strip, value, most, slot[, colour]`: a bar in the slot, value of most, as it was when the word ran, until `hud_clear` or another word on that slot"
+
+[[action]]
+name = "show_figure"
+id = 61
+args = ["seat", "int", "slot", "colour"]
+optional = true
+where = "the block's HUD slots page; drawn by the runner's modern HUD. Needs `hud modern`"
+doc = "`show_figure s, n, slot[, colour]`: a large whole number in the slot"
+
+[[action]]
+name = "show_text"
+id = 62
+args = ["seat", "int", "int", "int", "slot", "colour"]
+optional = true
+where = """the block's HUD slots page; drawn by the runner's modern HUD. The file writes `show_text s, "ROUND {round}", slot[, colour];`: the compiler pushes the text's number in hud_texts, from 1, and the {values}' values (0 for those not named). Any text, api.hud_texts texts a mode, each within its slot's limit; a {value} is a whole number, counted as five characters. Needs `hud modern`"""
+doc = "text in the slot, its {values} as they were when the word ran"
+
+[[action]]
+name = "show_gap"
+id = 63
+args = ["seat", "target", "slot", "colour"]
+optional = true
+where = "the block's HUD slots page; the value comes live from the gap page. Drawn by the runner's modern HUD. Needs `hud modern`"
+doc = "`show_gap s, ahead|behind|leader, slot[, colour]` or `show_gap s, you, top6`: the time gap by mini-sectors, shown from now on; left without a colour, green while gaining, red while losing, white while holding"
+
+[[action]]
+name = "hud_clear"
+id = 64
+args = ["seat", "slot"]
+where = "the block's HUD slots page"
+doc = "the slot shows nothing again"
