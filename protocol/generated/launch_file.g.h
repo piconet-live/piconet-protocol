@@ -11,6 +11,8 @@ namespace fzgx::launch_file
 {
 inline constexpr std::size_t MAX_BYTES = 1048576;
 inline constexpr std::size_t WINDOW_NAME_MOST_BYTES = 64;
+inline constexpr std::uint32_t AURORA_EDGES_LOW = 1u, AURORA_EDGES_HIGH = 4u;
+inline constexpr std::uint32_t AURORA_TEXTURES_LOW = 1u, AURORA_TEXTURES_HIGH = 16u;
 inline constexpr std::uint32_t MATCH_CAMERA_LOW = 1u, MATCH_CAMERA_HIGH = 4u;
 inline constexpr std::uint32_t WINDOW_NAME_PICTURE_WIDTH_LOW = 1u, WINDOW_NAME_PICTURE_WIDTH_HIGH = 512u;
 inline constexpr std::uint32_t WINDOW_NAME_PICTURE_HEIGHT_LOW = 1u, WINDOW_NAME_PICTURE_HEIGHT_HIGH = 64u;
@@ -20,8 +22,9 @@ inline constexpr std::size_t TASKBAR_NAME_MOST_BYTES = 64;
 inline constexpr std::uint32_t DEBUG_TEST_LAG_MS_LOW = 0u, DEBUG_TEST_LAG_MS_HIGH = 10000u;
 
 // File: the launch file: every setting of one start of the game. Takes about, bundle, board, widescreen,
-// trueWidescreen, windowName, showFrameRate, showInputs, modernHud, hudLayout, hudMeter, rumble, present, refreshRate,
-// verticalSync, fullScreen, controllerSetup; by hand: windowNamePicture, taskbar, lanes, match, replay, debug.
+// trueWidescreen, windowName, showFrameRate, showInputs, modernHud, hudLayout, hudMeter, renderer, auroraSize,
+// auroraEdges, auroraTextures, rumble, present, refreshRate, verticalSync, fullScreen, controllerSetup; by hand:
+// windowNamePicture, taskbar, lanes, match, replay, debug.
 template <typename P, typename T>
 void ReadFile([[maybe_unused]] P& p, [[maybe_unused]] T* t)
 {
@@ -38,6 +41,10 @@ void ReadFile([[maybe_unused]] P& p, [[maybe_unused]] T* t)
   p.Flag("modernHud", &t->modern_hud);
   p.Words("hudLayout", &t->hud_layout);
   p.Words("hudMeter", &t->hud_meter);
+  p.OneOf("renderer", &t->picture_renderer, {"dolphin", "aurora"});
+  p.OneOf("auroraSize", &t->aurora_size, {"auto", "2", "3", "4", "native"});
+  p.Whole("auroraEdges", &t->aurora_edges, 1u, 4u);
+  p.Whole("auroraTextures", &t->aurora_textures, 1u, 16u);
   p.Flag("rumble", &t->rumble);
   p.OneOf("present", &t->present, {"field", "console", "copy"});
   p.OneOf("refreshRate", &t->refresh_rate, {"60", "120", "240", "display"});

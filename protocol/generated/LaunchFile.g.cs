@@ -12,6 +12,10 @@ public static class LaunchFormat
     public const int MaxBytes = 1048576;
     /// <summary>The most bytes of "windowName" (UTF-8) the game's reader takes.</summary>
     public const int WindowNameMostBytes = 64;
+    /// <summary>The range of "auroraEdges" the game's reader takes.</summary>
+    public const int AuroraEdgesLow = 1, AuroraEdgesHigh = 4;
+    /// <summary>The range of "auroraTextures" the game's reader takes.</summary>
+    public const int AuroraTexturesLow = 1, AuroraTexturesHigh = 16;
     /// <summary>The range of "camera" the game's reader takes.</summary>
     public const int MatchCameraLow = 1, MatchCameraHigh = 4;
     /// <summary>The range of "width" the game's reader takes.</summary>
@@ -29,7 +33,7 @@ public static class LaunchFormat
 }
 
 /// <summary>The launch file's part File: the launch file: every setting of one start of the game.
-/// The launcher writes "about", "bundle", "widescreen", "trueWidescreen", "lanes", "controllerSetup", "match", "replay", "windowName", "windowNamePicture", "showFrameRate", "showInputs", "modernHud", "hudLayout", "hudMeter", "rumble", "present", "verticalSync", "fullScreen", "refreshRate", "taskbar", "board", "debug".</summary>
+/// The launcher writes "about", "bundle", "widescreen", "trueWidescreen", "lanes", "controllerSetup", "match", "replay", "windowName", "windowNamePicture", "showFrameRate", "showInputs", "modernHud", "hudLayout", "hudMeter", "renderer", "auroraSize", "auroraEdges", "auroraTextures", "rumble", "present", "verticalSync", "fullScreen", "refreshRate", "taskbar", "board", "debug".</summary>
 public sealed record LaunchFile(
     string About,
     string? Bundle = null,
@@ -45,6 +49,10 @@ public sealed record LaunchFile(
     bool ModernHud = false,
     string? HudLayout = null,
     string? HudMeter = null,
+    string? Renderer = null,
+    string? AuroraSize = null,
+    int AuroraEdges = 0,
+    int AuroraTextures = 0,
     bool Rumble = true,
     string? Present = null,
     bool VerticalSync = false,
@@ -111,6 +119,22 @@ public sealed record LaunchFile(
         if (HudMeter is { } hudMeter)
         {
             o["hudMeter"] = hudMeter;
+        }
+        if (Renderer is { } renderer)
+        {
+            o["renderer"] = renderer;
+        }
+        if (AuroraSize is { } auroraSize)
+        {
+            o["auroraSize"] = auroraSize;
+        }
+        if (AuroraEdges > 0)
+        {
+            o["auroraEdges"] = AuroraEdges;
+        }
+        if (AuroraTextures > 0)
+        {
+            o["auroraTextures"] = AuroraTextures;
         }
         if (!Rumble)
         {
