@@ -83,6 +83,21 @@ public static class ModeCompiler
         // the rule instances that may wait at once, so far (the api's waits)
         private int _waiting;
 
+        // the words of the results page against what the file ends on
+        private void ResultsWords(List<ModeItem> items, ModeEmitter emitter)
+        {
+            if (items.OfType<ModeSetupItem>().FirstOrDefault(s => s.Word == "results points") is { } points
+                && !emitter.Used.ContainsKey(ModeAction.Award) && !_setups.Any(s => s.Id == ModeSetup.PointsTable))
+            {
+                throw new ModeCompileException(points.Line, "results points shows the points page: a mode with it needs award");
+            }
+            if (items.OfType<ModeSetupItem>().FirstOrDefault(s => s.Word == "results_heading") is { } heading
+                && (emitter.Used.ContainsKey(ModeAction.Award) || _setups.Any(s => s.Id is ModeSetup.ResultsTitle or ModeSetup.PointsTable)))
+            {
+                throw new ModeCompileException(heading.Line, "results_heading heads the page of a mode with no points page: award, results_title and points_table end on the points page");
+            }
+        }
+
         public (ModePackage Mode, long Budget) File(List<ModeItem> items, string source)
         {
             var header = (ModeHeaderItem)items[0];
@@ -120,11 +135,7 @@ public static class ModeCompiler
             {
                 throw new ModeCompileException(bonus.Line, "time_bonus adds to the clock: a mode with it needs clock_limit");
             }
-            if (items.OfType<ModeSetupItem>().FirstOrDefault(s => s.Word == "results points") is { } points
-                && !_emitter.Used.ContainsKey(ModeAction.Award) && !_setups.Any(s => s.Id == ModeSetup.PointsTable))
-            {
-                throw new ModeCompileException(points.Line, "results points shows the points page: a mode with it needs award");
-            }
+            ResultsWords(items, _emitter);
             if (_emitter.Used.TryGetValue(ModeAction.ShowClock, out var clockLine) && _setups.Any(s => s.Id == ModeSetup.ClockLimit))
             {
                 throw new ModeCompileException(clockLine, "show_clock and clock_limit both write the game's clock: a mode has one or the other");
@@ -436,10 +447,10 @@ private static string? CompilersOwn(ModeSetup id, string name) => id switch
                     : PointsTableValues(item, word)));
                 return;
             }
-            if (word.Id == ModeSetup.ResultsTitle)
+            if (word.Id is ModeSetup.ResultsTitle or ModeSetup.ResultsHeading)
             {
                 var title = item.Table![0];
-                if (ModeResultsTitle.Refusal(title.Key) is { } refused)
+                if (ModeResultsTitle.Refusal(title.Key, word.Name) is { } refused)
                 {
                     throw new ModeCompileException(title.Line, refused);
                 }

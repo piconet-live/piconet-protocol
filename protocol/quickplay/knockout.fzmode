@@ -22,6 +22,7 @@ global int interval;           // steps between cuts, worked out once at the rac
 global int next_cut;
 global int cut_in;             // seconds to the next cut
 global int cuts;
+global int hold_until;         // a player's finish: the race ends when the game's FINISH! and place have had their 8 s
 seat   int cut_order;          // 0: never cut; 1: first out
 
 rule "Arm" {
@@ -37,7 +38,14 @@ rule "Cut the last racer" {
   while race.started and race.steps >= next_cut and count(seats where racing and seat.cut_order == 0) > keep;
   do {
     seat v = last(seats where racing and seat.cut_order == 0 by standing);
-    break_down v;              // out of energy, as a last hit: it tumbles, comes to rest or explodes, and is out
+    if (v.is_human and count(seats where seat.is_human) == 1) {
+      // the only player's race ends here as a finish does: FINISH! and the place they earned, the CPU takes the machine
+      v.place = count(seats where racing and seat.cut_order == 0);
+      finish_seat v;
+      hold_until = race.steps + 8s;
+    } else {
+      break_down v;            // out of energy, as a last hit: it tumbles, comes to rest or explodes, and is out
+    }
     cuts += 1;
     v.cut_order = cuts;
     next_cut = race.steps + interval;
@@ -86,6 +94,13 @@ rule "Winner" {
   event every step;
   when race.started and count(seats where racing) <= keep;
   do {
+    // a player still in has won through: the same FINISH! and place as a line crossed, then the results
+    for each seat where seat.racing and seat.is_human {
+      seat.place = seat.standing;
+      finish_seat seat;
+      hold_until = race.steps + 8s;
+    }
+    if (hold_until > race.steps) { wait hold_until - race.steps; }
     // survivors first (end_race fills them in standing order), then the racers out, last out first
     int n = keep + 1;
     for each seat where seat.cut_order > 0 by seat.cut_order desc { seat.place = n; n += 1; }

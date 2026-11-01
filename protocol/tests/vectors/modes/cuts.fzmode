@@ -1,4 +1,4 @@
-// The words of the cut race: break_down, show_clock, TICK, race_waits, results points and results_title.
+// The words of the cut race: break_down, finish_seat, show_clock, TICK, race_waits, results points and results_title.
 mode "Cuts" { api 1; about "Every word of the cut race."; }
 race_waits everyone;
 results points;
@@ -17,6 +17,7 @@ rule "Cut" {
     show seat, TIMER;
     stock_banner seat, TICK;
     break_down seat;
+    finish_seat seat;
     award seat, 1;
     tag seat, "CUT";
     tag seat off;

@@ -49,19 +49,19 @@ public sealed record ModeSetupValue(bool FromParam, int Value);
 public static class ModeResultsTitle
 {
     /// <summary>Why a title cannot be drawn; null: it can.</summary>
-    public static string? Refusal(string title)
+    public static string? Refusal(string title, string word = "results_title")
     {
         ArgumentNullException.ThrowIfNull(title);
         if (title.Length > ModeWords.ResultsTitle)
         {
-            return $"results_title is at most {ModeWords.ResultsTitle} characters: \"{title}\" has {title.Length}";
+            return $"{word} is at most {ModeWords.ResultsTitle} characters: \"{title}\" has {title.Length}";
         }
         if (title.FirstOrDefault(c => c is not (>= 'A' and <= 'Z') and not ' ') is var bad and not '\0')
         {
-            return $"results_title: the game's font 0x1D draws A to Z and the space, not '{bad}'";
+            return $"{word}: the game's font 0x1D draws A to Z and the space, not '{bad}'";
         }
         return title.Trim(' ').Length != title.Length || title.Length == 0
-            ? "results_title needs a title, with no space at either end: the game centres the whole string"
+            ? $"{word} needs a title, with no space at either end: the game centres the whole string"
             : null;
     }
 
@@ -547,7 +547,7 @@ public sealed class ModePackage
                 1 => true,
                 _ => throw new InvalidDataException($"the setup word {word.Name}'s argument has an unknown source"),
             }, s.I32())).ToList();
-            if (word.Id is ModeSetup.ResultsTitle or ModeSetup.TagTexts or ModeSetup.PointsTable or ModeSetup.HudTexts)
+            if (word.Id is ModeSetup.ResultsTitle or ModeSetup.ResultsHeading or ModeSetup.TagTexts or ModeSetup.PointsTable or ModeSetup.HudTexts)
             {
                 if (!OwnValues(word.Id, arguments))
                 {
@@ -587,7 +587,7 @@ public sealed class ModePackage
         {
             return false;
         }
-        if (id == ModeSetup.ResultsTitle)
+        if (id is ModeSetup.ResultsTitle or ModeSetup.ResultsHeading)
         {
             return ModeResultsTitle.Refusal(ModeResultsTitle.Text(arguments)) is null;
         }
