@@ -2099,6 +2099,13 @@ id = 52
 where = """written by the compiler when a rule reads seat.gap_ahead, gap_behind, gap_leader or uses show_gap; a file never writes it: the core then keeps every seat's arrival at each of 64 mini-sectors a lap in the block's gap page at each step (mode_gap.h). SIM: the undo log and the checksum have it with the race"""
 doc = "the mode uses the time gaps"
 
+[[setup]]
+name = "results_heading"
+id = 53
+form = "text"
+where = """the results' times list (fn_1_1461C8 0x146324, the game's PRACTICE, the page a mode with no award, results_title or points_table ends on): `results_heading "TEXT"`, the string in the window (in the package a value a byte), font 0x1D: A to Z and the space, api.results_title long at most; not all spaces, none at either end. Left out, with a mode, the core writes RESULTS"""
+doc = "the results page of a mode with no points page is headed TEXT; left out, RESULTS. Refused with award, results_title or points_table: those end on the points page"
+
 [[choice]]
 name = "slot"
 values = ["under_place", "beside_place", "under_times", "over_speed", "under_speed", "message", "under_top6", "top6"]
@@ -2158,3 +2165,11 @@ id = 73
 args = ["seat", "slot"]
 where = "the block's HUD slots page"
 doc = "the slot shows nothing again"
+
+[[action]]
+name = "finish_seat"
+needs_step = true
+id = 74
+args = ["seat"]
+where = """the mode point: what fn_1_250F8 ends with (flag 0x10000, no finish bonus), with the seat's finish time the race's time now; the next step's fn_1_32A40 books the finish as a line crossing's: countdown 480, the CPU drives, FINISH! and the seat's place. A seat placed by the mode keeps that place in its results record"""
+doc = "the seat finishes here and now, as if it had crossed the line: FINISH! and its place, the CPU takes over its machine. Never a finished or out seat"

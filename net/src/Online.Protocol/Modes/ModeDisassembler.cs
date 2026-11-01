@@ -99,7 +99,7 @@ public static class ModeDisassembler
     private static string Setup(ModeSetupWord word, ModePackage mode)
     {
         var table = ModeWords.Setups.First(s => s.Id == word.Id);
-        if (word.Id == ModeSetup.ResultsTitle)
+        if (word.Id is ModeSetup.ResultsTitle or ModeSetup.ResultsHeading)
         {
             return table.Name + " " + Quote(ModeResultsTitle.Text(word.Arguments));
         }

@@ -125,6 +125,11 @@ public static class ModeCompiler
             {
                 throw new ModeCompileException(points.Line, "results points shows the points page: a mode with it needs award");
             }
+            if (items.OfType<ModeSetupItem>().FirstOrDefault(s => s.Word == "results_heading") is { } heading
+                && (_emitter.Used.ContainsKey(ModeAction.Award) || _setups.Any(s => s.Id is ModeSetup.ResultsTitle or ModeSetup.PointsTable)))
+            {
+                throw new ModeCompileException(heading.Line, "results_heading heads the page of a mode with no points page: award, results_title and points_table end on the points page");
+            }
             if (_emitter.Used.TryGetValue(ModeAction.ShowClock, out var clockLine) && _setups.Any(s => s.Id == ModeSetup.ClockLimit))
             {
                 throw new ModeCompileException(clockLine, "show_clock and clock_limit both write the game's clock: a mode has one or the other");
@@ -436,10 +441,10 @@ private static string? CompilersOwn(ModeSetup id, string name) => id switch
                     : PointsTableValues(item, word)));
                 return;
             }
-            if (word.Id == ModeSetup.ResultsTitle)
+            if (word.Id is ModeSetup.ResultsTitle or ModeSetup.ResultsHeading)
             {
                 var title = item.Table![0];
-                if (ModeResultsTitle.Refusal(title.Key) is { } refused)
+                if (ModeResultsTitle.Refusal(title.Key, word.Name) is { } refused)
                 {
                     throw new ModeCompileException(title.Line, refused);
                 }

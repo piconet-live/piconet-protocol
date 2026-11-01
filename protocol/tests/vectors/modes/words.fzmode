@@ -8,6 +8,8 @@ mode "Words" {
   about "Every word of api 1, and every operation its compiler writes.";
 }
 
+results_heading "ALL DONE";
+
 param rounds "Laps" number 1..9 default 3;
 param push "Accelerator" number 0.5..1.0 step 0.25 default 1.0;
 param interval "Cut every" delay 10s..2min step 5s default 30s;

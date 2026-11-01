@@ -271,6 +271,8 @@ public enum ModeSetup : byte
     HudTexts = 51,
     /// <summary><c>time_gaps</c></summary>
     TimeGaps = 52,
+    /// <summary><c>results_heading</c></summary>
+    ResultsHeading = 53,
 }
 
 /// <summary>A read of a seat (protocol/modes.toml).</summary>
@@ -644,6 +646,8 @@ public enum ModeAction : byte
     ShowGap = 72,
     /// <summary><c>hud_clear</c></summary>
     HudClear = 73,
+    /// <summary><c>finish_seat</c></summary>
+    FinishSeat = 74,
 }
 
 /// <summary>The vocabulary of one api, by the names a mode file writes (protocol/modes.toml).</summary>
@@ -856,6 +860,7 @@ public static partial class ModeWords
         ("hud modern", ModeSetup.HudModern, [], false, ""),
         ("hud_texts", ModeSetup.HudTexts, [], false, "text"),
         ("time_gaps", ModeSetup.TimeGaps, [], false, ""),
+        ("results_heading", ModeSetup.ResultsHeading, [], false, "text"),
     ];
 
     /// <summary>The reads of a seat (<c>seat.NAME</c>): name, id, type.</summary>
@@ -1050,6 +1055,7 @@ public static partial class ModeWords
         ("show_text", ModeAction.ShowText, [ModeType.Seat, ModeType.Int, ModeType.Int, ModeType.Int, ModeType.Int, ModeType.Int]),
         ("show_gap", ModeAction.ShowGap, [ModeType.Seat, ModeType.Int, ModeType.Int, ModeType.Int]),
         ("hud_clear", ModeAction.HudClear, [ModeType.Seat, ModeType.Int]),
+        ("finish_seat", ModeAction.FinishSeat, [ModeType.Seat]),
     ];
 
     /// <summary>The actions that need a running step, which game_start refuses.</summary>
@@ -1068,6 +1074,7 @@ public static partial class ModeWords
             ModeAction.StockBanner,
             ModeAction.BreakDown,
             ModeAction.Damage,
+            ModeAction.FinishSeat,
         };
 
     /// <summary>The actions whose last argument a file may leave out: the compiler pushes -1, the word's default.</summary>
