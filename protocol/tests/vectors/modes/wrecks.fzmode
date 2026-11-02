@@ -1,0 +1,16 @@
+// What a seat's end reports (the runner's interpreter tests): destroyed and fall each count, out keeps its cause.
+mode "Wrecks" {
+  api 1;
+}
+
+laps unlimited;
+cpus on;
+
+seat int blown;
+seat int fell;
+seat int why;
+seat int reads;
+
+rule "Destroyed" { event destroyed(s); do { s.blown += 1; if (s.destroyed) { s.reads += 1; } } }
+rule "Fall" { event fall(s); do { s.fell += 1; } }
+rule "Out" { event out(s, cause); do { s.why = cause; } }

@@ -143,8 +143,8 @@ def load(path=SCHEMA, record_size=None):
         raise SchemaError("[[version]]: names and features once each")
     if file["written"] not in numbers:
         raise SchemaError("[replay]: written is one of the versions")
-    if compact["version"] != numbers[-1] + 1 or compact["version"] > 0xFFFF:
-        raise SchemaError("[compact]: version is the number after the last [[version]]")
+    if compact["version"] in numbers or compact["version"] < numbers[0] or compact["version"] > 0xFFFF:
+        raise SchemaError("[compact]: version is a number no [[version]] has (8: the one after version 7; version 9 on skip it)")
     if compact["check"] != "crc32" or compact["preset"] not in range(10) or type(compact["full_every"]) is not int \
             or compact["full_every"] < 1 or not 4096 <= compact["dict_min"] <= compact["dict_max"] <= compact["memlimit"]:
         raise SchemaError("[compact]: check crc32, a preset 0 to 9, full_every above 0, dict_min <= dict_max <= memlimit")

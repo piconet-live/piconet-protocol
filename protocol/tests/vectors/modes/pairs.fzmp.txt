@@ -1,0 +1,56 @@
+FZMP format 1 api 1, 790 bytes, hash 6c8fdadc20b34e358012b2db40fa306cc5c5efec424f11761bf041a460690d46
+HEAD name "Pairs" badge "" about "Every pair of seats, every step."
+PARM 0
+SETP 0
+VARS globals 1, seat words 0
+  global 0 = 0
+RULE 1
+  0 "Pairs" event every step, locals 2, when none, while none, body 0000
+CODE 119 bytes
+  ; rule 0 body
+  0000  Push 0
+  0005  StoreLocal 0
+  0007  LoadLocal 0
+  0009  RaceRead seats
+  000b  ILt
+  000c  JumpIfZero 0076
+  0011  Push 0
+  0016  StoreLocal 1
+  0018  LoadLocal 1
+  001a  RaceRead seats
+  001c  ILt
+  001d  JumpIfZero 0067
+  0022  LoadLocal 0
+  0024  SeatRead distance
+  0026  LoadLocal 1
+  0028  SeatRead distance
+  002a  FSub
+  002b  Push 1092616192 (0x41200000, real 10)
+  0030  FLt
+  0031  Dup
+  0032  JumpIfZero 0047
+  0037  Pop
+  0038  LoadLocal 1
+  003a  SeatRead distance
+  003c  LoadLocal 0
+  003e  SeatRead distance
+  0040  FSub
+  0041  Push 1092616192 (0x41200000, real 10)
+  0046  FLt
+  0047  JumpIfZero 0058
+  004c  LoadGlobal 0
+  004f  Push 1
+  0054  IAdd
+  0055  StoreGlobal 0
+  0058  LoadLocal 1
+  005a  Push 1
+  005f  IAdd
+  0060  StoreLocal 1
+  0062  Jump 0018
+  0067  LoadLocal 0
+  0069  Push 1
+  006e  IAdd
+  006f  StoreLocal 0
+  0071  Jump 0007
+  0076  End
+SRC  527 bytes

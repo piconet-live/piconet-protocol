@@ -1,0 +1,38 @@
+// Every word of the modern HUD, at least once: a vector for the compiler's tests and the runner's interpreter tests
+// (protocol/README.md), not a mode to race. Drawing only: none of these changes the race; the gap reads are race state.
+
+mode "HUD words" {
+  api 1;
+  about "Every word of the modern HUD.";
+}
+
+hud modern;
+
+global int round = 1;
+seat int lives = 3;
+
+rule "Slots" {
+  event race_start;
+  do {
+    for each seat {
+      show_gap seat, ahead, under_times;
+      show_gap seat, behind, over_speed, GOLD;
+      show_gap seat, you, top6;
+      show_text seat, "R{round}/{seat.lives}", under_place;
+      show_text seat, "Zweite Runde", message, RED;
+    }
+  }
+}
+
+rule "Bars" {
+  event every step;
+  while race.started;
+  do {
+    for each seat where seat.racing {
+      show_bar seat, strip, seat.energy, seat.max_energy, under_speed;
+      show_bar seat, cells, seat.lives, 5, under_top6, GREEN;
+      show_figure seat, seat.game_lap_steps / 60, beside_place, ORANGE;
+      if (seat.gap_ahead > 300 or seat.gap_behind > 300 or seat.gap_leader > 3000) { hud_clear seat, over_speed; }
+    }
+  }
+}

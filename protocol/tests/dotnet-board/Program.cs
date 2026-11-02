@@ -88,6 +88,17 @@ unsafe
         Known.Write(new BoardView(memory));
         Known.Check(new BoardView(memory), Check);
         NativeMemory.Clear(memory, BoardLayout.Size);
+        // a new ModeHead is whole (its lines' and words' text arrays are there), and goes through the board and back
+        var head = new BoardModeHead { Serial = 3, NameLength = 1, Count = 1 };
+        Check(head.Lines.All(l => l.Label is not null) && head.Words.All(w => w.Text is not null), "a new ModeHead's text arrays are there");
+        head.Name[0] = (byte)'K';
+        head.Lines[0].Label[0] = (byte)'N';
+        head.Words[383].Text[0] = (byte)'w';
+        new BoardView(memory).WriteModeHead(head);
+        var back = new BoardModeHead();
+        Check(new BoardView(memory).TryReadModeHead(back) && back.Serial == 3 && back.Count == 1 && back.Name[0] == 'K' && back.Lines[0].Label[0] == 'N' && back.Words[383].Text[0] == 'w',
+              "a ModeHead read back");
+        NativeMemory.Clear(memory, BoardLayout.Size);
         var view = new BoardView(memory);
         var writer = new Thread(() => Stress.Write(view, TimeSpan.FromMilliseconds(700)));
         writer.Start();

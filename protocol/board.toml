@@ -26,7 +26,7 @@
 [board]
 name = "status board"
 magic = "FZSB"          # the file's first four bytes
-version = 1             # a new layout is a new version: a game and a launcher of different versions refuse each other
+version = 4             # a new layout is a new version: a game and a launcher of different versions refuse each other
 endian = "little"
 block_align = 64
 
@@ -85,7 +85,7 @@ values = [
     { name = "Moves", value = 4, doc = "the game moves again after a reported freeze: A milliseconds it stood" },
     { name = "Notice", value = 5, doc = "the game took a notice from the mailbox: A its serial" },
     { name = "Desync", value = 6, doc = "a step's checksum differed from the relay's: A the step" },
-    { name = "Camera", value = 7, doc = "the view of the local racer's chase camera changed while it races (the player's camera button, or the start): A the view (1 to 3), B the one before (0: none said yet in this start)" },
+    { name = "Camera", value = 7, doc = "the view of the local racer's chase camera changed while it races (the player's camera button, or the start): A the view (1 to 3, 4 first person), B the one before (0: none said yet in this start)" },
 ]
 
 [[enum]]
@@ -140,6 +140,53 @@ fields = [
     { name = "Z", type = "f32" },
     { name = "Distance", type = "f32", doc = "distance covered over all laps (progress +0xF8): what orders the racers still racing" },
 ]
+
+[[enum]]
+name = "ModeBoardScope"
+type = "u8"
+doc = "Whose value a `board` line of a mode file names (the language's section 10)."
+values = [
+    { name = "Global", value = 0, doc = "one for the race" },
+    { name = "Seat", value = 1, doc = "one a seat" },
+    { name = "Team", value = 2, doc = "one a team" },
+]
+
+[[enum]]
+name = "ModeBoardType"
+type = "u8"
+doc = "How to read a mode value's word (the language's types; a vec is no `board` line's)."
+values = [
+    { name = "Int", value = 0, doc = "a whole number; a time is in steps, 60 a second" },
+    { name = "Real", value = 1, doc = "binary32" },
+    { name = "Bool", value = 2, doc = "0 or 1" },
+    { name = "Seat", value = 3, doc = "a seat, 0 to 29, or -1 none" },
+    { name = "Seats", value = 4, doc = "a set of seats: bit i, seat i" },
+]
+
+[[record]]
+name = "ModeLine"
+doc = "One `board` line of the mode's file, in the file's order."
+fields = [
+    { name = "Scope", type = "u8", enum = "ModeBoardScope" },
+    { name = "Type", type = "u8", enum = "ModeBoardType" },
+    { name = "Column", type = "u16", doc = "its place in its scope's values, 0 to 7" },
+    { name = "LabelLength", type = "u32" },
+    { name = "Label", type = "bytes", size = 32, doc = "UTF-8, as the file wrote it" },
+    { name = "WordCount", type = "u32", doc = "the words the line names, 0 to 16; they stand in the head's Words" },
+]
+
+[[record]]
+name = "ModeWord"
+doc = "One word a `board` line names: what its variable shows when it holds that word's index."
+fields = [
+    { name = "Length", type = "u32" },
+    { name = "Text", type = "bytes", size = 16, doc = "UTF-8, as the file wrote it" },
+]
+
+[[record]]
+name = "ModeValue"
+doc = "One value of a `board` line: a word, as its line's type says."
+fields = [{ name = "Value", type = "i32" }]
 
 [[record]]
 name = "Event"
@@ -214,6 +261,40 @@ fields = [
     { name = "LocalSeat", type = "u32" },
     { name = "Count", type = "u32", doc = "racers that follow (at most 30)" },
     { name = "Racers", type = "Racer", count = 30 },
+]
+
+[[block]]
+name = "ModeHead"
+kind = "seqlock"
+writer = "game"
+doc = """The race's game mode, written once, when its first picture is drawn: its identity and the `board` lines of its \
+file (D14 of the design). Serial 0: no mode (nothing below means anything). Picture only: nothing of the race reads it."""
+fields = [
+    { name = "Serial", type = "u32", doc = "1 once written; 0: no mode in this start" },
+    { name = "NameLength", type = "u32" },
+    { name = "Name", type = "bytes", size = 64, doc = "the mode's name, UTF-8; what does not fit is cut at a character" },
+    { name = "Hash", type = "bytes", size = 8, doc = "the first 8 bytes of the package's content hash (the share code is the first 40 bits' base32)" },
+    { name = "Count", type = "u32", doc = "the lines that follow (at most 24)" },
+    { name = "Lines", type = "ModeLine", count = 24 },
+    { name = "Words", type = "ModeWord", count = 384, doc = "a line's words: Words[line * 16 + value], the line's place in Lines; a value outside 0 to WordCount - 1 shows the number" },
+]
+
+[[block]]
+name = "ModeValues"
+kind = "seqlock"
+writer = "game"
+doc = """The values of the mode's `board` lines, every picture drawn of a race, a practice, a watched race and a replay: \
+what the mode's block holds at the moment the picture shows (a practice's rewind shows the moment's). Rollback can \
+correct them a moment later, as the Snapshot's. Not written when the mode has no `board` line and has not broken. Read from the mode's \
+block after the frame's steps; nothing of the race reads this. A line's Column says where its values are: Globals \
+[Column], Seats[seat * 8 + Column], Teams[team * 8 + Column]."""
+fields = [
+    { name = "Serial", type = "u32", doc = "written so far (0: none yet)" },
+    { name = "Frame", type = "u32", doc = "the race's step of the picture" },
+    { name = "Fault", type = "u32", doc = "what ended the race when the mode broke (mode.h's Fault, D6): 0 while it runs as it should" },
+    { name = "Globals", type = "ModeValue", count = 8 },
+    { name = "Seats", type = "ModeValue", count = 240 },
+    { name = "Teams", type = "ModeValue", count = 240 },
 ]
 
 [[block]]

@@ -11,7 +11,10 @@
 #   label     what a player's panel shows
 #   cs        its member of HostRules (PascalCase); none: it is in HostRules.All alone
 #   reach     alone (it means something in a race alone: a practice shows it), together (it needs other racers: a
-#             lobby's only), server (the server's own running: the operator's only)
+#             lobby's only), server (the server's own running: the operator's only), practice (a practice's alone: no
+#             lobby and no server takes it, HostRules.All does not hold it)
+#   setup     the game mode's setup word that sets it (modes.toml; a mode's word wins over the rule), or "flow": it runs
+#             the lobby or the server before a mode is chosen and stays out of mode files, or "practice"
 #   kind      course, courses, number, switch, range, choice, delay, machines, pack, text (Online.Protocol RuleKind)
 #   least, most, step, default
 #             its range and Quick Play's value (a switch: 0 to 1, 1 on); each a whole number or a C# constant by name
@@ -54,6 +57,7 @@ steps_a_second = 60
 others = [
     { at = 0, end = 100, what = "the mark, the set-up's words, the seats' machines, the start grid" },
     { at = 100, end = 104, what = "the rubber band (RACE_RUBBER_BAND_ON)" },
+    { at = 104, end = 108, what = "the simulation's own generator (RACE_SIM_GENERATOR)" },
     { at = 268, end = 298, what = "every seat's machine setting (RACE_SETTINGS)" },
     { at = 304, end = 308, what = "the race's flow (RACE_FLOW)" },
     { at = 320, end = 1280, what = "the seats' custom machines (RACE_CUSTOM)" },
@@ -61,6 +65,7 @@ others = [
 
 [[rule]]
 name = "course-select"
+setup = "course"
 label = "Course"
 cs = "CourseSelect"
 reach = "together"
@@ -68,6 +73,7 @@ kind = "course"
 
 [[rule]]
 name = "course-pool"
+setup = "courses"
 label = "Course pool"
 cs = "CoursePool"
 reach = "together"
@@ -75,6 +81,7 @@ kind = "courses"
 
 [[rule]]
 name = "racers"
+setup = "racers"
 label = "Racers"
 cs = "Racers"
 reach = "together"
@@ -85,6 +92,7 @@ default = "GameFacts.Limits.Seats"
 
 [[rule]]
 name = "laps"
+setup = "laps"
 label = "Laps"
 cs = "Laps"
 reach = "alone"
@@ -95,6 +103,7 @@ default = 3
 
 [[rule]]
 name = "cpu-level"
+setup = "cpu_level"
 label = "CPU level"
 cs = "CpuLevel"
 reach = "together"
@@ -107,6 +116,7 @@ race = { key = "cpuLevel", absent = 3, word = "RACE_CPULEVEL", at = 256, flag = 
 
 [[rule]]
 name = "cpu-fill"
+setup = "cpus"
 label = "CPU racers"
 cs = "CpuFill"
 reach = "together"
@@ -114,6 +124,7 @@ kind = "choice"
 
 [[rule]]
 name = "boost-start"
+setup = "boost_start"
 label = "Boost from the start"
 cs = "BoostStart"
 reach = "alone"
@@ -125,15 +136,20 @@ race = { key = "boostFromStart", absent = false, word = "RACE_BOOST", at = 260, 
 
 [[rule]]
 name = "restore"
+setup = "practice"
 label = "Restore"
 cs = "Restore"
-reach = "alone"
+reach = "practice"
 kind = "switch"
 most = 1
-race = { key = "restore", absent = false, word = "RACE_RESTORE", at = 264, flag = "--restore", doc = "a machine that falls or is wrecked is put back instead of being out" }
+doc = """A practice's rule alone (the owner, 2026-10-30): no lobby and no server sets it; a mode's race has the per-seat \
+`respawns` and `restore on`. Its member of RaceRules stays: a practice's match file, and every recording raced with it, \
+must play as they were."""
+race = { key = "restore", absent = false, word = "RACE_RESTORE", at = 264, doc = "a machine that falls or is wrecked is put back instead of being out" }
 
 [[rule]]
 name = "finish-limit"
+setup = "finish_limit"
 label = "Finish limit"
 cs = "FinishLimit"
 reach = "together"
@@ -148,6 +164,7 @@ without it: it ends when the last has finished or is out); the games count it in
 
 [[rule]]
 name = "mine-regen"
+setup = "mine_regen"
 label = "Mines return"
 cs = "MinesReturn"
 reach = "alone"
@@ -165,6 +182,7 @@ the game's own way); 50 to 5,000 in steps of 50, whole steps of the race (50 ms 
 
 [[rule]]
 name = "machines"
+setup = "machines"
 label = "Machines"
 cs = "Machines"
 reach = "together"
@@ -172,6 +190,7 @@ kind = "machines"
 
 [[rule]]
 name = "machine-setting"
+setup = "machine_setting"
 label = "Machine setting"
 cs = "MachineSetting"
 reach = "alone"
@@ -182,6 +201,7 @@ doc = "A range the racers' own settings are brought into; Quick Play: top speed,
 
 [[rule]]
 name = "stat-pack"
+setup = "stats"
 label = "Stats"
 cs = "StatPack"
 reach = "alone"
@@ -189,6 +209,7 @@ kind = "pack"
 
 [[rule]]
 name = "mixed-packs"
+setup = "mixed_packs"
 label = "Mixed packs"
 cs = "MixedPacks"
 reach = "together"
@@ -199,6 +220,7 @@ seat"); Quick Play: off, one pack for all (mixed packs only in lobbies)."""
 
 [[rule]]
 name = "vote-seconds"
+setup = "flow"
 label = "Course vote"
 cs = "VoteSeconds"
 reach = "together"
@@ -209,6 +231,7 @@ doc = "The course vote's length, in seconds."
 
 [[rule]]
 name = "choose-seconds"
+setup = "flow"
 label = "Machine choice"
 cs = "ChooseSeconds"
 reach = "together"
@@ -219,6 +242,7 @@ doc = "The machine choice's length, in seconds."
 
 [[rule]]
 name = "voting-minimum"
+setup = "flow"
 label = "Voting minimum"
 cs = "VotingMinimum"
 reach = "together"
@@ -230,6 +254,7 @@ doc = """The players a lobby needs before its race starts by vote; one above the
 
 [[rule]]
 name = "start-countdown"
+setup = "flow"
 label = "Start countdown"
 cs = "StartCountdown"
 reach = "server"
@@ -243,6 +268,7 @@ host or their vote starts them."""
 
 [[rule]]
 name = "start-timeout"
+setup = "flow"
 label = "Start timeout"
 cs = "StartTimeout"
 reach = "server"
@@ -253,6 +279,7 @@ doc = "How long the relay waits for every game of a race to join, in seconds."
 
 [[rule]]
 name = "ready-timeout"
+setup = "flow"
 label = "Ready timeout"
 cs = "ReadyTimeout"
 reach = "server"
@@ -263,6 +290,7 @@ doc = "How long the relay waits for every game of a race to be ready, in seconds
 
 [[rule]]
 name = "straggler-wait"
+setup = "flow"
 label = "Straggler wait"
 cs = "StragglerWait"
 reach = "server"
@@ -273,6 +301,7 @@ below the range, which <see cref="HostRule.Takes"/> refuses): until the last is 
 
 [[rule]]
 name = "latency-limit"
+setup = "flow"
 label = "Latency limit"
 cs = "LatencyLimit"
 reach = "together"
@@ -286,12 +315,14 @@ Quick Play: 250. The range is 30 to 300; 30 is the least, for a host whose playe
 
 [[rule]]
 name = "together"
+setup = "flow"
 label = "Builds together"
 reach = "server"
 kind = "text"
 
 [[rule]]
 name = "relay-ceiling"
+setup = "flow"
 label = "Relay ceiling"
 reach = "server"
 kind = "text"

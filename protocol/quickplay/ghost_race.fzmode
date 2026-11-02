@@ -1,0 +1,50 @@
+// A ghost race: a time trial raced together. Everyone starts on one spot and nobody touches anybody. Until the race starts
+// you see only your own machine; from GO the others are ghosts, as Time Attack draws its ghosts. No place and no faces:
+// the comparison is Time Attack's own live gap at the right edge, and the host may swap it for the game's gap to the
+// leader at each lap line. The results are the game's own, by time.
+
+mode "Ghost race" {
+  api 1;
+  about "Race the same lap as everyone, through each other, for the best time.";
+}
+
+param lap_count "Laps" number 1..9 default 3;
+param map_dots "Ghosts on the map" choice ["Show", "Hide"] default "Show";   // Time Attack marks its ghosts on the map
+param gap_kind "Gap" choice ["Live", "At lap lines", "Both", "None"] default "Live";
+
+preset "Sprint" { lap_count = 1; }
+preset "Blind" { map_dots = "Hide"; gap_kind = "None"; }
+
+cpus on;          // players may vote CPUs in
+start_together;
+contact off;
+laps lap_count;
+
+rule "Alone on the grid, no standings" {
+  event game_start;
+  do {
+    for each seat {
+      seat.look = invisible;
+      seat.own_look = normal;
+      hide seat, FACES;
+      hide seat, RANK;
+      if (gap_kind == 0 or gap_kind == 2) { show seat, GHOST_GAP; }
+      if (gap_kind == 1 or gap_kind == 2) { show seat, LEADER_GAP; }
+      if (map_dots == 1) { map_hide seat from seats - seat; }
+    }
+  }
+}
+
+rule "The others are ghosts" {
+  event race_start;
+  do {
+    for each seat {
+      seat.look = ghost;
+    }
+  }
+}
+
+rule "Whoever finishes is gone" {
+  event finish(s);
+  do { s.look = invisible; }   // the CPU drives a finished seat on: nobody should race that
+}

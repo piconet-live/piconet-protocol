@@ -1,0 +1,47 @@
+FZMP format 1 api 1, 690 bytes, hash 350bfedffa9f12cd2ff1e19142c9e86a9570a515cf63567a7f96c208dd154222
+HEAD name "Wrecks" badge "" about ""
+PARM 0
+SETP 2
+  laps 0
+  cpus on
+VARS globals 0, seat words 4
+  seat 0 = 0
+  seat 1 = 0
+  seat 2 = 0
+  seat 3 = 0
+RULE 3
+  0 "Destroyed" event destroyed, locals 1, when none, while none, body 0000
+  1 "Fall" event fall, locals 1, when none, while none, body 002a
+  2 "Out" event out, locals 2, when none, while none, body 003b
+CODE 67 bytes
+  ; rule 0 body
+  0000  LoadLocal 0
+  0002  LoadLocal 0
+  0004  LoadSeatVar 0
+  0007  Push 1
+  000c  IAdd
+  000d  StoreSeatVar 0
+  0010  LoadLocal 0
+  0012  SeatRead destroyed
+  0014  JumpIfZero 0029
+  0019  LoadLocal 0
+  001b  LoadLocal 0
+  001d  LoadSeatVar 3
+  0020  Push 1
+  0025  IAdd
+  0026  StoreSeatVar 3
+  0029  End
+  ; rule 1 body
+  002a  LoadLocal 0
+  002c  LoadLocal 0
+  002e  LoadSeatVar 1
+  0031  Push 1
+  0036  IAdd
+  0037  StoreSeatVar 1
+  003a  End
+  ; rule 2 body
+  003b  LoadLocal 0
+  003d  LoadLocal 1
+  003f  StoreSeatVar 2
+  0042  End
+SRC  437 bytes

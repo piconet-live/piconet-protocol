@@ -57,7 +57,8 @@ class RulesSchema(unittest.TestCase):
 
     def test_a_new_rules_word_goes_in_the_free_room(self):
         free = rules.free_words(rules.load())
-        self.assertIn(104, free)
+        self.assertIn(108, free)
+        self.assertNotIn(104, free)   # the simulation's own generator (RACE_SIM_GENERATOR)
         self.assertIn(312, free)
         self.assertNotIn(308, free)
         self.assertNotIn(320, free)

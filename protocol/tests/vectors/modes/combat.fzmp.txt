@@ -1,0 +1,60 @@
+FZMP format 1 api 1, 1102 bytes, hash 2203baa642c5dda9a6f63ac4d6d07c17d7767f9e5ba3ce9ac4e684319a6213d2
+HEAD name "Combat" badge "" about "A vector of the combat words."
+PARM 0
+SETP 10
+  damage 2 (0x40000000)
+  knockback 3 (0x40400000)
+  wall_damage 0.5 (0x3f000000)
+  wall_bounce 10 (0x41200000)
+  spin_attacks off
+  side_attacks off
+  spin_immunity on
+  clock_limit 7200
+  time_bonus 10
+  points_table course 50 (: ) 25 100
+VARS globals 1, seat words 0
+  global 0 = 0
+RULE 1
+  0 "Live" event every step, locals 1, when 0000, while none, body 0012
+CODE 86 bytes
+  ; rule 0 when
+  0000  RaceRead started
+  0002  Dup
+  0003  JumpIfZero 0011
+  0008  Pop
+  0009  RaceRead steps
+  000b  Push 60
+  0010  IGe
+  0011  Ret
+  ; rule 0 body
+  0012  RaceRead damage
+  0014  RaceRead knockback
+  0016  FAdd
+  0017  RaceRead wall_damage
+  0019  FAdd
+  001a  RaceRead wall_bounce
+  001c  FAdd
+  001d  StoreGlobal 0
+  0020  Push 1065353216 (0x3f800000, real 1)
+  0025  Action race.damage
+  0027  RaceRead knockback
+  0029  Push 2
+  002e  IToF
+  002f  FMul
+  0030  Action race.knockback
+  0032  Push 1120272384 (0x42c60000, real 99)
+  0037  Action race.wall_damage
+  0039  Push 0
+  003e  Action race.wall_bounce
+  0040  Push 1
+  0045  Action race.spin_attacks
+  0047  RaceRead spin_attacks
+  0049  Action race.spin_attacks
+  004b  RaceRead side_attacks
+  004d  Not
+  004e  Action race.side_attacks
+  0050  RaceRead spin_immunity
+  0052  Not
+  0053  Action race.spin_immunity
+  0055  End
+SRC  795 bytes

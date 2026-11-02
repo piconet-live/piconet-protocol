@@ -1,0 +1,12 @@
+// A time trial: alone against the clock, the laps the player sets, no rewind. Nothing starts it yet: the launcher has no page for it.
+
+mode "Time trial" {
+  api 1;
+  about "Race alone for the best time.";
+}
+
+param lap_count "Laps" number 1..9 default 3;
+
+solo on;
+laps lap_count;
+pause on;

@@ -1,0 +1,20 @@
+// Every pair of seats, every step (30 x 30): the shape a slipstream or a haunting takes, at the step's worst. The
+// runner's measured cost of a step of it backs the budget (modes.toml [api] budget). Not a mode to play.
+
+mode "Pairs" {
+  api 1;
+  about "Every pair of seats, every step.";
+}
+
+global int near;
+
+rule "Pairs" {
+  event every step;
+  do {
+    for each a in seats {
+      for each b in seats {
+        if (a.distance - b.distance < 10.0 and b.distance - a.distance < 10.0) { near = near + 1; }
+      }
+    }
+  }
+}

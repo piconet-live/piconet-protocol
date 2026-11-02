@@ -1,0 +1,11 @@
+// The on/off setup words with a switch parameter for a value, and a results title with a space: what the game reads.
+mode "Switches" { api 1; about "On and off by parameter."; }
+param low  "Low"  switch default off;
+param high "High" switch default on;
+
+boost low;
+contact low;
+restore high;
+cpus high;
+mine_regen high;
+results_title "A B";

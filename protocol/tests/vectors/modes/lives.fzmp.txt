@@ -1,0 +1,87 @@
+FZMP format 1 api 1, 705 bytes, hash 3f5ef5a286ef72185da0f5a6bca496047c43c6a19b342f1ac345050868b538d7
+HEAD name "Lives test" badge "LIVES" about "Three lives each. The last wreck is final."
+PARM 0
+SETP 2
+  laps 2
+  cpus on
+VARS globals 0, seat words 1
+  seat 0 = 0
+RULE 5
+  0 "lives 3" event game_start, locals 1, when none, while none, body 0000
+  1 "lives 3" event destroyed, locals 1, when none, while none, body 0048
+  2 "lives 3" event each seat, locals 1, when 0069, while none, body 0080
+  3 "lives 3" event out, locals 1, when none, while none, body 0085
+  4 "lives 3" event each seat, locals 1, when none, while none, body 0090
+CODE 177 bytes
+  ; rule 0 body
+  0000  Push 0
+  0005  StoreLocal 0
+  0007  LoadLocal 0
+  0009  RaceRead seats
+  000b  ILt
+  000c  JumpIfZero 0047
+  0011  LoadLocal 0
+  0013  Push 3
+  0018  StoreSeatVar 0
+  001b  LoadLocal 0
+  001d  Push 3
+  0022  Action show_number
+  0024  Push 3
+  0029  Push 1
+  002e  IGt
+  002f  JumpIfZero 0038
+  0034  LoadLocal 0
+  0036  Action respawns
+  0038  LoadLocal 0
+  003a  Push 1
+  003f  IAdd
+  0040  StoreLocal 0
+  0042  Jump 0007
+  0047  End
+  ; rule 1 body
+  0048  LoadLocal 0
+  004a  LoadSeatVar 0
+  004d  Push 0
+  0052  IGt
+  0053  JumpIfZero 0068
+  0058  LoadLocal 0
+  005a  LoadLocal 0
+  005c  LoadSeatVar 0
+  005f  Push 1
+  0064  ISub
+  0065  StoreSeatVar 0
+  0068  End
+  ; rule 2 when
+  0069  LoadLocal 0
+  006b  SeatRead restoring
+  006d  Dup
+  006e  JumpIfZero 007f
+  0073  Pop
+  0074  LoadLocal 0
+  0076  LoadSeatVar 0
+  0079  Push 1
+  007e  ILe
+  007f  Ret
+  ; rule 2 body
+  0080  LoadLocal 0
+  0082  Action respawns off
+  0084  End
+  ; rule 3 body
+  0085  LoadLocal 0
+  0087  Push 0
+  008c  StoreSeatVar 0
+  008f  End
+  ; rule 4 body
+  0090  LoadLocal 0
+  0092  SeatRead racing
+  0094  JumpIfZero 00a7
+  0099  LoadLocal 0
+  009b  LoadLocal 0
+  009d  LoadSeatVar 0
+  00a0  Action show_number
+  00a2  Jump 00b0
+  00a7  LoadLocal 0
+  00a9  Push -1
+  00ae  Action show_number
+  00b0  End
+SRC  248 bytes
