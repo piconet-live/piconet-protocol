@@ -59,3 +59,15 @@ rule "The owner's words of 2026-10-31" {
     s.ghost_sound = off;
   }
 }
+
+rule "The story parts' values" {
+  event lap(s);
+  do {
+    show_distance s, s.lap_length - s.lap_distance;
+    show s, DISTANCE;
+    show_objects s, s.lap, 5;
+    show s, OBJECTS;
+    show_distance s off;
+    show_objects s off;
+  }
+}

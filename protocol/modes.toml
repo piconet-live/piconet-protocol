@@ -1753,8 +1753,8 @@ doc = "everyone races on the modern HUD; without it each player chooses Classic 
 name = "part"
 values = ["TIMER", "DISTANCE", "DIGIT", "WARNING", "SUCCESS", "FAILED", "TIME_OVER", "SPEED_GAUGE", "OBJECTS", "LEADER_GAP", "GHOST_GAP", "RANK", "LAPS", "SPEED", "ENERGY", "LAP_TIMES", "RACE_TIME", "FACES"]
 doc = """a part of the game's own race HUD: TIMER the timed mode's clock (clock_limit's time, R+0xA4: seconds, 0 to \
-999); DISTANCE the metres to the finish (the seat's own); DIGIT the story's big digit (danger_zone's seconds, 3 2 1); \
-WARNING, SUCCESS, FAILED, TIME_OVER, SPEED_GAUGE, OBJECTS the story's pictures, off until shown; LEADER_GAP the game's own time gap to the leader, off until shown: at each lap line, for a second, the seat's time behind the leader, and the leader's own lead when second place crosses; GHOST_GAP Time Attack's live gap, off until shown: signed minutes, seconds and thousandths at the right edge (617, 270), all race, against the seat furthest ahead, red while it is ahead, blue while you are; RANK, LAPS, SPEED, ENERGY, \
+999); DISTANCE the metres to the finish (the seat's own; show_distance gives a mode's); DIGIT the story's big digit (danger_zone's seconds, 3 2 1); \
+WARNING, SUCCESS, FAILED, TIME_OVER, SPEED_GAUGE, OBJECTS the story's pictures, off until shown (SUCCESS MISSION CLEAR!, FAILED MISSION FAILED, TIME_OVER "Time is up...": fixed pictures with no value; OBJECTS the course objects' count n/of, show_objects gives a mode's); LEADER_GAP the game's own time gap to the leader, off until shown: at each lap line, for a second, the seat's time behind the leader, and the leader's own lead when second place crosses; GHOST_GAP Time Attack's live gap, off until shown: signed minutes, seconds and thousandths at the right edge (617, 270), all race, against the seat furthest ahead, red while it is ahead, blue while you are; RANK, LAPS, SPEED, ENERGY, \
 LAP_TIMES, RACE_TIME, FACES the standard HUD (the mask .data 0x3D544; FACES the board fn_1_D27B8), on until hidden"""
 
 [[choice]]
@@ -2173,3 +2173,35 @@ id = 74
 args = ["seat"]
 where = """the mode point: what fn_1_250F8 ends with (flag 0x10000, no finish bonus), with the seat's finish time the race's time now; the next step's fn_1_32A40 books the finish as a line crossing's: countdown 480, the CPU drives, FINISH! and the seat's place. A seat placed by the mode keeps that place in its results record"""
 doc = "the seat finishes here and now, as if it had crossed the line: FINISH! and its place, the CPU takes over its machine. Never a finished or out seat"
+
+# --- the story parts' values (experiments X3, X7; 2026-11-02): a mode's numbers in the game's own DISTANCE and OBJECTS,
+# as show_clock feeds TIMER. The value is held in the block (the slots page's tail, the runner's mode_hud.h STORY); the
+# part itself is still shown with `show s, DISTANCE` / `show s, OBJECTS`. Left out, the parts draw the game's values.
+
+[[action]]
+name = "show_distance"
+id = 75
+args = ["seat", "real"]
+where = """the block's story record for the seat; the HUD pass points the DISTANCE drawer's source (fn_1_CDC8C 0xCE858, .bss 0x84 +8 and +0xC, the P and R it reads) at two stand-in records in the window that give back the value (laps 1, lap length the value, distance 0), for the racer the picture follows. Drawing only: nothing a step reads"""
+doc = "the metres DISTANCE shows for the seat, from now on in place of the game's metres to the finish; whole metres, 0 to 99999 (the drawer's five digits), red under 1000 as the game's. Shown with `show s, DISTANCE`"
+
+[[action]]
+name = "show_distance off"
+id = 76
+args = ["seat"]
+where = "the block's story record for the seat"
+doc = "DISTANCE shows the game's metres again"
+
+[[action]]
+name = "show_objects"
+id = 77
+args = ["seat", "int", "int"]
+where = """the block's story record for the seat; the image's sites at fn_1_CDC8C 0xCDD7C and 0xCDD88 (the OBJECTS drawer's two counts, `bl fn_1_E5430` and `bl fn_1_E5568`, the course objects' table .bss 0x7AE88) give the window's two numbers in their place, for the racer the picture follows. Drawing only: nothing a step reads"""
+doc = "`show_objects s, n, of`: OBJECTS reads n/of for the seat, from now on in place of the course's objects; each 0 to 99 (two digits). Shown with `show s, OBJECTS`"
+
+[[action]]
+name = "show_objects off"
+id = 78
+args = ["seat"]
+where = "the block's story record for the seat"
+doc = "OBJECTS shows the course's own count again"

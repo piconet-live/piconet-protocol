@@ -648,6 +648,14 @@ public enum ModeAction : byte
     HudClear = 73,
     /// <summary><c>finish_seat</c></summary>
     FinishSeat = 74,
+    /// <summary><c>show_distance</c></summary>
+    ShowDistance = 75,
+    /// <summary><c>show_distance off</c></summary>
+    ShowDistanceOff = 76,
+    /// <summary><c>show_objects</c></summary>
+    ShowObjects = 77,
+    /// <summary><c>show_objects off</c></summary>
+    ShowObjectsOff = 78,
 }
 
 /// <summary>The vocabulary of one api, by the names a mode file writes (protocol/modes.toml).</summary>
@@ -1056,6 +1064,10 @@ public static partial class ModeWords
         ("show_gap", ModeAction.ShowGap, [ModeType.Seat, ModeType.Int, ModeType.Int, ModeType.Int]),
         ("hud_clear", ModeAction.HudClear, [ModeType.Seat, ModeType.Int]),
         ("finish_seat", ModeAction.FinishSeat, [ModeType.Seat]),
+        ("show_distance", ModeAction.ShowDistance, [ModeType.Seat, ModeType.Real]),
+        ("show_distance off", ModeAction.ShowDistanceOff, [ModeType.Seat]),
+        ("show_objects", ModeAction.ShowObjects, [ModeType.Seat, ModeType.Int, ModeType.Int]),
+        ("show_objects off", ModeAction.ShowObjectsOff, [ModeType.Seat]),
     ];
 
     /// <summary>The actions that need a running step, which game_start refuses.</summary>

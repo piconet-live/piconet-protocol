@@ -1,17 +1,18 @@
-FZMP format 1 api 1, 1707 bytes, hash ec53ee3f9975b6ce6e9654d650b4b2b848fb3fde513940325bedebd7c93b2627
+FZMP format 1 api 1, 2038 bytes, hash 1f4e0f2310726eb26ec7f731265f6798b2ea503d6000c093b1a8526e87046281
 HEAD name "Displays" badge "" about "Every display word of api 1."
 PARM 0
 SETP 1
   tag_texts "OUT"
 VARS globals 0, seat words 1
   seat 0 = 3
-RULE 5
+RULE 6
   0 "Parts" event every step, locals 1, when 0000, while none, body 0003
   1 "The number" event each seat, locals 1, when none, while none, body 003f
   2 "Looks" event each seat, locals 1, when 004f, while none, body 0060
   3 "Out of sight" event out, locals 1, when none, while none, body 007c
   4 "The owner's words of 2026-10-31" event finish, locals 1, when none, while none, body 00b7
-CODE 233 bytes
+  5 "The story parts' values" event lap, locals 1, when none, while none, body 00e9
+CODE 286 bytes
   ; rule 0 when
   0000  RaceRead started
   0002  Ret
@@ -108,4 +109,28 @@ CODE 233 bytes
   00e1  Push 0
   00e6  Action seat.ghost_sound
   00e8  End
-SRC  1184 bytes
+  ; rule 5 body
+  00e9  LoadLocal 0
+  00eb  LoadLocal 0
+  00ed  SeatRead lap_length
+  00ef  LoadLocal 0
+  00f1  SeatRead lap_distance
+  00f3  FSub
+  00f4  Action show_distance
+  00f6  LoadLocal 0
+  00f8  Push 1
+  00fd  Action show
+  00ff  LoadLocal 0
+  0101  LoadLocal 0
+  0103  SeatRead lap
+  0105  Push 5
+  010a  Action show_objects
+  010c  LoadLocal 0
+  010e  Push 8
+  0113  Action show
+  0115  LoadLocal 0
+  0117  Action show_distance off
+  0119  LoadLocal 0
+  011b  Action show_objects off
+  011d  End
+SRC  1421 bytes

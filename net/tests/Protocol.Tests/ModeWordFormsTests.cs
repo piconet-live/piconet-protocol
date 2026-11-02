@@ -351,6 +351,8 @@ public sealed class ModeWordFormsTests
     [InlineData("rule \"R\" { event each seat; do { show_number seat off; } }")]
     [InlineData("rule \"R\" { event race_start; do { int a = race.humans_left; int b = race.human_finished; } }")]
     [InlineData("rule \"R\" { event each seat; do { show seat, GHOST_GAP; seat.ghost_tint = 0x80FF80FF; seat.ghost_sound = on; } }")]
+    [InlineData("rule \"R\" { event each seat; do { show_distance seat, 1234.5; show seat, DISTANCE; show_distance seat off; } }")]
+    [InlineData("rule \"R\" { event each seat; do { show_objects seat, 3, 5; show seat, OBJECTS; show_objects seat off; } }")]
     public void TheWordsPromisedAreBuilt(string body)
     {
         Assert.Empty(Compile(body).Errors);
