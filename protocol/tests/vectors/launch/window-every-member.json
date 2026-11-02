@@ -18,6 +18,7 @@
   "auroraEdges": 4,
   "auroraTextures": 16,
   "auroraColourblind": "deuteranopia",
+  "auroraHighRefresh": 240,
   "rumble": false,
   "present": "field",
   "verticalSync": true,

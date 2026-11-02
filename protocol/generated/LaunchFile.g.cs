@@ -16,6 +16,8 @@ public static class LaunchFormat
     public const int AuroraEdgesLow = 1, AuroraEdgesHigh = 4;
     /// <summary>The range of "auroraTextures" the game's reader takes.</summary>
     public const int AuroraTexturesLow = 1, AuroraTexturesHigh = 16;
+    /// <summary>The range of "auroraHighRefresh" the game's reader takes.</summary>
+    public const int AuroraHighRefreshLow = 120, AuroraHighRefreshHigh = 480;
     /// <summary>The range of "camera" the game's reader takes.</summary>
     public const int MatchCameraLow = 1, MatchCameraHigh = 4;
     /// <summary>The range of "width" the game's reader takes.</summary>
@@ -33,7 +35,7 @@ public static class LaunchFormat
 }
 
 /// <summary>The launch file's part File: the launch file: every setting of one start of the game.
-/// The launcher writes "about", "bundle", "widescreen", "trueWidescreen", "lanes", "controllerSetup", "match", "replay", "windowName", "windowNamePicture", "showFrameRate", "showInputs", "modernHud", "hudLayout", "hudMeter", "renderer", "auroraSize", "auroraEdges", "auroraTextures", "auroraColourblind", "rumble", "present", "verticalSync", "fullScreen", "refreshRate", "taskbar", "board", "debug".</summary>
+/// The launcher writes "about", "bundle", "widescreen", "trueWidescreen", "lanes", "controllerSetup", "match", "replay", "windowName", "windowNamePicture", "showFrameRate", "showInputs", "modernHud", "hudLayout", "hudMeter", "renderer", "auroraSize", "auroraEdges", "auroraTextures", "auroraColourblind", "auroraHighRefresh", "rumble", "present", "verticalSync", "fullScreen", "refreshRate", "taskbar", "board", "debug".</summary>
 public sealed record LaunchFile(
     string About,
     string? Bundle = null,
@@ -54,6 +56,7 @@ public sealed record LaunchFile(
     int AuroraEdges = 0,
     int AuroraTextures = 0,
     string? AuroraColourblind = null,
+    int AuroraHighRefresh = 0,
     bool Rumble = true,
     string? Present = null,
     bool VerticalSync = false,
@@ -140,6 +143,10 @@ public sealed record LaunchFile(
         if (AuroraColourblind is { } auroraColourblind)
         {
             o["auroraColourblind"] = auroraColourblind;
+        }
+        if (AuroraHighRefresh > 0)
+        {
+            o["auroraHighRefresh"] = AuroraHighRefresh;
         }
         if (!Rumble)
         {
