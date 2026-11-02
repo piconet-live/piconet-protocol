@@ -2183,7 +2183,7 @@ name = "show_distance"
 id = 75
 args = ["seat", "real"]
 where = """the block's story record for the seat; the HUD pass points the DISTANCE drawer's source (fn_1_CDC8C 0xCE858, .bss 0x84 +8 and +0xC, the P and R it reads) at two stand-in records in the window that give back the value (laps 1, lap length the value, distance 0), for the racer the picture follows. Drawing only: nothing a step reads"""
-doc = "the metres DISTANCE shows for the seat, from now on in place of the game's metres to the finish; whole metres, 0 to 99999 (the drawer's five digits), red under 1000 as the game's. Shown with `show s, DISTANCE`"
+doc = "the metres DISTANCE shows for the seat, from now on in place of the game's metres to the finish; whole metres, 0 to 99999 (the drawer's five digits); under 1000 drawn large in the middle, as the game's own last 1000 m. Shown with `show s, DISTANCE`"
 
 [[action]]
 name = "show_distance off"
