@@ -185,6 +185,7 @@ member = [
     { key = "auroraShots", type = "wholes", to = "aurora_shots", low = 1, high = 4294967295, least = 1, most = 32 },
     { key = "auroraScale", type = "whole", to = "aurora_scale", low = 1, high = 8, doc = "Aurora's render scale; left out: the window's own pixels with the video off, the emulator's internal resolution with it on" },
     { key = "auroraLog", type = "text", to = "aurora_log" },
+    { key = "classicHudLayout", type = "text", to = "classic_hud_layout", doc = "a layout file that moves, turns and mirrors the parts of the game's own race HUD (the runner's hud_move.h); left out: the game's HUD as it is" },
 ]
 
 [[part]]
