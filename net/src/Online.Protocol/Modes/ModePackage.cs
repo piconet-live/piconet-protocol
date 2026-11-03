@@ -537,7 +537,7 @@ public sealed class ModePackage
         {
             var id = s.U8();
             var word = ModeWords.Setups.FirstOrDefault(w => (int)w.Id == id);
-            if (word.Name is null)
+            if (word.Name is null || ModeWords.HeldSetups.Contains(word.Id))
             {
                 throw new InvalidDataException($"setup word {id} is not of api {ModeWords.Api}");
             }

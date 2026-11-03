@@ -1,0 +1,55 @@
+FZMP format 1 api 1, 771 bytes, hash 9072d7c1cef351302a44c70de868329c327189e43652ac2855e0ad6f10fd5669
+HEAD name "Gap reads" badge "" about "The gap reads."
+PARM 0
+SETP 1
+  time_gaps
+VARS globals 0, seat words 1
+  seat 0 = 0
+RULE 1
+  0 "Gaps" event every step, locals 1, when none, while 0000, body 0003
+CODE 110 bytes
+  ; rule 0 while
+  0000  RaceRead started
+  0002  Ret
+  ; rule 0 body
+  0003  Push 0
+  0008  StoreLocal 0
+  000a  LoadLocal 0
+  000c  RaceRead seats
+  000e  ILt
+  000f  JumpIfZero 006d
+  0014  LoadLocal 0
+  0016  SeatRead racing
+  0018  JumpIfZero 005e
+  001d  LoadLocal 0
+  001f  SeatRead gap_ahead
+  0021  Push 300
+  0026  IGt
+  0027  Dup
+  0028  JumpIfNotZero 0038
+  002d  Pop
+  002e  LoadLocal 0
+  0030  SeatRead gap_behind
+  0032  Push 300
+  0037  IGt
+  0038  Dup
+  0039  JumpIfNotZero 0049
+  003e  Pop
+  003f  LoadLocal 0
+  0041  SeatRead gap_leader
+  0043  Push 3000
+  0048  IGt
+  0049  JumpIfZero 005e
+  004e  LoadLocal 0
+  0050  LoadLocal 0
+  0052  LoadSeatVar 0
+  0055  Push 1
+  005a  IAdd
+  005b  StoreSeatVar 0
+  005e  LoadLocal 0
+  0060  Push 1
+  0065  IAdd
+  0066  StoreLocal 0
+  0068  Jump 000a
+  006d  End
+SRC  530 bytes

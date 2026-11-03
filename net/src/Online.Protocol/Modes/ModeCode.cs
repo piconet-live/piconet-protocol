@@ -101,7 +101,7 @@ internal static class ModeCode
             {
                 throw new InvalidDataException($"{i.Op} at {i.Offset} names {i.Operands[0]}, past its table's {most}");
             }
-            if (i.Op == ModeOp.Action && ModeWords.Actions.All(a => (long)a.Id != i.Operands[0]))
+            if (i.Op == ModeOp.Action && ModeWords.Actions.All(a => (long)a.Id != i.Operands[0] || ModeWords.HeldActions.Contains(a.Id)))
             {
                 throw new InvalidDataException($"{i.Op} at {i.Offset} names {i.Operands[0]}, a word no longer of the table");
             }

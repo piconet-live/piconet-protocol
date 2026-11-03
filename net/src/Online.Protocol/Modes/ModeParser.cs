@@ -148,6 +148,9 @@ internal sealed class ModeParser
 
     private ModeCompileException Error(string message) => new(Current.Line, message);
 
+    /// <summary>A word modes.toml holds out of this api (<c>held</c>): its id is kept for a later one.</summary>
+    private static string NotInThisVersion(string word) => $"{word} is not in this version of the mode language (api {ModeWords.Api})";
+
     private static string Describe(ModeToken token) =>
         token.Kind == ModeTokenKind.End ? token.Text
         : token.Kind == ModeTokenKind.Text ? $"the string \"{token.Text}\""
@@ -576,6 +579,10 @@ internal sealed class ModeParser
         {
             throw Error($"'{Current.Text}' is not a word of api {ModeWords.Api}");
         }
+        if (ModeWords.HeldSetups.Contains(ModeWords.Setups.Single(s => s.Name == word).Id))
+        {
+            throw Error(NotInThisVersion(word));
+        }
         _at += parts.Length;
         if (ModeWords.Setups.Single(s => s.Name == word).Id == ModeSetup.LapsByCourse)
         {
@@ -906,6 +913,10 @@ internal sealed class ModeParser
         if (!ModeWords.Actions.Any(a => a.Name == name))
         {
             throw Error($"'{name}' is not an action of api {ModeWords.Api}");
+        }
+        if (ModeWords.HeldActions.Contains(ModeWords.Actions.First(a => a.Name == name).Id))
+        {
+            throw new ModeCompileException(token.Line, NotInThisVersion(name));
         }
         // a word between the first two arguments in place of the comma (map_hide s from seats)
         var join = ModeWords.ActionJoins.GetValueOrDefault(ModeWords.Actions.First(a => a.Name == name).Id);

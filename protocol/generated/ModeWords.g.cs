@@ -1099,6 +1099,25 @@ public static partial class ModeWords
             ModeAction.ShowGap,
         };
 
+    /// <summary>The setup words held out of this api (modes.toml's <c>held</c>): refused, their ids kept for a later api.</summary>
+    public static readonly IReadOnlySet<ModeSetup> HeldSetups =
+        new HashSet<ModeSetup>
+        {
+            ModeSetup.HudModern,
+            ModeSetup.HudTexts,
+        };
+
+    /// <summary>The actions held out of this api (modes.toml's <c>held</c>): refused, their ids kept for a later api.</summary>
+    public static readonly IReadOnlySet<ModeAction> HeldActions =
+        new HashSet<ModeAction>
+        {
+            ModeAction.ShowBar,
+            ModeAction.ShowFigure,
+            ModeAction.ShowText,
+            ModeAction.ShowGap,
+            ModeAction.HudClear,
+        };
+
     /// <summary>A choice's limit by its value's place, for the choices that have them (a slot's characters).</summary>
     public static readonly IReadOnlyDictionary<string, IReadOnlyList<int>> ChoiceLimits =
         new Dictionary<string, IReadOnlyList<int>>

@@ -26,7 +26,6 @@ public sealed class ModeWordFormsTests
     [InlineData("boost_start off;")]
     [InlineData("teams 2..4;")]
     [InlineData("customs off;")]
-    [InlineData("hud modern;")]
     [InlineData("contact off;")]
     [InlineData("restore on;")]
     [InlineData("finish_limit 90;")]

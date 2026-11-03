@@ -261,7 +261,7 @@ private static string? CompilersOwn(ModeSetup id, string name) => id switch
 {
     ModeSetup.TagTexts => "tag_texts is the compiler's own: a rule writes tag s, \"TEXT\"; and the text is kept",
     ModeSetup.StatsPage => "stats_page is the compiler's own: a rule writes the stat, and the page is kept",
-    ModeSetup.HudTexts or ModeSetup.TimeGaps => $"{name} is the compiler's own: show_text, show_gap and the gap reads set it",
+    ModeSetup.TimeGaps => "time_gaps is the compiler's own: the gap reads set it",
     _ => null,
 };
 
