@@ -25,7 +25,7 @@ inline constexpr std::uint32_t DEBUG_TEST_LAG_MS_LOW = 0u, DEBUG_TEST_LAG_MS_HIG
 // File: the launch file: every setting of one start of the game. Takes about, bundle, board, widescreen,
 // trueWidescreen, windowName, showFrameRate, showInputs, modernHud, hudLayout, hudMeter, renderer, auroraSize,
 // auroraEdges, auroraTextures, auroraColourblind, auroraHighRefresh, rumble, present, refreshRate, verticalSync,
-// fullScreen, controllerSetup; by hand: windowNamePicture, taskbar, lanes, match, replay, debug.
+// fullScreen, controllerSetup; by hand: windowNamePicture, taskbar, lanes, match, replay, overlay, debug.
 template <typename P, typename T>
 void ReadFile([[maybe_unused]] P& p, [[maybe_unused]] T* t)
 {
@@ -54,6 +54,19 @@ void ReadFile([[maybe_unused]] P& p, [[maybe_unused]] T* t)
   p.Flag("verticalSync", &t->vertical_sync);
   p.OneOf("fullScreen", &t->full_screen, {"borderless", "exclusive"});
   p.Flag("controllerSetup", &t->controller_setup);
+}
+
+// OverlayEntry ("overlay"): one file of a mod pack, read in place of the disc's: the runner refuses the files it never
+// takes from a mod, and in any start but the offline game the race files too. Takes disc, from.
+template <typename P, typename T>
+void ReadOverlayEntry([[maybe_unused]] P& p, [[maybe_unused]] T* t)
+{
+  p.Words("disc", &t->disc);
+  if (!p.Has("disc"))
+    p.Refuse("disc", "is missing: the file's path on the disc, under files/, with '/' (stage/st05.tpl.lz)");
+  p.Words("from", &t->from);
+  if (!p.Has("from"))
+    p.Refuse("from", "is missing: the replacement file's whole path");
 }
 
 // Match ("match"): a race: the match file the launcher wrote, with where the race is recorded. Takes relayHost, delay,

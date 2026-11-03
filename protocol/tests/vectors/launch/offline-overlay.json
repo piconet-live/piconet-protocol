@@ -1,0 +1,15 @@
+{
+  "about": "Piconet Launcher: offline play",
+  "bundle": "C:\\game\\fzgx",
+  "lanes": 0,
+  "overlay": [
+    {
+      "disc": "stage/st05.tpl.lz",
+      "from": "C:\\mods\\luminous\\stage\\st05.tpl.lz"
+    },
+    {
+      "disc": "game/cardata.lz",
+      "from": "C:\\mods\\stats\\game\\cardata.lz"
+    }
+  ]
+}

@@ -14,10 +14,10 @@ LAUNCH_KEYS = {"name", "max_bytes"}
 PART_KEYS = {"name", "under", "key", "cs", "cs_base", "cs_order", "doc", "member"}
 MEMBER_KEYS = {"key", "type", "to", "hand", "low", "high", "values", "least", "most", "may_be_empty", "most_bytes",
                "missing", "cs", "doc"}
-TYPES = {"bool", "whole", "number", "text", "one_of", "wholes", "object"}
+TYPES = {"bool", "whole", "number", "text", "one_of", "wholes", "object", "objects"}
 CS_KEYS = {"name", "write", "value"}
 # what each `write` takes: the member types it is for
-WRITES = {"always": {"whole"}, "required": {"whole", "text", "one_of"}, "set": {"bool", "text", "one_of", "object"},
+WRITES = {"always": {"whole"}, "required": {"whole", "text", "one_of"}, "set": {"bool", "text", "one_of", "object", "objects"},
           "true": {"bool"}, "false": {"bool"}, "positive": {"whole"}}
 IDENTIFIER = re.compile(r"[A-Z][A-Za-z0-9]*\Z")
 KEY = re.compile(r"[a-z][A-Za-z0-9]*\Z")
@@ -39,7 +39,7 @@ class Member:
             fail("a key is camelCase letters and digits")
         if self.type not in TYPES:
             fail(f"type {self.type!r} is none of {sorted(TYPES)}")
-        self.hand = raw.get("hand", False) is True or self.type == "object"
+        self.hand = raw.get("hand", False) is True or self.type in ("object", "objects")
         self.to = raw.get("to")
         if self.hand != (self.to is None) or (self.to is not None and not CXX_MEMBER.match(self.to)):
             fail("a member the generated reader takes has `to` (a C++ member, snake_case), one taken by hand none")
@@ -140,9 +140,13 @@ def load(path=SCHEMA):
         if parent is None or part.key is None:
             raise SchemaError(f"part {part.name}: `under` a part and its `key` there")
         member = next((m for m in parent.members if m.key == part.key), None)
-        if member is None or member.type != "object":
-            raise SchemaError(f"part {part.name}: {part.under} has no object {part.key}")
+        if member is None or member.type not in ("object", "objects"):
+            raise SchemaError(f"part {part.name}: {part.under} has no object or list of objects {part.key}")
         member.part = part
         if (member.cs is None) != (part.cs is None):
             raise SchemaError(f"part {part.name}: written by the launcher where its member in {part.under} is")
+    for part in parts:
+        for m in part.members:
+            if m.type == "objects" and m.part is None:
+                raise SchemaError(f"part {part.name}, member {m.key}: a list of objects has its part (`under` {part.name})")
     return {"launch": launch, "codec": codec, "parts": parts}
