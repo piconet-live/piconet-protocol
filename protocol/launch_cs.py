@@ -32,6 +32,8 @@ def constants(s):
 def member_type(m):
     if m.type == "object":
         return m.part.cs + "?"
+    if m.type == "objects":
+        return f"IReadOnlyList<{m.part.cs}>?"
     w = m.cs["write"]
     return TYPES[m.type] + ("?" if w == "set" else "")
 
@@ -54,6 +56,11 @@ def write(m):
     if w == "positive":
         return [f"        if ({name} > 0)", "        {", f"            o[{k}] = {name};", "        }"]
     given = name[0].lower() + name[1:]
+    if m.type == "objects":
+        # an empty list is written as none: the file reads as it did before the key
+        return [f"        if ({name} is {{ Count: > 0 }} {given})", "        {", "            var list = new JsonArray();",
+                f"            foreach (var one in {given})", "            {", "                list.Add(one.ToJson());", "            }",
+                f"            o[{k}] = list;", "        }"]
     value = f"{given}.ToJson()" if m.type == "object" else given
     return [f"        if ({name} is {{ }} {given})", "        {", f"            o[{k}] = {value};", "        }"]
 
@@ -78,7 +85,7 @@ def record(part):
 
 
 def emit(s):
-    out = [GENERATED, "#nullable enable", "", "using System.Text.Json.Nodes;", "",
+    out = [GENERATED, "#nullable enable", "", "using System.Collections.Generic;", "using System.Text.Json.Nodes;", "",
            f"namespace {s['codec']['csharp']['namespace']};"]
     out += constants(s)
     for part in s["parts"]:

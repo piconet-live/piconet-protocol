@@ -10,8 +10,9 @@
 #
 # A member's `type`: bool, whole (a whole number from `low` to `high`), number (any number from `low` to `high`),
 # text (`may_be_empty` true when "" is a value; `most_bytes`: the longest, a constant the reader's own check uses),
-# one_of (a text of `values`), wholes (a list of `least` to `most` whole numbers, each from `low` to `high`), or
-# object (another part, or an object the reader takes by hand). `to` is the member of the C++ reader's target the
+# one_of (a text of `values`), wholes (a list of `least` to `most` whole numbers, each from `low` to `high`),
+# object (another part, or an object the reader takes by hand), or objects (a list of a part's objects, taken by hand,
+# each by the part's generated reader). `to` is the member of the C++ reader's target the
 # value goes to (fzgx::Options, fzgx::Debug or a part's own struct). `hand` true: the reader takes the member itself
 # (files_launch.cpp, files_launch_debug.cpp: a value of its own form, or parsed further); an object is always taken
 # by hand, its part's members by the generated reader. `missing`: why a file without the member is refused. `doc`:
@@ -43,7 +44,7 @@ cs = "LaunchFile"
 doc = "the launch file: every setting of one start of the game"
 cs_order = ["about", "bundle", "widescreen", "trueWidescreen", "lanes", "controllerSetup", "match", "replay",
             "windowName", "windowNamePicture", "showFrameRate", "showInputs", "modernHud", "hudLayout", "hudMeter", "renderer", "auroraSize", "auroraEdges", "auroraTextures", "auroraColourblind", "rumble", "present", "verticalSync", "fullScreen",
-            "refreshRate", "taskbar", "board", "debug"]
+            "refreshRate", "taskbar", "board", "overlay", "debug"]
 member = [
     { key = "about", type = "text", to = "about", missing = "a line that says what this start is for", cs = { name = "About", write = "required" } },
     { key = "bundle", type = "text", to = "bundle_dir", cs = { name = "Bundle", write = "set" } },
@@ -72,7 +73,19 @@ member = [
     { key = "lanes", type = "whole", hand = true, low = 0, high = 0, cs = { write = "always", value = 0 }, doc = "0 only: the multicore physics is parked on branch parked/lanes (ReadLanesOff)" },
     { key = "match", type = "object", cs = { name = "Match", write = "set" } },
     { key = "replay", type = "object", cs = { name = "Replay", write = "set" } },
+    { key = "overlay", type = "objects", cs = { name = "Overlay", write = "set" }, doc = "a mod pack's files over the disc's, in order (a later entry for a disc path wins); left out or empty: the disc as it is" },
     { key = "debug", type = "object", cs = { name = "Debug", write = "set" } },
+]
+
+[[part]]
+name = "OverlayEntry"
+under = "File"
+key = "overlay"
+cs = "LaunchOverlayEntry"
+doc = "one file of a mod pack, read in place of the disc's: the runner refuses the files it never takes from a mod, and in any start but the offline game the race files too"
+member = [
+    { key = "disc", type = "text", to = "disc", missing = "the file's path on the disc, under files/, with '/' (stage/st05.tpl.lz)", cs = { name = "Disc", write = "required" } },
+    { key = "from", type = "text", to = "from", missing = "the replacement file's whole path", cs = { name = "From", write = "required" } },
 ]
 
 [[part]]
