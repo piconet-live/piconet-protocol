@@ -195,11 +195,12 @@ public sealed record LaunchFile(
     }
 }
 
-/// <summary>The launch file's part OverlayEntry ("overlay"): one file of a mod pack, read in place of the disc's: the runner refuses the files it never takes from a mod, and in any start but the offline game the race files too.
-/// The launcher writes "disc", "from".</summary>
+/// <summary>The launch file's part OverlayEntry ("overlay"): one file of a mod pack, read in place of the disc's: the runner refuses the files it never takes from a mod, and in any start but the offline game a race file whose race fields the launcher did not find equal to the disc's.
+/// The launcher writes "disc", "from", "raceSame".</summary>
 public sealed record LaunchOverlayEntry(
     string Disc,
-    string From)
+    string From,
+    bool RaceSame = false)
 {
     /// <summary>The part as JSON, its members in the file's order.</summary>
     public JsonObject ToJson()
@@ -207,6 +208,10 @@ public sealed record LaunchOverlayEntry(
         var o = new JsonObject();
         o["disc"] = Disc;
         o["from"] = From;
+        if (RaceSame)
+        {
+            o["raceSame"] = true;
+        }
         return o;
     }
 }

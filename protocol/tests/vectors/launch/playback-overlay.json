@@ -11,6 +11,11 @@
     {
       "disc": "bg/bg_tow.tpl.lz",
       "from": "C:\\mods\\luminous\\bg\\bg_tow.tpl.lz"
+    },
+    {
+      "disc": "stage/COLI_COURSE05.lz",
+      "from": "C:\\mods\\tron\\stage\\COLI_COURSE05.lz",
+      "raceSame": true
     }
   ]
 }
