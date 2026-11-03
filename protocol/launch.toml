@@ -82,10 +82,11 @@ name = "OverlayEntry"
 under = "File"
 key = "overlay"
 cs = "LaunchOverlayEntry"
-doc = "one file of a mod pack, read in place of the disc's: the runner refuses the files it never takes from a mod, and in any start but the offline game the race files too"
+doc = "one file of a mod pack, read in place of the disc's: the runner refuses the files it never takes from a mod, and in any start but the offline game a race file whose race fields the launcher did not find equal to the disc's"
 member = [
     { key = "disc", type = "text", to = "disc", missing = "the file's path on the disc, under files/, with '/' (stage/st05.tpl.lz)", cs = { name = "Disc", write = "required" } },
     { key = "from", type = "text", to = "from", missing = "the replacement file's whole path", cs = { name = "From", write = "required" } },
+    { key = "raceSame", type = "bool", to = "race_same", cs = { name = "RaceSame", write = "true" }, doc = "the launcher compared the file's race fields with the disc's and found them equal: a race file (car data, a course) is then taken online too" },
 ]
 
 [[part]]

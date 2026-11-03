@@ -55,7 +55,8 @@ void ReadFile([[maybe_unused]] P& p, [[maybe_unused]] T* t)
 }
 
 // OverlayEntry ("overlay"): one file of a mod pack, read in place of the disc's: the runner refuses the files it never
-// takes from a mod, and in any start but the offline game the race files too. Takes disc, from.
+// takes from a mod, and in any start but the offline game a race file whose race fields the launcher did not find equal
+// to the disc's. Takes disc, from, raceSame.
 template <typename P, typename T>
 void ReadOverlayEntry([[maybe_unused]] P& p, [[maybe_unused]] T* t)
 {
@@ -65,6 +66,7 @@ void ReadOverlayEntry([[maybe_unused]] P& p, [[maybe_unused]] T* t)
   p.Words("from", &t->from);
   if (!p.Has("from"))
     p.Refuse("from", "is missing: the replacement file's whole path");
+  p.Flag("raceSame", &t->race_same);
 }
 
 // Match ("match"): a race: the match file the launcher wrote, with where the race is recorded. Takes relayHost, delay,
