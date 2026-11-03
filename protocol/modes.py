@@ -13,10 +13,10 @@ API_KEYS = {"number", "budget", "queue", "globals", "seat_words", "locals", "rul
             "team_words", "teams", "waits", "wait_locals", "subs", "board", "board_label", "board_words", "board_word", "fsqrt_cost", "results_title", "hud_texts", "hud_text_values", "tag_text", "tag_texts", "presets"}
 OP_KEYS = {"name", "code", "operands", "doc"}
 EVENT_KEYS = {"name", "id", "kind", "binds", "doc"}
-SETUP_KEYS = {"name", "id", "args", "where", "doc", "table", "lobby", "form"}
+SETUP_KEYS = {"name", "id", "args", "where", "doc", "table", "lobby", "form", "held"}
 ARG_KEYS = {"type", "name", "least", "most", "default", "on"}
 READ_KEYS = {"name", "id", "type", "doc"}
-ACTION_KEYS = {"name", "spelled", "id", "args", "where", "doc", "join", "needs_step", "optional"}
+ACTION_KEYS = {"name", "spelled", "id", "args", "where", "doc", "join", "needs_step", "optional", "held"}
 CHOICE_KEYS = {"name", "values", "doc", "limits"}
 OPERANDS = {"u8": 1, "u16": 2, "u32": 4, "i32": 4}
 TYPES = {"int", "real", "bool", "seat", "seats", "vec"}
@@ -57,6 +57,8 @@ def numbered(raw, allowed, what, high=255, gaps=False):
         if ident <= (out[-1]["id"] if out else -1) if gaps else ident != i:
             raise SchemaError(f"{what} {name}: the ids run 0, 1, 2 ... in the file's order (got {entry['id']})")
         # (`spelled`: the code's name when two words would spell the same: `no_contact` and `no contact`)
+        if entry.get("held", False) is not True and "held" in entry:
+            raise SchemaError(f"{what} {name}: held is true or left out")
         out.append(dict(entry, pascal=pascal(entry.get("spelled", name), what)))
     if len({e["pascal"] for e in out}) != len(out):
         raise SchemaError(f"{what}: two names spell the same")

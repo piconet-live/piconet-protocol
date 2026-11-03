@@ -16,7 +16,11 @@
 #
 # A setup word's or action's id only rises: a word taken out leaves its id unused (`eliminate` 1; `mine_regen off` 7,
 # `restore off` 10, `mixed_packs off` 22, `boost_start off` 24, the fixed results titles 35 to 39), so a package from before
-# is refused and never read as another word. A setup argument of type "switch" is an on or off: `on`, `off` or a switch
+# is refused and never read as another word. A word with `held = true` is not in this api: the compiler refuses it
+# ("not in this version of the mode language") and so does a package's reader, but it keeps its row and its id, so a
+# later api brings it back by taking the key off and no other word ever takes its id (the owner, 2026-11-02: the modern
+# HUD's words, `hud modern`, `hud_texts` and show_bar to hud_clear, wait for a later api; the gap reads and `time_gaps`
+# stay). A setup argument of type "switch" is an on or off: `on`, `off` or a switch
 # parameter (1 or 0); an int argument with `on = N` also takes those: off 0, on N, and a switch parameter's 1 reads as N.
 #
 # A word: `name` as a mode file writes it (`spelled`: the generated code's name, when two names would spell the same), `id` its number in the bytecode (Action, SeatRead, RaceRead) or the package
@@ -1745,6 +1749,7 @@ doc = "every seat's full energy, and every seat begins full. Left out: the game'
 
 [[setup]]
 name = "hud modern"
+held = true
 id = 50
 where = """the window's flag HUD_MODERN (mode_hud.h): the core takes the game's energy meter, rank, lap counter, race time and lap list off the part mask at the drawing, and the runner's own HUD draws them, as the player's Modern setting does. Drawing only. Left out, the player's setting decides"""
 doc = "everyone races on the modern HUD; without it each player chooses Classic or Modern"
@@ -2088,6 +2093,7 @@ doc = "the seat's full energy, from the next step: the pit's cap, a restore's ha
 
 [[setup]]
 name = "hud_texts"
+held = true
 id = 51
 form = "text"
 where = """the texts `show_text` draws, which the compiler writes from the file's `show_text` words and a file never writes itself (in the package a value a UTF-16 unit, a 0 between texts, 1 and 2 where the {values} stand): the core hands the viewed seat's text to the runner's HUD (modern_hud.cpp), which draws it in Saira with a fallback font"""
@@ -2129,6 +2135,7 @@ doc = "the HUD's palette (Direction D): text, accent, danger, gold, warn. Left o
 
 [[action]]
 name = "show_bar"
+held = true
 id = 69
 args = ["seat", "bar", "real", "real", "slot", "colour"]
 optional = true
@@ -2137,6 +2144,7 @@ doc = "`show_bar s, strip, value, most, slot[, colour]`: a bar in the slot, valu
 
 [[action]]
 name = "show_figure"
+held = true
 id = 70
 args = ["seat", "int", "slot", "colour"]
 optional = true
@@ -2145,6 +2153,7 @@ doc = "`show_figure s, n, slot[, colour]`: a large whole number in the slot"
 
 [[action]]
 name = "show_text"
+held = true
 id = 71
 args = ["seat", "int", "int", "int", "slot", "colour"]
 optional = true
@@ -2153,6 +2162,7 @@ doc = "text in the slot, its {values} as they were when the word ran"
 
 [[action]]
 name = "show_gap"
+held = true
 id = 72
 args = ["seat", "target", "slot", "colour"]
 optional = true
@@ -2161,6 +2171,7 @@ doc = "`show_gap s, ahead|behind|leader, slot[, colour]` or `show_gap s, you, to
 
 [[action]]
 name = "hud_clear"
+held = true
 id = 73
 args = ["seat", "slot"]
 where = "the block's HUD slots page"
