@@ -750,9 +750,9 @@ row the local pad's, port/core/src/practice_session.cpp). No lobby and no rotati
 [[setup]]
 name = "rewind"
 id = 27
-args = [{ type = "int", least = 60, most = 3600 }]
-where = """the rolling buffer the player can go back through, a time or steps, at most a minute: every step inside it stays \
-in the undo log, the mode's block with the rest. Left out in a solo mode, no way back"""
+args = [{ type = "int", least = 60, most = 18000 }]
+where = """the rolling buffer the player can go back through, a time or steps, at most five minutes (18,000 steps): every step \
+inside it stays in the undo log, the mode's block with the rest. Left out in a solo mode, no way back"""
 
 [[setup]]
 name = "pause"

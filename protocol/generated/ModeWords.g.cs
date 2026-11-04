@@ -842,7 +842,7 @@ public static partial class ModeWords
         ("boost_start", ModeSetup.BoostStart, [new ModeArgument("", ModeType.Bool, 0, 1, null)], true, ""),
         ("teams", ModeSetup.Teams, [new ModeArgument("least", ModeType.Int, 2, 30, null), new ModeArgument("most", ModeType.Int, 2, 30, null)], true, "range"),
         ("solo", ModeSetup.Solo, [new ModeArgument("", ModeType.Bool, 0, 1, null)], false, ""),
-        ("rewind", ModeSetup.Rewind, [new ModeArgument("", ModeType.Int, 60, 3600, null)], false, ""),
+        ("rewind", ModeSetup.Rewind, [new ModeArgument("", ModeType.Int, 60, 18000, null)], false, ""),
         ("pause", ModeSetup.Pause, [new ModeArgument("", ModeType.Bool, 0, 1, null)], false, ""),
         ("save_state", ModeSetup.SaveState, [new ModeArgument("", ModeType.Bool, 0, 1, null)], false, ""),
         ("resume_countdown", ModeSetup.ResumeCountdown, [new ModeArgument("", ModeType.Int, 0, 300, null)], false, ""),

@@ -1,8 +1,8 @@
-// Play's Practice: alone, unlimited laps unless the player sets a count, a minute's rewind and one saved moment. The launcher starts it itself.
+// Play's Practice: alone, unlimited laps unless the player sets a count, five minutes of rewind and one saved moment. The launcher starts it itself.
 
 mode "Practice" {
   api 1;
-  about "Race alone with a minute's rewind and one save.";
+  about "Race alone with five minutes of rewind and one save.";
 }
 
 param restore_on "Restore" switch default off;
@@ -11,7 +11,7 @@ param lap_count "Laps" number 0..99 default 0;  // 0: unlimited
 solo on;
 results_heading "PRACTICE";
 laps lap_count;
-rewind 1min;
+rewind 5min;
 pause on;
 save_state on;
 resume_countdown 1s;
