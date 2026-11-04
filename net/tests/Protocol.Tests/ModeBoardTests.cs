@@ -107,7 +107,7 @@ public sealed class ModeBoardTests
     [InlineData("solo on;\ncpus on;\n", "one seat")]
     [InlineData("solo on;\nracers 1..2;\n", "one seat")]
     [InlineData("solo on;\nteams 2..2;\n", "one seat")]
-    [InlineData("solo on;\nrewind 2min;\n", "rewind")]
+    [InlineData("solo on;\nrewind 6min;\n", "rewind")]
     public void ASoloWordOutOfPlaceIsRefused(string body, string says)
     {
         var result = Compile(body);
