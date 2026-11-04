@@ -2112,6 +2112,17 @@ form = "text"
 where = """the results' times list (fn_1_1461C8 0x146324, the game's PRACTICE, the page a mode with no award, results_title or points_table ends on): `results_heading "TEXT"`, the string in the window (in the package a value a byte), font 0x1D: A to Z and the space, api.results_title long at most; not all spaces, none at either end. Left out, with a mode, the core writes RESULTS"""
 doc = "the results page of a mode with no points page is headed TEXT; left out, RESULTS. Refused with award, results_title or points_table: those end on the points page"
 
+[[setup]]
+name = "hud clean"
+id = 54
+where = """the window's flag HUD_CLEAN (mode_hud.h): once a frame at the drawing, after the mode's HUD pass (the core's \
+clean_picture.cpp), the Check task's gap of every viewport (.bss 0x89770, fn_1_128F54) is written 0.0, for which the CHECK \
+sign (fn_1_12907C) is not drawn, and every seat's player name's first byte and the window's tag bytes 0, so the name \
+tags (port/image/routines/nametags.py) have nothing to draw (the results' rows then show the pilots' names). Drawing \
+only: the Check task writes the gaps whole before its own compare reads them, and only the sign reads them; the names \
+and the tags are the data window's, which no step reads"""
+doc = "nothing over the race that the HUD's parts do not cover: no CHECK sign (the arrow at the bottom edge that points at a rival close behind) and no name tags, a player's or a mode's `tag`. For footage; the standard parts go with `hide`"
+
 [[choice]]
 name = "slot"
 values = ["under_place", "beside_place", "under_times", "over_speed", "under_speed", "message", "under_top6", "top6"]
