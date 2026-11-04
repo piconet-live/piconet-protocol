@@ -150,7 +150,7 @@ public static class ModeCompiler
             {
                 _setups.Add(new ModeSetupWord(ModeSetup.StatsPage, []));
             }
-            HudWords();
+            GapWords();
             var mode = new ModePackage
             {
                 Api = api,
@@ -255,7 +255,6 @@ public static class ModeCompiler
 
         /// <summary>The words of a race raced alone need <c>solo</c>; and <c>solo</c> is one seat. A word stated
         /// <c>off</c> asks for nothing; a switch parameter may be on, so it counts as on.</summary>
-        /// <summary>The modern HUD's words: all of them need <c>hud modern</c>, the texts and the time gaps go in the package.</summary>
 /// <summary>Why a file may not write this setup word, one the compiler adds itself; null when it may.</summary>
 private static string? CompilersOwn(ModeSetup id, string name) => id switch
 {
@@ -265,20 +264,9 @@ private static string? CompilersOwn(ModeSetup id, string name) => id switch
     _ => null,
 };
 
-    private void HudWords()
+    /// <summary>The time gaps go in the package when a rule reads one.</summary>
+    private void GapWords()
     {
-        foreach (var word in new[] { ModeAction.ShowBar, ModeAction.ShowFigure, ModeAction.ShowText, ModeAction.ShowGap, ModeAction.HudClear })
-        {
-            if (_emitter!.Used.TryGetValue(word, out var line) && !_setups.Any(s => s.Id == ModeSetup.HudModern))
-            {
-                var name = ModeWords.Actions.First(a => a.Id == word).Name;
-                throw new ModeCompileException(line, $"{name} draws on the modern HUD: the mode needs the setup word hud modern;");
-            }
-        }
-        if (_emitter!.HudTexts.Count > 0)
-        {
-            _setups.Add(new ModeSetupWord(ModeSetup.HudTexts, ModeHudTexts.Cells(_emitter!.HudTexts)));
-        }
         if (_emitter!.UsesGaps)
         {
             _setups.Add(new ModeSetupWord(ModeSetup.TimeGaps, []));

@@ -1,5 +1,5 @@
 // The gap reads, at least once: a vector for the compiler's tests (protocol/README.md), not a mode to race. Race
-// state: the same on every game. (The modern HUD's words that drew them are held out of api 1: modes.toml's `held`.)
+// state: the same on every game.
 
 mode "Gap reads" {
   api 1;

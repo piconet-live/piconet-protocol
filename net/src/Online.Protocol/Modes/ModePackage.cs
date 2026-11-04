@@ -116,41 +116,6 @@ public static class ModeTagTexts
         new string([.. cells.Select(c => (char)c.Value)]).Split('\0');
 }
 
-/// <summary>The texts <c>show_text</c> draws, which the package carries in the setup word <c>hud_texts</c>: a value a UTF-16
-/// unit, a 0 between texts, a 1 or a 2 where a <c>{value}</c> stands; a <c>show_text</c> names one by its place, from 1.
-/// Drawn by the HUD in Saira with a fallback font for what Saira lacks, so any written character goes; a slot limits the length.</summary>
-public static class ModeHudTexts
-{
-    /// <summary>What a whole number takes of a slot's characters.</summary>
-    private const int ValueWidth = 5;
-
-    /// <summary>Why a text cannot stand in a slot of <paramref name="limit"/> characters; null: it can.</summary>
-    public static string? Refusal(string text, int limit, string slot)
-    {
-        ArgumentNullException.ThrowIfNull(text);
-        if (text.Length == 0 || text.Trim(' ').Length == 0)
-        {
-            return "show_text needs a text";
-        }
-        if (text.Any(c => c == 0 || (c < ' ' && c > ModeWords.HudTextValues) || c == 127))
-        {
-            return "show_text: a text holds no control characters";
-        }
-        var length = text.Sum(c => c <= ModeWords.HudTextValues ? ValueWidth : 1);
-        return length > limit
-            ? $"show_text: {slot} takes at most {limit} characters, a value counted as {ValueWidth}: this text takes {length}"
-            : null;
-    }
-
-    /// <summary>The texts as the word's arguments.</summary>
-    public static List<ModeSetupValue> Cells(IEnumerable<string> texts) =>
-        [.. string.Join('\0', texts).Select(c => new ModeSetupValue(false, c))];
-
-    /// <summary>The word's arguments as its texts.</summary>
-    public static string[] Texts(IEnumerable<ModeSetupValue> cells) =>
-        new string([.. cells.Select(c => (char)c.Value)]).Split('\0');
-}
-
 /// <summary>A setup word as the package keeps it: every argument of the word, in the table's order, the ones the file
 /// left out at their defaults (so a reader needs no table of defaults).</summary>
 public sealed record ModeSetupWord(ModeSetup Id, IReadOnlyList<ModeSetupValue> Arguments);
@@ -537,7 +502,7 @@ public sealed class ModePackage
         {
             var id = s.U8();
             var word = ModeWords.Setups.FirstOrDefault(w => (int)w.Id == id);
-            if (word.Name is null || ModeWords.HeldSetups.Contains(word.Id))
+            if (word.Name is null)
             {
                 throw new InvalidDataException($"setup word {id} is not of api {ModeWords.Api}");
             }
@@ -547,7 +512,7 @@ public sealed class ModePackage
                 1 => true,
                 _ => throw new InvalidDataException($"the setup word {word.Name}'s argument has an unknown source"),
             }, s.I32())).ToList();
-            if (word.Id is ModeSetup.ResultsTitle or ModeSetup.ResultsHeading or ModeSetup.TagTexts or ModeSetup.PointsTable or ModeSetup.HudTexts)
+            if (word.Id is ModeSetup.ResultsTitle or ModeSetup.ResultsHeading or ModeSetup.TagTexts or ModeSetup.PointsTable)
             {
                 if (!OwnValues(word.Id, arguments))
                 {
@@ -576,12 +541,6 @@ public sealed class ModePackage
         if (id == ModeSetup.PointsTable)
         {
             return arguments.Count is > 0 and <= ModeWords.Seats && !arguments.Any(a => a.FromParam || a.Value is < 0 or > 999);
-        }
-        if (id == ModeSetup.HudTexts)
-        {
-            var hud = ModeHudTexts.Texts(arguments);
-            return !arguments.Any(a => a.FromParam || a.Value is < 0 or > 0xFFFF) && hud.Length <= ModeWords.HudTexts && hud.Distinct().Count() == hud.Length &&
-                !hud.Any(t => ModeHudTexts.Refusal(t, ModeWords.ChoiceLimits["slot"].Max(), "") is not null);
         }
         if (arguments.Any(a => a.FromParam || a.Value is < 0 or > 127))
         {

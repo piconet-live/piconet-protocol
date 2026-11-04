@@ -265,10 +265,6 @@ public enum ModeSetup : byte
     StatsPage = 48,
     /// <summary><c>max_energy</c></summary>
     MaxEnergy = 49,
-    /// <summary><c>hud modern</c></summary>
-    HudModern = 50,
-    /// <summary><c>hud_texts</c></summary>
-    HudTexts = 51,
     /// <summary><c>time_gaps</c></summary>
     TimeGaps = 52,
     /// <summary><c>results_heading</c></summary>
@@ -638,16 +634,6 @@ public enum ModeAction : byte
     SeatStatGripWindow = 67,
     /// <summary><c>seat.max_energy</c></summary>
     SeatMaxEnergy = 68,
-    /// <summary><c>show_bar</c></summary>
-    ShowBar = 69,
-    /// <summary><c>show_figure</c></summary>
-    ShowFigure = 70,
-    /// <summary><c>show_text</c></summary>
-    ShowText = 71,
-    /// <summary><c>show_gap</c></summary>
-    ShowGap = 72,
-    /// <summary><c>hud_clear</c></summary>
-    HudClear = 73,
     /// <summary><c>finish_seat</c></summary>
     FinishSeat = 74,
     /// <summary><c>show_distance</c></summary>
@@ -697,10 +683,6 @@ public static partial class ModeWords
     public const int TagText = 10;
     /// <summary>The api's limit <c>tag_texts</c>.</summary>
     public const int TagTexts = 8;
-    /// <summary>The api's limit <c>hud_texts</c>.</summary>
-    public const int HudTexts = 10;
-    /// <summary>The api's limit <c>hud_text_values</c>.</summary>
-    public const int HudTextValues = 2;
     /// <summary>The api's limit <c>board</c>.</summary>
     public const int Board = 8;
     /// <summary>The api's limit <c>board_label</c>.</summary>
@@ -867,8 +849,6 @@ public static partial class ModeWords
         ("courses", ModeSetup.Courses, [], true, "list"),
         ("stats_page", ModeSetup.StatsPage, [], false, ""),
         ("max_energy", ModeSetup.MaxEnergy, [new ModeArgument("", ModeType.Int, 1, 1000, null)], false, ""),
-        ("hud modern", ModeSetup.HudModern, [], false, ""),
-        ("hud_texts", ModeSetup.HudTexts, [], false, "text"),
         ("time_gaps", ModeSetup.TimeGaps, [], false, ""),
         ("results_heading", ModeSetup.ResultsHeading, [], false, "text"),
         ("hud clean", ModeSetup.HudClean, [], false, ""),
@@ -1061,11 +1041,6 @@ public static partial class ModeWords
         ("seat.stat.turn_decel", ModeAction.SeatStatTurnDecel, [ModeType.Seat, ModeType.Real]),
         ("seat.stat.grip_window", ModeAction.SeatStatGripWindow, [ModeType.Seat, ModeType.Real]),
         ("seat.max_energy", ModeAction.SeatMaxEnergy, [ModeType.Seat, ModeType.Real]),
-        ("show_bar", ModeAction.ShowBar, [ModeType.Seat, ModeType.Int, ModeType.Real, ModeType.Real, ModeType.Int, ModeType.Int]),
-        ("show_figure", ModeAction.ShowFigure, [ModeType.Seat, ModeType.Int, ModeType.Int, ModeType.Int]),
-        ("show_text", ModeAction.ShowText, [ModeType.Seat, ModeType.Int, ModeType.Int, ModeType.Int, ModeType.Int, ModeType.Int]),
-        ("show_gap", ModeAction.ShowGap, [ModeType.Seat, ModeType.Int, ModeType.Int, ModeType.Int]),
-        ("hud_clear", ModeAction.HudClear, [ModeType.Seat, ModeType.Int]),
         ("finish_seat", ModeAction.FinishSeat, [ModeType.Seat]),
         ("show_distance", ModeAction.ShowDistance, [ModeType.Seat, ModeType.Real]),
         ("show_distance off", ModeAction.ShowDistanceOff, [ModeType.Seat]),
@@ -1092,42 +1067,6 @@ public static partial class ModeWords
             ModeAction.FinishSeat,
         };
 
-    /// <summary>The actions whose last argument a file may leave out: the compiler pushes -1, the word's default.</summary>
-    public static readonly IReadOnlySet<ModeAction> ActionsWithOptionalLast =
-        new HashSet<ModeAction>
-        {
-            ModeAction.ShowBar,
-            ModeAction.ShowFigure,
-            ModeAction.ShowText,
-            ModeAction.ShowGap,
-        };
-
-    /// <summary>The setup words held out of this api (modes.toml's <c>held</c>): refused, their ids kept for a later api.</summary>
-    public static readonly IReadOnlySet<ModeSetup> HeldSetups =
-        new HashSet<ModeSetup>
-        {
-            ModeSetup.HudModern,
-            ModeSetup.HudTexts,
-        };
-
-    /// <summary>The actions held out of this api (modes.toml's <c>held</c>): refused, their ids kept for a later api.</summary>
-    public static readonly IReadOnlySet<ModeAction> HeldActions =
-        new HashSet<ModeAction>
-        {
-            ModeAction.ShowBar,
-            ModeAction.ShowFigure,
-            ModeAction.ShowText,
-            ModeAction.ShowGap,
-            ModeAction.HudClear,
-        };
-
-    /// <summary>A choice's limit by its value's place, for the choices that have them (a slot's characters).</summary>
-    public static readonly IReadOnlyDictionary<string, IReadOnlyList<int>> ChoiceLimits =
-        new Dictionary<string, IReadOnlyList<int>>
-        {
-            ["slot"] = [14, 8, 18, 18, 18, 24, 20, 0],
-        };
-
     /// <summary>The choices: an argument of one takes one of its names, its value the name's place.</summary>
     public static readonly IReadOnlyDictionary<string, IReadOnlyList<string>> Choices =
         new Dictionary<string, IReadOnlyList<string>>
@@ -1135,10 +1074,6 @@ public static partial class ModeWords
             ["part"] = ["TIMER", "DISTANCE", "DIGIT", "WARNING", "SUCCESS", "FAILED", "TIME_OVER", "SPEED_GAUGE", "OBJECTS", "LEADER_GAP", "GHOST_GAP", "RANK", "LAPS", "SPEED", "ENERGY", "LAP_TIMES", "RACE_TIME", "FACES"],
             ["banner"] = ["FINAL_LAP", "BOOST_POWER", "TIME_BONUS", "GAP", "WRONG_WAY", "TICK"],
             ["look"] = ["normal", "ghost", "invisible"],
-            ["slot"] = ["under_place", "beside_place", "under_times", "over_speed", "under_speed", "message", "under_top6", "top6"],
-            ["bar"] = ["strip", "wedge", "cells"],
-            ["target"] = ["ahead", "behind", "leader", "you"],
-            ["colour"] = ["WHITE", "GREEN", "RED", "GOLD", "ORANGE"],
         };
 
     /// <summary>The actions' arguments that take a choice: (action, argument) to the choice's name.</summary>
@@ -1150,17 +1085,6 @@ public static partial class ModeWords
             [(ModeAction.StockBanner, 1)] = "banner",
             [(ModeAction.SeatLook, 1)] = "look",
             [(ModeAction.SeatOwnLook, 1)] = "look",
-            [(ModeAction.ShowBar, 1)] = "bar",
-            [(ModeAction.ShowBar, 4)] = "slot",
-            [(ModeAction.ShowBar, 5)] = "colour",
-            [(ModeAction.ShowFigure, 2)] = "slot",
-            [(ModeAction.ShowFigure, 3)] = "colour",
-            [(ModeAction.ShowText, 4)] = "slot",
-            [(ModeAction.ShowText, 5)] = "colour",
-            [(ModeAction.ShowGap, 1)] = "target",
-            [(ModeAction.ShowGap, 2)] = "slot",
-            [(ModeAction.ShowGap, 3)] = "colour",
-            [(ModeAction.HudClear, 1)] = "slot",
         };
 
     /// <summary>The actions written with a word between their first two arguments in place of a comma.</summary>

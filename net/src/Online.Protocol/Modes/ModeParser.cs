@@ -148,9 +148,6 @@ internal sealed class ModeParser
 
     private ModeCompileException Error(string message) => new(Current.Line, message);
 
-    /// <summary>A word modes.toml holds out of this api (<c>held</c>): its id is kept for a later one.</summary>
-    private static string NotInThisVersion(string word) => $"{word} is not in this version of the mode language (api {ModeWords.Api})";
-
     private static string Describe(ModeToken token) =>
         token.Kind == ModeTokenKind.End ? token.Text
         : token.Kind == ModeTokenKind.Text ? $"the string \"{token.Text}\""
@@ -579,10 +576,6 @@ internal sealed class ModeParser
         {
             throw Error($"'{Current.Text}' is not a word of api {ModeWords.Api}");
         }
-        if (ModeWords.HeldSetups.Contains(ModeWords.Setups.Single(s => s.Name == word).Id))
-        {
-            throw Error(NotInThisVersion(word));
-        }
         _at += parts.Length;
         if (ModeWords.Setups.Single(s => s.Name == word).Id == ModeSetup.LapsByCourse)
         {
@@ -914,10 +907,6 @@ internal sealed class ModeParser
         {
             throw Error($"'{name}' is not an action of api {ModeWords.Api}");
         }
-        if (ModeWords.HeldActions.Contains(ModeWords.Actions.First(a => a.Name == name).Id))
-        {
-            throw new ModeCompileException(token.Line, NotInThisVersion(name));
-        }
         // a word between the first two arguments in place of the comma (map_hide s from seats)
         var join = ModeWords.ActionJoins.GetValueOrDefault(ModeWords.Actions.First(a => a.Name == name).Id);
         var arguments = new List<ModeExpr>();
@@ -942,65 +931,10 @@ internal sealed class ModeParser
             }
             arguments.Add(name == "tag" && Current.Kind == ModeTokenKind.Text
                 ? new ModeTagText(Current.Line, Take().Text)
-                : name == "show_text" && Current.Kind == ModeTokenKind.Text
-                ? HudText(Take())
                 : Expression());
         }
         Expect(";");
         return new ModeActionStatement(token.Line, name, arguments);
-    }
-
-    /// <summary>The text of <c>show_text</c>: what stands between braces is an expression of the language, read as any other.</summary>
-    private ModeHudText HudText(ModeToken token)
-    {
-        var text = new StringBuilder();
-        var values = new List<ModeExpr>();
-        for (var i = 0; i < token.Text.Length; i++)
-        {
-            var c = token.Text[i];
-            if (c == '}')
-            {
-                throw new ModeCompileException(token.Line, "show_text: a } with no { before it");
-            }
-            if (c != '{')
-            {
-                text.Append(c);
-                continue;
-            }
-            var end = token.Text.IndexOf('}', i);
-            if (end < 0)
-            {
-                throw new ModeCompileException(token.Line, "show_text: a { with no } after it");
-            }
-            if (values.Count == ModeWords.HudTextValues)
-            {
-                throw new ModeCompileException(token.Line, $"show_text: a text names at most {ModeWords.HudTextValues} values");
-            }
-            values.Add(Inner(token.Text[(i + 1)..end], token.Line));
-            text.Append((char)values.Count);
-            i = end;
-        }
-        return new ModeHudText(token.Line, text.ToString(), values);
-    }
-
-    /// <summary>An expression inside a text, on the text's line.</summary>
-    private ModeExpr Inner(string source, int line)
-    {
-        try
-        {
-            var warnings = new List<string>();
-            var inner = new ModeParser(ModeLexer.Tokens(source, warnings), _macros);
-            var value = inner.Expression();
-            if (inner.Current.Kind != ModeTokenKind.End)
-            {
-                throw new ModeCompileException(line, $"show_text: {{{source}}} is not one value");
-            }
-            return value;
-        }
-        catch (ModeCompileException e)
-        {
-            throw new ModeCompileException(line, $"show_text: {{{source}}}: {e.Message}");
-        }
     }
 
     /// <summary><c>team T no contact;</c>: the action <c>team no contact</c> on team T.</summary>
