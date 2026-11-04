@@ -36,7 +36,7 @@ public static class LaunchFormat
 }
 
 /// <summary>The launch file's part File: the launch file: every setting of one start of the game.
-/// The launcher writes "about", "bundle", "widescreen", "trueWidescreen", "lanes", "controllerSetup", "match", "replay", "windowName", "windowNamePicture", "showFrameRate", "showInputs", "modernHud", "hudLayout", "hudMeter", "renderer", "auroraSize", "auroraEdges", "auroraTextures", "auroraColourblind", "auroraHighRefresh", "rumble", "present", "verticalSync", "fullScreen", "refreshRate", "taskbar", "board", "overlay", "debug".</summary>
+/// The launcher writes "about", "bundle", "widescreen", "trueWidescreen", "lanes", "controllerSetup", "match", "replay", "windowName", "windowNamePicture", "showFrameRate", "showInputs", "modernHud", "hudLayout", "hudMeter", "renderer", "auroraSize", "auroraEdges", "auroraTextures", "auroraColourblind", "auroraHighRefresh", "auroraRayTracing", "rumble", "present", "verticalSync", "fullScreen", "refreshRate", "taskbar", "board", "overlay", "debug".</summary>
 public sealed record LaunchFile(
     string About,
     string? Bundle = null,
@@ -58,6 +58,7 @@ public sealed record LaunchFile(
     int AuroraTextures = 0,
     string? AuroraColourblind = null,
     int AuroraHighRefresh = 0,
+    bool AuroraRayTracing = false,
     bool Rumble = true,
     string? Present = null,
     bool VerticalSync = false,
@@ -149,6 +150,10 @@ public sealed record LaunchFile(
         if (AuroraHighRefresh > 0)
         {
             o["auroraHighRefresh"] = AuroraHighRefresh;
+        }
+        if (AuroraRayTracing)
+        {
+            o["auroraRayTracing"] = true;
         }
         if (!Rumble)
         {
