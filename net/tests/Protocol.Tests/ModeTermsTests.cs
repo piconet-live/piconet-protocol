@@ -550,6 +550,15 @@ public sealed class ModeTermsTests
     }
 
     [Fact]
+    public void HudCleanSaysWhatItTakesOff()
+    {
+        var result = ModeCompiler.Compile("mode \"M\" { api 1; about \"A.\"; }\nhud clean;\n");
+        Assert.True(result.Succeeded, string.Join(" ", result.Errors));
+        Assert.Equal([ModeSetup.HudClean], result.Mode!.Setups.Select(s => s.Id));
+        Assert.Equal(["No CHECK sign or name tags"], ModeRuleLines.Of(result.Mode!));
+    }
+
+    [Fact]
     public void ARuleNotChangedSaysNothing()
     {
         var result = ModeCompiler.Compile("""

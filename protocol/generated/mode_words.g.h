@@ -267,7 +267,8 @@ enum Setup : std::uint8_t
   SETUP_HUDTEXTS = 51,  // hud_texts
   SETUP_TIMEGAPS = 52,  // time_gaps
   SETUP_RESULTSHEADING = 53,  // results_heading
-  SETUP_COUNT = 54,
+  SETUP_HUDCLEAN = 54,  // hud clean
+  SETUP_COUNT = 55,
 };
 
 // a read of a seat (OP_SEATREAD)

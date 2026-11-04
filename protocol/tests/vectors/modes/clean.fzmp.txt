@@ -1,0 +1,26 @@
+FZMP format 1 api 1, 355 bytes, hash d8c3adf9fd4c393f7e1cb765ea3332e889913b0e0da0690672c7d7b5ab814a33
+HEAD name "Clean" badge "" about ""
+PARM 0
+SETP 1
+  hud clean
+VARS globals 0, seat words 0
+RULE 1
+  0 "Hide" event race_start, locals 1, when none, while none, body 0000
+CODE 42 bytes
+  ; rule 0 body
+  0000  Push 0
+  0005  StoreLocal 0
+  0007  LoadLocal 0
+  0009  RaceRead seats
+  000b  ILt
+  000c  JumpIfZero 0029
+  0011  LoadLocal 0
+  0013  Push 11
+  0018  Action hide
+  001a  LoadLocal 0
+  001c  Push 1
+  0021  IAdd
+  0022  StoreLocal 0
+  0024  Jump 0007
+  0029  End
+SRC  204 bytes

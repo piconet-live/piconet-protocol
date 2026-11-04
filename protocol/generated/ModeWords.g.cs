@@ -273,6 +273,8 @@ public enum ModeSetup : byte
     TimeGaps = 52,
     /// <summary><c>results_heading</c></summary>
     ResultsHeading = 53,
+    /// <summary><c>hud clean</c></summary>
+    HudClean = 54,
 }
 
 /// <summary>A read of a seat (protocol/modes.toml).</summary>
@@ -869,6 +871,7 @@ public static partial class ModeWords
         ("hud_texts", ModeSetup.HudTexts, [], false, "text"),
         ("time_gaps", ModeSetup.TimeGaps, [], false, ""),
         ("results_heading", ModeSetup.ResultsHeading, [], false, "text"),
+        ("hud clean", ModeSetup.HudClean, [], false, ""),
     ];
 
     /// <summary>The reads of a seat (<c>seat.NAME</c>): name, id, type.</summary>
