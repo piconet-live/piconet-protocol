@@ -67,7 +67,8 @@ class RulesSchema(unittest.TestCase):
         self.assertIn("overlaps the race's flow", self.error("at = 308", "at = 304"))
         self.assertIn("overlaps the seats' custom machines", self.error("at = 308", "at = 320"))
         self.assertIn("overlaps rule cpu-level's word", self.error("at = 308", "at = 256"))
-        self.assertIn("is outside the race block", self.error("at = 308", "at = 1280"))
+        self.assertIn("overlaps the seats' boost trail colours", self.error("at = 308", "at = 1280"))
+        self.assertIn("is outside the race block", self.error("at = 308", "at = 1640"))
         self.assertIn("at is a word's offset", self.error("at = 308", "at = 310"))
 
     def test_what_a_rule_may_say(self):
