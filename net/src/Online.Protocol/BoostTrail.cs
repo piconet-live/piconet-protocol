@@ -2,10 +2,10 @@ namespace Online.Protocol;
 
 /// <summary>A racer's boost trail colours, the same on every player's screen: the flame while cruising, the flame
 /// while boosting, and what a boost throws off. Picture only: the race never reads them, so a racer's choice cannot change a race.
-/// Any left out (null): the game's own colour for it.</summary>
+/// Any left out (null): the game's own colour for it; <see cref="Sparks"/> left out follows <see cref="Boost"/>, and is the game's own only when that is too.</summary>
 /// <param name="Normal">The flame while not boosting.</param>
 /// <param name="Boost">The flame while boosting.</param>
-/// <param name="Sparks">What a boost throws off: the bolts, the sparkles and the streak.</param>
+/// <param name="Sparks">What a boost throws off: the bolts, the sparkles and the streak; null, the boost flame's colour.</param>
 public sealed record BoostTrail(Rgb? Normal = null, Rgb? Boost = null, Rgb? Sparks = null)
 {
     /// <summary>Nothing chosen: the machine's own colours.</summary>
