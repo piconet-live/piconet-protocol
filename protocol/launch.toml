@@ -43,7 +43,7 @@ name = "File"
 cs = "LaunchFile"
 doc = "the launch file: every setting of one start of the game"
 cs_order = ["about", "bundle", "widescreen", "trueWidescreen", "lanes", "controllerSetup", "match", "replay",
-            "windowName", "windowNamePicture", "showFrameRate", "showInputs", "modernHud", "hudLayout", "hudMeter", "renderer", "auroraSize", "auroraEdges", "auroraTextures", "auroraColourblind", "auroraHighRefresh", "rumble", "present", "verticalSync", "fullScreen",
+            "windowName", "windowNamePicture", "showFrameRate", "showInputs", "modernHud", "hudLayout", "hudMeter", "renderer", "auroraSize", "auroraEdges", "auroraTextures", "auroraColourblind", "auroraHighRefresh", "auroraRayTracing", "rumble", "present", "verticalSync", "fullScreen",
             "refreshRate", "taskbar", "board", "overlay", "debug"]
 member = [
     { key = "about", type = "text", to = "about", missing = "a line that says what this start is for", cs = { name = "About", write = "required" } },
@@ -63,6 +63,7 @@ member = [
     { key = "auroraTextures", type = "whole", to = "aurora_textures", low = 1, high = 16, cs = { name = "AuroraTextures", write = "positive" }, doc = "with renderer aurora: anisotropic filtering on every texture with mipmaps; left out is the game's own" },
     { key = "auroraColourblind", type = "one_of", values = ["off", "deuteranopia", "protanopia", "tritanopia"], to = "aurora_colourblind", cs = { name = "AuroraColourblind", write = "set" }, doc = "with renderer aurora: a colour filter of the whole picture for colourblind players; left out is off" },
     { key = "auroraHighRefresh", type = "whole", to = "aurora_high_refresh", low = 120, high = 480, cs = { name = "AuroraHighRefresh", write = "positive" }, doc = "with renderer aurora: pictures a second asked for; pictures between the steps, a step run ahead for them, undone" },
+    { key = "auroraRayTracing", type = "bool", to = "aurora_ray_tracing", cs = { name = "AuroraRayTracing", write = "true" }, doc = "with renderer aurora: ray tracing, the runner's whole tested set of Aurora's ray switches; left out is off" },
     { key = "rumble", type = "bool", to = "rumble", cs = { name = "Rumble", write = "false" } },
     { key = "windowNamePicture", type = "object", cs = { name = "WindowNamePicture", write = "set" } },
     { key = "taskbar", type = "object", cs = { name = "Taskbar", write = "set" } },
