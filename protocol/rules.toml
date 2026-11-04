@@ -51,7 +51,7 @@ namespace = "Online.Protocol"
 namespace = "fzgx::race_rules"
 
 [race_block]
-size = 1280              # bytes of the race block ('FZRC', the runner's port/core/src/files.h RACE_SIZE)
+size = 1640              # bytes of the race block ('FZRC', the runner's port/core/src/files.h RACE_SIZE)
 steps_a_second = 60
 # the block's parts that are no rule's word (the runner's port/image/routines/memmap.py says each)
 others = [
@@ -61,6 +61,7 @@ others = [
     { at = 268, end = 298, what = "every seat's machine setting (RACE_SETTINGS)" },
     { at = 304, end = 308, what = "the race's flow (RACE_FLOW)" },
     { at = 320, end = 1280, what = "the seats' custom machines (RACE_CUSTOM)" },
+    { at = 1280, end = 1640, what = "the seats' boost trail colours (RACE_TRAILS)" },
 ]
 
 [[rule]]

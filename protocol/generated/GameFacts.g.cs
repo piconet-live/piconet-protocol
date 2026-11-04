@@ -52,6 +52,9 @@ public static class GameFacts
         /// <summary>steps between a player's input and the step it is used in (decided: 2, never more)</summary>
         public const uint InputDelay = 2;
 
+        /// <summary>a boost trail colour's least brightest part: the flame's textures are grey and added to the picture, so a darker colour draws nothing; the core lifts one under this, keeping its hue</summary>
+        public const int TrailLeastBrightness = 96;
+
         /// <summary>memory ranges never rolled back, at most (the list at UNTRACKED)</summary>
         public const uint MaxUntracked = 32;
     }

@@ -165,13 +165,15 @@ public sealed record BrowseLobbies(bool On) : ClientMessage;
 /// <see cref="EnterQuickPlay"/> names one (machine, colour, setting, stock colour, a garage-built machine): in a
 /// custom lobby the launcher sends no <see cref="EnterQuickPlay"/>.</summary>
 public sealed record CreateLobby(string Name, LobbyRules Rules, string? Password, int Machine, Rgb Color, int? Setting = null,
-    int? StockColor = null, CustomMachine? Custom = null) : ClientMessage;
+    int? StockColor = null, CustomMachine? Custom = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] BoostTrail? Trail = null) : ClientMessage;
 
 /// <summary>Join a custom lobby of the browser, leaving the lobby one is in, with the racer as
 /// <see cref="EnterQuickPlay"/> names one. A locked lobby needs its password: another is refused with
 /// <see cref="CustomLobby.BadPassword"/>.</summary>
 public sealed record JoinLobby(string LobbyId, string? Password, int Machine, Rgb Color, int? Setting = null,
-    int? StockColor = null, CustomMachine? Custom = null) : ClientMessage;
+    int? StockColor = null, CustomMachine? Custom = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] BoostTrail? Trail = null) : ClientMessage;
 
 /// <summary>The host's change to their lobby while it is forming: a new name (null: the same), the rules whole
 /// (a missing key: Quick Play's), a new password (null: the same), or none (<paramref name="ClearPassword"/>).
