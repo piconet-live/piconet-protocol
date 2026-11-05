@@ -401,7 +401,7 @@ public sealed class QuickPlayRotationTests : IDisposable
     public void QuickPlaysModeHasItsSettingsAndTheirDefaultsAreQuickPlays()
     {
         var normal = Official().Normal;
-        Assert.Equal(["Laps", "CPU level", "Boost from the start", "Mines return", "Finish limit", "Machine setting from", "Machine setting to", "Stats"],
+        Assert.Equal(["Laps", "CPU level", "Boost from the start", "Mines respawn", "Finish limit", "Machine setting from", "Machine setting to", "Stats"],
             normal.Package.Params.Select(p => p.Label));
         var laps = normal.Package.Params[0];
         Assert.Equal(("By course", 100, 100, 99), (laps.Or, laps.Default, laps.Most, laps.Top));
@@ -415,7 +415,7 @@ public sealed class QuickPlayRotationTests : IDisposable
 
         var values = normal.Package.Params.Select(p => p.Default).ToArray();
         values[0] = 5;                                                       // 5 laps everywhere
-        values[3] = normal.Package.Params[3].Unset!.Value;                  // mines stay gone
+        values[3] = normal.Package.Params[3].Unset!.Value;                  // mines never respawn
         values[7] = normal.Package.Params[7].Choices.ToList().IndexOf(ModeTerms.StockChoice);
         var hosted = new RotationMode(normal.File, normal.Package, normal.Hash, values);
         Assert.Equal((5, 5), (hosted.Laps(sonic), hosted.Laps(8)));

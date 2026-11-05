@@ -34,7 +34,7 @@ public static partial class HostRules
 
     /// <summary>A mine comes back this many milliseconds after it went off (0: it stays gone, the game's own way);
     /// Quick Play: 200.</summary>
-    public static HostRule MinesReturn { get; } = new("mine-regen", "Mines return", RuleReach.Alone, RuleKind.Delay, 50, 5000, 50, Default: 200, Unit: "ms", Taken: "0 (mines stay gone) or 50 to 5000 ms, in steps of 50", Flag: "--mine-regen-ms", SetupWord: "mine_regen");
+    public static HostRule MinesRespawn { get; } = new("mine-regen", "Mines respawn", RuleReach.Alone, RuleKind.Delay, 50, 5000, 50, Default: 200, Unit: "ms", Taken: "0 (mines stay gone) or 50 to 5000 ms, in steps of 50", Flag: "--mine-regen-ms", SetupWord: "mine_regen");
 
     public static HostRule Machines { get; } = new("machines", "Machines", RuleReach.Together, RuleKind.Machines, SetupWord: "machines");
 
@@ -91,7 +91,7 @@ public static partial class HostRules
         CpuFill,
         BoostStart,
         FinishLimit,
-        MinesReturn,
+        MinesRespawn,
         Machines,
         MachineSetting,
         StatPack,
@@ -109,11 +109,11 @@ public static partial class HostRules
     ];
 
     /// <summary>The rules that mean something in a race alone, in order: what a practice shows.</summary>
-    public static IReadOnlyList<HostRule> Alone { get; } = [Laps, BoostStart, Restore, MinesReturn, MachineSetting, StatPack];
+    public static IReadOnlyList<HostRule> Alone { get; } = [Laps, BoostStart, Restore, MinesRespawn, MachineSetting, StatPack];
 
     /// <summary>The rules the games apply, in the operator's order: the members of <see cref="RaceRules"/>, each a word
     /// of the game's race block; a practice's rule is not among them (no server sets it).</summary>
-    public static IReadOnlyList<HostRule> Race { get; } = [CpuLevel, BoostStart, FinishLimit, MinesReturn];
+    public static IReadOnlyList<HostRule> Race { get; } = [CpuLevel, BoostStart, FinishLimit, MinesRespawn];
 
     /// <summary>A rule by its name; null: no such rule.</summary>
     public static HostRule? Named(string name) => All.FirstOrDefault(r => r.Name == name);
@@ -130,7 +130,7 @@ public static partial class HostRules
 public sealed record RaceRules(int CpuLevel = 3, bool BoostFromStart = false, bool Restore = false, int FinishLimitSeconds = 0, int MineRegenMs = 0)
 {
     /// <summary>Quick Play's: every rule's default (<see cref="HostRule.Default"/>).</summary>
-    public static RaceRules QuickPlay { get; } = new(HostRules.CpuLevel.Default, HostRules.BoostStart.Default != 0, HostRules.Restore.Default != 0, HostRules.FinishLimit.Default, HostRules.MinesReturn.Default);
+    public static RaceRules QuickPlay { get; } = new(HostRules.CpuLevel.Default, HostRules.BoostStart.Default != 0, HostRules.Restore.Default != 0, HostRules.FinishLimit.Default, HostRules.MinesRespawn.Default);
 
     /// <summary>A rule's value as a whole number (a switch: 1 on); <paramref name="rule"/> is one of <see
     /// cref="HostRules.Race"/> (or a practice's).</summary>

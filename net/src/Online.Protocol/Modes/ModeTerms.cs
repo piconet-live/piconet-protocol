@@ -41,7 +41,7 @@ public sealed record ModeTerms
     public int FinishLimit { get; init; }
 
     /// <summary>A mine's return in ms (0: stays gone); the mode's when stated.</summary>
-    public int? MinesReturn { get; init; }
+    public int? MinesRespawn { get; init; }
 
     /// <summary>The pinned course; null: the lobby's way.</summary>
     public int? Course { get; init; }
@@ -125,7 +125,7 @@ public sealed record ModeTerms
                 },
                 ModeSetup.CpuLevel => terms with { CpuLevel = Cell(a[0]) },
                 ModeSetup.FinishLimit => terms with { FinishLimit = Cell(a[0]) },
-                ModeSetup.MineRegen => terms with { MinesReturn = Cell(a[0]) == 1 ? MineRegenOn : Cell(a[0]) },
+                ModeSetup.MineRegen => terms with { MinesRespawn = Cell(a[0]) == 1 ? MineRegenOn : Cell(a[0]) },
                 ModeSetup.Boost when Cell(a[0]) == 0 => terms with { BoostStart = false },
                 ModeSetup.Course => terms with { Course = Cell(a[0]) },
                 ModeSetup.CoursesAll => terms with { Courses = [] },
@@ -177,7 +177,7 @@ public sealed record ModeTerms
         rules[HostRules.Laps.Name] = LapsAll ?? (LapsElse is null ? GameLaps : LapsByCourse);
         rules[HostRules.CpuLevel.Name] = CpuLevel ?? GameCpuLevel;
         rules[HostRules.BoostStart.Name] = BoostStart == true ? 1 : 0;
-        rules[HostRules.MinesReturn.Name] = MinesReturn ?? 0;
+        rules[HostRules.MinesRespawn.Name] = MinesRespawn ?? 0;
         if (Course is { } course)
         {
             rules[HostRules.CourseSelect.Name] = (int)CourseSelectMode.Fixed;

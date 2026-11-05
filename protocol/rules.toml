@@ -166,8 +166,8 @@ without it: it ends when the last has finished or is out); the games count it in
 [[rule]]
 name = "mine-regen"
 setup = "mine_regen"
-label = "Mines return"
-cs = "MinesReturn"
+label = "Mines respawn"
+cs = "MinesRespawn"
 reach = "alone"
 kind = "delay"
 least = 50

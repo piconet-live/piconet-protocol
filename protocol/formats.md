@@ -1045,7 +1045,7 @@ bytes and hash it had), each u32 its tag (four letters), u32 its length and its 
 The **content hash** is the SHA-256 of the package's bytes; its **share code** the first 8 characters of the hash's
 base32 (RFC 4648, upper case, no padding). At most 64 KiB, the source included.
 
-**A mode's words are the race's rules** (`ModeTerms`): a word stated sets its rule; left out, the game's own way (3 laps, CPU level 3, no boost on the first lap, mines stay gone, each racer's own setting, the disc's own stats, one pack for all), the finish limit 0 and no CPUs without `cpus on`. A custom lobby's own settings (its seats, ping limit, vote and choice times, voting minimum, how the course is found among the mode's) are not the mode's. The coordinator writes the result in the match start, so `setup.rules`, `laps` and the seats say what is raced.
+**A mode's words are the race's rules** (`ModeTerms`): a word stated sets its rule; left out, the game's own way (3 laps, CPU level 3, no boost on the first lap, mines that do not respawn, each racer's own setting, the disc's own stats, one pack for all), the finish limit 0 and no CPUs without `cpus on`. A custom lobby's own settings (its seats, ping limit, vote and choice times, voting minimum, how the course is found among the mode's) are not the mode's. The coordinator writes the result in the match start, so `setup.rules`, `laps` and the seats say what is raced.
 
 **In a match start**: `setup.mode` = `{"package": BASE64, "hash": HEX, "api": N, "params": [i32, ...], "teams":
 [team, ...]}`, the parameters in `PARM`'s order (a real's bits); `teams` each seat's team by seat, 0 to 29, set by

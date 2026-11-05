@@ -460,7 +460,7 @@ public sealed class ModeTermsTests
     {
         var mode = ModeCompiler.Compile($"{Sw}mine_regen {value};\n").Mode!;
         var values = given is { } g ? (value == "n" ? new[] { 0, g } : [g, 200]) : null;
-        Assert.Equal(ms, ModeTerms.Of(mode, values).MinesReturn);
+        Assert.Equal(ms, ModeTerms.Of(mode, values).MinesRespawn);
     }
 
     [Theory]
@@ -606,8 +606,18 @@ public sealed class ModeTermsTests
             """);
         Assert.True(result.Succeeded, string.Join(" ", result.Errors));
         Assert.Equal(
-            ["No boost", "No restore", "Time limit 3:00", "Damage 150%", "No spin attacks", "Time bonus 10 seconds", "Up to 8 racers"],
+            ["No boost", "Restore Off", "Time limit 3:00", "Damage 150%", "No spin attacks", "Time bonus 10 seconds", "Up to 8 racers"],
             ModeRuleLines.Of(result.Mode!));
+    }
+
+    /// <summary>A setting's line is its label and its value, as the launcher's row says it; a parameter at its named
+    /// value says nothing ("By course" laps have their place on the card).</summary>
+    [Fact]
+    public void QuickPlaysLinesAreItsSettingsWords()
+    {
+        var mode = ModeCompiler.Compile(File.ReadAllText(TestSupport.RepositoryFolder.Protocol("protocol", "quickplay", "competitive.fzmode"))).Mode!;
+        Assert.Equal(["Finish limit 90 s", "CPU level Master", "Boost from the start Off", "Mines respawn 0.2 s", "Machine setting 100", "Stats"],
+            ModeRuleLines.Of(mode));
     }
 
     [Fact]

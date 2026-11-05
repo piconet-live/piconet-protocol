@@ -6,13 +6,13 @@
 
 mode "Quick Play" {
   api 1;
-  about "The game's own rules.";
+  about "Quick Play's rules: laps by course, GX Unleashed stats.";
 }
 
 param lap_count   "Laps"            number 1..99 or "By course" default "By course";   // a number: every course
 param cpu_skill   "CPU level"       choice ["Novice", "Standard", "Expert", "Master"] default "Master";
 param boost_first "Boost from the start" switch default off;
-param mines_back  "Mines return"    number 50..5000 step 50 or "Stay gone" default 200;  // milliseconds
+param mines_back  "Mines respawn"   number 50..5000 step 50 or "Off" default 200;  // milliseconds
 param finish_in   "Finish limit"    number 0..600 step 5 default 90;                     // seconds after the winner; 0: none
 param setting_low  "Machine setting from" number 0..100 default 100;
 param setting_high "Machine setting to"   number 0..100 default 100;
