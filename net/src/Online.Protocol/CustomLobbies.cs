@@ -99,10 +99,12 @@ public sealed record LobbyRules(IReadOnlyDictionary<string, int> Values,
         if (Values?.Keys.FirstOrDefault(ModeKeys.Contains) is { } key)
         {
             var label = (HostRules.Named(key) ?? HostRules.MachineSetting).Label;
-            return $"{label} comes from the mode now: choose a mode that sets it, or a mode file of your own";
+#pragma warning disable CA1308 // (a label inside a line of words, not a key compared)
+            return $"the mode sets {label.ToLowerInvariant()} now: choose a mode that sets it, or a mode file of your own";
+#pragma warning restore CA1308
         }
         return StatPack is not null && PackFile is null
-            ? "Stats come from the mode now: choose a mode that names the pack, or a mode file of your own"
+            ? "the mode sets the stats now: choose a mode that names the pack, or a mode file of your own"
             : null;
     }
 

@@ -115,10 +115,10 @@ public sealed class CustomLobbyMessageTests
     [Fact]
     public void ARuleOfTheRaceOutsideTheModeIsRefused()
     {
-        Assert.Equal("Laps comes from the mode now: choose a mode that sets it, or a mode file of your own",
+        Assert.Equal("the mode sets laps now: choose a mode that sets it, or a mode file of your own",
             new LobbyRules(new Dictionary<string, int> { ["laps"] = 5 }).OutsideTheMode());
-        Assert.Contains("Machine setting comes from the mode", new LobbyRules(new Dictionary<string, int> { [LobbyRules.SettingHighKey] = 90 }).OutsideTheMode(), StringComparison.Ordinal);
-        Assert.StartsWith("Stats come from the mode", new LobbyRules(new Dictionary<string, int>(), "GX Unleashed").OutsideTheMode(), StringComparison.Ordinal);
+        Assert.Contains("the mode sets machine setting now", new LobbyRules(new Dictionary<string, int> { [LobbyRules.SettingHighKey] = 90 }).OutsideTheMode(), StringComparison.Ordinal);
+        Assert.StartsWith("the mode sets the stats now", new LobbyRules(new Dictionary<string, int>(), "GX Unleashed").OutsideTheMode(), StringComparison.Ordinal);
         Assert.Null(new LobbyRules(new Dictionary<string, int>
         {
             ["racers"] = 8, ["latency-limit"] = 150, ["vote-seconds"] = 20, ["choose-seconds"] = 20, ["voting-minimum"] = 2,
