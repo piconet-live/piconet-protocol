@@ -401,7 +401,7 @@ public sealed class QuickPlayRotationTests : IDisposable
     public void QuickPlaysModeHasItsSettingsAndTheirDefaultsAreQuickPlays()
     {
         var normal = Official().Normal;
-        Assert.Equal(["Laps", "CPU level", "Boost from the start", "Mines respawn", "Finish limit", "Machine setting from", "Machine setting to", "Stats"],
+        Assert.Equal(["Laps", "CPU level", "Boost from the start", "Mines respawn", "Finish limit", "Machine setting from", "Machine setting to", "Stats", "CPU racers"],
             normal.Package.Params.Select(p => p.Label));
         var laps = normal.Package.Params[0];
         Assert.Equal(("By course", 100, 100, 99), (laps.Or, laps.Default, laps.Most, laps.Top));
