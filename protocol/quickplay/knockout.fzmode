@@ -11,7 +11,6 @@ param first_cut "First cut"   delay 20s..120s step 5s default 45s;   // a 30-mac
 param keep      "Racers left" number 1..29 default 1;
 param warn_from "Warn from"   number 3..9 default 5;                  // seconds before the cut
 
-courses ["Lightning: Loop Cross"];
 cpus on;
 stats "GX Unleashed";   // Quick Play's pack, mines and machine setting (a word left out is the game's own)
 mine_regen on;
