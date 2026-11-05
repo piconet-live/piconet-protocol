@@ -53,10 +53,11 @@ public sealed class CustomLobbyMessageTests
     [Fact]
     public void OnlyTheRulesThatDifferFromQuickPlaysAreNamed()
     {
-        var quick = new LobbyRules(new Dictionary<string, int> { ["laps"] = 3, ["machine-setting"] = 100, [LobbyRules.SettingHighKey] = 100 });
-        var lobby = new LobbyRules(new Dictionary<string, int> { ["laps"] = 3, ["machine-setting"] = 80, [LobbyRules.SettingHighKey] = 100 },
-            "GX Unleashed");
-        Assert.Equal(["machine-setting", "stat-pack"], lobby.Differing(quick));
+        var quick = new LobbyRules(new Dictionary<string, int> { ["racers"] = 30, ["course-select"] = (int)CourseSelectMode.Vote, ["laps"] = 3 });
+        var lobby = new LobbyRules(new Dictionary<string, int> { ["racers"] = 30, ["course-select"] = (int)CourseSelectMode.Fixed,
+            [LobbyRules.FixedCourseKey] = 3, ["laps"] = 5, ["machine-setting"] = 80 }, "GX Unleashed");
+        // (laps, the setting and the stats are the mode's: no lobby setting, not named)
+        Assert.Equal(["course-select"], lobby.Differing(quick));
         Assert.Empty(LobbyRules.QuickPlay.Differing(quick));
     }
 

@@ -26,8 +26,8 @@ namespace Online.Protocol;
 /// lobby's rules with the mode as <see cref="Mode"/> alone (its hash, name and badge); a launcher that sends rules again
 /// without a ModeFile and with the Mode the server sent keeps it, a Mode of the server's official ones
 /// (<see cref="LobbyList.Modes"/>) races that one, and without either races no mode. How the race plays is the mode's:
-/// a host's Values hold only <see cref="LobbyKeys"/> and <see cref="NoModeWordYet"/>, and StatPack only beside a
-/// PackFile (<see cref="OutsideTheMode"/>). A server from
+/// a host's Values hold only <see cref="LobbyKeys"/>, and StatPack only beside a PackFile the mode's stats
+/// parameter asks for (<see cref="OutsideTheMode"/>). A server from
 /// before modes passes over both. ModeValues: the host's values of the mode's parameters, in <c>PARM</c>'s order (a
 /// real's bits), checked against its declared ranges (<see cref="ModePackage.ValuesRefusal"/>) and raced in
 /// <c>setup.mode.params</c>; null: a new file's defaults, or what the lobby's mode has. The course pool and the allowed machines are Quick Play's in a custom lobby.
@@ -113,17 +113,16 @@ public sealed record LobbyRules(IReadOnlyDictionary<string, int> Values,
         return Value(rule.Name);
     }
 
-    /// <summary>The names of the settable rules whose value here is not <paramref name="quickPlay"/>'s, in the rules'
-    /// order (<see cref="Settable"/>): what a lobby's rules summary shows. A key missing here is Quick Play's.</summary>
+    /// <summary>The names of the lobby's own settings (<see cref="LobbyKeys"/>) whose value here is not
+    /// <paramref name="quickPlay"/>'s, in the rules' order (<see cref="Settable"/>): what a lobby's rules summary shows
+    /// beside its mode. A key missing here is Quick Play's.</summary>
     public IReadOnlyList<string> Differing(LobbyRules quickPlay)
     {
         ArgumentNullException.ThrowIfNull(quickPlay);
         bool Differs(string key) => Value(key) is { } v && v != quickPlay.Value(key);
-        // (what the lobby's mode states is the mode's, not the host's, and is not news beside its name)
-        return [.. Settable.Where(rule => Mode?.Terms?.ContainsKey(rule.Name) != true && !(rule == HostRules.StatPack && Mode?.Pack is not null)).Where(rule => rule.Kind switch
+        // (the race's rules are the mode's, not the host's, and are not news beside its name: only the lobby's own settings)
+        return [.. Settable.Where(rule => LobbyKeys.Contains(rule.Name)).Where(rule => rule.Kind switch
         {
-            RuleKind.Pack => StatPack != quickPlay.StatPack,
-            RuleKind.Range => Differs(rule.Name) || Differs(SettingHighKey),
             RuleKind.Course => Differs(rule.Name) || (Value(rule) == (int)CourseSelectMode.Fixed && Differs(FixedCourseKey)),
             _ => Differs(rule.Name),
         }).Select(r => r.Name)];

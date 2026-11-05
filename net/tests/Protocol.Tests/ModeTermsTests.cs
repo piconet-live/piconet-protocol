@@ -330,14 +330,15 @@ public sealed class ModeTermsTests
         Assert.DoesNotContain("\"team\"", System.Text.Json.JsonSerializer.Serialize(new PlayerInfo("p", "n", 1, new Rgb(1, 2, 3)), ControlProtocol.Json), StringComparison.Ordinal);
     }
 
-    /// <summary>A mode's terms are not news beside its name: <see cref="LobbyRules.Differing"/> leaves them out.</summary>
+    /// <summary>The race's rules are the mode's and not news beside its name: <see cref="LobbyRules.Differing"/> says
+    /// only the lobby's own settings, whether the mode states the rule or leaves it to the game.</summary>
     [Fact]
     public void WhatTheModeOwnsIsNotAmongTheRulesThatDiffer()
     {
-        var quickPlay = new LobbyRules(new Dictionary<string, int> { ["finish-limit"] = 90, ["laps"] = 3 });
-        var rules = new LobbyRules(new Dictionary<string, int> { ["finish-limit"] = 0, ["laps"] = 5 },
+        var quickPlay = new LobbyRules(new Dictionary<string, int> { ["finish-limit"] = 90, ["laps"] = 3, ["racers"] = 30 }, StatPack: "GX Unleashed");
+        var rules = new LobbyRules(new Dictionary<string, int> { ["finish-limit"] = 0, ["laps"] = 5, ["racers"] = 8 },
             Mode: new LobbyMode("h", "s", "M", 1, Terms: new Dictionary<string, int> { ["finish-limit"] = 0 }));
-        Assert.Equal(["laps"], rules.Differing(quickPlay));
+        Assert.Equal(["racers"], rules.Differing(quickPlay));
     }
 
     private const string Params = """
