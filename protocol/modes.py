@@ -10,14 +10,14 @@ SCHEMA = os.path.join(here, "modes.toml")
 
 TOP_KEYS = {"codec", "api", "op", "event", "setup", "seat_read", "race_read", "action", "choice"}
 API_KEYS = {"number", "budget", "queue", "globals", "seat_words", "locals", "rules", "sorts", "package_bytes", "seats",
-            "team_words", "teams", "waits", "wait_locals", "subs", "board", "board_label", "board_words", "board_word", "fsqrt_cost", "results_title", "hud_texts", "hud_text_values", "tag_text", "tag_texts", "presets"}
+            "team_words", "teams", "waits", "wait_locals", "subs", "board", "board_label", "board_words", "board_word", "fsqrt_cost", "results_title", "tag_text", "tag_texts", "presets"}
 OP_KEYS = {"name", "code", "operands", "doc"}
 EVENT_KEYS = {"name", "id", "kind", "binds", "doc"}
-SETUP_KEYS = {"name", "id", "args", "where", "doc", "table", "lobby", "form", "held"}
+SETUP_KEYS = {"name", "id", "args", "where", "doc", "table", "lobby", "form"}
 ARG_KEYS = {"type", "name", "least", "most", "default", "on"}
 READ_KEYS = {"name", "id", "type", "doc"}
-ACTION_KEYS = {"name", "spelled", "id", "args", "where", "doc", "join", "needs_step", "optional", "held"}
-CHOICE_KEYS = {"name", "values", "doc", "limits"}
+ACTION_KEYS = {"name", "spelled", "id", "args", "where", "doc", "join", "needs_step"}
+CHOICE_KEYS = {"name", "values", "doc"}
 OPERANDS = {"u8": 1, "u16": 2, "u32": 4, "i32": 4}
 TYPES = {"int", "real", "bool", "seat", "seats", "vec"}
 PASCAL = re.compile(r"[A-Z][A-Za-z0-9]*\Z")
@@ -57,8 +57,6 @@ def numbered(raw, allowed, what, high=255, gaps=False):
         if ident <= (out[-1]["id"] if out else -1) if gaps else ident != i:
             raise SchemaError(f"{what} {name}: the ids run 0, 1, 2 ... in the file's order (got {entry['id']})")
         # (`spelled`: the code's name when two words would spell the same: `no_contact` and `no contact`)
-        if entry.get("held", False) is not True and "held" in entry:
-            raise SchemaError(f"{what} {name}: held is true or left out")
         out.append(dict(entry, pascal=pascal(entry.get("spelled", name), what)))
     if len({e["pascal"] for e in out}) != len(out):
         raise SchemaError(f"{what}: two names spell the same")
@@ -137,9 +135,7 @@ def load(path=SCHEMA):
         if (not isinstance(values, list) or not values or len(values) > 255
                 or any(not isinstance(v, str) or not re.fullmatch(r"[A-Za-z][A-Za-z0-9_]*", v) for v in values)):
             raise SchemaError(f"choice {name}: values are names")
-        choices[name] = {"name": name, "pascal": pascal(name, "choice"), "values": values, "doc": entry.get("doc", ""), "limits": entry.get("limits")}
-        if entry.get("limits") is not None and (not isinstance(entry["limits"], list) or len(entry["limits"]) != len(values)):
-            raise SchemaError(f"choice {name}: limits, one a value")
+        choices[name] = {"name": name, "pascal": pascal(name, "choice"), "values": values, "doc": entry.get("doc", "")}
     named = [v for c in choices.values() for v in c["values"]]
     if len(set(named)) != len(named):
         raise SchemaError("choice: a value's name twice")

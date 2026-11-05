@@ -26,8 +26,6 @@ inline constexpr int FSQRT_COST = 8;
 inline constexpr int RESULTS_TITLE = 23;
 inline constexpr int TAG_TEXT = 10;
 inline constexpr int TAG_TEXTS = 8;
-inline constexpr int HUD_TEXTS = 10;
-inline constexpr int HUD_TEXT_VALUES = 2;
 inline constexpr int BOARD = 8;
 inline constexpr int BOARD_LABEL = 32;
 inline constexpr int BOARD_WORDS = 16;
@@ -263,8 +261,6 @@ enum Setup : std::uint8_t
   SETUP_COURSES = 47,  // courses
   SETUP_STATSPAGE = 48,  // stats_page
   SETUP_MAXENERGY = 49,  // max_energy
-  SETUP_HUDMODERN = 50,  // hud modern
-  SETUP_HUDTEXTS = 51,  // hud_texts
   SETUP_TIMEGAPS = 52,  // time_gaps
   SETUP_RESULTSHEADING = 53,  // results_heading
   SETUP_HUDCLEAN = 54,  // hud clean
@@ -460,11 +456,6 @@ enum Action : std::uint8_t
   ACTION_SEATSTATTURNDECEL = 66,  // seat.stat.turn_decel
   ACTION_SEATSTATGRIPWINDOW = 67,  // seat.stat.grip_window
   ACTION_SEATMAXENERGY = 68,  // seat.max_energy
-  ACTION_SHOWBAR = 69,  // show_bar
-  ACTION_SHOWFIGURE = 70,  // show_figure
-  ACTION_SHOWTEXT = 71,  // show_text
-  ACTION_SHOWGAP = 72,  // show_gap
-  ACTION_HUDCLEAR = 73,  // hud_clear
   ACTION_FINISHSEAT = 74,  // finish_seat
   ACTION_SHOWDISTANCE = 75,  // show_distance
   ACTION_SHOWDISTANCEOFF = 76,  // show_distance off
@@ -516,50 +507,6 @@ enum Look : std::uint8_t
   LOOK_GHOST = 1,
   LOOK_INVISIBLE = 2,
   LOOK_COUNT = 3,
-};
-
-// the choice `slot`: a named place on the modern HUD (fzgx/hud_layout.h), which follows the player's layout; `limits`, the characters a text may take there. top6 takes only `show_gap seat, you, top6`: each row of the top 6 shows that racer's gap to you
-enum Slot : std::uint8_t
-{
-  SLOT_UNDER_PLACE = 0,
-  SLOT_BESIDE_PLACE = 1,
-  SLOT_UNDER_TIMES = 2,
-  SLOT_OVER_SPEED = 3,
-  SLOT_UNDER_SPEED = 4,
-  SLOT_MESSAGE = 5,
-  SLOT_UNDER_TOP6 = 6,
-  SLOT_TOP6 = 7,
-  SLOT_COUNT = 8,
-};
-
-// the choice `bar`: how `show_bar` draws: a thin slanted strip, a wedge widening as the energy meter does, or one cell a whole unit up to the most (at most 12)
-enum Bar : std::uint8_t
-{
-  BAR_STRIP = 0,
-  BAR_WEDGE = 1,
-  BAR_CELLS = 2,
-  BAR_COUNT = 3,
-};
-
-// the choice `target`: whose gap `show_gap` shows: the racer one place ahead, one place behind, the leader; you with the slot top6: each row's racer against you
-enum Target : std::uint8_t
-{
-  TARGET_AHEAD = 0,
-  TARGET_BEHIND = 1,
-  TARGET_LEADER = 2,
-  TARGET_YOU = 3,
-  TARGET_COUNT = 4,
-};
-
-// the choice `colour`: the HUD's palette (Direction D): text, accent, danger, gold, warn. Left out: white; for `show_gap`, green gaining, red losing, white holding
-enum Colour : std::uint8_t
-{
-  COLOUR_WHITE = 0,
-  COLOUR_GREEN = 1,
-  COLOUR_RED = 2,
-  COLOUR_GOLD = 3,
-  COLOUR_ORANGE = 4,
-  COLOUR_COUNT = 5,
 };
 
 // what `on` is for a setup word that also takes a value
@@ -639,11 +586,6 @@ constexpr int ActionArguments(std::uint8_t action)
     case ACTION_SEATSTATTURNDECEL: return 2;
     case ACTION_SEATSTATGRIPWINDOW: return 2;
     case ACTION_SEATMAXENERGY: return 2;
-    case ACTION_SHOWBAR: return 6;
-    case ACTION_SHOWFIGURE: return 4;
-    case ACTION_SHOWTEXT: return 6;
-    case ACTION_SHOWGAP: return 4;
-    case ACTION_HUDCLEAR: return 2;
     case ACTION_FINISHSEAT: return 1;
     case ACTION_SHOWDISTANCE: return 2;
     case ACTION_SHOWDISTANCEOFF: return 1;

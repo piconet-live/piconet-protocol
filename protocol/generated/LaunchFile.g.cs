@@ -36,7 +36,7 @@ public static class LaunchFormat
 }
 
 /// <summary>The launch file's part File: the launch file: every setting of one start of the game.
-/// The launcher writes "about", "bundle", "widescreen", "trueWidescreen", "lanes", "controllerSetup", "match", "replay", "windowName", "windowNamePicture", "showFrameRate", "showInputs", "modernHud", "hudLayout", "hudMeter", "renderer", "auroraSize", "auroraEdges", "auroraTextures", "auroraColourblind", "auroraHighRefresh", "auroraRayTracing", "rumble", "present", "verticalSync", "fullScreen", "refreshRate", "taskbar", "board", "overlay", "debug".</summary>
+/// The launcher writes "about", "bundle", "widescreen", "trueWidescreen", "lanes", "controllerSetup", "match", "replay", "windowName", "windowNamePicture", "showFrameRate", "showInputs", "renderer", "auroraSize", "auroraEdges", "auroraTextures", "auroraColourblind", "auroraHighRefresh", "auroraRayTracing", "rumble", "present", "verticalSync", "fullScreen", "refreshRate", "taskbar", "board", "overlay", "debug".</summary>
 public sealed record LaunchFile(
     string About,
     string? Bundle = null,
@@ -49,9 +49,6 @@ public sealed record LaunchFile(
     LaunchNamePicture? WindowNamePicture = null,
     bool? ShowFrameRate = null,
     bool ShowInputs = false,
-    bool ModernHud = false,
-    string? HudLayout = null,
-    string? HudMeter = null,
     string? Renderer = null,
     string? AuroraSize = null,
     int AuroraEdges = 0,
@@ -114,18 +111,6 @@ public sealed record LaunchFile(
         if (ShowInputs)
         {
             o["showInputs"] = true;
-        }
-        if (ModernHud)
-        {
-            o["modernHud"] = true;
-        }
-        if (HudLayout is { } hudLayout)
-        {
-            o["hudLayout"] = hudLayout;
-        }
-        if (HudMeter is { } hudMeter)
-        {
-            o["hudMeter"] = hudMeter;
         }
         if (Renderer is { } renderer)
         {
