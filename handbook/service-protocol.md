@@ -107,6 +107,13 @@ coordinator sends as a chat line at each welcome. A launcher on its home screen 
 every few seconds is how it sees the message there, and it goes when the field does. Written only when set: a reader
 from before passes over it.
 
+**The official modes in the status** (`ServiceStatus.ModeStore`, `ModeStoreView`): where the coordinator loaded Quick
+Play's rotation from (`source`: `bucket`, the stack's mode store; `local copy`, its last good copy while the bucket
+cannot be reached; `image seed`, the image's quickplay folder while neither is there; `image`, a server with no store),
+a `fault` line while it is not the bucket's, and the rotation's modes (`modes`: `file`, `name`,
+the package's `hash`, `role` normal, spicy or lobby, a spicy one's `weight`). The operator and the deploy tooling read
+it; no launcher does. Written only when the server has a rotation: a reader from before passes over it.
+
 **The key in `hello`** (`Hello.Key`): the launcher's secret, 32 random bytes in base64url without padding (43
 characters, `PlayerTags.NewKey`), made once and kept in its settings (`LauncherSettings.PlayerKey`). The coordinator
 works the player's tag out from it with its own tag key (a launcher cannot
