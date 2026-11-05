@@ -24,7 +24,10 @@ namespace Online.Protocol;
 /// compiles with the one compiler (<see cref="ModeCompiler"/>) and races in place of Quick Play's rules: a file that
 /// does not compile is refused with the compiler's messages (<see cref="CustomLobby.BadMode"/>). The server sends a
 /// lobby's rules with the mode as <see cref="Mode"/> alone (its hash, name and badge); a launcher that sends rules again
-/// without a ModeFile and with the Mode the server sent keeps it, and without either races no mode. A server from
+/// without a ModeFile and with the Mode the server sent keeps it, a Mode of the server's official ones
+/// (<see cref="LobbyList.Modes"/>) races that one, and without either races no mode. How the race plays is the mode's:
+/// a host's Values hold only <see cref="LobbyKeys"/> and <see cref="NoModeWordYet"/>, and StatPack only beside a
+/// PackFile (<see cref="OutsideTheMode"/>). A server from
 /// before modes passes over both. ModeValues: the host's values of the mode's parameters, in <c>PARM</c>'s order (a
 /// real's bits), checked against its declared ranges (<see cref="ModePackage.ValuesRefusal"/>) and raced in
 /// <c>setup.mode.params</c>; null: a new file's defaults, or what the lobby's mode has. The course pool and the allowed machines are Quick Play's in a custom lobby.
@@ -69,6 +72,39 @@ public sealed record LobbyRules(IReadOnlyDictionary<string, int> Values,
     /// member), and the two extra keys.</summary>
     public static IReadOnlyList<string> Keys { get; } =
         [.. Settable.Where(r => r.Kind != RuleKind.Pack).Select(r => r.Name), SettingHighKey, FixedCourseKey, TeamsKey];
+
+    /// <summary>The keys a host sets beside the mode: the lobby's own settings (the player limit, the ping limit, the vote's
+    /// and the machine choice's times, the voting minimum) and the teams the mode's word allows. They shape the lobby, not
+    /// how the race plays (piconet-docs research/game-modes/ design 5, D10).</summary>
+    public static IReadOnlyList<string> LobbyKeys { get; } =
+        [HostRules.Racers.Name, HostRules.LatencyLimit.Name, HostRules.VoteSeconds.Name, HostRules.ChooseSeconds.Name,
+            HostRules.VotingMinimum.Name, TeamsKey];
+
+    /// <summary>The race's rules a host still sets beside the mode because no word of the mode's says all they do yet
+    /// (marked for the owner, 2026-11-05): the CPUs filling every empty seat (<c>cpus on</c> only lets players vote
+    /// them in), and how the course is found (a random draw has no word, and <c>course</c> takes no parameter, so a
+    /// host's fixed course is no setting of an official mode). With them the host's own stat pack file
+    /// (<see cref="PackFile"/>: <c>stats</c> names one of the server's).</summary>
+    public static IReadOnlyList<string> NoModeWordYet { get; } = [HostRules.CpuFill.Name, HostRules.CourseSelect.Name, FixedCourseKey];
+
+    /// <summary>The keys that are the mode's alone (each has its setup word, <see cref="HostRule.SetupWord"/>): a host
+    /// sends none of them, and a server refuses rules that hold one (<see cref="OutsideTheMode"/>). The stat pack by
+    /// name is the mode's too (<c>stats</c>).</summary>
+    public static IReadOnlyList<string> ModeKeys { get; } = [.. Keys.Where(k => !LobbyKeys.Contains(k) && !NoModeWordYet.Contains(k))];
+
+    /// <summary>Why a host's rules are refused: they set a rule of the race that is the mode's (<see cref="ModeKeys"/>), or
+    /// a server's stat pack by name without the host's own file; null: they do not. One line, as a refusal says it.</summary>
+    public string? OutsideTheMode()
+    {
+        if (Values?.Keys.FirstOrDefault(ModeKeys.Contains) is { } key)
+        {
+            var label = (HostRules.Named(key) ?? HostRules.MachineSetting).Label;
+            return $"{label} comes from the mode now: choose a mode that sets it, or a mode file of your own";
+        }
+        return StatPack is not null && PackFile is null
+            ? "Stats come from the mode now: choose a mode that names the pack, or a mode file of your own"
+            : null;
+    }
 
     /// <summary>The value under a key; null: Quick Play's.</summary>
     public int? Value(string key) => Values is not null && Values.TryGetValue(key, out var v) ? v : null;
@@ -195,9 +231,14 @@ public sealed record LeaveLobby : ClientMessage;
 
 /// <summary>The lobby browser: every custom lobby the player may join (their build's), sent on
 /// <see cref="BrowseLobbies"/> and then when the list changes, at most about twice a second. QuickPlay: the server's
-/// own rules in the same form, whole: what a lobby's rules are compared with (<see cref="LobbyRules.Differing"/>).</summary>
+/// own rules in the same form, whole: what a lobby's rules are compared with (<see cref="LobbyRules.Differing"/>).
+/// Modes: the server's official modes a host may give a lobby (its catalog's lobby modes, in order: Quick Play's
+/// normal rules first, then those rules with each stat pack, then the others), each named as a lobby's mode is, with its
+/// settings on their defaults; the host chooses one by naming it in <see cref="LobbyRules.Mode"/> (its hash), or sends
+/// a file of their own (<see cref="LobbyRules.ModeFile"/>). Null: a server from before them.</summary>
 public sealed record LobbyList(IReadOnlyList<LobbySummary> Lobbies,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] LobbyRules? QuickPlay = null) : ServerMessage;
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] LobbyRules? QuickPlay = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<LobbyMode>? Modes = null) : ServerMessage;
 
 /// <summary>A custom lobby's game mode as the server names it (<see cref="LobbyRules.Mode"/>): the package's content
 /// hash (<see cref="ModePackage.Hash"/>) and share code, the mode's name, its badge and its line of what it changes

@@ -258,53 +258,22 @@ public sealed class ModeCompilerTests
         Assert.Empty(ModeCompiler.Compile(Head + "seat int lap_time;\nglobal int ghost;\nrule \"R\" { event each seat; do { seat.look = ghost; ghost = seat.lap_time; } }\n").Errors);
     }
 
-    private const string PresetHead = Head + "param n \"N\" number 1..9 default 3;\nparam on_off \"S\" switch default off;\nparam pick \"P\" choice [\"A\", \"B\"] default \"A\";\nparam hold \"W\" delay 1s..10s step 1s default 2s;\nparam f \"F\" number 0.5..2.0 default 1.0;\n";
-
     [Fact]
-    public void APresetGivesEveryParameterAValue()
+    public void APresetIsRefusedWithOneLine()
     {
-        var compiled = ModeCompiler.Compile(PresetHead + "preset \"One\" { n = 5; pick = \"B\"; }\npreset \"Two\" { on_off = on; hold = 5s; f = 1.5; }\n");
-        Assert.Empty(compiled.Errors);
-        var mode = compiled.Mode!;
-        Assert.Equal(["One", "Two"], mode.Presets.Select(p => p.Name));
-        var defaults = mode.Params.Select(p => p.Default).ToList();
-        Assert.Equal([5, 0, 1, defaults[3], defaults[4]], mode.Presets[0].Values);
-        Assert.Equal([3, 1, 0, 300, BitConverter.SingleToInt32Bits(1.5f)], mode.Presets[1].Values);
-        Assert.All(mode.Presets, p => Assert.Null(mode.ValuesRefusal(p.Values)));
+        // a mode file is one choice: its parameters keep their defaults and the host changes them in the lobby
+        var source = Head + "param n \"N\" number 1..9 default 3;\npreset \"One\" { n = 5; }\n";
+        var errors = ModeCompiler.Compile(source).Errors;
+        Assert.Single(errors);
+        Assert.Contains("line 3: presets are gone: a mode file is one choice, and a variant is a mode file of its own", errors[0].ToString(), StringComparison.Ordinal);
     }
 
     [Fact]
-    public void PresetsAreNotInThePackagesBytes()
+    public void AGhostRaceHasItsDefaultsAndNoPresets()
     {
-        var source = PresetHead + "preset \"One\" { n = 5; }\n";
-        var compiled = ModeCompiler.Compile(source);
-        var read = ModePackage.Read(compiled.Package!);
-        Assert.Empty(read.Presets);
-        Assert.Equal(compiled.Package, read.Write());
-        Assert.Equal(source, read.Source);
-    }
-
-    [Theory]
-    [InlineData("preset \"One\" { missing = 1; }\n", "names 'missing'")]
-    [InlineData("preset \"One\" { n = 1; n = 2; }\n", "names n twice")]
-    [InlineData("preset \"One\" { n = 10; }\n", "outside what the parameter allows")]
-    [InlineData("preset \"One\" { n = 1.5; }\n", "is a whole number")]
-    [InlineData("preset \"One\" { n = \"A\"; }\n", "is not a choice")]
-    [InlineData("preset \"One\" { pick = \"C\"; }\n", "is one of its choices")]
-    [InlineData("preset \"One\" { on_off = 1; }\n", "is a switch")]
-    [InlineData("preset \"One\" { hold = 3; }\n", "is a time")]
-    [InlineData("preset \"One\" { }\n", "sets nothing")]
-    [InlineData("preset \"One\" { n = 1; }\npreset \"One\" { n = 2; }\n", "a name of its own")]
-    public void ABadPresetIsRefused(string preset, string said)
-    {
-        Assert.Contains(said, Errors(PresetHead + preset));
-    }
-
-    [Fact]
-    public void AGhostRaceOffersItsPresets()
-    {
-        var mode = ModeCompiler.Compile(File.ReadAllText(RepositoryFolder.Protocol("protocol", "quickplay", "ghost_race.fzmode"))).Mode!;
-        Assert.Equal(["Sprint", "Blind"], mode.Presets.Select(p => p.Name));
+        var text = File.ReadAllText(RepositoryFolder.Protocol("protocol", "quickplay", "ghost_race.fzmode"));
+        Assert.DoesNotContain("preset ", text, StringComparison.Ordinal);
+        var mode = ModeCompiler.Compile(text).Mode!;
         Assert.Equal(3, mode.Params[0].Default);
         Assert.Equal(("Show", "Live"), (mode.Params[1].Choices[mode.Params[1].Default], mode.Params[2].Choices[mode.Params[2].Default]));
     }

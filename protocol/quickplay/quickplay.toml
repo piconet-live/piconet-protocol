@@ -8,9 +8,16 @@ random_spicy_chance = 0.15 # Random may land on a spicy option, biased toward no
 leaderboards = false       # Quick Play never has leaderboards
 show_laps = true           # cards may show the lap count; never "normally N"
 
+# A custom lobby's official modes, in the order its host is offered them (before "From file…", the host's own):
+# Quick Play's normal rules first, then those rules with each stat pack, then the others. No solo mode: a lobby races
+# together. Not the rotation's; a server lists only those it can race (a stat pack it holds).
+lobby_modes = ["competitive.fzmode", "competitive_stock.fzmode", "competitive_gx_unleashed.fzmode",
+               "competitive_gx_plus.fzmode", "knockout.fzmode", "ghost_race.fzmode"]
+
 [normal]
 mode = "competitive.fzmode"
 
 [[spicy]]
 mode = "knockout.fzmode"
 weight = 1
+

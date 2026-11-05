@@ -378,4 +378,47 @@ public sealed class QuickPlayRotationTests : IDisposable
         Assert.DoesNotContain("modes", ControlProtocol.Encode(new Hello("p", ControlProtocol.Version)), StringComparison.Ordinal);
         Assert.Equal(0, Assert.IsType<Hello>(ControlProtocol.DecodeClient($$"""{"type":"hello","name":"p","version":{{ControlProtocol.Version}}}""")).Modes);
     }
+    /// <summary>A custom lobby's official modes, in the host's order: Quick Play's normal rules, then with each stat pack
+    /// (stock first), then the others; no solo mode. Each names its pack as a mode word, and the lobby's names carry
+    /// each one's settings on their defaults.</summary>
+    [Fact]
+    public void TheOfficialLobbyModesComeInTheHostsOrder()
+    {
+        var modes = Official().LobbyModes;
+        Assert.Equal(["Quick Play", "Quick Play with stock stats", "Quick Play with GX Unleashed stats", "Quick Play with F-Zero GX+ stats",
+            "Knockout", "Ghost race"], modes.Select(m => m.Package.Name));
+        Assert.Equal([null, "", "GX Unleashed", "F-Zero GX+", null, null], modes.Select(m => m.Terms.Pack));
+        Assert.Equal(Official().Normal.Hash, modes[0].Hash);   // (the rotation's own file)
+        Assert.All(modes, m => Assert.False(m.Terms.Solo));
+        var ghost = modes[^1].Named();
+        Assert.Equal(modes[^1].Hash, ghost.Hash);
+        Assert.Equal(ghost.Params!.Select(p => p.Default), ghost.Values!);
+        Assert.Null(modes[0].Named().Params);
+    }
+
+    /// <summary>A stat pack's variant is Quick Play's normal file word for word below its own header and stats line, so
+    /// a change to Quick Play's rules is made in every one of them.</summary>
+    [Theory]
+    [InlineData("competitive_stock.fzmode", "stats stock;")]
+    [InlineData("competitive_gx_unleashed.fzmode", "stats \"GX Unleashed\";")]
+    [InlineData("competitive_gx_plus.fzmode", "stats \"F-Zero GX+\";")]
+    public void AStatPackVariantIsQuickPlaysRulesWordForWord(string file, string stats)
+    {
+        static string Body(string text) => text[(text.IndexOf("\n}\n", StringComparison.Ordinal) + 3)..].TrimStart('\n');
+        var normal = Body(File.ReadAllText(RepositoryFolder.Protocol("protocol", "quickplay", "competitive.fzmode")));
+        var variant = Body(File.ReadAllText(RepositoryFolder.Protocol("protocol", "quickplay", file)));
+        Assert.Equal(stats + "\n" + normal, variant);
+    }
+
+    [Theory]
+    [InlineData("lobby_modes = \"competitive.fzmode\"\nspicy_cards = 0\n[normal]\nmode = \"competitive.fzmode\"", "lobby_modes is a list of mode files")]
+    [InlineData("lobby_modes = [\"competitive.fzmode\", \"competitive.fzmode\"]\nspicy_cards = 0\n[normal]\nmode = \"competitive.fzmode\"", "names competitive.fzmode twice")]
+    [InlineData("lobby_modes = [\"solo.fzmode\"]\nspicy_cards = 0\n[normal]\nmode = \"competitive.fzmode\"", "no lobby holds it")]
+    public void ALobbyListThatDoesNotLoadSaysWhy(string toml, string says)
+    {
+        var folder = WithFile(toml);
+        File.WriteAllText(Path.Combine(folder, "solo.fzmode"), "mode \"Alone\" { api 1; }\nsolo on;\n");
+        var error = Assert.Throws<InvalidDataException>(() => QuickPlayRotation.Read(folder));
+        Assert.Contains(says, error.Message, StringComparison.Ordinal);
+    }
 }

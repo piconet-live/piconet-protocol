@@ -1,0 +1,23 @@
+// Quick Play's normal rules (competitive.fzmode) with one stat pack for every racer: a custom lobby's choice, not in the
+// rotation. Everything below the stats line is competitive.fzmode's own, word for word (a protocol test holds it), so a
+// change to Quick Play's rules is made in every one of these files.
+
+mode "Quick Play with stock stats" {
+  api 1;
+  about "The game's own rules and the disc's own stats.";
+}
+
+stats stock;
+cpus on;          // players may vote CPUs in, as today; none come without the vote
+finish_limit 90;       // the lobby's limit stops at a mode's door: Quick Play's own end, as today
+
+laps by course {
+  "Mute City: Sonic Oval": 8;
+  "Aeropolis: Screw Drive": 6;
+  "Big Blue: Drift Highway": 6;
+  "Casino Palace: Split Oval": 6;
+  "Mute City: Twist Road": 6;
+  "Green Plant: Mobius Ring": 4;
+  "Outer Space: Meteor Stream": 4;
+  else: 3;
+}

@@ -264,7 +264,7 @@ internal sealed class ModeParser
         return token.Text switch
         {
             "param" => Param(),
-            "preset" => Preset(),
+            "preset" => throw Error("presets are gone: a mode file is one choice, and a variant is a mode file of its own"),
             "const" => Const(),
             "global" or "seat" or "team" => Variable(),
             "sub" => Sub(),
@@ -305,30 +305,6 @@ internal sealed class ModeParser
         }
         Expect(";");
         return new ModeBoardItem(line, scope, nameToken.Text, label, words);
-    }
-
-    /// <summary><c>preset "Sprint" { laps_asked = 1; dots = "Hidden"; }</c>: a named set of parameter values (the design's
-    /// section 5, a preset is a named mode with parameter values).</summary>
-    private ModePresetItem Preset()
-    {
-        var line = Take().Line;
-        var name = Text();
-        Expect("{");
-        var values = new List<ModePresetValue>();
-        while (!Accept("}"))
-        {
-            var token = Take();
-            if (token.Kind != ModeTokenKind.Name)
-            {
-                throw new ModeCompileException(token.Line, $"a preset gives parameters values, not {Describe(token)}");
-            }
-            Expect("=");
-            values.Add(Current.Kind == ModeTokenKind.Text
-                ? new ModePresetValue(token.Line, token.Text, null, Text())
-                : new ModePresetValue(token.Line, token.Text, Literal(), null));
-            Expect(";");
-        }
-        return new ModePresetItem(line, name, values);
     }
 
     private ModeParamItem Param()

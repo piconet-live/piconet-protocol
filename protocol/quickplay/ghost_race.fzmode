@@ -12,9 +12,6 @@ param lap_count "Laps" number 1..9 default 3;
 param map_dots "Ghosts on the map" choice ["Show", "Hide"] default "Show";   // Time Attack marks its ghosts on the map
 param gap_kind "Gap" choice ["Live", "At lap lines", "Both", "None"] default "Live";
 
-preset "Sprint" { lap_count = 1; }
-preset "Blind" { map_dots = "Hide"; gap_kind = "None"; }
-
 cpus on;          // players may vote CPUs in
 start_together;
 contact off;

@@ -109,4 +109,35 @@ public sealed class CustomLobbyMessageTests
         var file = StatPackText.Write(pack);
         Assert.True(file.Length <= LobbyRules.MostPackFile / 2, $"{file.Length} characters");
     }
+    /// <summary>How the race plays is the mode's: a host's rules that set laps, CPUs' level, a machine setting or a
+    /// server's pack by name are refused in one line; the lobby's own settings, the rules with no mode word yet and the
+    /// host's own pack file are not.</summary>
+    [Fact]
+    public void ARuleOfTheRaceOutsideTheModeIsRefused()
+    {
+        Assert.Equal("Laps comes from the mode now: choose a mode that sets it, or a mode file of your own",
+            new LobbyRules(new Dictionary<string, int> { ["laps"] = 5 }).OutsideTheMode());
+        Assert.Contains("Machine setting comes from the mode", new LobbyRules(new Dictionary<string, int> { [LobbyRules.SettingHighKey] = 90 }).OutsideTheMode(), StringComparison.Ordinal);
+        Assert.StartsWith("Stats come from the mode", new LobbyRules(new Dictionary<string, int>(), "GX Unleashed").OutsideTheMode(), StringComparison.Ordinal);
+        Assert.Null(new LobbyRules(new Dictionary<string, int>
+        {
+            ["racers"] = 8, ["latency-limit"] = 150, ["vote-seconds"] = 20, ["choose-seconds"] = 20, ["voting-minimum"] = 2,
+            [LobbyRules.TeamsKey] = 2, ["cpu-fill"] = 1, ["course-select"] = 2, [LobbyRules.FixedCourseKey] = 8,
+        }, "Own", "name Own\n").OutsideTheMode());
+        Assert.Equal(["laps", "cpu-level", "boost-start", "finish-limit", "mine-regen", "machine-setting", "mixed-packs", LobbyRules.SettingHighKey],
+            LobbyRules.ModeKeys);
+        Assert.All(LobbyRules.ModeKeys.Where(k => k != LobbyRules.SettingHighKey), k => Assert.NotNull(HostRules.Named(k)!.SetupWord));
+    }
+
+    /// <summary>The lobby browser carries the server's official modes; an older end passes over them.</summary>
+    [Fact]
+    public void TheLobbyListCarriesTheOfficialModes()
+    {
+        var mode = new LobbyMode("ab", "CODE", "Ghost race", 1);
+        var text = ControlProtocol.Encode(new LobbyList([], null, [mode]));
+        Assert.Contains("\"modes\":[{", text, StringComparison.Ordinal);
+        var back = Assert.IsType<LobbyList>(ControlProtocol.DecodeServer(text));
+        Assert.Equal("Ghost race", Assert.Single(back.Modes!).Name);
+        Assert.DoesNotContain("modes", ControlProtocol.Encode(new LobbyList([])), StringComparison.Ordinal);
+    }
 }

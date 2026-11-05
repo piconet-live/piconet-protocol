@@ -316,7 +316,10 @@ public sealed class ModeLimitsTests
     /// own change writes its new hash here (<c>ModeCompilerTests</c> holds the vectors' bytes).</summary>
     [Theory]
     [InlineData("competitive", "f5249b0048616c1e643ee4a5caed4fc3b80b55d33dfe5542134981215c4b1cfb", 0)]
-    [InlineData("ghost_race", "18983f711714041e291f6ae0167b19ae1114fa1961d635d6379f4a5da145951e", 2204)]
+    [InlineData("competitive_gx_plus", "cfc36d878ceee5616615a85eeb0fb11b1034313ba1ef1e31474bc4307e0a8611", 0)]
+    [InlineData("competitive_gx_unleashed", "a98dba7bf876936463847bf4ec66310d1fb86a229d9bcbedf2a7c18700b97c1a", 0)]
+    [InlineData("competitive_stock", "3750942599e1184f32fbfbdc5003d4c4511978c52a986f2a14a180206e3c38b2", 0)]
+    [InlineData("ghost_race", "3b39b50364392257ca1a09079301ad25d71be478f9412ef059fb18071c4e441b", 2204)]
     [InlineData("knockout", "1fbb31a27e2c66e0f4d68228bab50d9a12a409cc82a0ad3a63f2cf048752c4ad", 44785)]
     [InlineData("practice", "5ec37ed0e45a2c7a54691824cedaef0648b5493c1965fc6bfc4ed2464e8ade76", 339)]
     [InlineData("time_trial", "501ee749f21e46dd3e72fb871dfcb07c3812ae13020e046b3bb3de7b4582ef92", 0)]

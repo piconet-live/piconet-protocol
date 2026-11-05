@@ -19,6 +19,15 @@ public sealed record RotationMode(string File, ModePackage Package, string Hash,
     /// <summary>The mode says <c>cpus on</c>: players may vote CPUs into its race (left out, they may not).</summary>
     public bool CpusAllowed => Terms.CpusAllowed;
 
+    /// <summary>The mode as a lobby's rules and the lobby browser name it (<see cref="LobbyRules.Mode"/>,
+    /// <see cref="LobbyList.Modes"/>): its hash and share code, its header, what it owns of the race, and its settings on
+    /// their values (null: none).</summary>
+    public LobbyMode Named() => new(Hash, ModePackage.ShareCode(Hash), Package.Name, Package.Api, Package.Badge, Package.About,
+        Terms.Rules(), Terms.Pack, Package.Params.Count > 0 ? Package.Params : null,
+        Package.Params.Count > 0 ? Values ?? [.. Package.Params.Select(p => p.Default)] : null,
+        Terms.Machines is { Count: > 0 } machines ? machines : null, Terms.CustomsOff,
+        Terms.Courses is { Count: > 0 } courses ? courses : null);
+
     /// <summary>The match start's <c>setup.mode</c>: the package on its parameters' values.</summary>
     public ModeStart Start() => Package.Start(Values);
 
@@ -63,11 +72,12 @@ public sealed class QuickPlayRotation
     /// <summary>The steps of a chance's draw.</summary>
     private const int ChanceSteps = 1_000_000;
 
-    private static readonly string[] TopKeys = ["cards", "spicy_cards", "random_spicy_chance", "leaderboards", "show_laps", "normal", "spicy"];
+    private static readonly string[] TopKeys = ["cards", "spicy_cards", "random_spicy_chance", "leaderboards", "show_laps", "lobby_modes", "normal", "spicy"];
 
     private QuickPlayRotation(int cards, int spicyCards, double randomSpicyChance, bool showLaps, RotationMode normal,
-        IReadOnlyList<RotationSpicy> spicy)
+        IReadOnlyList<RotationSpicy> spicy, IReadOnlyList<RotationMode> lobbyModes)
     {
+        LobbyModes = lobbyModes;
         Cards = cards;
         SpicyCards = spicyCards;
         RandomSpicyChance = randomSpicyChance;
@@ -93,6 +103,11 @@ public sealed class QuickPlayRotation
 
     /// <summary>The spicy options, in the file's order.</summary>
     public IReadOnlyList<RotationSpicy> Spicy { get; }
+
+    /// <summary>A custom lobby's official modes (<c>lobby_modes</c>), in the order its host is offered them: Quick Play's
+    /// normal rules first, then those rules with each stat pack, then the others. Not the rotation's: no vote card races
+    /// them unless the rotation names them too. Empty: the file lists none.</summary>
+    public IReadOnlyList<RotationMode> LobbyModes { get; }
 
     /// <summary>Every mode of the rotation, the normal one first.</summary>
     public IEnumerable<RotationMode> Modes => Spicy.Select(s => s.Mode).Prepend(Normal);
@@ -163,7 +178,25 @@ public sealed class QuickPlayRotation
         {
             throw new InvalidDataException($"{FileName}: spicy_cards is {spicyCards}, and there is no [[spicy]] option");
         }
-        return new QuickPlayRotation(cards, spicyCards, chance, showLaps, normalMode, spicy);
+        var lobbyModes = new List<RotationMode>();
+        if (table.TryGetValue("lobby_modes", out var l))
+        {
+            if (l is not TomlArray files || files.Any(f => f is not string))
+            {
+                throw new InvalidDataException($"{FileName}: lobby_modes is a list of mode files, lobby_modes = [\"competitive.fzmode\"]");
+            }
+            foreach (var file in files.Cast<string>())
+            {
+                if (lobbyModes.Any(m => m.File == file))
+                {
+                    throw new InvalidDataException($"{FileName}: lobby_modes names {file} twice");
+                }
+                var mode = modes.TryGetValue(file, out var known) ? known : Compiled(folder, file, rotation: false);
+                modes[file] = mode;
+                lobbyModes.Add(mode);
+            }
+        }
+        return new QuickPlayRotation(cards, spicyCards, chance, showLaps, normalMode, spicy, lobbyModes);
     }
 
     /// <summary>A vote's options: <see cref="Cards"/> course cards from the pool, <see cref="SpicyCards"/> of them
@@ -260,7 +293,7 @@ public sealed class QuickPlayRotation
         return (mode, weight);
     }
 
-    private static RotationMode Compiled(string folder, string file)
+    private static RotationMode Compiled(string folder, string file, bool rotation = true)
     {
         if (file != Path.GetFileName(file) || !file.EndsWith(".fzmode", StringComparison.Ordinal))
         {
@@ -279,13 +312,14 @@ public sealed class QuickPlayRotation
         // a card names one course of the mode's list, so a pin is no card's, and a Quick Play lobby's seats are its own.
         // (A list holds courses of the pool alone, CoursePool.Default: the compiler refuses any other, line and all.)
         var terms = ModeTerms.Of(compiled.Mode!);
-        if (terms.Course is not null || terms.Racers is not null)
-        {
-            throw new InvalidDataException($"{file}: a mode of Quick Play's rotation says neither course nor racers: its cards draw from its courses, and its lobby has the seats");
-        }
         if (terms.Solo)
         {
-            throw new InvalidDataException($"{file}: a solo mode is raced alone, and no rotation holds it");
+            throw new InvalidDataException(rotation ? $"{file}: a solo mode is raced alone, and no rotation holds it"
+                : $"{file}: a solo mode is raced alone, and no lobby holds it");
+        }
+        if (rotation && (terms.Course is not null || terms.Racers is not null))
+        {
+            throw new InvalidDataException($"{file}: a mode of Quick Play's rotation says neither course nor racers: its cards draw from its courses, and its lobby has the seats");
         }
         return new RotationMode(file, compiled.Mode!, compiled.Hash!);
     }
