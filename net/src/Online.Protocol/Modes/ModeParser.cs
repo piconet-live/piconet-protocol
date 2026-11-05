@@ -326,21 +326,39 @@ internal sealed class ModeParser
         return item;
     }
 
+    /// <summary><c>or "Name"</c> after a parameter's range or choices: its named value that states nothing.</summary>
+    private string? OrName() => Accept("or") ? Text() : null;
+
+    /// <summary>A default: the optional parameter's named value in quotes, or a literal.</summary>
+    private (ModeLiteral? Value, string? Named) Default(string? or)
+    {
+        if (!Accept("default"))
+        {
+            return (null, null);
+        }
+        return or is not null && Current.Kind == ModeTokenKind.Text ? (null, Text()) : (Literal(), null);
+    }
+
     private ModeParamItem RangeParam(int line, string name, string label, ModeParamKind kind)
     {
         var least = Literal();
         Expect("..");
         var most = Literal();
         var step = Accept("step") ? Literal() : null;
-        var value = Accept("default") ? Literal() : null;
-        return new ModeParamItem(line, name, label, kind, least, most, step, value, [], null);
+        var or = OrName();
+        var (value, named) = Default(or);
+        return new ModeParamItem(line, name, label, kind, least, most, step, value, [], named, or);
     }
 
     private ModeParamItem SwitchParam(int line, string name, string label)
     {
-        Expect("default");
-        var value = Literal();
-        return new ModeParamItem(line, name, label, ModeParamKind.Switch, null, null, null, value, [], null);
+        var or = OrName();
+        if (!Current.Is("default"))
+        {
+            Expect("default");
+        }
+        var (value, named) = Default(or);
+        return new ModeParamItem(line, name, label, ModeParamKind.Switch, null, null, null, value, [], named, or);
     }
 
     private ModeParamItem ChoiceParam(int line, string name, string label)
@@ -352,8 +370,9 @@ internal sealed class ModeParser
             choices.Add(Text());
         }
         Expect("]");
+        var or = OrName();
         var value = Accept("default") ? Text() : null;
-        return new ModeParamItem(line, name, label, ModeParamKind.Choice, null, null, null, null, choices, value);
+        return new ModeParamItem(line, name, label, ModeParamKind.Choice, null, null, null, null, choices, value, or);
     }
 
     /// <summary>A literal, a minus in front allowed: a parameter's range, a setup word's value.</summary>
@@ -622,6 +641,12 @@ internal sealed class ModeParser
     /// <summary>A name in quotes, <c>stats "GX+"</c>.</summary>
     private ModeSetupItem SetupText(int line, string word)
     {
+        if (word == "stats" && Current.Kind == ModeTokenKind.Name)
+        {
+            var parameter = new ModeSetupArgument(line, "", new ModeName(line, Take().Text));
+            Expect(";");
+            return new ModeSetupItem(line, word, [parameter]);
+        }
         if (Current.Kind != ModeTokenKind.Text)
         {
             throw Error($"{word} takes a name in quotes, not {Describe(Current)}");

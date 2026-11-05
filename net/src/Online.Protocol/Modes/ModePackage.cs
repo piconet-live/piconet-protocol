@@ -19,10 +19,26 @@ public enum ModeParamKind : byte
 
 /// <summary>A parameter of a mode: the lobby's rule control. <see cref="Type"/> is <see cref="ModeType.Int"/> or
 /// <see cref="ModeType.Real"/> as the package keeps it; the range, step and default are cells (a real's bits).
-/// A real number with no step written has step 0.</summary>
+/// A real number with no step written has step 0. <see cref="Or"/>: an optional parameter's named value (<c>or "By
+/// course"</c>), which states nothing: its cell is <see cref="Most"/>, one step past the written range (a choice's: the
+/// index after its choices), and a setup word given it is as if not written. In <c>PARM</c> its kind has bit 0x80 and the
+/// name is its last choice.</summary>
 public sealed record ModeParam(string Name, string Label, ModeParamKind Kind, ModeType Type, int Least, int Most,
-    int Step, int Default, IReadOnlyList<string> Choices)
+    int Step, int Default, IReadOnlyList<string> Choices, string? Or = null)
 {
+    /// <summary>The bit of <c>PARM</c>'s kind that marks an optional parameter.</summary>
+    public const int OptionalBit = 0x80;
+
+    /// <summary>The cell of the named value that states nothing; null: not optional.</summary>
+    public int? Unset => Or is null ? null : Most;
+
+    /// <summary>The top of the written range: <see cref="Most"/>, but an optional parameter's, one step below its named
+    /// value.</summary>
+    public int Top => Or is null ? Most : Kind == ModeParamKind.Choice ? Most - 1 : Most - Math.Max(Step, 1);
+
+    /// <summary>The value is the named one that states nothing.</summary>
+    public bool StatesNothing(int value) => Or is not null && value == Most;
+
     /// <summary>Whether a value is within the range (a real's as a real).</summary>
     public bool Holds(int value) => Type == ModeType.Real
         ? BitConverter.Int32BitsToSingle(value) is var v && v >= BitConverter.Int32BitsToSingle(Least) && v <= BitConverter.Int32BitsToSingle(Most)
@@ -198,14 +214,15 @@ public sealed class ModePackage
             {
                 s.Text(p.Name);
                 s.Text(p.Label);
-                s.U8((int)p.Kind);
+                s.U8((int)p.Kind | (p.Or is null ? 0 : ModeParam.OptionalBit));
                 s.U8(p.Type == ModeType.Real ? 1 : 0);
                 s.I32(p.Least);
                 s.I32(p.Most);
                 s.I32(p.Step);
                 s.I32(p.Default);
-                s.U16(p.Choices.Count);
-                foreach (var choice in p.Choices)
+                var choices = p.Or is null ? p.Choices : [.. p.Choices, p.Or];
+                s.U16(choices.Count);
+                foreach (var choice in choices)
                 {
                     s.Text(choice);
                 }
@@ -471,12 +488,15 @@ public sealed class ModePackage
             var (name, label, kind, type) = (s.Text(), s.Text(), s.U8(), s.U8());
             var (least, most, step, value) = (s.I32(), s.I32(), s.I32(), s.I32());
             var choices = Enumerable.Range(0, s.U16()).Select(_ => s.Text()).ToList();
-            if (kind > (int)ModeParamKind.Choice || type > 1)
+            var optional = (kind & ModeParam.OptionalBit) != 0;
+            kind &= ~ModeParam.OptionalBit;
+            if (kind > (int)ModeParamKind.Choice || type > 1 || (optional && (type == 1 || choices.Count == 0)))
             {
                 throw new InvalidDataException($"the parameter {name}'s kind or type is unknown");
             }
+            var or = optional ? choices[^1] : null;
             var param = new ModeParam(name, label, (ModeParamKind)kind, type == 1 ? ModeType.Real : ModeType.Int,
-                least, most, step, value, choices);
+                least, most, step, value, optional ? choices[..^1] : choices, or);
             if (!param.Holds(value) || (param.Kind == ModeParamKind.Choice && most != choices.Count - 1))
             {
                 throw new InvalidDataException($"the parameter {name}'s default is outside its range");

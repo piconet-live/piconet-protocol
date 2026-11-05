@@ -41,6 +41,10 @@ internal static class ModeParams
     /// <summary><c>switch default on|off</c>.</summary>
     public static ModeParam Switch(ModeParamItem item)
     {
+        if (item.Or is not null && item.Default is null && item.DefaultChoice == item.Or)
+        {
+            return new ModeParam(item.Name, item.Label, ModeParamKind.Switch, ModeType.Int, 0, 1, 1, 0, []);
+        }
         if (item.Default is not { Type: ModeType.Bool } value)
         {
             throw new ModeCompileException(item.Line, $"{item.Name} is a switch: its default is on or off");
@@ -51,7 +55,9 @@ internal static class ModeParams
     /// <summary><c>choice ["a", "b"] [default "a"]</c>: the index of the choice.</summary>
     public static ModeParam Choice(ModeParamItem item)
     {
-        var index = item.DefaultChoice is null ? 0 : item.Choices.ToList().IndexOf(item.DefaultChoice);
+        var index = item.DefaultChoice is null ? 0
+            : item.Or is not null && item.DefaultChoice == item.Or ? item.Choices.Count
+            : item.Choices.ToList().IndexOf(item.DefaultChoice);
         if (index < 0)
         {
             throw new ModeCompileException(item.Line, $"{item.Name}'s default \"{item.DefaultChoice}\" is not one of its choices");
@@ -61,6 +67,38 @@ internal static class ModeParams
             throw new ModeCompileException(item.Line, $"{item.Name} names a choice twice");
         }
         return new ModeParam(item.Name, item.Label, ModeParamKind.Choice, ModeType.Int, 0, item.Choices.Count - 1, 1, index, item.Choices);
+    }
+
+    /// <summary>A parameter with <c>or "Name"</c>: one value more, one step past its range (a choice's: after its
+    /// choices; a switch's: 2), named, that states nothing, and its default when the default names it. Whole numbers
+    /// only: a real has no next step.</summary>
+    public static ModeParam Optional(ModeParamItem item, ModeParam p)
+    {
+        if (item.Or is not { } or)
+        {
+            return item.DefaultChoice is not null && item.Kind != ModeParamKind.Choice
+                ? throw new ModeCompileException(item.Line, $"{item.Name}'s default \"{item.DefaultChoice}\" is no value of it")
+                : p;
+        }
+        if (p.Type == ModeType.Real)
+        {
+            throw new ModeCompileException(item.Line, $"{item.Name} is a real: or \"{or}\" goes on a whole number, a delay, a switch or a choice");
+        }
+        if (or.Length == 0 || p.Choices.Contains(or))
+        {
+            throw new ModeCompileException(item.Line, $"{item.Name}'s or \"{or}\" is a name of its own, not one of its choices");
+        }
+        if (item.DefaultChoice is { } named && named != or && item.Kind != ModeParamKind.Choice)
+        {
+            throw new ModeCompileException(item.Line, $"{item.Name}'s default \"{named}\" is not \"{or}\"");
+        }
+        var unset = p.Kind == ModeParamKind.Choice ? p.Choices.Count : (long)p.Most + Math.Max(p.Step, 1);
+        if (unset > int.MaxValue)
+        {
+            throw new ModeCompileException(item.Line, $"{item.Name}'s range has no step past its most for or \"{or}\"");
+        }
+        var stated = item.DefaultChoice == or || (p.Kind == ModeParamKind.Choice && p.Default == p.Choices.Count);
+        return p with { Most = (int)unset, Default = stated ? (int)unset : p.Default, Or = or };
     }
 
     private static ModeParam Checked(ModeParamItem item, ModeParam p, bool stepWritten)

@@ -705,7 +705,7 @@ name = "stats"
 id = 19
 lobby = true
 form = "text"
-where = "the coordinator: the race's stat pack, one of the server's by name, enforced (the host's row leaves the panel); a server without it refuses the mode. Left out: the lobby's rule stands"
+where = "the coordinator: the race's stat pack, one of the server's by name, enforced; a server without it refuses the mode. Also a choice parameter (`stats pack;`): the chosen choice names the pack, `stock` the disc's own stats, `file` the host's own pack file. Left out: the disc's own stats"
 
 [[setup]]
 name = "stats stock"
@@ -718,13 +718,13 @@ name = "mixed_packs"
 id = 21
 lobby = true
 args = [{ type = "switch" }]
-where = "the coordinator: on, each racer may race a pack of their own; off, one pack for all. Left out: the lobby's rule stands"
+where = "the coordinator: on, each racer may race a pack of their own; off, one pack for all. Left out: one pack for all"
 [[setup]]
 name = "boost_start"
 id = 23
 lobby = true
 args = [{ type = "switch" }]
-where = "the coordinator: the match start's rules (RACE_BOOST): on, boosting on the first lap; off, none. Left out: the lobby's rule stands"
+where = "the coordinator: the match start's rules (RACE_BOOST): on, boosting on the first lap; off, none. Left out: none, the game's own way"
 [[setup]]
 name = "teams"
 id = 25

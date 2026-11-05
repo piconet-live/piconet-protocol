@@ -378,36 +378,50 @@ public sealed class QuickPlayRotationTests : IDisposable
         Assert.DoesNotContain("modes", ControlProtocol.Encode(new Hello("p", ControlProtocol.Version)), StringComparison.Ordinal);
         Assert.Equal(0, Assert.IsType<Hello>(ControlProtocol.DecodeClient($$"""{"type":"hello","name":"p","version":{{ControlProtocol.Version}}}""")).Modes);
     }
-    /// <summary>A custom lobby's official modes, in the host's order: Quick Play's normal rules, then with each stat pack
-    /// (stock first), then the others; no solo mode. Each names its pack as a mode word, and the lobby's names carry
-    /// each one's settings on their defaults.</summary>
+    /// <summary>A custom lobby's official modes, in the host's order: Quick Play's normal mode, then the others; no solo
+    /// mode. The lobby's names carry each one's settings on their defaults.</summary>
     [Fact]
     public void TheOfficialLobbyModesComeInTheHostsOrder()
     {
         var modes = Official().LobbyModes;
-        Assert.Equal(["Quick Play", "Quick Play with stock stats", "Quick Play with GX Unleashed stats", "Quick Play with F-Zero GX+ stats",
-            "Knockout", "Ghost race"], modes.Select(m => m.Package.Name));
-        Assert.Equal([null, "", "GX Unleashed", "F-Zero GX+", null, null], modes.Select(m => m.Terms.Pack));
+        Assert.Equal(["Quick Play", "Knockout", "Ghost race"], modes.Select(m => m.Package.Name));
+        Assert.Equal(["GX Unleashed", "GX Unleashed", "GX Unleashed"], modes.Select(m => m.Terms.Pack));
         Assert.Equal(Official().Normal.Hash, modes[0].Hash);   // (the rotation's own file)
         Assert.All(modes, m => Assert.False(m.Terms.Solo));
         var ghost = modes[^1].Named();
         Assert.Equal(modes[^1].Hash, ghost.Hash);
         Assert.Equal(ghost.Params!.Select(p => p.Default), ghost.Values!);
-        Assert.Null(modes[0].Named().Params);
     }
 
-    /// <summary>A stat pack's variant is Quick Play's normal file word for word below its own header and stats line, so
-    /// a change to Quick Play's rules is made in every one of them.</summary>
-    [Theory]
-    [InlineData("competitive_stock.fzmode", "stats stock;")]
-    [InlineData("competitive_gx_unleashed.fzmode", "stats \"GX Unleashed\";")]
-    [InlineData("competitive_gx_plus.fzmode", "stats \"F-Zero GX+\";")]
-    public void AStatPackVariantIsQuickPlaysRulesWordForWord(string file, string stats)
+    /// <summary>Quick Play's normal mode declares what a host may change, and on its defaults it is Quick Play's race of
+    /// before: the laps by course, CPU level Master, no boost on the first lap, mines back in 200 ms, 90 s to finish, top
+    /// speed fixed, GX Unleashed. A host's values change it: a number of laps on every course, stock stats, mines that
+    /// stay gone.</summary>
+    [Fact]
+    public void QuickPlaysModeHasItsSettingsAndTheirDefaultsAreQuickPlays()
     {
-        static string Body(string text) => text[(text.IndexOf("\n}\n", StringComparison.Ordinal) + 3)..].TrimStart('\n');
-        var normal = Body(File.ReadAllText(RepositoryFolder.Protocol("protocol", "quickplay", "competitive.fzmode")));
-        var variant = Body(File.ReadAllText(RepositoryFolder.Protocol("protocol", "quickplay", file)));
-        Assert.Equal(stats + "\n" + normal, variant);
+        var normal = Official().Normal;
+        Assert.Equal(["Laps", "CPU level", "Boost from the start", "Mines return", "Finish limit", "Machine setting from", "Machine setting to", "Stats"],
+            normal.Package.Params.Select(p => p.Label));
+        var laps = normal.Package.Params[0];
+        Assert.Equal(("By course", 100, 100, 99), (laps.Or, laps.Default, laps.Most, laps.Top));
+        var sonic = CourseTable.Courses.First(c => c.Track == "Sonic Oval").Course;
+        var rules = normal.Terms.Rules();
+        Assert.Equal((8, 3, ModeTerms.LapsByCourse), (normal.Laps(sonic), normal.Laps(8), rules["laps"]));
+        Assert.Equal((3, 0, 200, 90, 100, 100), (rules["cpu-level"], rules["boost-start"], rules["mine-regen"], rules["finish-limit"],
+            rules["machine-setting"], rules[LobbyRules.SettingHighKey]));
+        Assert.Equal(("GX Unleashed", (int)CpuFillMode.Vote), (normal.Terms.Pack, rules["cpu-fill"]));
+
+        var values = normal.Package.Params.Select(p => p.Default).ToArray();
+        values[0] = 5;                                                       // 5 laps everywhere
+        values[3] = normal.Package.Params[3].Unset!.Value;                  // mines stay gone
+        values[7] = normal.Package.Params[7].Choices.ToList().IndexOf(ModeTerms.StockChoice);
+        var hosted = new RotationMode(normal.File, normal.Package, normal.Hash, values);
+        Assert.Equal((5, 5), (hosted.Laps(sonic), hosted.Laps(8)));
+        Assert.Equal((0, ""), (hosted.Terms.Rules()["mine-regen"], hosted.Terms.Pack));
+        values[7] = normal.Package.Params[7].Choices.ToList().IndexOf(ModeTerms.FileChoice);
+        Assert.Equal((null, true), (new RotationMode(normal.File, normal.Package, normal.Hash, values).Terms.Pack,
+            new RotationMode(normal.File, normal.Package, normal.Hash, values).Terms.PackFromFile));
     }
 
     [Theory]

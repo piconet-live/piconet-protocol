@@ -86,6 +86,8 @@ internal sealed partial class ModeEmitter
             case { Kind: ModeNameKind.Const } c:
                 Push(c.Cell);
                 return c.Type;
+            case { Kind: ModeNameKind.Param, Param.Or: { } or }:
+                throw new ModeCompileException(name.Line, $"{name.Name} may be \"{or}\", which is no value: only a setup word takes it");
             case { Kind: ModeNameKind.Param } p:
                 Op(ModeOp.Param, p.Index);
                 return p.Type;

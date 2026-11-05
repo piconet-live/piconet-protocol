@@ -304,7 +304,7 @@ internal sealed partial class ModeEmitter
             Push(value);
             times = Math.Max(0, value);
         }
-        else if (repeat.Count is ModeName name && names.Find(name.Name) is { Kind: ModeNameKind.Param, Type: ModeType.Int } param)
+        else if (repeat.Count is ModeName name && names.Find(name.Name) is { Kind: ModeNameKind.Param, Type: ModeType.Int, Param.Or: null } param)
         {
             Op(ModeOp.Param, param.Index);
             times = Math.Max(0, param.Param!.Most);

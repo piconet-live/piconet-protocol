@@ -73,32 +73,27 @@ public sealed record LobbyRules(IReadOnlyDictionary<string, int> Values,
     public static IReadOnlyList<string> Keys { get; } =
         [.. Settable.Where(r => r.Kind != RuleKind.Pack).Select(r => r.Name), SettingHighKey, FixedCourseKey, TeamsKey];
 
-    /// <summary>The keys a host sets beside the mode: the lobby's own settings (the player limit, the ping limit, the vote's
-    /// and the machine choice's times, the voting minimum) and the teams the mode's word allows. They shape the lobby, not
-    /// how the race plays (piconet-docs research/game-modes/ design 5, D10).</summary>
+    /// <summary>The keys a host sets beside the mode: the lobby's own settings (the player limit, capped by the mode's
+    /// <c>racers</c>; the ping limit; the vote's and the machine choice's times; the voting minimum; how the course is
+    /// found: a vote, a random draw or a fixed course, among the mode's <c>courses</c>, and none when its <c>course</c>
+    /// pins one). They shape the lobby, not how the race plays (piconet-docs research/game-modes/ design 5, D10).</summary>
     public static IReadOnlyList<string> LobbyKeys { get; } =
         [HostRules.Racers.Name, HostRules.LatencyLimit.Name, HostRules.VoteSeconds.Name, HostRules.ChooseSeconds.Name,
-            HostRules.VotingMinimum.Name, TeamsKey];
+            HostRules.VotingMinimum.Name, HostRules.CourseSelect.Name, FixedCourseKey];
 
-    /// <summary>The race's rules a host still sets beside the mode because no word of the mode's says all they do yet
-    /// (marked for the owner, 2026-11-05): the CPUs filling every empty seat (<c>cpus on</c> only lets players vote
-    /// them in), and how the course is found (a random draw has no word, and <c>course</c> takes no parameter, so a
-    /// host's fixed course is no setting of an official mode). With them the host's own stat pack file
-    /// (<see cref="PackFile"/>: <c>stats</c> names one of the server's).</summary>
-    public static IReadOnlyList<string> NoModeWordYet { get; } = [HostRules.CpuFill.Name, HostRules.CourseSelect.Name, FixedCourseKey];
+    /// <summary>The keys that are the mode's alone (each has its setup word, <see cref="HostRule.SetupWord"/>, or is a
+    /// mode's parameter: the teams, the CPUs): a host sends none of them, and a server refuses rules that hold one
+    /// (<see cref="OutsideTheMode"/>). The stat pack by name is the mode's too (<c>stats</c>).</summary>
+    public static IReadOnlyList<string> ModeKeys { get; } = [.. Keys.Where(k => !LobbyKeys.Contains(k))];
 
-    /// <summary>The keys that are the mode's alone (each has its setup word, <see cref="HostRule.SetupWord"/>): a host
-    /// sends none of them, and a server refuses rules that hold one (<see cref="OutsideTheMode"/>). The stat pack by
-    /// name is the mode's too (<c>stats</c>).</summary>
-    public static IReadOnlyList<string> ModeKeys { get; } = [.. Keys.Where(k => !LobbyKeys.Contains(k) && !NoModeWordYet.Contains(k))];
-
-    /// <summary>Why a host's rules are refused: they set a rule of the race that is the mode's (<see cref="ModeKeys"/>), or
-    /// a server's stat pack by name without the host's own file; null: they do not. One line, as a refusal says it.</summary>
+    /// <summary>Why a host's rules are refused: they set a rule of the race, which is the mode's (<see cref="ModeKeys"/>),
+    /// or a server's stat pack by name (a name goes only with the host's own file); null: they do not. One line, as a refusal says it. (A host's own pack file goes
+    /// only with a mode whose stats choice is the host's file: the server checks it against the mode.)</summary>
     public string? OutsideTheMode()
     {
         if (Values?.Keys.FirstOrDefault(ModeKeys.Contains) is { } key)
         {
-            var label = (HostRules.Named(key) ?? HostRules.MachineSetting).Label;
+            var label = key == TeamsKey ? "Teams" : (HostRules.Named(key) ?? HostRules.MachineSetting).Label;
 #pragma warning disable CA1308 // (a label inside a line of words, not a key compared)
             return $"the mode sets {label.ToLowerInvariant()} now: choose a mode that sets it, or a mode file of your own";
 #pragma warning restore CA1308
@@ -235,7 +230,7 @@ public sealed record LeaveLobby : ClientMessage;
 /// <see cref="BrowseLobbies"/> and then when the list changes, at most about twice a second. QuickPlay: the server's
 /// own rules in the same form, whole: what a lobby's rules are compared with (<see cref="LobbyRules.Differing"/>).
 /// Modes: the server's official modes a host may give a lobby (its catalog's lobby modes, in order: Quick Play's
-/// normal rules first, then those rules with each stat pack, then the others), each named as a lobby's mode is, with its
+/// normal mode first, then the others), each named as a lobby's mode is, with its
 /// settings on their defaults; the host chooses one by naming it in <see cref="LobbyRules.Mode"/> (its hash), or sends
 /// a file of their own (<see cref="LobbyRules.ModeFile"/>). Null: a server from before them.</summary>
 public sealed record LobbyList(IReadOnlyList<LobbySummary> Lobbies,
@@ -245,9 +240,10 @@ public sealed record LobbyList(IReadOnlyList<LobbySummary> Lobbies,
 /// <summary>A custom lobby's game mode as the server names it (<see cref="LobbyRules.Mode"/>): the package's content
 /// hash (<see cref="ModePackage.Hash"/>) and share code, the mode's name, its badge and its line of what it changes
 /// (the header's; "" when it has none), and the api it needs (<see cref="Hello.Modes"/>). Terms: the rules the mode
-/// owns, by the rule's key as <see cref="LobbyRules.Values"/> holds them (<see cref="ModeTerms.Rules"/>), which win over
-/// the lobby's own; Pack: the stat pack it names ("" the disc's own stats; null: it names none). CpusAllowed is in Terms
-/// (cpu-fill). Null Terms: a server from before them. Params: the mode's parameters as its package declares them, and
+/// races, every rule of the race by its key as <see cref="LobbyRules.Values"/> holds them (<see cref="ModeTerms.Rules"/>:
+/// a word left out is the game's own way); Pack: the stat pack it races on its values now ("" the disc's own stats; null:
+/// its stats choice is the host's own file, <see cref="LobbyRules.PackFile"/>). CpusAllowed is in Terms (cpu-fill: the
+/// vote, or never). Null Terms: a server from before them. Params: the mode's parameters as its package declares them, and
 /// Values their values now, in the same order: the lobby's rule controls and what its panel shows. Null: it has none,
 /// or a server from before them. Machines: the machine ids it allows when it states a list, so a Garage shows them
 /// before the machine choice opens; null: it states none (the lobby's machines stand). CustomsOff: it races no custom

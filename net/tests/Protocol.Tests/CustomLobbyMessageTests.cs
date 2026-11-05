@@ -122,11 +122,14 @@ public sealed class CustomLobbyMessageTests
         Assert.Null(new LobbyRules(new Dictionary<string, int>
         {
             ["racers"] = 8, ["latency-limit"] = 150, ["vote-seconds"] = 20, ["choose-seconds"] = 20, ["voting-minimum"] = 2,
-            [LobbyRules.TeamsKey] = 2, ["cpu-fill"] = 1, ["course-select"] = 2, [LobbyRules.FixedCourseKey] = 8,
+            ["course-select"] = 2, [LobbyRules.FixedCourseKey] = 8,
         }, "Own", "name Own\n").OutsideTheMode());
-        Assert.Equal(["laps", "cpu-level", "boost-start", "finish-limit", "mine-regen", "machine-setting", "mixed-packs", LobbyRules.SettingHighKey],
-            LobbyRules.ModeKeys);
-        Assert.All(LobbyRules.ModeKeys.Where(k => k != LobbyRules.SettingHighKey), k => Assert.NotNull(HostRules.Named(k)!.SetupWord));
+        Assert.Equal(["laps", "cpu-level", "cpu-fill", "boost-start", "finish-limit", "mine-regen", "machine-setting", "mixed-packs",
+            LobbyRules.SettingHighKey, LobbyRules.TeamsKey], LobbyRules.ModeKeys);
+        Assert.All(LobbyRules.ModeKeys.Where(k => k is not (LobbyRules.SettingHighKey or LobbyRules.TeamsKey)), k => Assert.NotNull(HostRules.Named(k)!.SetupWord));
+        Assert.Equal("the mode sets teams now: choose a mode that sets it, or a mode file of your own",
+            new LobbyRules(new Dictionary<string, int> { [LobbyRules.TeamsKey] = 2 }).OutsideTheMode());
+        Assert.StartsWith("the mode sets cpu racers now", new LobbyRules(new Dictionary<string, int> { ["cpu-fill"] = 1 }).OutsideTheMode(), StringComparison.Ordinal);
     }
 
     /// <summary>The lobby browser carries the server's official modes; an older end passes over them.</summary>

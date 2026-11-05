@@ -94,8 +94,11 @@ internal sealed record ModeHeaderItem(int Line, string Name, int? Api, int ApiLi
 
 /// <summary>A parameter. <see cref="Least"/>, <see cref="Most"/>, <see cref="Step"/>, <see cref="Default"/> are
 /// literals (null when left out); a choice's default is the name it names, in <see cref="DefaultChoice"/>.</summary>
+/// <see cref="Or"/>: an optional parameter's named value (<c>or "By course"</c>); a default naming it is in
+/// <see cref="DefaultChoice"/> for every kind.
 internal sealed record ModeParamItem(int Line, string Name, string Label, ModeParamKind Kind, ModeLiteral? Least,
-    ModeLiteral? Most, ModeLiteral? Step, ModeLiteral? Default, IReadOnlyList<string> Choices, string? DefaultChoice)
+    ModeLiteral? Most, ModeLiteral? Step, ModeLiteral? Default, IReadOnlyList<string> Choices, string? DefaultChoice,
+    string? Or = null)
     : ModeItem(Line);
 
 

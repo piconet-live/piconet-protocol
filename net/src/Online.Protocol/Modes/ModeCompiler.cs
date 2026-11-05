@@ -150,6 +150,7 @@ public static class ModeCompiler
                 _setups.Add(new ModeSetupWord(ModeSetup.StatsPage, []));
             }
             GapWords();
+            CarriedForms();
             var mode = new ModePackage
             {
                 Api = api,
@@ -321,6 +322,7 @@ private static string? CompilersOwn(ModeSetup id, string name) => id switch
                 ModeParamKind.Switch => ModeParams.Switch(item),
                 _ => ModeParams.Choice(item),
             };
+            param = ModeParams.Optional(item, param);
             var type = item.Kind == ModeParamKind.Switch ? ModeType.Bool : param.Type;
             _names.Declare(item.Line, item.Name, new ModeDeclared(ModeNameKind.Param, type, _params.Count, Param: param));
             _params.Add(param);
@@ -371,6 +373,56 @@ private static string? CompilersOwn(ModeSetup id, string name) => id switch
             }
         }
 
+        /// <summary>The game's words whose value a match start carries as its own (setup.laps, setup.rules): given an
+        /// optional parameter, the coordinator reads them (the game would read its named value as a number), and they
+        /// reach the game as the match start's fields, as the coordinator's own words do.</summary>
+        private static readonly ModeSetup[] Carried = [ModeSetup.Laps, ModeSetup.LapsByCourse, ModeSetup.CpuLevel, ModeSetup.FinishLimit, ModeSetup.MineRegen];
+
+        /// <summary>The words given an optional parameter (<c>or "Name"</c>), by id.</summary>
+        private readonly HashSet<ModeSetup> _optional = [];
+
+        /// <summary>The word gives an optional parameter as one of its values.</summary>
+        private bool GivesOptional(ModeSetupItem item) =>
+            item.Arguments.Any(a => a.Value is ModeName n && _names.Find(n.Name) is { Kind: ModeNameKind.Param, Param.Or: not null })
+            || (item.Table ?? []).Any(r => r.Value is ModeName n && _names.Find(n.Name) is { Kind: ModeNameKind.Param, Param.Or: not null });
+
+        private static string First(ModeSetup id) => ModeWords.Setups.Single(s => s.Id == id).Name.Split(' ')[0];
+
+        /// <summary>A form of a word beside one given an optional parameter goes where that one went: the coordinator's,
+        /// so the game never reads a form the named value leaves standing.</summary>
+        private void CarriedForms()
+        {
+            foreach (var word in _setups.Where(s => Carried.Contains(s.Id) && _optional.Any(o => First(o) == First(s.Id))).ToList())
+            {
+                _setups.Remove(word);
+                _lobbyWords.Add(new ModeLobbyWord(word.Id, word.Arguments));
+            }
+        }
+
+        /// <summary>Two forms of one word (restore on, restore off; machines, machines all): the file says one, but beside
+        /// a form given an optional parameter, which at its named value leaves the other standing (laps by course, then
+        /// laps lap_count). Whether this one gives an optional parameter (noted).</summary>
+        private bool Forms(ModeSetupItem item, ModeSetup id, string name, bool lobby)
+        {
+            var first = name.Split(' ')[0];
+            var optional = GivesOptional(item);
+            if (ModeWords.Setups.FirstOrDefault(s => s.Name != name && s.Name.Split(' ')[0] == first &&
+                (_setups.Any(w => w.Id == s.Id) || _lobbyWords.Any(w => w.Id == s.Id))) is { Name: not null } other
+                && !optional && !_optional.Contains(other.Id))
+            {
+                throw new ModeCompileException(item.Line, $"{other.Name} and {name}: one of them");
+            }
+            if (optional)
+            {
+                if (!lobby && !Carried.Contains(id))
+                {
+                    throw new ModeCompileException(item.Line, $"{name} is the game's own: it takes no parameter with or \"...\" (only laps, cpu_level, finish_limit, mine_regen and the coordinator's words do)");
+                }
+                _optional.Add(id);
+            }
+            return optional;
+        }
+
         private void Setup(ModeSetupItem item)
         {
             var word = ModeWords.Setups.Single(s => s.Name == item.Word);
@@ -378,13 +430,8 @@ private static string? CompilersOwn(ModeSetup id, string name) => id switch
             {
                 throw new ModeCompileException(item.Line, $"{word.Name} is set twice");
             }
-            // two forms of one word (restore on, restore off; machines, machines all): the file says one
             var first = word.Name.Split(' ')[0];
-            if (ModeWords.Setups.FirstOrDefault(s => s.Name != word.Name && s.Name.Split(' ')[0] == first &&
-                (_setups.Any(w => w.Id == s.Id) || _lobbyWords.Any(w => w.Id == s.Id))) is { Name: not null } other)
-            {
-                throw new ModeCompileException(item.Line, $"{other.Name} and {word.Name}: one of them");
-            }
+            var optional = Forms(item, word.Id, word.Name, word.Lobby);
             OneOfCourseAndCourses(item, first, word.Name);
             if (CompilersOwn(word.Id, word.Name) is { } own)
             {
@@ -405,6 +452,11 @@ private static string? CompilersOwn(ModeSetup id, string name) => id switch
                     throw new ModeCompileException(title.Line, refused);
                 }
                 _setups.Add(new ModeSetupWord(word.Id, ModeResultsTitle.Cells(title.Key)));
+                return;
+            }
+            if (StatsParam(item) is { } pack)
+            {
+                _lobbyWords.Add(new ModeLobbyWord(word.Id, [pack]));
                 return;
             }
             var given = new Dictionary<string, ModeSetupArgument>();
@@ -446,7 +498,31 @@ private static string? CompilersOwn(ModeSetup id, string name) => id switch
                     ? throw new ModeCompileException(row.Line, $"a row of {word.Name} is a number, not a parameter")
                     : laps);
             }
+            if (optional)
+            {
+                _lobbyWords.Add(new ModeLobbyWord(word.Id, values));
+                return;
+            }
             _setups.Add(new ModeSetupWord(word.Id, values));
+        }
+
+        /// <summary><c>stats pack;</c>: the choice parameter whose chosen choice names the pack, as <c>stats "x"</c>
+        /// names it (<c>stock</c>: the disc's own stats; <c>file</c>: the host's own pack file). Null: a name in quotes.</summary>
+        private ModeSetupValue? StatsParam(ModeSetupItem item)
+        {
+            if (ModeWords.Setups.Single(s => s.Name == item.Word).Id != ModeSetup.Stats || item.Arguments is not [{ Value: ModeName name } given])
+            {
+                return null;
+            }
+            if (_names.Find(name.Name) is not { Kind: ModeNameKind.Param, Param: { Kind: ModeParamKind.Choice } param } found)
+            {
+                throw new ModeCompileException(given.Line, $"stats takes a pack's name in quotes or a choice parameter, and {name.Name} is not one");
+            }
+            if (param.Choices.FirstOrDefault(c => c.Length is 0 or > 64) is { } bad)
+            {
+                throw new ModeCompileException(given.Line, $"a stat pack's name is 1 to 64 characters, not \"{bad}\"");
+            }
+            return new ModeSetupValue(true, found.Index);
         }
 
         /// <summary>A course a mode may race on, by the number of its name: a course of the pool.</summary>
@@ -538,7 +614,7 @@ private static string? CompilersOwn(ModeSetup id, string name) => id switch
                 {
                     throw new ModeCompileException(given.Line, $"{what} takes {ModeTypes.Name(argument.Type)}, and the parameter {name.Name} is not one");
                 }
-                if (!Within(argument, param.Param.Least) || !Within(argument, param.Param.Most))
+                if (!Within(argument, param.Param.Least) || !Within(argument, param.Param.Top))
                 {
                     throw new ModeCompileException(given.Line, $"the parameter {name.Name}'s range goes outside {what}'s {Range(argument)}");
                 }
@@ -639,7 +715,7 @@ private static string? CompilersOwn(ModeSetup id, string name) => id switch
             {
                 return;
             }
-            if (time is ModeName name && _names.Find(name.Name) is { Kind: ModeNameKind.Param, Param.Kind: ModeParamKind.Delay } param
+            if (time is ModeName name && _names.Find(name.Name) is { Kind: ModeNameKind.Param, Param: { Kind: ModeParamKind.Delay, Or: null } } param
                 && param.Param.Least >= 1)
             {
                 return;

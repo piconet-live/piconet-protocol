@@ -13,6 +13,9 @@ param map_dots "Ghosts on the map" choice ["Show", "Hide"] default "Show";   // 
 param gap_kind "Gap" choice ["Live", "At lap lines", "Both", "None"] default "Live";
 
 cpus on;          // players may vote CPUs in
+stats "GX Unleashed";   // Quick Play's pack, mines and machine setting (a word left out is the game's own)
+mine_regen on;
+machine_setting 100;
 start_together;
 contact off;
 laps lap_count;
