@@ -23,13 +23,28 @@ namespace Online.Protocol;
 /// too; null: none, or a server from before it (written only when set).
 /// PackNone: the server takes the setting FZGX_STAT_PACK=none as no pack, the one way to no pack where a deployment's
 /// configuration names one; false: a server from before that word, which would refuse to start on it (the deploy tooling asks).
+/// ModeStore: the server's official modes and where it loaded them from (<see cref="ModeStoreView"/>); null: a server
+/// from before the mode store, or one with no rotation.
 /// </summary>
 public sealed record ServiceStatus(
     string Name, DateTimeOffset Time, int PlayersOnline, IReadOnlyList<LobbyView> Lobbies,
     IReadOnlyList<FormingMatchView> Starting, IReadOnlyList<RaceView> Races, IReadOnlyList<RelayView> Relays,
     StatPackName? StatPack = null, string? PackSetting = null, TogetherView? Together = null, string? TogetherSetting = null,
     string? TogetherFault = null, IReadOnlyList<TogetherFileView>? TogetherFiles = null,
-    IReadOnlyList<LineBuildView>? LineBuilds = null, string? LineBuildsFault = null, RecentNotice? Motd = null, bool PackNone = false);
+    IReadOnlyList<LineBuildView>? LineBuilds = null, string? LineBuildsFault = null, RecentNotice? Motd = null, bool PackNone = false,
+    ModeStoreView? ModeStore = null);
+
+/// <summary>Where a coordinator's official modes (Quick Play's rotation and the files it names) were loaded from, and
+/// which it races (<see cref="ServiceStatus.ModeStore"/>). Source: "bucket" (the stack's mode store), "local copy" (the
+/// store's last good copy on the coordinator's disk, while the bucket cannot be reached), "image seed" (the image's
+/// quickplay folder, while the bucket cannot be reached and no copy is there) or "image" (a server with no store: the
+/// folder alone). Fault: why the store is not the bucket's now, in a line (null: nothing is wrong). Modes: the
+/// rotation's modes, the normal one first.</summary>
+public sealed record ModeStoreView(string Source, string? Fault, IReadOnlyList<ModeView> Modes);
+
+/// <summary>One official mode as the status page shows it: its file in the store, its name, its package's hash, and its
+/// part: "normal" (every other card), "spicy" (with its weight in the draw) or "lobby" (a custom lobby's alone).</summary>
+public sealed record ModeView(string File, string Name, string Hash, string Role, int? Weight = null);
 
 /// <summary>A released build that names no line, and the line a server puts it in (<see cref="ServiceStatus.LineBuilds"/>):
 /// the build with each hash cut to eight characters, its line ("0.5") and what the file calls it ("0.5.1").</summary>
