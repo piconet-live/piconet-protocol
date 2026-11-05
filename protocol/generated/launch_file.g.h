@@ -129,7 +129,7 @@ void ReadTaskbar([[maybe_unused]] P& p, [[maybe_unused]] T* t)
 // drawnFrames, lateSteps, lateSeats, lateNoise, skipDraws, trace, keepScratch, bufferShare, bufferSteps, replayMemory,
 // replayNear, replayScript, replayEndQuits, hitLog, undoLog, fullScreenWithoutFocus, singleCore, jit, cheats, mods,
 // automation, loadState, userSettings, renderer, auroraShots, auroraScale, auroraLog, classicHudLayout; by hand:
-// forceRollback, clock, redraw, traceStates, dump, slowSteps, undoTrace, standStill, partialRollback.
+// forceRollback, clock, redraw, traceStates, dump, slowSteps, undoTrace, standStill, partialRollback, rollbackWorker.
 template <typename P, typename T>
 void ReadDebug([[maybe_unused]] P& p, [[maybe_unused]] T* t)
 {
