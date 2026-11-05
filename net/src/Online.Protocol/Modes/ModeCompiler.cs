@@ -157,7 +157,7 @@ public static class ModeCompiler
                 Name = header.Name,
                 Badge = header.Badge,
                 About = header.About,
-                Params = _params,
+                Params = Units(),
                 Setups = _setups,
                 LobbyWords = _lobbyWords,
                 Globals = _globals,
@@ -169,6 +169,27 @@ public static class ModeCompiler
                 Source = source,
             };
             return (mode, _emitter.Cost);
+        }
+
+        /// <summary>The parameters, each with the rule whose setup word takes it and, a number, that rule's unit
+        /// (<see cref="HostRule.Unit"/>: <c>mine_regen</c>'s ms, <c>finish_limit</c>'s s).</summary>
+        private List<ModeParam> Units()
+        {
+            var words = _setups.Select(w => (w.Id, Values: w.Arguments)).Concat(_lobbyWords.Select(w => (w.Id, w.Values)));
+            var rules = new Dictionary<int, HostRule>();
+            foreach (var (id, values) in words)
+            {
+                var snake = string.Concat(id.ToString().Select((c, i) => i > 0 && char.IsUpper(c) ? "_" + char.ToLowerInvariant(c) : char.ToLowerInvariant(c).ToString()));
+                if (HostRules.All.FirstOrDefault(r => r.SetupWord == snake) is { } rule)
+                {
+                    foreach (var v in values.Where(v => v.FromParam))
+                    {
+                        rules[v.Value] = rule;
+                    }
+                }
+            }
+            return [.. _params.Select((p, i) => rules.TryGetValue(i, out var rule)
+                ? p with { Rule = rule.Name, Unit = p.Kind == ModeParamKind.Number ? rule.Unit : "" } : p)];
         }
 
         private void Item(ModeItem item)

@@ -24,8 +24,12 @@ public enum ModeParamKind : byte
 /// index after its choices), and a setup word given it is as if not written. In <c>PARM</c> its kind has bit 0x80 and the
 /// name is its last choice.</summary>
 public sealed record ModeParam(string Name, string Label, ModeParamKind Kind, ModeType Type, int Least, int Most,
-    int Step, int Default, IReadOnlyList<string> Choices, string? Or = null)
+    int Step, int Default, IReadOnlyList<string> Choices, string? Or = null, string Unit = "", string Rule = "")
 {
+    // Rule: the rule (HostRule.Name) whose setup word takes it, "" none; Unit: what a number counts ("ms", "s"), that
+    // rule's unit (HostRule.Unit). The compiler finds both; they are not in PARM (a read package's parameters have
+    // none). A launcher shows the unit beside the value and the setting once, as its rule.
+
     /// <summary>The bit of <c>PARM</c>'s kind that marks an optional parameter.</summary>
     public const int OptionalBit = 0x80;
 

@@ -48,10 +48,10 @@ public static partial class HostRules
     public static HostRule MixedPacks { get; } = new("mixed-packs", "Mixed packs", RuleReach.Together, RuleKind.Switch, 0, 1, Taken: "on or off", SetupWord: "mixed_packs");
 
     /// <summary>The course vote's length, in seconds.</summary>
-    public static HostRule VoteSeconds { get; } = new("vote-seconds", "Course vote", RuleReach.Together, RuleKind.Text, 5, 120);
+    public static HostRule VoteSeconds { get; } = new("vote-seconds", "Course vote", RuleReach.Together, RuleKind.Text, 5, 120, Unit: "s");
 
     /// <summary>The machine choice's length, in seconds.</summary>
-    public static HostRule ChooseSeconds { get; } = new("choose-seconds", "Machine choice", RuleReach.Together, RuleKind.Text, 5, 120);
+    public static HostRule ChooseSeconds { get; } = new("choose-seconds", "Machine choice", RuleReach.Together, RuleKind.Text, 5, 120, Unit: "s");
 
     /// <summary>The players a lobby needs before its race starts by vote; one above the lobby's racers (<see
     /// cref="Racers"/>) is taken, and such a lobby never starts by vote.</summary>
@@ -62,23 +62,23 @@ public static partial class HostRules
     /// cref="StartCountdownLeast"/> seconds when one seat is left; a full lobby starts at once, and the start vote
     /// still starts it sooner. 0: no countdown, the vote alone (as before 0.5.2). Custom lobbies never count down:
     /// their host or their vote starts them.</summary>
-    public static HostRule StartCountdown { get; } = new("start-countdown", "Start countdown", RuleReach.Server, RuleKind.Text, 0, 600);
+    public static HostRule StartCountdown { get; } = new("start-countdown", "Start countdown", RuleReach.Server, RuleKind.Text, 0, 600, Unit: "s");
 
     /// <summary>How long the relay waits for every game of a race to join, in seconds.</summary>
-    public static HostRule StartTimeout { get; } = new("start-timeout", "Start timeout", RuleReach.Server, RuleKind.Text, 10, 600);
+    public static HostRule StartTimeout { get; } = new("start-timeout", "Start timeout", RuleReach.Server, RuleKind.Text, 10, 600, Unit: "s");
 
     /// <summary>How long the relay waits for every game of a race to be ready, in seconds.</summary>
-    public static HostRule ReadyTimeout { get; } = new("ready-timeout", "Ready timeout", RuleReach.Server, RuleKind.Text, 10, 600);
+    public static HostRule ReadyTimeout { get; } = new("ready-timeout", "Ready timeout", RuleReach.Server, RuleKind.Text, 10, 600, Unit: "s");
 
     /// <summary>How long a lobby waits for the last racers of its race once half are back, in seconds; -1 (a number
     /// below the range, which <see cref="HostRule.Takes"/> refuses): until the last is back.</summary>
-    public static HostRule StragglerWait { get; } = new("straggler-wait", "Straggler wait", RuleReach.Server, RuleKind.Text, 0, 600);
+    public static HostRule StragglerWait { get; } = new("straggler-wait", "Straggler wait", RuleReach.Server, RuleKind.Text, 0, 600, Unit: "s");
 
     /// <summary>The round trip to the race's relay a player may have to race, in milliseconds; a player above it
     /// watches that race from the lobby. A lobby's rule, which its rules line shows (<see
     /// cref="ServerRules.LatencyLimitMs"/>); Quick Play: 250. The range is 30 to 300; 30 is the least, for a host whose
     /// players are all close (a LAN, one city).</summary>
-    public static HostRule LatencyLimit { get; } = new("latency-limit", "Latency limit", RuleReach.Together, RuleKind.Number, 30, 300, Default: ServerRules.QuickPlayLatencyLimitMs, Taken: "30 to 300");
+    public static HostRule LatencyLimit { get; } = new("latency-limit", "Latency limit", RuleReach.Together, RuleKind.Number, 30, 300, Default: ServerRules.QuickPlayLatencyLimitMs, Unit: "ms", Taken: "30 to 300");
 
     /// <summary>Every rule, in the operator's order: the race's, the lobbies' times and limits, the server's own.</summary>
     public static IReadOnlyList<HostRule> All { get; } =
