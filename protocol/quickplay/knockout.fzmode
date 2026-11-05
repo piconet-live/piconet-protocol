@@ -13,6 +13,9 @@ param warn_from "Warn from"   number 3..9 default 5;                  // seconds
 
 courses ["Lightning: Loop Cross"];
 cpus on;
+stats "GX Unleashed";   // Quick Play's pack, mines and machine setting (a word left out is the game's own)
+mine_regen on;
+machine_setting 100;
 laps unlimited;
 rolling_start 1000 km/h;       // speed at the gate, CPU steers through the countdown at 60% accelerator, control at GO
 race_waits everyone;           // the race goes on until the mode ends it, not until the last player is out

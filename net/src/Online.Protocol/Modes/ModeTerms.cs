@@ -3,10 +3,12 @@ using System.Globalization;
 namespace Online.Protocol;
 
 /// <summary>What a mode states of its race, read from its setup words on its parameters' values: the one place a mode's
-/// word meets a lobby rule (the overhaul of piconet-docs research/game-modes/ design 5). A word left out leaves the
-/// lobby's rule, but two: a mode owns its race's ending, so the finish limit is off unless the mode states it, and CPUs
-/// come only when it says <c>cpus on</c>. The service and the launcher's stand-in both lay these over a lobby.
-/// Lobby flow (the vote's and choice's times, the timeouts, the ping limit) is not a mode's.</summary>
+/// word meets a lobby rule (the overhaul of piconet-docs research/game-modes/ design 5). The race's rules are the
+/// mode's alone: a word left out is the game's own way (3 laps, CPU level Master, no boost on the first lap, mines stay
+/// gone, each racer's own machine setting, the disc's own stats, one pack for all), the finish limit is off unless the
+/// mode states it, and CPUs come only when it says <c>cpus on</c> (then by the vote). The service and the launcher's
+/// stand-in both lay these over a lobby. Lobby settings (the seats, the ping limit, the vote's and choice's times, the
+/// voting minimum, how the course is found among the mode's) are not a mode's.</summary>
 public sealed record ModeTerms
 {
     // what `mine_regen on` is, as a switch parameter gives it (1 in the package)
@@ -39,7 +41,7 @@ public sealed record ModeTerms
     public int FinishLimit { get; init; }
 
     /// <summary>A mine's return in ms (0: stays gone); the mode's when stated.</summary>
-    public int? MinesReturn { get; init; }
+    public int? MinesRespawn { get; init; }
 
     /// <summary>The pinned course; null: the lobby's way.</summary>
     public int? Course { get; init; }
@@ -61,8 +63,9 @@ public sealed record ModeTerms
     /// <summary>The range a racer's own setting is brought into.</summary>
     public SettingRange? Setting { get; init; }
 
-    /// <summary>The stat pack by name ("" the disc's own stats); null: the lobby's.</summary>
-    public string? Pack { get; init; }
+    /// <summary>The stat pack by name; "" the disc's own stats, which a mode that names none races (the game's own).
+    /// Null only with <see cref="PackFromFile"/>: the host's own file.</summary>
+    public string? Pack { get; init; } = "";
 
     /// <summary>Each racer may race a pack of their own; the mode's when stated.</summary>
     public bool? MixedPacks { get; init; }
@@ -70,19 +73,47 @@ public sealed record ModeTerms
     /// <summary>The teams a race has (<c>teams</c>); null: the lobby's rule.</summary>
     public (int Least, int Most)? Teams { get; init; }
 
-    /// <summary>The laps on a course as the mode states them; null: the lobby's. 0: unlimited.</summary>
-    public int? Laps(int course) => LapsAll ?? (LapsTable.TryGetValue(course, out var row) ? row : LapsElse);
+    /// <summary>The laps on a course: the mode's, or the game's own 3 when it states none. 0: unlimited.</summary>
+    public int? Laps(int course) => LapsAll ?? (LapsTable.TryGetValue(course, out var row) ? row : LapsElse) ?? GameLaps;
 
-    /// <summary>A mode's terms, on the parameters' values (null: their defaults, as Quick Play races every mode).</summary>
+    /// <summary>The game's own laps (a Grand Prix race's), where a mode states none.</summary>
+    public const int GameLaps = 3;
+
+    /// <summary>The game's own CPU level (Master; rules.toml's absent value), where a mode states none.</summary>
+    public const int GameCpuLevel = 3;
+
+    /// <summary>The mode's stats choice is the host's own pack file (<c>stats pack;</c> on the choice <c>file</c>): the
+    /// host hands it (<see cref="LobbyRules.PackFile"/>), and <see cref="Pack"/> is null.</summary>
+    public bool PackFromFile { get; init; }
+
+    /// <summary>The index of the choice parameter that chooses the stat pack (<c>stats pack;</c>); null: none. A launcher
+    /// says its choices <see cref="StockChoice"/> and <see cref="FileChoice"/> in words, and offers the file for the second.</summary>
+    public int? PackParam { get; init; }
+
+    /// <summary>The choice of a <c>stats</c> parameter that is the disc's own stats.</summary>
+    public const string StockChoice = "stock";
+
+    /// <summary>The choice of a <c>stats</c> parameter that is the host's own pack file.</summary>
+    public const string FileChoice = "file";
+
+    /// <summary>A mode's terms, on the parameters' values (null: their defaults, as Quick Play races every mode). A word
+    /// given an optional parameter at its named value (<see cref="ModeParam.Or"/>) is as if not written, and such words
+    /// are read after the others, so a value given wins over the form it stands beside (<c>laps</c> over
+    /// <c>laps by course</c>).</summary>
     public static ModeTerms Of(ModePackage mode, IReadOnlyList<int>? parameters = null)
     {
         ArgumentNullException.ThrowIfNull(mode);
         int Cell(ModeSetupValue v) => !v.FromParam ? v.Value : parameters is not null ? parameters[v.Value] : mode.Params[v.Value].Default;
+        bool Unset(ModeSetupValue v) => v.FromParam && mode.Params[v.Value].StatesNothing(Cell(v));
+        bool Optional(IReadOnlyList<ModeSetupValue> values) => values.Any(v => v.FromParam && mode.Params[v.Value].Or is not null);
+        var words = mode.Setups.Select(w => (w.Id, Values: w.Arguments, Text: (string?)null))
+            .Concat(mode.LobbyWords.Select(w => (w.Id, w.Values, w.Text)))
+            .Where(w => !w.Values.Any(Unset))
+            .OrderBy(w => Optional(w.Values));   // (stable: the file's order otherwise)
         var terms = new ModeTerms();
-        foreach (var word in mode.Setups)
+        foreach (var (id, a, text) in words)
         {
-            var a = word.Arguments;
-            terms = word.Id switch
+            terms = id switch
             {
                 ModeSetup.Cpus => terms with { CpusAllowed = Cell(a[0]) != 0 },
                 ModeSetup.Solo => terms with { Solo = Cell(a[0]) != 0 },
@@ -94,16 +125,8 @@ public sealed record ModeTerms
                 },
                 ModeSetup.CpuLevel => terms with { CpuLevel = Cell(a[0]) },
                 ModeSetup.FinishLimit => terms with { FinishLimit = Cell(a[0]) },
-                ModeSetup.MineRegen => terms with { MinesReturn = Cell(a[0]) == 1 ? MineRegenOn : Cell(a[0]) },
+                ModeSetup.MineRegen => terms with { MinesRespawn = Cell(a[0]) == 1 ? MineRegenOn : Cell(a[0]) },
                 ModeSetup.Boost when Cell(a[0]) == 0 => terms with { BoostStart = false },
-                _ => terms,   // (the game's alone)
-            };
-        }
-        foreach (var word in mode.LobbyWords)
-        {
-            var a = word.Values;
-            terms = word.Id switch
-            {
                 ModeSetup.Course => terms with { Course = Cell(a[0]) },
                 ModeSetup.CoursesAll => terms with { Courses = [] },
                 ModeSetup.Courses => terms with { Courses = [.. a.Select(Cell).Order()] },
@@ -112,19 +135,30 @@ public sealed record ModeTerms
                 ModeSetup.Machines => terms with { Machines = [.. a.Select(Cell).Order()] },
                 ModeSetup.Customs => terms with { CustomsOff = Cell(a[0]) == 0 },
                 ModeSetup.MachineSetting => terms with { Setting = new SettingRange(Cell(a[0]), Cell(a[1])) },
-                ModeSetup.Stats => terms with { Pack = word.Text },
+                ModeSetup.Stats when text is null && a is [{ FromParam: true } chosen] =>
+                    Chosen(terms, mode.Params[chosen.Value].Choices[Cell(chosen)]) with { PackParam = chosen.Value },
+                ModeSetup.Stats => terms with { Pack = text },
                 ModeSetup.StatsStock => terms with { Pack = "" },
                 ModeSetup.MixedPacks => terms with { MixedPacks = Cell(a[0]) != 0 },
                 ModeSetup.BoostStart => terms with { BoostStart = Cell(a[0]) != 0 },
                 ModeSetup.Teams => terms with { Teams = (Cell(a[0]), Cell(a[1])) },
-                _ => terms,
+                _ => terms,   // (the game's alone)
             };
         }
         return terms;
     }
 
-    /// <summary>The rules the mode owns, as <see cref="LobbyRules.Values"/> holds a rule: what goes over the host's
-    /// values, and what a lobby's panel shows as the mode's. The stat pack, the machines and a list of courses are no number:
+    /// <summary>A <c>stats</c> parameter's choice: a pack by its name, <see cref="StockChoice"/> or <see cref="FileChoice"/>.</summary>
+    private static ModeTerms Chosen(ModeTerms terms, string choice) => choice switch
+    {
+        StockChoice => terms with { Pack = "", PackFromFile = false },
+        FileChoice => terms with { Pack = null, PackFromFile = true },
+        _ => terms with { Pack = choice, PackFromFile = false },
+    };
+
+    /// <summary>The race's rules under the mode, every one (a word left out: the game's own), as
+    /// <see cref="LobbyRules.Values"/> holds a rule: what goes over the server's, and what a lobby's panel shows as the
+    /// mode's. The stat pack, the machines and a list of courses are no number:
     /// see <see cref="Pack"/>, <see cref="Machines"/>, <see cref="Courses"/>.</summary>
     public IReadOnlyDictionary<string, int> Rules()
     {
@@ -139,36 +173,32 @@ public sealed record ModeTerms
                 rules[key] = v;
             }
         }
-        if (!CpusAllowed)
-        {
-            rules[HostRules.CpuFill.Name] = (int)CpuFillMode.Never;
-        }
-        Put(HostRules.Laps.Name, LapsAll ?? (LapsElse is null ? null : LapsByCourse));
-        Put(HostRules.CpuLevel.Name, CpuLevel);
-        Put(HostRules.BoostStart.Name, BoostStart is { } boost ? boost ? 1 : 0 : null);
-        Put(HostRules.MinesReturn.Name, MinesReturn);
+        rules[HostRules.CpuFill.Name] = (int)(CpusAllowed ? CpuFillMode.Vote : CpuFillMode.Never);
+        rules[HostRules.Laps.Name] = LapsAll ?? (LapsElse is null ? GameLaps : LapsByCourse);
+        rules[HostRules.CpuLevel.Name] = CpuLevel ?? GameCpuLevel;
+        rules[HostRules.BoostStart.Name] = BoostStart == true ? 1 : 0;
+        rules[HostRules.MinesRespawn.Name] = MinesRespawn ?? 0;
         if (Course is { } course)
         {
             rules[HostRules.CourseSelect.Name] = (int)CourseSelectMode.Fixed;
             rules[LobbyRules.FixedCourseKey] = course;
         }
         Put(HostRules.Racers.Name, Racers?.Most);
-        if (Setting is { } setting)
-        {
-            rules[HostRules.MachineSetting.Name] = setting.Low;
-            rules[LobbyRules.SettingHighKey] = setting.High;
-        }
-        Put(HostRules.MixedPacks.Name, MixedPacks is { } mixed ? mixed ? 1 : 0 : null);
+        var range = Setting ?? SettingRange.Free;   // (the game's own: each racer's own)
+        rules[HostRules.MachineSetting.Name] = range.Low;
+        rules[LobbyRules.SettingHighKey] = range.High;
+        rules[HostRules.MixedPacks.Name] = MixedPacks == true ? 1 : 0;
         return rules;
     }
 
-    /// <summary>The teams a lobby's race has under this mode, from the lobby's rule: within the mode's <c>teams</c> (no
-    /// rule: its least); no <c>teams</c> word: the rule's. 0: no teams, every seat its own.</summary>
+    /// <summary>The teams a lobby offers under this mode: its <c>teams</c>' most (a race needs players on at least its
+    /// least, <see cref="Refusal"/>; a host chooses the count through the mode's parameter, <c>teams n..n</c>); a server's
+    /// rule within it; no <c>teams</c> word: the rule's. 0: no teams, every seat its own.</summary>
     public int TeamCount(int lobbyTeams)
     {
         if (Teams is { } teams)
         {
-            return lobbyTeams == 0 ? teams.Least : Math.Clamp(lobbyTeams, teams.Least, teams.Most);
+            return lobbyTeams == 0 ? teams.Most : Math.Clamp(lobbyTeams, teams.Least, teams.Most);
         }
         return lobbyTeams;
     }

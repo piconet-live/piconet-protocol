@@ -21,19 +21,21 @@ public static class ModeRuleLines
                 lines.Add(line);
             }
         }
-        lines.AddRange(mode.LobbyWords.Select(Lobby).OfType<string>());
+        // (a word given an optional parameter at its named value states nothing: no line)
+        bool Unset(ModeSetupValue v) => v.FromParam && mode.Params[v.Value].StatesNothing(mode.Params[v.Value].Default);
+        lines.AddRange(mode.LobbyWords.Where(w => !w.Values.Any(Unset)).Select(w => Lobby(w, [.. w.Values.Select(Value)])).OfType<string>());
         return lines;
     }
 
     private static string? Line(ModeSetup word, List<int> a) => word switch
     {
-        ModeSetup.Cpus => a[0] == 0 ? "No CPUs" : null,
+        ModeSetup.Cpus => a[0] == 0 ? "CPU racers Off" : null,
         ModeSetup.PedalsLocked => "Pedals locked",
         ModeSetup.Boost => a[0] == 0 ? "No boost" : null,
-        ModeSetup.FinishLimit => $"{Say(a[0])} seconds to finish after the winner",
-        ModeSetup.MineRegen => "Mines return",
-        ModeSetup.CpuLevel => $"CPU level {Say(a[0])}",
-        ModeSetup.Restore => a[0] == 0 ? "No restore" : "Restore",
+        ModeSetup.FinishLimit => a[0] == 0 ? "Finish limit Off" : $"Finish limit {Say(a[0])} s",
+        ModeSetup.MineRegen => a[0] == 0 ? "Mines respawn Off" : $"Mines respawn {Say(a[0])} ms",
+        ModeSetup.CpuLevel => $"CPU level {(a[0] is >= 0 and < 4 ? CpuLevels[a[0]] : Say(a[0]))}",
+        ModeSetup.Restore => a[0] == 0 ? "Restore Off" : "Restore On",
         ModeSetup.Contact => a[0] == 0 ? "No contact" : null,
         ModeSetup.ClockLimit => $"Time limit {Clock(a[0])}",
         ModeSetup.RollingStart => $"Rolling start at {Say(BitConverter.Int32BitsToSingle(a[0]))} km/h",
@@ -53,24 +55,29 @@ public static class ModeRuleLines
         _ => null,
     };
 
-    private static string? Lobby(ModeLobbyWord word) => word.Id switch
+    private static string? Lobby(ModeLobbyWord word, List<int> a) => word.Id switch
     {
         ModeSetup.Course => "One course",
-        ModeSetup.Racers => word.Values is [_, var most] ? $"Up to {Say(most.Value)} racers" : null,
+        ModeSetup.Racers => a is [_, var most] ? $"Up to {Say(most)} racers" : null,
         ModeSetup.Machines => "Set machines",
-        ModeSetup.MachineSetting => "Set machine setting",
-        ModeSetup.Stats => "Stat pack",
-        ModeSetup.BoostStart => word.Values is [{ Value: 0 }] ? "No boost on the first lap" : null,
+        ModeSetup.MachineSetting => a is [var low, var high] && low != high ? $"Machine setting {Say(low)}-{Say(high)}"
+            : a is [var one, ..] ? $"Machine setting {Say(one)}" : "Machine setting",
+        ModeSetup.Stats => "Stats",
+        ModeSetup.BoostStart => a is [var on] ? (on == 0 ? "Boost from the start Off" : "Boost from the start On") : null,
         ModeSetup.Teams => "Teams",
-        ModeSetup.Customs => word.Values is [{ Value: 0 }] ? "No custom machines" : null,
-        _ => null,
+        ModeSetup.Customs => a is [0] ? "No custom machines" : null,
+        _ => Line(word.Id, a),   // (a game word the coordinator carries: its line as in the package's setup)
     };
+
+    /// <summary>The CPU levels by name, as the launcher's rows say them.</summary>
+    public static IReadOnlyList<string> CpuLevels { get; } = ["Novice", "Standard", "Expert", "Master"];
 
     private static string Percent(string name, int bits) => $"{name} {Say(BitConverter.Int32BitsToSingle(bits) * 100)}%";
 
     private static string Say(float value) => ((int)MathF.Round(value)).ToString(CultureInfo.InvariantCulture);
 
     private static string Say(int value) => value.ToString(CultureInfo.InvariantCulture);
+
 
     /// <summary>Steps (60 a second) as minutes and seconds.</summary>
     private static string Clock(int steps) => string.Create(CultureInfo.InvariantCulture, $"{steps / 3600}:{steps / 60 % 60:00}");

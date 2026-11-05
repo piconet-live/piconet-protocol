@@ -315,9 +315,9 @@ public sealed class ModeLimitsTests
     /// <summary>The compiler's limits change no mode: each shipped file to the hash it had before them. A shipped file's
     /// own change writes its new hash here (<c>ModeCompilerTests</c> holds the vectors' bytes).</summary>
     [Theory]
-    [InlineData("competitive", "f5249b0048616c1e643ee4a5caed4fc3b80b55d33dfe5542134981215c4b1cfb", 0)]
-    [InlineData("ghost_race", "18983f711714041e291f6ae0167b19ae1114fa1961d635d6379f4a5da145951e", 2204)]
-    [InlineData("knockout", "1fbb31a27e2c66e0f4d68228bab50d9a12a409cc82a0ad3a63f2cf048752c4ad", 44785)]
+    [InlineData("competitive", "a2d428b06ff352c63fbeb85a1feee6f196cc14b3bbdbb4af6524210d36341bbd", 0)]
+    [InlineData("ghost_race", "79086a7da673233b91866be2d4d0062aca34985a23ee8a0f0d2eb9234fdbba8c", 2204)]
+    [InlineData("knockout", "27741586f263f5e71ec6565be60f7da26eafb5cbbfaba2b7776cfb10103ca0c0", 44785)]
     [InlineData("practice", "5ec37ed0e45a2c7a54691824cedaef0648b5493c1965fc6bfc4ed2464e8ade76", 339)]
     [InlineData("time_trial", "501ee749f21e46dd3e72fb871dfcb07c3812ae13020e046b3bb3de7b4582ef92", 0)]
     public void AShippedModeKeepsItsHash(string name, string hash, long budget)

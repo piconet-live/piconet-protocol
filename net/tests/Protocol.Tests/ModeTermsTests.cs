@@ -47,14 +47,74 @@ public sealed class ModeTermsTests
         Assert.True(new RaceRules(Restore: true).Value(HostRules.Restore) == 1);   // (old recordings keep it)
     }
 
+    /// <summary>A word left out is the game's own way: 3 laps, CPU level Master, no boost on the first lap, mines stay
+    /// gone, each racer's own setting, the disc's own stats, one pack for all; no finish limit, no CPUs.</summary>
     [Fact]
-    public void AModeThatSaysNothingOwnsOnlyItsEnding()
+    public void AModeThatSaysNothingRacesTheGamesOwnWay()
     {
         var terms = Terms("");
         Assert.False(terms.CpusAllowed);
         Assert.Equal(0, terms.FinishLimit);
-        Assert.Null(terms.Laps(3));
-        Assert.Equal(new Dictionary<string, int> { ["finish-limit"] = 0, ["cpu-fill"] = (int)CpuFillMode.Never }, terms.Rules());
+        Assert.Equal(3, terms.Laps(3));
+        Assert.Equal("", terms.Pack);
+        Assert.Equal(new Dictionary<string, int>
+        {
+            ["finish-limit"] = 0, ["cpu-fill"] = (int)CpuFillMode.Never, ["laps"] = 3, ["cpu-level"] = 3, ["boost-start"] = 0,
+            ["mine-regen"] = 0, ["machine-setting"] = 0, [LobbyRules.SettingHighKey] = GameFacts.Limits.SettingMax, ["mixed-packs"] = 0,
+        }, terms.Rules());
+    }
+
+    /// <summary>An optional parameter (<c>or "Name"</c>): one value more, past its range, that states nothing. At it the
+    /// word is as if not written, so a form beside it stands (<c>laps by course</c>); given a value, it wins. Such a word of
+    /// the game's is the coordinator's (the match start carries its value), and so is the form beside it.</summary>
+    [Fact]
+    public void AnOptionalParameterStatesNothingAtItsNamedValue()
+    {
+        var compiled = Compile("""
+            param n "Laps" number 1..9 or "By course" default "By course";
+            laps by course { "Mute City: Sonic Oval": 8; else: 3; }
+            laps n;
+            """);
+        Assert.True(compiled.Succeeded, string.Join("; ", compiled.Errors));
+        var mode = compiled.Mode!;
+        var n = Assert.Single(mode.Params);
+        Assert.Equal(("By course", 10, 10, 9), (n.Or, n.Most, n.Default, n.Top));
+        Assert.DoesNotContain(mode.Setups, w => w.Id is ModeSetup.Laps or ModeSetup.LapsByCourse);
+        var sonic = CourseTable.Courses.First(c => c.Track == "Sonic Oval").Course;
+        Assert.Equal((8, 3), (ModeTerms.Of(mode).Laps(sonic), ModeTerms.Of(mode).Laps(8)));
+        Assert.Equal((5, 5), (ModeTerms.Of(mode, [5]).Laps(sonic), ModeTerms.Of(mode, [5]).Laps(8)));
+        var read = ModePackage.Read(mode.Write()).Params[0];
+        Assert.Equal((n.Or, n.Most, n.Default, n.Kind, 0), (read.Or, read.Most, read.Default, read.Kind, read.Choices.Count));
+    }
+
+    [Theory]
+    [InlineData("param n \"N\" number 1..9 or \"X\" default \"X\";\ncontact n;", "contact is the game's own")]
+    [InlineData("param n \"N\" number 1..9 or \"X\" default \"X\";\nrule \"R\" { event race_start; do { if (n == 1) { } } }", "only a setup word takes it")]
+    [InlineData("param n \"N\" number 0.5..1.5 or \"X\";", "goes on a whole number")]
+    [InlineData("param n \"N\" choice [\"A\", \"X\"] or \"X\";", "a name of its own")]
+    [InlineData("param n \"N\" number 1..9 default \"X\";", "a mode cannot work with text")]
+    public void AnOptionalParameterGoesOnlyWhereItCan(string words, string says) =>
+        Assert.Contains(says, Error(words), StringComparison.Ordinal);
+
+    /// <summary><c>stats</c> takes a choice parameter: the chosen choice names the pack, <c>stock</c> is the disc's own
+    /// stats and <c>file</c> the host's own pack file.</summary>
+    [Fact]
+    public void StatsTakeAChoiceOfPacks()
+    {
+        var mode = Compile("param p \"Stats\" choice [\"GX+\", \"stock\", \"file\"] default \"GX+\";\nstats p;").Mode!;
+        Assert.Equal(("GX+", false), (ModeTerms.Of(mode).Pack, ModeTerms.Of(mode).PackFromFile));
+        Assert.Equal("", ModeTerms.Of(mode, [1]).Pack);
+        Assert.Equal((null, true), (ModeTerms.Of(mode, [2]).Pack, ModeTerms.Of(mode, [2]).PackFromFile));
+        Assert.Contains("a choice parameter", Error("param p \"P\" number 1..2;\nstats p;"), StringComparison.Ordinal);
+    }
+
+    /// <summary>A range word takes number parameters (<c>machine_setting low..high</c>).</summary>
+    [Fact]
+    public void ARangeTakesParameters()
+    {
+        var mode = Compile("param a \"From\" number 0..100 default 80;\nparam b \"To\" number 0..100 default 100;\nmachine_setting a..b;").Mode!;
+        Assert.Equal(new SettingRange(80, 100), ModeTerms.Of(mode).Setting);
+        Assert.Equal(new SettingRange(50, 60), ModeTerms.Of(mode, [50, 60]).Setting);
     }
 
     [Theory]
@@ -150,7 +210,7 @@ public sealed class ModeTermsTests
         Assert.Equal(80, rules["machine-setting"]);
         Assert.Equal(100, rules[LobbyRules.SettingHighKey]);
         Assert.Equal(1, rules["mixed-packs"]);
-        Assert.False(rules.ContainsKey("cpu-fill"));   // (allowed: the lobby's vote stands)
+        Assert.Equal((int)CpuFillMode.Vote, rules["cpu-fill"]);   // (allowed: by the vote)
     }
 
     [Fact]
@@ -235,7 +295,7 @@ public sealed class ModeTermsTests
     public void TheTeamsOfARaceFollowTheModesWord()
     {
         var limited = Terms("teams 3..4;");
-        Assert.Equal(3, limited.TeamCount(0));
+        Assert.Equal(4, limited.TeamCount(0));   // (offered: its most)
         Assert.Equal(3, limited.TeamCount(2));
         Assert.Equal(4, limited.TeamCount(9));
         Assert.Equal(0, Terms("").TeamCount(0));
@@ -270,14 +330,15 @@ public sealed class ModeTermsTests
         Assert.DoesNotContain("\"team\"", System.Text.Json.JsonSerializer.Serialize(new PlayerInfo("p", "n", 1, new Rgb(1, 2, 3)), ControlProtocol.Json), StringComparison.Ordinal);
     }
 
-    /// <summary>A mode's terms are not news beside its name: <see cref="LobbyRules.Differing"/> leaves them out.</summary>
+    /// <summary>The race's rules are the mode's and not news beside its name: <see cref="LobbyRules.Differing"/> says
+    /// only the lobby's own settings, whether the mode states the rule or leaves it to the game.</summary>
     [Fact]
     public void WhatTheModeOwnsIsNotAmongTheRulesThatDiffer()
     {
-        var quickPlay = new LobbyRules(new Dictionary<string, int> { ["finish-limit"] = 90, ["laps"] = 3 });
-        var rules = new LobbyRules(new Dictionary<string, int> { ["finish-limit"] = 0, ["laps"] = 5 },
+        var quickPlay = new LobbyRules(new Dictionary<string, int> { ["finish-limit"] = 90, ["laps"] = 3, ["racers"] = 30 }, StatPack: "GX Unleashed");
+        var rules = new LobbyRules(new Dictionary<string, int> { ["finish-limit"] = 0, ["laps"] = 5, ["racers"] = 8 },
             Mode: new LobbyMode("h", "s", "M", 1, Terms: new Dictionary<string, int> { ["finish-limit"] = 0 }));
-        Assert.Equal(["laps"], rules.Differing(quickPlay));
+        Assert.Equal(["racers"], rules.Differing(quickPlay));
     }
 
     private const string Params = """
@@ -399,7 +460,7 @@ public sealed class ModeTermsTests
     {
         var mode = ModeCompiler.Compile($"{Sw}mine_regen {value};\n").Mode!;
         var values = given is { } g ? (value == "n" ? new[] { 0, g } : [g, 200]) : null;
-        Assert.Equal(ms, ModeTerms.Of(mode, values).MinesReturn);
+        Assert.Equal(ms, ModeTerms.Of(mode, values).MinesRespawn);
     }
 
     [Theory]
@@ -545,8 +606,31 @@ public sealed class ModeTermsTests
             """);
         Assert.True(result.Succeeded, string.Join(" ", result.Errors));
         Assert.Equal(
-            ["No boost", "No restore", "Time limit 3:00", "Damage 150%", "No spin attacks", "Time bonus 10 seconds", "Up to 8 racers"],
+            ["No boost", "Restore Off", "Time limit 3:00", "Damage 150%", "No spin attacks", "Time bonus 10 seconds", "Up to 8 racers"],
             ModeRuleLines.Of(result.Mode!));
+    }
+
+    /// <summary>A setting's line is its label and its value, as the launcher's row says it; a parameter at its named
+    /// value says nothing ("By course" laps have their place on the card).</summary>
+    [Fact]
+    public void QuickPlaysLinesAreItsSettingsWords()
+    {
+        var mode = ModeCompiler.Compile(File.ReadAllText(TestSupport.RepositoryFolder.Protocol("protocol", "quickplay", "competitive.fzmode"))).Mode!;
+        Assert.Equal(["Finish limit 90 s", "CPU level Master", "Boost from the start Off", "Mines respawn 200 ms", "Machine setting 100", "Stats"],
+            ModeRuleLines.Of(mode));
+    }
+
+    /// <summary>A number parameter a rule's word takes counts in that rule's unit: Quick Play's mines in ms, its finish
+    /// limit in seconds; the others none.</summary>
+    [Fact]
+    public void AParameterCountsInItsRulesUnit()
+    {
+        var mode = ModeCompiler.Compile(File.ReadAllText(TestSupport.RepositoryFolder.Protocol("protocol", "quickplay", "competitive.fzmode"))).Mode!;
+        Assert.Equal(["", "", "", "ms", "s", "", "", "", ""], mode.Params.Select(p => p.Unit));
+        Assert.Equal(["laps", "cpu-level", "boost-start", "mine-regen", "finish-limit", "machine-setting", "machine-setting", "stat-pack", "cpu-fill"],
+            mode.Params.Select(p => p.Rule));
+        var teams = ModeCompiler.Compile("mode \"T\" { api 1; }\nparam n \"Teams\" number 2..4 default 2;\nparam k \"Keep\" number 1..3;\nteams n..n;\n").Mode!;
+        Assert.Equal(["teams", ""], teams.Params.Select(p => p.Rule));
     }
 
     [Fact]

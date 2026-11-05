@@ -1,16 +1,31 @@
 // Quick Play's normal rules: the game's own rules with the competitive scene's lap counts.
 // One file with a lap table, not one file per course: the rules are the same on every course and only the laps
 // differ, so a change to the rules is one edit and a vote card is (course, this mode).
-// Setup words left out take the lobby rules' Quick Play values (rules.toml defaults), but the finish limit: a mode
-// owns its ending, so this one states it.
+// Every rule of the race is this file's (a word left out is the game's own way); the parameters are what a custom
+// lobby's host may change, and their defaults are Quick Play's own race. Quick Play races them at their defaults.
 
 mode "Quick Play" {
   api 1;
-  about "The game's own rules.";
+  about "Quick Play's rules: laps by course, GX Unleashed stats.";
 }
 
-cpus on;          // players may vote CPUs in, as today; none come without the vote
-finish_limit 90;       // the lobby's limit stops at a mode's door: Quick Play's own end, as today
+param lap_count   "Laps"            number 1..99 or "By course" default "By course";   // a number: every course
+param cpu_skill   "CPU level"       choice ["Novice", "Standard", "Expert", "Master"] default "Master";
+param boost_first "Boost from the start" switch default off;
+param mines_back  "Mines respawn"   number 50..5000 step 50 or "Off" default 200;  // milliseconds
+param finish_in   "Finish limit"    number 0..600 step 5 default 90;                     // seconds after the winner; 0: none
+param setting_low  "Machine setting from" number 0..100 default 100;
+param setting_high "Machine setting to"   number 0..100 default 100;
+param pack        "Stats"           choice ["GX Unleashed", "F-Zero GX+", "stock", "file"] default "GX Unleashed";
+param cpu_racers  "CPU racers"      switch default on;   // on: players may vote CPUs in, as today; off: none
+
+cpus cpu_racers;
+finish_limit finish_in;   // a mode owns its ending: Quick Play's own end, as today
+cpu_level cpu_skill;
+boost_start boost_first;
+mine_regen mines_back;
+machine_setting setting_low..setting_high;   // Quick Play: top speed, fixed
+stats pack;       // a pack of the server's by name, stock (the disc's own) or file (the host's own pack file)
 
 laps by course {
   "Mute City: Sonic Oval": 8;
@@ -22,3 +37,4 @@ laps by course {
   "Outer Space: Meteor Stream": 4;
   else: 3;
 }
+laps lap_count;   // "By course": the table above

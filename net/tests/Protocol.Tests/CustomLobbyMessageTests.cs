@@ -53,10 +53,11 @@ public sealed class CustomLobbyMessageTests
     [Fact]
     public void OnlyTheRulesThatDifferFromQuickPlaysAreNamed()
     {
-        var quick = new LobbyRules(new Dictionary<string, int> { ["laps"] = 3, ["machine-setting"] = 100, [LobbyRules.SettingHighKey] = 100 });
-        var lobby = new LobbyRules(new Dictionary<string, int> { ["laps"] = 3, ["machine-setting"] = 80, [LobbyRules.SettingHighKey] = 100 },
-            "GX Unleashed");
-        Assert.Equal(["machine-setting", "stat-pack"], lobby.Differing(quick));
+        var quick = new LobbyRules(new Dictionary<string, int> { ["racers"] = 30, ["course-select"] = (int)CourseSelectMode.Vote, ["laps"] = 3 });
+        var lobby = new LobbyRules(new Dictionary<string, int> { ["racers"] = 30, ["course-select"] = (int)CourseSelectMode.Fixed,
+            [LobbyRules.FixedCourseKey] = 3, ["laps"] = 5, ["machine-setting"] = 80 }, "GX Unleashed");
+        // (laps, the setting and the stats are the mode's: no lobby setting, not named)
+        Assert.Equal(["course-select"], lobby.Differing(quick));
         Assert.Empty(LobbyRules.QuickPlay.Differing(quick));
     }
 
@@ -108,5 +109,39 @@ public sealed class CustomLobbyMessageTests
         Assert.True(pack is not null, refusal);
         var file = StatPackText.Write(pack);
         Assert.True(file.Length <= LobbyRules.MostPackFile / 2, $"{file.Length} characters");
+    }
+    /// <summary>How the race plays is the mode's: a host's rules that set laps, CPUs' level, a machine setting or a
+    /// server's pack by name are refused in one line; the lobby's own settings, the rules with no mode word yet and the
+    /// host's own pack file are not.</summary>
+    [Fact]
+    public void ARuleOfTheRaceOutsideTheModeIsRefused()
+    {
+        Assert.Equal("the mode sets laps now: choose a mode that sets it, or a mode file of your own",
+            new LobbyRules(new Dictionary<string, int> { ["laps"] = 5 }).OutsideTheMode());
+        Assert.Contains("the mode sets machine setting now", new LobbyRules(new Dictionary<string, int> { [LobbyRules.SettingHighKey] = 90 }).OutsideTheMode(), StringComparison.Ordinal);
+        Assert.StartsWith("the mode sets the stats now", new LobbyRules(new Dictionary<string, int>(), "GX Unleashed").OutsideTheMode(), StringComparison.Ordinal);
+        Assert.Null(new LobbyRules(new Dictionary<string, int>
+        {
+            ["racers"] = 8, ["latency-limit"] = 150, ["vote-seconds"] = 20, ["choose-seconds"] = 20, ["voting-minimum"] = 2,
+            ["course-select"] = 2, [LobbyRules.FixedCourseKey] = 8,
+        }, "Own", "name Own\n").OutsideTheMode());
+        Assert.Equal(["laps", "cpu-level", "cpu-fill", "boost-start", "finish-limit", "mine-regen", "machine-setting", "mixed-packs",
+            LobbyRules.SettingHighKey, LobbyRules.TeamsKey], LobbyRules.ModeKeys);
+        Assert.All(LobbyRules.ModeKeys.Where(k => k is not (LobbyRules.SettingHighKey or LobbyRules.TeamsKey)), k => Assert.NotNull(HostRules.Named(k)!.SetupWord));
+        Assert.Equal("the mode sets teams now: choose a mode that sets it, or a mode file of your own",
+            new LobbyRules(new Dictionary<string, int> { [LobbyRules.TeamsKey] = 2 }).OutsideTheMode());
+        Assert.StartsWith("the mode sets cpu racers now", new LobbyRules(new Dictionary<string, int> { ["cpu-fill"] = 1 }).OutsideTheMode(), StringComparison.Ordinal);
+    }
+
+    /// <summary>The lobby browser carries the server's official modes; an older end passes over them.</summary>
+    [Fact]
+    public void TheLobbyListCarriesTheOfficialModes()
+    {
+        var mode = new LobbyMode("ab", "CODE", "Ghost race", 1);
+        var text = ControlProtocol.Encode(new LobbyList([], null, [mode]));
+        Assert.Contains("\"modes\":[{", text, StringComparison.Ordinal);
+        var back = Assert.IsType<LobbyList>(ControlProtocol.DecodeServer(text));
+        Assert.Equal("Ghost race", Assert.Single(back.Modes!).Name);
+        Assert.DoesNotContain("modes", ControlProtocol.Encode(new LobbyList([])), StringComparison.Ordinal);
     }
 }

@@ -41,6 +41,10 @@ internal static class ModeParams
     /// <summary><c>switch default on|off</c>.</summary>
     public static ModeParam Switch(ModeParamItem item)
     {
+        if (item.Or is not null && item.Default is null && item.DefaultChoice == item.Or)
+        {
+            return new ModeParam(item.Name, item.Label, ModeParamKind.Switch, ModeType.Int, 0, 1, 1, 0, []);
+        }
         if (item.Default is not { Type: ModeType.Bool } value)
         {
             throw new ModeCompileException(item.Line, $"{item.Name} is a switch: its default is on or off");
@@ -51,7 +55,9 @@ internal static class ModeParams
     /// <summary><c>choice ["a", "b"] [default "a"]</c>: the index of the choice.</summary>
     public static ModeParam Choice(ModeParamItem item)
     {
-        var index = item.DefaultChoice is null ? 0 : item.Choices.ToList().IndexOf(item.DefaultChoice);
+        var index = item.DefaultChoice is null ? 0
+            : item.Or is not null && item.DefaultChoice == item.Or ? item.Choices.Count
+            : item.Choices.ToList().IndexOf(item.DefaultChoice);
         if (index < 0)
         {
             throw new ModeCompileException(item.Line, $"{item.Name}'s default \"{item.DefaultChoice}\" is not one of its choices");
@@ -63,35 +69,36 @@ internal static class ModeParams
         return new ModeParam(item.Name, item.Label, ModeParamKind.Choice, ModeType.Int, 0, item.Choices.Count - 1, 1, index, item.Choices);
     }
 
-    /// <summary>A preset's value for a parameter, as its cell: a choice's by name, a switch's on or off, a delay's a time, a
-    /// number's a number on the parameter's range and steps.</summary>
-    public static int PresetCell(ModeParam p, ModePresetValue value)
+    /// <summary>A parameter with <c>or "Name"</c>: one value more, one step past its range (a choice's: after its
+    /// choices; a switch's: 2), named, that states nothing, and its default when the default names it. Whole numbers
+    /// only: a real has no next step.</summary>
+    public static ModeParam Optional(ModeParamItem item, ModeParam p)
     {
-        string Word() => $"the preset's {p.Name}";
-        if (p.Kind == ModeParamKind.Choice)
+        if (item.Or is not { } or)
         {
-            var index = value.Choice is null ? -1 : p.Choices.ToList().IndexOf(value.Choice);
-            return index >= 0 ? index
-                : throw new ModeCompileException(value.Line, $"{Word()} is one of its choices: {string.Join(", ", p.Choices.Select(c => $"\"{c}\""))}");
+            return item.DefaultChoice is not null && item.Kind != ModeParamKind.Choice
+                ? throw new ModeCompileException(item.Line, $"{item.Name}'s default \"{item.DefaultChoice}\" is no value of it")
+                : p;
         }
-        if (value.Literal is not { } literal)
+        if (p.Type == ModeType.Real)
         {
-            throw new ModeCompileException(value.Line, $"{Word()} is not a choice: it takes {(p.Kind == ModeParamKind.Switch ? "on or off" : "a value of its range")}");
+            throw new ModeCompileException(item.Line, $"{item.Name} is a real: or \"{or}\" goes on a whole number, a delay, a switch or a choice");
         }
-        if (p.Kind == ModeParamKind.Switch)
+        if (or.Length == 0 || p.Choices.Contains(or))
         {
-            return literal.Type == ModeType.Bool ? literal.Bits : throw new ModeCompileException(value.Line, $"{Word()} is a switch: on or off");
+            throw new ModeCompileException(item.Line, $"{item.Name}'s or \"{or}\" is a name of its own, not one of its choices");
         }
-        if (p.Kind == ModeParamKind.Delay != literal.Time || literal.Type is not (ModeType.Int or ModeType.Real))
+        if (item.DefaultChoice is { } named && named != or && item.Kind != ModeParamKind.Choice)
         {
-            throw new ModeCompileException(value.Line, $"{Word()} is {(p.Kind == ModeParamKind.Delay ? "a time (30s)" : "a number")}");
+            throw new ModeCompileException(item.Line, $"{item.Name}'s default \"{named}\" is not \"{or}\"");
         }
-        var cell = p.Type == ModeType.Real && literal.Type == ModeType.Int ? ModeOperators.Cell(literal.Bits) : literal.Bits;
-        if (p.Type == ModeType.Int && literal.Type == ModeType.Real)
+        var unset = p.Kind == ModeParamKind.Choice ? p.Choices.Count : (long)p.Most + Math.Max(p.Step, 1);
+        if (unset > int.MaxValue)
         {
-            throw new ModeCompileException(value.Line, $"{Word()} is a whole number");
+            throw new ModeCompileException(item.Line, $"{item.Name}'s range has no step past its most for or \"{or}\"");
         }
-        return p.Fits(cell) ? cell : throw new ModeCompileException(value.Line, $"{Word()} {literal.Text} is outside what the parameter allows");
+        var stated = item.DefaultChoice == or || (p.Kind == ModeParamKind.Choice && p.Default == p.Choices.Count);
+        return p with { Most = (int)unset, Default = stated ? (int)unset : p.Default, Or = or };
     }
 
     private static ModeParam Checked(ModeParamItem item, ModeParam p, bool stepWritten)

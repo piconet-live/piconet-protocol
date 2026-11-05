@@ -378,4 +378,62 @@ public sealed class QuickPlayRotationTests : IDisposable
         Assert.DoesNotContain("modes", ControlProtocol.Encode(new Hello("p", ControlProtocol.Version)), StringComparison.Ordinal);
         Assert.Equal(0, Assert.IsType<Hello>(ControlProtocol.DecodeClient($$"""{"type":"hello","name":"p","version":{{ControlProtocol.Version}}}""")).Modes);
     }
+    /// <summary>A custom lobby's official modes, in the host's order: Quick Play's normal mode, then the others; no solo
+    /// mode. The lobby's names carry each one's settings on their defaults.</summary>
+    [Fact]
+    public void TheOfficialLobbyModesComeInTheHostsOrder()
+    {
+        var modes = Official().LobbyModes;
+        Assert.Equal(["Quick Play", "Knockout", "Ghost race"], modes.Select(m => m.Package.Name));
+        Assert.Equal(["GX Unleashed", "GX Unleashed", "GX Unleashed"], modes.Select(m => m.Terms.Pack));
+        Assert.Equal(Official().Normal.Hash, modes[0].Hash);   // (the rotation's own file)
+        Assert.All(modes, m => Assert.False(m.Terms.Solo));
+        var ghost = modes[^1].Named();
+        Assert.Equal(modes[^1].Hash, ghost.Hash);
+        Assert.Equal(ghost.Params!.Select(p => p.Default), ghost.Values!);
+    }
+
+    /// <summary>Quick Play's normal mode declares what a host may change, and on its defaults it is Quick Play's race of
+    /// before: the laps by course, CPU level Master, no boost on the first lap, mines back in 200 ms, 90 s to finish, top
+    /// speed fixed, GX Unleashed. A host's values change it: a number of laps on every course, stock stats, mines that
+    /// stay gone.</summary>
+    [Fact]
+    public void QuickPlaysModeHasItsSettingsAndTheirDefaultsAreQuickPlays()
+    {
+        var normal = Official().Normal;
+        Assert.Equal(["Laps", "CPU level", "Boost from the start", "Mines respawn", "Finish limit", "Machine setting from", "Machine setting to", "Stats", "CPU racers"],
+            normal.Package.Params.Select(p => p.Label));
+        var laps = normal.Package.Params[0];
+        Assert.Equal(("By course", 100, 100, 99), (laps.Or, laps.Default, laps.Most, laps.Top));
+        var sonic = CourseTable.Courses.First(c => c.Track == "Sonic Oval").Course;
+        var rules = normal.Terms.Rules();
+        Assert.Equal((8, 3, ModeTerms.LapsByCourse), (normal.Laps(sonic), normal.Laps(8), rules["laps"]));
+        Assert.Equal((3, 0, 200, 90, 100, 100), (rules["cpu-level"], rules["boost-start"], rules["mine-regen"], rules["finish-limit"],
+            rules["machine-setting"], rules[LobbyRules.SettingHighKey]));
+        Assert.Equal(("GX Unleashed", (int)CpuFillMode.Vote), (normal.Terms.Pack, rules["cpu-fill"]));
+        Assert.Equal(7, normal.Named().PackParam);
+
+        var values = normal.Package.Params.Select(p => p.Default).ToArray();
+        values[0] = 5;                                                       // 5 laps everywhere
+        values[3] = normal.Package.Params[3].Unset!.Value;                  // mines never respawn
+        values[7] = normal.Package.Params[7].Choices.ToList().IndexOf(ModeTerms.StockChoice);
+        var hosted = new RotationMode(normal.File, normal.Package, normal.Hash, values);
+        Assert.Equal((5, 5), (hosted.Laps(sonic), hosted.Laps(8)));
+        Assert.Equal((0, ""), (hosted.Terms.Rules()["mine-regen"], hosted.Terms.Pack));
+        values[7] = normal.Package.Params[7].Choices.ToList().IndexOf(ModeTerms.FileChoice);
+        Assert.Equal((null, true), (new RotationMode(normal.File, normal.Package, normal.Hash, values).Terms.Pack,
+            new RotationMode(normal.File, normal.Package, normal.Hash, values).Terms.PackFromFile));
+    }
+
+    [Theory]
+    [InlineData("lobby_modes = \"competitive.fzmode\"\nspicy_cards = 0\n[normal]\nmode = \"competitive.fzmode\"", "lobby_modes is a list of mode files")]
+    [InlineData("lobby_modes = [\"competitive.fzmode\", \"competitive.fzmode\"]\nspicy_cards = 0\n[normal]\nmode = \"competitive.fzmode\"", "names competitive.fzmode twice")]
+    [InlineData("lobby_modes = [\"solo.fzmode\"]\nspicy_cards = 0\n[normal]\nmode = \"competitive.fzmode\"", "no lobby holds it")]
+    public void ALobbyListThatDoesNotLoadSaysWhy(string toml, string says)
+    {
+        var folder = WithFile(toml);
+        File.WriteAllText(Path.Combine(folder, "solo.fzmode"), "mode \"Alone\" { api 1; }\nsolo on;\n");
+        var error = Assert.Throws<InvalidDataException>(() => QuickPlayRotation.Read(folder));
+        Assert.Contains(says, error.Message, StringComparison.Ordinal);
+    }
 }

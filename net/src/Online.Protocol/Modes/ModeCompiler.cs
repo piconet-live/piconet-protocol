@@ -71,7 +71,6 @@ public static class ModeCompiler
     {
         private readonly ModeNames _names = new();
         private readonly List<ModeParam> _params = [];
-        private readonly List<ModePreset> _presets = [];
         private readonly List<ModeSetupWord> _setups = [];
         private readonly List<ModeLobbyWord> _lobbyWords = [];
         private readonly List<int> _globals = [];
@@ -151,14 +150,14 @@ public static class ModeCompiler
                 _setups.Add(new ModeSetupWord(ModeSetup.StatsPage, []));
             }
             GapWords();
+            CarriedForms();
             var mode = new ModePackage
             {
                 Api = api,
                 Name = header.Name,
                 Badge = header.Badge,
                 About = header.About,
-                Params = _params,
-                Presets = _presets,
+                Params = Units(),
                 Setups = _setups,
                 LobbyWords = _lobbyWords,
                 Globals = _globals,
@@ -172,15 +171,36 @@ public static class ModeCompiler
             return (mode, _emitter.Cost);
         }
 
+        /// <summary>The parameters, each with the rule whose setup word takes it and, a number, that rule's unit
+        /// (<see cref="HostRule.Unit"/>: <c>mine_regen</c>'s ms, <c>finish_limit</c>'s s).</summary>
+        private List<ModeParam> Units()
+        {
+            var words = _setups.Select(w => (w.Id, Values: w.Arguments)).Concat(_lobbyWords.Select(w => (w.Id, w.Values)));
+            var rules = new Dictionary<int, HostRule>();
+            foreach (var (id, values) in words)
+            {
+                var snake = string.Concat(id.ToString().Select((c, i) => i > 0 && char.IsUpper(c) ? "_" + char.ToLowerInvariant(c) : char.ToLowerInvariant(c).ToString()));
+                if (HostRules.All.FirstOrDefault(r => r.SetupWord == snake) is { } rule)
+                {
+                    foreach (var v in values.Where(v => v.FromParam))
+                    {
+                        rules[v.Value] = rule;
+                    }
+                }
+            }
+            // (the teams have no rule of the table, but a key of the lobby's rules: LobbyRules.TeamsKey)
+            var teams = _lobbyWords.Where(w => w.Id == ModeSetup.Teams).SelectMany(w => w.Values).Where(v => v.FromParam).Select(v => v.Value).ToHashSet();
+            return [.. _params.Select((p, i) => rules.TryGetValue(i, out var rule)
+                ? p with { Rule = rule.Name, Unit = p.Kind == ModeParamKind.Number ? rule.Unit : "" }
+                : teams.Contains(i) ? p with { Rule = LobbyRules.TeamsKey } : p)];
+        }
+
         private void Item(ModeItem item)
         {
             switch (item)
             {
                 case ModeParamItem param:
                     Param(param);
-                    break;
-                case ModePresetItem preset:
-                    Preset(preset);
                     break;
                 case ModeSetupItem setup:
                     Setup(setup);
@@ -326,42 +346,10 @@ private static string? CompilersOwn(ModeSetup id, string name) => id switch
                 ModeParamKind.Switch => ModeParams.Switch(item),
                 _ => ModeParams.Choice(item),
             };
+            param = ModeParams.Optional(item, param);
             var type = item.Kind == ModeParamKind.Switch ? ModeType.Bool : param.Type;
             _names.Declare(item.Line, item.Name, new ModeDeclared(ModeNameKind.Param, type, _params.Count, Param: param));
             _params.Add(param);
-        }
-
-        /// <summary>A preset, after the parameters it names (each thing is declared before it is used). Every parameter it
-        /// leaves out keeps its default.</summary>
-        private void Preset(ModePresetItem item)
-        {
-            if (_presets.Count >= ModeWords.Presets)
-            {
-                throw new ModeCompileException(item.Line, $"a mode has at most {ModeWords.Presets} presets");
-            }
-            if (item.Name.Trim().Length == 0 || _presets.Any(p => p.Name == item.Name))
-            {
-                throw new ModeCompileException(item.Line, $"a preset has a name of its own, not \"{item.Name}\"");
-            }
-            if (item.Values.Count == 0)
-            {
-                throw new ModeCompileException(item.Line, $"the preset \"{item.Name}\" sets nothing");
-            }
-            var cells = _params.Select(p => p.Default).ToArray();
-            var given = new HashSet<string>(StringComparer.Ordinal);
-            foreach (var value in item.Values)
-            {
-                if (_names.Find(value.Param) is not { Kind: ModeNameKind.Param } declared)
-                {
-                    throw new ModeCompileException(value.Line, $"the preset \"{item.Name}\" names '{value.Param}', which is no parameter declared before it");
-                }
-                if (!given.Add(value.Param))
-                {
-                    throw new ModeCompileException(value.Line, $"the preset \"{item.Name}\" names {value.Param} twice");
-                }
-                cells[declared.Index] = ModeParams.PresetCell(declared.Param!, value);
-            }
-            _presets.Add(new ModePreset(item.Name, cells));
         }
 
         /// <summary>The Grand Prix's points for places 1 to 30, main.rel .rodata 0xDB38 (design D9).</summary>
@@ -409,6 +397,56 @@ private static string? CompilersOwn(ModeSetup id, string name) => id switch
             }
         }
 
+        /// <summary>The game's words whose value a match start carries as its own (setup.laps, setup.rules): given an
+        /// optional parameter, the coordinator reads them (the game would read its named value as a number), and they
+        /// reach the game as the match start's fields, as the coordinator's own words do.</summary>
+        private static readonly ModeSetup[] Carried = [ModeSetup.Laps, ModeSetup.LapsByCourse, ModeSetup.CpuLevel, ModeSetup.FinishLimit, ModeSetup.MineRegen];
+
+        /// <summary>The words given an optional parameter (<c>or "Name"</c>), by id.</summary>
+        private readonly HashSet<ModeSetup> _optional = [];
+
+        /// <summary>The word gives an optional parameter as one of its values.</summary>
+        private bool GivesOptional(ModeSetupItem item) =>
+            item.Arguments.Any(a => a.Value is ModeName n && _names.Find(n.Name) is { Kind: ModeNameKind.Param, Param.Or: not null })
+            || (item.Table ?? []).Any(r => r.Value is ModeName n && _names.Find(n.Name) is { Kind: ModeNameKind.Param, Param.Or: not null });
+
+        private static string First(ModeSetup id) => ModeWords.Setups.Single(s => s.Id == id).Name.Split(' ')[0];
+
+        /// <summary>A form of a word beside one given an optional parameter goes where that one went: the coordinator's,
+        /// so the game never reads a form the named value leaves standing.</summary>
+        private void CarriedForms()
+        {
+            foreach (var word in _setups.Where(s => Carried.Contains(s.Id) && _optional.Any(o => First(o) == First(s.Id))).ToList())
+            {
+                _setups.Remove(word);
+                _lobbyWords.Add(new ModeLobbyWord(word.Id, word.Arguments));
+            }
+        }
+
+        /// <summary>Two forms of one word (restore on, restore off; machines, machines all): the file says one, but beside
+        /// a form given an optional parameter, which at its named value leaves the other standing (laps by course, then
+        /// laps lap_count). Whether this one gives an optional parameter (noted).</summary>
+        private bool Forms(ModeSetupItem item, ModeSetup id, string name, bool lobby)
+        {
+            var first = name.Split(' ')[0];
+            var optional = GivesOptional(item);
+            if (ModeWords.Setups.FirstOrDefault(s => s.Name != name && s.Name.Split(' ')[0] == first &&
+                (_setups.Any(w => w.Id == s.Id) || _lobbyWords.Any(w => w.Id == s.Id))) is { Name: not null } other
+                && !optional && !_optional.Contains(other.Id))
+            {
+                throw new ModeCompileException(item.Line, $"{other.Name} and {name}: one of them");
+            }
+            if (optional)
+            {
+                if (!lobby && !Carried.Contains(id))
+                {
+                    throw new ModeCompileException(item.Line, $"{name} is the game's own: it takes no parameter with or \"...\" (only laps, cpu_level, finish_limit, mine_regen and the coordinator's words do)");
+                }
+                _optional.Add(id);
+            }
+            return optional;
+        }
+
         private void Setup(ModeSetupItem item)
         {
             var word = ModeWords.Setups.Single(s => s.Name == item.Word);
@@ -416,13 +454,8 @@ private static string? CompilersOwn(ModeSetup id, string name) => id switch
             {
                 throw new ModeCompileException(item.Line, $"{word.Name} is set twice");
             }
-            // two forms of one word (restore on, restore off; machines, machines all): the file says one
             var first = word.Name.Split(' ')[0];
-            if (ModeWords.Setups.FirstOrDefault(s => s.Name != word.Name && s.Name.Split(' ')[0] == first &&
-                (_setups.Any(w => w.Id == s.Id) || _lobbyWords.Any(w => w.Id == s.Id))) is { Name: not null } other)
-            {
-                throw new ModeCompileException(item.Line, $"{other.Name} and {word.Name}: one of them");
-            }
+            var optional = Forms(item, word.Id, word.Name, word.Lobby);
             OneOfCourseAndCourses(item, first, word.Name);
             if (CompilersOwn(word.Id, word.Name) is { } own)
             {
@@ -443,6 +476,11 @@ private static string? CompilersOwn(ModeSetup id, string name) => id switch
                     throw new ModeCompileException(title.Line, refused);
                 }
                 _setups.Add(new ModeSetupWord(word.Id, ModeResultsTitle.Cells(title.Key)));
+                return;
+            }
+            if (StatsParam(item) is { } pack)
+            {
+                _lobbyWords.Add(new ModeLobbyWord(word.Id, [pack]));
                 return;
             }
             var given = new Dictionary<string, ModeSetupArgument>();
@@ -484,7 +522,31 @@ private static string? CompilersOwn(ModeSetup id, string name) => id switch
                     ? throw new ModeCompileException(row.Line, $"a row of {word.Name} is a number, not a parameter")
                     : laps);
             }
+            if (optional)
+            {
+                _lobbyWords.Add(new ModeLobbyWord(word.Id, values));
+                return;
+            }
             _setups.Add(new ModeSetupWord(word.Id, values));
+        }
+
+        /// <summary><c>stats pack;</c>: the choice parameter whose chosen choice names the pack, as <c>stats "x"</c>
+        /// names it (<c>stock</c>: the disc's own stats; <c>file</c>: the host's own pack file). Null: a name in quotes.</summary>
+        private ModeSetupValue? StatsParam(ModeSetupItem item)
+        {
+            if (ModeWords.Setups.Single(s => s.Name == item.Word).Id != ModeSetup.Stats || item.Arguments is not [{ Value: ModeName name } given])
+            {
+                return null;
+            }
+            if (_names.Find(name.Name) is not { Kind: ModeNameKind.Param, Param: { Kind: ModeParamKind.Choice } param } found)
+            {
+                throw new ModeCompileException(given.Line, $"stats takes a pack's name in quotes or a choice parameter, and {name.Name} is not one");
+            }
+            if (param.Choices.FirstOrDefault(c => c.Length is 0 or > 64) is { } bad)
+            {
+                throw new ModeCompileException(given.Line, $"a stat pack's name is 1 to 64 characters, not \"{bad}\"");
+            }
+            return new ModeSetupValue(true, found.Index);
         }
 
         /// <summary>A course a mode may race on, by the number of its name: a course of the pool.</summary>
@@ -576,7 +638,7 @@ private static string? CompilersOwn(ModeSetup id, string name) => id switch
                 {
                     throw new ModeCompileException(given.Line, $"{what} takes {ModeTypes.Name(argument.Type)}, and the parameter {name.Name} is not one");
                 }
-                if (!Within(argument, param.Param.Least) || !Within(argument, param.Param.Most))
+                if (!Within(argument, param.Param.Least) || !Within(argument, param.Param.Top))
                 {
                     throw new ModeCompileException(given.Line, $"the parameter {name.Name}'s range goes outside {what}'s {Range(argument)}");
                 }
@@ -677,7 +739,7 @@ private static string? CompilersOwn(ModeSetup id, string name) => id switch
             {
                 return;
             }
-            if (time is ModeName name && _names.Find(name.Name) is { Kind: ModeNameKind.Param, Param.Kind: ModeParamKind.Delay } param
+            if (time is ModeName name && _names.Find(name.Name) is { Kind: ModeNameKind.Param, Param: { Kind: ModeParamKind.Delay, Or: null } } param
                 && param.Param.Least >= 1)
             {
                 return;
