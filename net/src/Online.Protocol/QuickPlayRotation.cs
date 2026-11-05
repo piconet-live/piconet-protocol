@@ -26,7 +26,7 @@ public sealed record RotationMode(string File, ModePackage Package, string Hash,
         Terms.Rules(), Terms.Pack, Package.Params.Count > 0 ? Package.Params : null,
         Package.Params.Count > 0 ? Values ?? [.. Package.Params.Select(p => p.Default)] : null,
         Terms.Machines is { Count: > 0 } machines ? machines : null, Terms.CustomsOff,
-        Terms.Courses is { Count: > 0 } courses ? courses : null);
+        Terms.Courses is { Count: > 0 } courses ? courses : null, Terms.PackParam);
 
     /// <summary>The match start's <c>setup.mode</c>: the package on its parameters' values.</summary>
     public ModeStart Start() => Package.Start(Values);

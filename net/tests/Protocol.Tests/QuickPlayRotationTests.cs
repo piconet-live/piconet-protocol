@@ -411,6 +411,7 @@ public sealed class QuickPlayRotationTests : IDisposable
         Assert.Equal((3, 0, 200, 90, 100, 100), (rules["cpu-level"], rules["boost-start"], rules["mine-regen"], rules["finish-limit"],
             rules["machine-setting"], rules[LobbyRules.SettingHighKey]));
         Assert.Equal(("GX Unleashed", (int)CpuFillMode.Vote), (normal.Terms.Pack, rules["cpu-fill"]));
+        Assert.Equal(7, normal.Named().PackParam);
 
         var values = normal.Package.Params.Select(p => p.Default).ToArray();
         values[0] = 5;                                                       // 5 laps everywhere

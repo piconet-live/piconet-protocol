@@ -86,6 +86,10 @@ public sealed record ModeTerms
     /// host hands it (<see cref="LobbyRules.PackFile"/>), and <see cref="Pack"/> is null.</summary>
     public bool PackFromFile { get; init; }
 
+    /// <summary>The index of the choice parameter that chooses the stat pack (<c>stats pack;</c>); null: none. A launcher
+    /// says its choices <see cref="StockChoice"/> and <see cref="FileChoice"/> in words, and offers the file for the second.</summary>
+    public int? PackParam { get; init; }
+
     /// <summary>The choice of a <c>stats</c> parameter that is the disc's own stats.</summary>
     public const string StockChoice = "stock";
 
@@ -131,7 +135,8 @@ public sealed record ModeTerms
                 ModeSetup.Machines => terms with { Machines = [.. a.Select(Cell).Order()] },
                 ModeSetup.Customs => terms with { CustomsOff = Cell(a[0]) == 0 },
                 ModeSetup.MachineSetting => terms with { Setting = new SettingRange(Cell(a[0]), Cell(a[1])) },
-                ModeSetup.Stats when text is null && a is [{ FromParam: true } chosen] => Chosen(terms, mode.Params[chosen.Value].Choices[Cell(chosen)]),
+                ModeSetup.Stats when text is null && a is [{ FromParam: true } chosen] =>
+                    Chosen(terms, mode.Params[chosen.Value].Choices[Cell(chosen)]) with { PackParam = chosen.Value },
                 ModeSetup.Stats => terms with { Pack = text },
                 ModeSetup.StatsStock => terms with { Pack = "" },
                 ModeSetup.MixedPacks => terms with { MixedPacks = Cell(a[0]) != 0 },
@@ -186,13 +191,14 @@ public sealed record ModeTerms
         return rules;
     }
 
-    /// <summary>The teams a lobby's race has under this mode, from the lobby's rule: within the mode's <c>teams</c> (no
-    /// rule: its least); no <c>teams</c> word: the rule's. 0: no teams, every seat its own.</summary>
+    /// <summary>The teams a lobby offers under this mode: its <c>teams</c>' most (a race needs players on at least its
+    /// least, <see cref="Refusal"/>; a host chooses the count through the mode's parameter, <c>teams n..n</c>); a server's
+    /// rule within it; no <c>teams</c> word: the rule's. 0: no teams, every seat its own.</summary>
     public int TeamCount(int lobbyTeams)
     {
         if (Teams is { } teams)
         {
-            return lobbyTeams == 0 ? teams.Least : Math.Clamp(lobbyTeams, teams.Least, teams.Most);
+            return lobbyTeams == 0 ? teams.Most : Math.Clamp(lobbyTeams, teams.Least, teams.Most);
         }
         return lobbyTeams;
     }

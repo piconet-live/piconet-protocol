@@ -295,7 +295,7 @@ public sealed class ModeTermsTests
     public void TheTeamsOfARaceFollowTheModesWord()
     {
         var limited = Terms("teams 3..4;");
-        Assert.Equal(3, limited.TeamCount(0));
+        Assert.Equal(4, limited.TeamCount(0));   // (offered: its most)
         Assert.Equal(3, limited.TeamCount(2));
         Assert.Equal(4, limited.TeamCount(9));
         Assert.Equal(0, Terms("").TeamCount(0));
