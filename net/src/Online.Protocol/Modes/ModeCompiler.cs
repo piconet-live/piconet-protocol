@@ -188,8 +188,11 @@ public static class ModeCompiler
                     }
                 }
             }
+            // (the teams have no rule of the table, but a key of the lobby's rules: LobbyRules.TeamsKey)
+            var teams = _lobbyWords.Where(w => w.Id == ModeSetup.Teams).SelectMany(w => w.Values).Where(v => v.FromParam).Select(v => v.Value).ToHashSet();
             return [.. _params.Select((p, i) => rules.TryGetValue(i, out var rule)
-                ? p with { Rule = rule.Name, Unit = p.Kind == ModeParamKind.Number ? rule.Unit : "" } : p)];
+                ? p with { Rule = rule.Name, Unit = p.Kind == ModeParamKind.Number ? rule.Unit : "" }
+                : teams.Contains(i) ? p with { Rule = LobbyRules.TeamsKey } : p)];
         }
 
         private void Item(ModeItem item)

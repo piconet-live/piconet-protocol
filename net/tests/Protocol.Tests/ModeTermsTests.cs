@@ -616,7 +616,7 @@ public sealed class ModeTermsTests
     public void QuickPlaysLinesAreItsSettingsWords()
     {
         var mode = ModeCompiler.Compile(File.ReadAllText(TestSupport.RepositoryFolder.Protocol("protocol", "quickplay", "competitive.fzmode"))).Mode!;
-        Assert.Equal(["Finish limit 90 s", "CPU level Master", "Boost from the start Off", "Mines respawn 0.2 s", "Machine setting 100", "Stats"],
+        Assert.Equal(["Finish limit 90 s", "CPU level Master", "Boost from the start Off", "Mines respawn 200 ms", "Machine setting 100", "Stats"],
             ModeRuleLines.Of(mode));
     }
 
@@ -629,6 +629,8 @@ public sealed class ModeTermsTests
         Assert.Equal(["", "", "", "ms", "s", "", "", ""], mode.Params.Select(p => p.Unit));
         Assert.Equal(["laps", "cpu-level", "boost-start", "mine-regen", "finish-limit", "machine-setting", "machine-setting", "stat-pack"],
             mode.Params.Select(p => p.Rule));
+        var teams = ModeCompiler.Compile("mode \"T\" { api 1; }\nparam n \"Teams\" number 2..4 default 2;\nparam k \"Keep\" number 1..3;\nteams n..n;\n").Mode!;
+        Assert.Equal(["teams", ""], teams.Params.Select(p => p.Rule));
     }
 
     [Fact]

@@ -26,7 +26,7 @@ public enum ModeParamKind : byte
 public sealed record ModeParam(string Name, string Label, ModeParamKind Kind, ModeType Type, int Least, int Most,
     int Step, int Default, IReadOnlyList<string> Choices, string? Or = null, string Unit = "", string Rule = "")
 {
-    // Rule: the rule (HostRule.Name) whose setup word takes it, "" none; Unit: what a number counts ("ms", "s"), that
+    // Rule: the rule (HostRule.Name, or LobbyRules.TeamsKey) whose setup word takes it, "" none; Unit: what a number counts ("ms", "s"), that
     // rule's unit (HostRule.Unit). The compiler finds both; they are not in PARM (a read package's parameters have
     // none). A launcher shows the unit beside the value and the setting once, as its rule.
 

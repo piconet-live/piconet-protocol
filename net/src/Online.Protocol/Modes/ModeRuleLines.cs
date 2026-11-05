@@ -33,7 +33,7 @@ public static class ModeRuleLines
         ModeSetup.PedalsLocked => "Pedals locked",
         ModeSetup.Boost => a[0] == 0 ? "No boost" : null,
         ModeSetup.FinishLimit => a[0] == 0 ? "Finish limit Off" : $"Finish limit {Say(a[0])} s",
-        ModeSetup.MineRegen => a[0] == 0 ? "Mines respawn Off" : $"Mines respawn {Seconds(a[0])} s",
+        ModeSetup.MineRegen => a[0] == 0 ? "Mines respawn Off" : $"Mines respawn {Say(a[0])} ms",
         ModeSetup.CpuLevel => $"CPU level {(a[0] is >= 0 and < 4 ? CpuLevels[a[0]] : Say(a[0]))}",
         ModeSetup.Restore => a[0] == 0 ? "Restore Off" : "Restore On",
         ModeSetup.Contact => a[0] == 0 ? "No contact" : null,
@@ -78,8 +78,6 @@ public static class ModeRuleLines
 
     private static string Say(int value) => value.ToString(CultureInfo.InvariantCulture);
 
-    /// <summary>Milliseconds as seconds: "0.2".</summary>
-    private static string Seconds(int ms) => (ms / 1000.0).ToString("0.##", CultureInfo.InvariantCulture);
 
     /// <summary>Steps (60 a second) as minutes and seconds.</summary>
     private static string Clock(int steps) => string.Create(CultureInfo.InvariantCulture, $"{steps / 3600}:{steps / 60 % 60:00}");
