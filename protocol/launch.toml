@@ -189,6 +189,7 @@ member = [
     { key = "undoTrace", type = "object" },
     { key = "standStill", type = "object" },
     { key = "partialRollback", type = "object", hand = true, doc = "a mode alone, or an object (ReadPartialKeys)" },
+    { key = "rollbackWorker", type = "object", hand = true, doc = "tests only: a mode alone, or an object (ReadWorkerKeys); a player's start has none and its race runs the worker" },
     { key = "fullScreenWithoutFocus", type = "bool", to = "full_screen_without_focus" },
     { key = "singleCore", type = "bool", to = "single_core" },
     { key = "jit", type = "bool", to = "jit" },
