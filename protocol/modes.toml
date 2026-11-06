@@ -2103,18 +2103,19 @@ where = """the grid (main.rel fn_1_85934). 0: every machine on slot 0's spot, th
 (the slot site at 0x85BF4, `mr r3, r28`, gives 0, the window's flag SAME_SPOT), and contact off from before the first \
 contact pass (every no-contact row on at game_start; `contact on` refused). Above 0: after the game places slot k \
 (0x85C0C, `bl fn_1_85F70`), the story's own mid-course placement (story action 13) moves it to the lap distance \
-d0 - k x gap (d0 slot 0's, wrapped by the lap) and the lane k mod 3 (-0.25, 0, +0.25 of the road's width): fn_1_214C4, \
+d0 - k x gap (d0 slot 0's: every machine behind the line, as on the grid; the gap at most the lap over the machines, \
+a larger one taken as that at the grid, so the spread fits one lap) and the lane k mod 3 (-0.25, 0, +0.25 of the road's width): fn_1_214C4, \
 fn_1_17920, fn_1_207DC, fn_1_85F90 (fn_1_892FC, fn_1_23500, which seeds the progress from the spot); the window's flag \
 SPREAD and its gap word; the rank pass fn_1_8B880 after the loop is the game's. Below 12.9 m (the game's own grid step) \
 with contact that can be on, refused. Not on a course without laps (the grid as ever there)"""
-doc = "the machines start this many metres apart round the lap, in grid order, across three lanes (0: everyone on one spot, slot 0's, nobody touching anybody from before the first step). Every machine counts its first lap from its first crossing of the line, as from the grid; with contact, 12.9 m or more"
+doc = "the machines start this many metres apart going back from the line, in grid order, across three lanes; at most the lap over the racers (more is taken as even), so the whole field fits one lap (0: everyone on one spot, slot 0's, nobody touching anybody from before the first step). Every machine starts behind the line, as on the grid: its first crossing counts no lap. With contact, 12.9 m or more"
 
 [[setup]]
 name = "start_gap even"
 id = 57
 where = """start_gap with the gap the lap length over the race's machines ([.bss 0x3BE0]+0x90 / .bss 0x6D820 +0x2A, in the \
 image at the grid): the window's flag SPREAD with the gap word 0. Not with start_gap"""
-doc = "the machines start spread evenly round the whole lap, in grid order, across three lanes"
+doc = "the machines start spread evenly round the whole lap behind the line, in grid order, across three lanes"
 
 [[action]]
 name = "finish_seat"
