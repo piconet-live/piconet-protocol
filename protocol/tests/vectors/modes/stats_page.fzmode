@@ -19,6 +19,7 @@ rule "Change" {
       seat.stat.drift_accel = 2.0;
       seat.stat.turn_decel = 0.5;
       seat.stat.grip_window = 3.7;
+      seat.stat.boost_energy = seat.stat.base.boost_energy * 0.5;
     }
     if (seat.index == 1) {
       seat.stat.drift_rotation_resistance = 100.0;
@@ -29,10 +30,12 @@ rule "Change" {
       seat.stat.drift_accel = 100.0;
       seat.stat.turn_decel = 100.0;
       seat.stat.grip_window = 1000.0;
+      seat.stat.boost_energy = 10.0;
     }
     seen = seat.stat.drift_rotation_resistance + seat.stat.drift_friction + seat.stat.turn_tension + seat.stat.turn_reaction
          + seat.stat.strafe_turn + seat.stat.drift_accel + seat.stat.turn_decel + seat.stat.grip_window
          + seat.stat.base.drift_friction + seat.stat.base.turn_tension + seat.stat.base.turn_reaction
-         + seat.stat.base.strafe_turn + seat.stat.base.drift_accel + seat.stat.base.turn_decel + seat.stat.base.grip_window;
+         + seat.stat.base.strafe_turn + seat.stat.base.drift_accel + seat.stat.base.turn_decel + seat.stat.base.grip_window
+         + seat.stat.boost_energy + seat.stat.base.boost_energy;
   }
 }

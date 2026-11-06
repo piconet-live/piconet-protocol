@@ -25,11 +25,14 @@
 // Damage is 400% and the game's cap of 20 a hit for a player is off (a CPU never had it), so a hard hit can end a
 // machine from full; a hit still takes at most 1.01 x max energy. Walls, mines and the pit are the game's own: the pit's
 // refill (1.1 a step) cannot save a machine from one hit at this damage.
+//
+// Boosts take half the energy: every seat's boost energy is half its stat pack's (GX Unleashed's 0.15 a step, 0.075
+// here; the game's 1/6 would be 1/12), from the start to the end, a restore included.
 
 mode "Death Race" {
   api 1;
   badge "DEATH RACE";
-  about "Drift Highway, no finish line. Three lives each. Points for every machine you take out and for staying in.";
+  about "Drift Highway, no finish line. Three lives each. Boosts take half the energy. Points for every machine you take out and for staying in.";
 }
 
 param length      "Race length"         delay 3min..10min step 30s default 6min;
@@ -90,6 +93,14 @@ rule "Lives" {
       show_number seat, lives;
       if (lives > 1) { respawns seat; }
     }
+  }
+}
+
+rule "Half-energy boosts" {
+  // the seat's own value is its pack's; the mode's stays through a restore (the stat record is the mode's, not the machine's)
+  event game_start;
+  do {
+    for each seat { seat.stat.boost_energy = seat.stat.base.boost_energy * 0.5; }
   }
 }
 

@@ -1,4 +1,4 @@
-FZMP format 1 api 1, 1899 bytes, hash c7289476ce8fb88c17a66cb9d0c930c59ed0fd0ba82896c8ddf4a9bae8559875
+FZMP format 1 api 1, 2099 bytes, hash bdce44feb22ba69e05ee3f8e79109699874222b3106f07e5e13dc3e25b333306
 HEAD name "Stats page" badge "" about ""
 PARM 0
 SETP 1
@@ -7,7 +7,7 @@ VARS globals 1, seat words 0
   global 0 = 0
 RULE 1
   0 "Change" event each seat, locals 1, when none, while 0000, body 0003
-CODE 260 bytes
+CODE 293 bytes
   ; rule 0 while
   0000  RaceRead started
   0002  Ret
@@ -16,7 +16,7 @@ CODE 260 bytes
   0005  SeatRead index
   0007  Push 0
   000c  IEq
-  000d  JumpIfZero 005f
+  000d  JumpIfZero 006d
   0012  LoadLocal 0
   0014  LoadLocal 0
   0016  SeatRead stat.base.drift_rotation_resistance
@@ -45,78 +45,93 @@ CODE 260 bytes
   0058  Push 1080872141 (0x406ccccd, real 3.7)
   005d  Action seat.stat.grip_window
   005f  LoadLocal 0
-  0061  SeatRead index
-  0063  Push 1
-  0068  IEq
-  0069  JumpIfZero 00b6
-  006e  LoadLocal 0
-  0070  Push 1120403456 (0x42c80000, real 100)
-  0075  Action seat.stat.drift_rotation_resistance
-  0077  LoadLocal 0
-  0079  Push 1120403456 (0x42c80000, real 100)
-  007e  Action seat.stat.drift_friction
-  0080  LoadLocal 0
-  0082  Push 1120403456 (0x42c80000, real 100)
-  0087  Action seat.stat.turn_tension
-  0089  LoadLocal 0
-  008b  Push 1148846080 (0x447a0000, real 1000)
-  0090  Action seat.stat.turn_reaction
-  0092  LoadLocal 0
-  0094  Push 1175232512 (0x460ca000, real 9000)
-  0099  Action seat.stat.strafe_turn
-  009b  LoadLocal 0
-  009d  Push 1120403456 (0x42c80000, real 100)
-  00a2  Action seat.stat.drift_accel
-  00a4  LoadLocal 0
-  00a6  Push 1120403456 (0x42c80000, real 100)
-  00ab  Action seat.stat.turn_decel
-  00ad  LoadLocal 0
-  00af  Push 1148846080 (0x447a0000, real 1000)
-  00b4  Action seat.stat.grip_window
-  00b6  LoadLocal 0
-  00b8  SeatRead stat.drift_rotation_resistance
-  00ba  LoadLocal 0
-  00bc  SeatRead stat.drift_friction
-  00be  FAdd
-  00bf  LoadLocal 0
-  00c1  SeatRead stat.turn_tension
-  00c3  FAdd
+  0061  LoadLocal 0
+  0063  SeatRead stat.base.boost_energy
+  0065  Push 1056964608 (0x3f000000, real 0.5)
+  006a  FMul
+  006b  Action seat.stat.boost_energy
+  006d  LoadLocal 0
+  006f  SeatRead index
+  0071  Push 1
+  0076  IEq
+  0077  JumpIfZero 00cd
+  007c  LoadLocal 0
+  007e  Push 1120403456 (0x42c80000, real 100)
+  0083  Action seat.stat.drift_rotation_resistance
+  0085  LoadLocal 0
+  0087  Push 1120403456 (0x42c80000, real 100)
+  008c  Action seat.stat.drift_friction
+  008e  LoadLocal 0
+  0090  Push 1120403456 (0x42c80000, real 100)
+  0095  Action seat.stat.turn_tension
+  0097  LoadLocal 0
+  0099  Push 1148846080 (0x447a0000, real 1000)
+  009e  Action seat.stat.turn_reaction
+  00a0  LoadLocal 0
+  00a2  Push 1175232512 (0x460ca000, real 9000)
+  00a7  Action seat.stat.strafe_turn
+  00a9  LoadLocal 0
+  00ab  Push 1120403456 (0x42c80000, real 100)
+  00b0  Action seat.stat.drift_accel
+  00b2  LoadLocal 0
+  00b4  Push 1120403456 (0x42c80000, real 100)
+  00b9  Action seat.stat.turn_decel
+  00bb  LoadLocal 0
+  00bd  Push 1148846080 (0x447a0000, real 1000)
+  00c2  Action seat.stat.grip_window
   00c4  LoadLocal 0
-  00c6  SeatRead stat.turn_reaction
-  00c8  FAdd
-  00c9  LoadLocal 0
-  00cb  SeatRead stat.strafe_turn
-  00cd  FAdd
-  00ce  LoadLocal 0
-  00d0  SeatRead stat.drift_accel
-  00d2  FAdd
-  00d3  LoadLocal 0
-  00d5  SeatRead stat.turn_decel
-  00d7  FAdd
-  00d8  LoadLocal 0
-  00da  SeatRead stat.grip_window
-  00dc  FAdd
-  00dd  LoadLocal 0
-  00df  SeatRead stat.base.drift_friction
-  00e1  FAdd
-  00e2  LoadLocal 0
-  00e4  SeatRead stat.base.turn_tension
-  00e6  FAdd
-  00e7  LoadLocal 0
-  00e9  SeatRead stat.base.turn_reaction
-  00eb  FAdd
-  00ec  LoadLocal 0
-  00ee  SeatRead stat.base.strafe_turn
-  00f0  FAdd
-  00f1  LoadLocal 0
-  00f3  SeatRead stat.base.drift_accel
-  00f5  FAdd
-  00f6  LoadLocal 0
-  00f8  SeatRead stat.base.turn_decel
-  00fa  FAdd
-  00fb  LoadLocal 0
-  00fd  SeatRead stat.base.grip_window
-  00ff  FAdd
-  0100  StoreGlobal 0
-  0103  End
-SRC  1519 bytes
+  00c6  Push 1092616192 (0x41200000, real 10)
+  00cb  Action seat.stat.boost_energy
+  00cd  LoadLocal 0
+  00cf  SeatRead stat.drift_rotation_resistance
+  00d1  LoadLocal 0
+  00d3  SeatRead stat.drift_friction
+  00d5  FAdd
+  00d6  LoadLocal 0
+  00d8  SeatRead stat.turn_tension
+  00da  FAdd
+  00db  LoadLocal 0
+  00dd  SeatRead stat.turn_reaction
+  00df  FAdd
+  00e0  LoadLocal 0
+  00e2  SeatRead stat.strafe_turn
+  00e4  FAdd
+  00e5  LoadLocal 0
+  00e7  SeatRead stat.drift_accel
+  00e9  FAdd
+  00ea  LoadLocal 0
+  00ec  SeatRead stat.turn_decel
+  00ee  FAdd
+  00ef  LoadLocal 0
+  00f1  SeatRead stat.grip_window
+  00f3  FAdd
+  00f4  LoadLocal 0
+  00f6  SeatRead stat.base.drift_friction
+  00f8  FAdd
+  00f9  LoadLocal 0
+  00fb  SeatRead stat.base.turn_tension
+  00fd  FAdd
+  00fe  LoadLocal 0
+  0100  SeatRead stat.base.turn_reaction
+  0102  FAdd
+  0103  LoadLocal 0
+  0105  SeatRead stat.base.strafe_turn
+  0107  FAdd
+  0108  LoadLocal 0
+  010a  SeatRead stat.base.drift_accel
+  010c  FAdd
+  010d  LoadLocal 0
+  010f  SeatRead stat.base.turn_decel
+  0111  FAdd
+  0112  LoadLocal 0
+  0114  SeatRead stat.base.grip_window
+  0116  FAdd
+  0117  LoadLocal 0
+  0119  SeatRead stat.boost_energy
+  011b  FAdd
+  011c  LoadLocal 0
+  011e  SeatRead stat.base.boost_energy
+  0120  FAdd
+  0121  StoreGlobal 0
+  0124  End
+SRC  1686 bytes

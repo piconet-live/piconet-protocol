@@ -464,6 +464,10 @@ public enum ModeSeatRead : byte
     GapBehind = 90,
     /// <summary><c>gap_leader</c></summary>
     GapLeader = 91,
+    /// <summary><c>stat.boost_energy</c></summary>
+    StatBoostEnergy = 92,
+    /// <summary><c>stat.base.boost_energy</c></summary>
+    StatBaseBoostEnergy = 93,
 }
 
 /// <summary>A read of the race (protocol/modes.toml).</summary>
@@ -648,6 +652,8 @@ public enum ModeAction : byte
     ShowObjects = 77,
     /// <summary><c>show_objects off</c></summary>
     ShowObjectsOff = 78,
+    /// <summary><c>seat.stat.boost_energy</c></summary>
+    SeatStatBoostEnergy = 79,
 }
 
 /// <summary>The vocabulary of one api, by the names a mode file writes (protocol/modes.toml).</summary>
@@ -953,6 +959,8 @@ public static partial class ModeWords
         ("gap_ahead", ModeSeatRead.GapAhead, ModeType.Int),
         ("gap_behind", ModeSeatRead.GapBehind, ModeType.Int),
         ("gap_leader", ModeSeatRead.GapLeader, ModeType.Int),
+        ("stat.boost_energy", ModeSeatRead.StatBoostEnergy, ModeType.Real),
+        ("stat.base.boost_energy", ModeSeatRead.StatBaseBoostEnergy, ModeType.Real),
     ];
 
     /// <summary>The reads of the race (<c>race.NAME</c>): name, id, type.</summary>
@@ -1050,6 +1058,7 @@ public static partial class ModeWords
         ("show_distance off", ModeAction.ShowDistanceOff, [ModeType.Seat]),
         ("show_objects", ModeAction.ShowObjects, [ModeType.Seat, ModeType.Int, ModeType.Int]),
         ("show_objects off", ModeAction.ShowObjectsOff, [ModeType.Seat]),
+        ("seat.stat.boost_energy", ModeAction.SeatStatBoostEnergy, [ModeType.Seat, ModeType.Real]),
     ];
 
     /// <summary>The actions that need a running step, which game_start refuses.</summary>
