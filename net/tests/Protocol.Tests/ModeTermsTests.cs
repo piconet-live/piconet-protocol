@@ -621,13 +621,13 @@ public sealed class ModeTermsTests
     }
 
     /// <summary>A number parameter a rule's word takes counts in that rule's unit: Quick Play's mines in ms, its finish
-    /// limit in seconds; the others none.</summary>
+    /// limit in seconds; the others none (its lives are its rules', no setup word's).</summary>
     [Fact]
     public void AParameterCountsInItsRulesUnit()
     {
         var mode = ModeCompiler.Compile(File.ReadAllText(TestSupport.RepositoryFolder.Protocol("protocol", "quickplay", "competitive.fzmode"))).Mode!;
-        Assert.Equal(["", "", "", "ms", "s", "", "", "", ""], mode.Params.Select(p => p.Unit));
-        Assert.Equal(["laps", "cpu-level", "boost-start", "mine-regen", "finish-limit", "machine-setting", "machine-setting", "stat-pack", "cpu-fill"],
+        Assert.Equal(["", "", "", "ms", "s", "", "", "", "", ""], mode.Params.Select(p => p.Unit));
+        Assert.Equal(["laps", "cpu-level", "boost-start", "mine-regen", "finish-limit", "machine-setting", "machine-setting", "stat-pack", "cpu-fill", ""],
             mode.Params.Select(p => p.Rule));
         var teams = ModeCompiler.Compile("mode \"T\" { api 1; }\nparam n \"Teams\" number 2..4 default 2;\nparam k \"Keep\" number 1..3;\nteams n..n;\n").Mode!;
         Assert.Equal(["teams", ""], teams.Params.Select(p => p.Rule));

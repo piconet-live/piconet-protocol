@@ -9,7 +9,7 @@ it at its start (a file that does not load stops the start), and the launcher's 
 | File | What it is |
 |---|---|
 | `quickplay.toml` | The rotation: the card counts, the normal option and the spicy options with their weights. The courses are each mode file's `courses` word (left out: the pool). Also `lobby_modes`: a custom lobby's official modes in the order a host is offered them (Quick Play's normal mode, then the others); the server lists those it can race (`LobbyList.Modes`) |
-| `competitive.fzmode` | The normal option: the game's own rules with the competitive scene's laps (`laps by course`), on every course of the pool; its parameters (Laps "By course" or a number, CPU level, boost, mines, finish limit, machine setting, stats) are what a custom lobby's host may change, on Quick Play's values by default |
+| `competitive.fzmode` | The normal option: the game's own rules with the competitive scene's laps (`laps by course`), on every course of the pool; three lives each (`lives`: every wreck the game restores costs one, as in Death Race; the last is final); its parameters (Laps "By course" or a number, CPU level, boost, mines, finish limit, machine setting, stats, CPU racers, Lives 1 to 9) are what a custom lobby's host may change, on Quick Play's values by default |
 | `knockout.fzmode` | A spicy option: a rolling start, then the last racer is out every interval, on Lightning: Loop Cross |
 | `practice.fzmode` | Not in the rotation: Play's Practice, raced alone (`solo`); the launcher starts it itself, beside the program in this folder |
 | `time_trial.fzmode` | Not in the rotation: a time trial, raced alone (`solo`); no launcher page starts it yet |
