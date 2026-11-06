@@ -125,8 +125,11 @@ public sealed class ModeBoardTests
         Assert.True(practice.Succeeded, string.Join(" ", practice.Errors));
         Assert.True(ModeTerms.Of(practice.Mode!).Solo);
         Assert.Equal(0, ModeTerms.Of(practice.Mode!).Laps(1));
-        Assert.Equal(["restore_on", "lap_count"], practice.Mode!.Params.Select(p => p.Name));
-        Assert.Equal(5, ModeTerms.Of(practice.Mode!, [0, 5]).Laps(1));
+        Assert.Equal(["lap_count", "restore_on", "resume"], practice.Mode!.Params.Select(p => p.Name));
+        Assert.Equal(5, ModeTerms.Of(practice.Mode!, [5, 0, 60]).Laps(1));
+        // the countdown after a resume or a load: the player's, 0 to 5 s, 1 s unless changed (in steps)
+        Assert.Equal((ModeParamKind.Delay, 0, 300, 60), practice.Mode!.Params[2] is var r ? (r.Kind, r.Least, r.Most, r.Default) : default);
+        Assert.Equal(new ModeSetupValue(true, 2), practice.Mode!.Setups.Single(s => s.Id == ModeSetup.ResumeCountdown).Arguments[0]);
         var trial = ModeCompiler.Compile(File.ReadAllText(Path.Combine(folder, "time_trial.fzmode")));
         Assert.True(trial.Succeeded, string.Join(" ", trial.Errors));
         Assert.True(ModeTerms.Of(trial.Mode!).Solo);
