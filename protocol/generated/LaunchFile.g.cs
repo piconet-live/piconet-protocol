@@ -36,7 +36,7 @@ public static class LaunchFormat
 }
 
 /// <summary>The launch file's part File: the launch file: every setting of one start of the game.
-/// The launcher writes "about", "bundle", "widescreen", "trueWidescreen", "lanes", "controllerSetup", "match", "replay", "windowName", "windowNamePicture", "showFrameRate", "showInputs", "renderer", "auroraSize", "auroraEdges", "auroraTextures", "auroraColourblind", "auroraHighRefresh", "auroraRayTracing", "rumble", "present", "verticalSync", "fullScreen", "refreshRate", "taskbar", "board", "overlay", "debug".</summary>
+/// The launcher writes "about", "bundle", "widescreen", "trueWidescreen", "lanes", "controllerSetup", "match", "replay", "windowName", "windowNamePicture", "showFrameRate", "showInputs", "renderer", "auroraSize", "auroraEdges", "auroraTextures", "auroraColourblind", "auroraHighRefresh", "auroraRayTracing", "rumble", "present", "verticalSync", "fullScreen", "taskbar", "board", "overlay", "debug".</summary>
 public sealed record LaunchFile(
     string About,
     string? Bundle = null,
@@ -60,7 +60,6 @@ public sealed record LaunchFile(
     string? Present = null,
     bool VerticalSync = false,
     string? FullScreen = null,
-    string? RefreshRate = null,
     LaunchTaskbar? Taskbar = null,
     string? Board = null,
     IReadOnlyList<LaunchOverlayEntry>? Overlay = null,
@@ -155,10 +154,6 @@ public sealed record LaunchFile(
         if (FullScreen is { } fullScreen)
         {
             o["fullScreen"] = fullScreen;
-        }
-        if (RefreshRate is { } refreshRate)
-        {
-            o["refreshRate"] = refreshRate;
         }
         if (Taskbar is { } taskbar)
         {

@@ -9,6 +9,6 @@
   },
   "windowName": "Piconet",
   "showFrameRate": false,
-  "fullScreen": "borderless",
-  "refreshRate": "display"
+  "renderer": "aurora",
+  "fullScreen": "borderless"
 }

@@ -21,7 +21,6 @@
   "present": "field",
   "verticalSync": true,
   "fullScreen": "exclusive",
-  "refreshRate": "240",
   "taskbar": {
     "id": "Piconet.Launcher",
     "program": "C:\\Piconet\\Launcher.App.exe",
