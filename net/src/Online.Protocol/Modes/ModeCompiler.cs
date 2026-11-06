@@ -140,7 +140,7 @@ public static class ModeCompiler
                 throw new ModeCompileException(clockLine, "show_clock and clock_limit both write the game's clock: a mode has one or the other");
             }
             SoloWords(items);
-            StartTogetherWords(items);
+            StartGapWords(items);
             if (_emitter.TagTexts.Count > 0)
             {
                 _setups.Add(new ModeSetupWord(ModeSetup.TagTexts, ModeTagTexts.Cells(_emitter.TagTexts)));
@@ -320,17 +320,48 @@ private static string? CompilersOwn(ModeSetup id, string name) => id switch
             }
         }
 
-        /// <summary><c>start_together</c> puts every machine on one spot, which only works with contact off, as it
-        /// keeps it from before the first step. A <c>contact</c> that can be on (stated on, or a switch parameter) is refused.</summary>
-        private void StartTogetherWords(List<ModeItem> items)
+        /// <summary>The nearest two machines stand at the start with contact on: the game's own grid step, 12.9 m a slot
+        /// (fn_1_85C58). A <c>start_gap</c> below it may only race with contact off.</summary>
+        public const float NearestStart = 12.9f;
+
+        /// <summary><c>start_gap</c>: one gap, in metres or <c>even</c>. 0 puts every machine on slot 0's spot, which only
+        /// works with contact off, as the word keeps it from before the first step: a <c>contact</c> that can be on
+        /// (stated on, or a switch parameter) is refused. A gap above 0 and below <see cref="NearestStart"/> needs contact
+        /// stated off. A parameter's whole range is held to both.</summary>
+        private void StartGapWords(List<ModeItem> items)
         {
-            if (_setups.All(s => s.Id != ModeSetup.StartTogether) || _setups.FirstOrDefault(s => s.Id == ModeSetup.Contact) is not { } contact
-                || contact.Arguments[0] is { FromParam: false, Value: 0 })
+            var gap = _setups.FirstOrDefault(s => s.Id == ModeSetup.StartGap);
+            var even = _setups.Any(s => s.Id == ModeSetup.StartGapEven);
+            int Line(ModeSetup id)
+            {
+                var word = ModeWords.Setups.Single(w => w.Id == id).Name;
+                return items.OfType<ModeSetupItem>().First(s => s.Word == word).Line;
+            }
+            if (gap is null)
             {
                 return;
             }
-            var word = ModeWords.Setups.Single(w => w.Id == ModeSetup.Contact).Name;
-            throw new ModeCompileException(items.OfType<ModeSetupItem>().First(s => s.Word == word).Line, "contact on: start_together keeps every racer on one spot, so contact stays off");
+            if (even)
+            {
+                throw new ModeCompileException(Line(ModeSetup.StartGapEven), "start_gap once: a gap in metres or even, not both");
+            }
+            var (least, most) = gap.Arguments[0] is { FromParam: true } p
+                ? (BitConverter.Int32BitsToSingle(_params[p.Value].Least), BitConverter.Int32BitsToSingle(_params[p.Value].Most))
+                : (BitConverter.Int32BitsToSingle(gap.Arguments[0].Value), BitConverter.Int32BitsToSingle(gap.Arguments[0].Value));
+            var contact = _setups.FirstOrDefault(s => s.Id == ModeSetup.Contact);
+            if (contact is { Arguments: [{ FromParam: false, Value: 0 }] })
+            {
+                return;
+            }
+            if (least == 0f && contact is not null)
+            {
+                throw new ModeCompileException(Line(ModeSetup.Contact), "contact on: start_gap 0 keeps every racer on one spot, so contact stays off");
+            }
+            if (most > 0f && least < NearestStart)
+            {
+                throw new ModeCompileException(Line(ModeSetup.StartGap),
+                    $"start_gap below {NearestStart} m with contact on: the game's grid puts machines no nearer than that; give {NearestStart} m or more, 0, or contact off");
+            }
         }
 
         private void Param(ModeParamItem item)

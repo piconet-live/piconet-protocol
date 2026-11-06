@@ -36,8 +36,14 @@ public sealed class ModeWordFormsTests
     [InlineData("pedals locked accel 0.6 brake 0.0;")]
     [InlineData("clock_limit 5min;")]
     [InlineData("rolling_start 1000 km/h;")]
-    [InlineData("start_together;")]
-    [InlineData("start_together; contact off;")]
+    [InlineData("start_gap 0;")]
+    [InlineData("start_gap 0 m; contact off;")]
+    [InlineData("start_gap 200 m;")]
+    [InlineData("start_gap 12.9 m;")]
+    [InlineData("start_gap 5 m; contact off;")]
+    [InlineData("start_gap even;")]
+    [InlineData("start_gap even; rolling_start 1000 km/h;")]
+    [InlineData("param g \"G\" number 20.0..500.0 default 100.0; start_gap g;")]
     [InlineData("param c \"C\" switch default on; cpus c;")]
     [InlineData("param l \"L\" delay 1min..10min step 30s default 3min; clock_limit l;")]
     [InlineData("results_title \"ABCDEFGHIJKLMNOPQRSTUVW\";")]
@@ -168,12 +174,23 @@ public sealed class ModeWordFormsTests
     }
 
     [Theory]
-    [InlineData("start_together; contact on;")]
-    [InlineData("param c \"C\" switch default off; start_together; contact c;")]
-    public void StartTogetherRefusesAContactThatCanBeOn(string body)
+    [InlineData("start_gap 0; contact on;")]
+    [InlineData("param c \"C\" switch default off; start_gap 0; contact c;")]
+    [InlineData("start_gap 5 m;")]
+    [InlineData("start_gap 12 m; contact on;")]
+    [InlineData("param c \"C\" switch default off; start_gap 5 m; contact c;")]
+    [InlineData("param g \"G\" number 0.0..500.0 default 100.0; start_gap g;")]
+    [InlineData("start_gap 100 m; start_gap even;")]
+    public void StartGapRefusesAContactThatCanBeOnBelowTheGridsStep(string body)
     {
         var error = Assert.Single(Compile(body).Errors);
-        Assert.Contains("start_together", error.ToString());
+        Assert.Contains("start_gap", error.ToString());
+    }
+
+    [Fact]
+    public void StartTogetherIsNoWord()
+    {
+        Assert.NotEmpty(Compile("start_together;").Errors);
     }
 
     /// <summary>The design's example 9.3, as it stands there: inside the budget by squares, with no square root in its loop.</summary>

@@ -16,7 +16,7 @@ cpus on;          // players may vote CPUs in
 stats "GX Unleashed";   // Quick Play's pack, mines and machine setting (a word left out is the game's own)
 mine_regen on;
 machine_setting 100;
-start_together;
+start_gap 0;      // everyone on slot 0's spot
 contact off;
 laps lap_count;
 

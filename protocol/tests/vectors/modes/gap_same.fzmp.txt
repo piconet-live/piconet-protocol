@@ -1,8 +1,8 @@
-FZMP format 1 api 1, 411 bytes, hash 53cdfed2f023d9b6d3cb3d0d629704af022d199c6f5b06e2a7962eaf1aa3a96e
-HEAD name "Together" badge "" about ""
+FZMP format 1 api 1, 455 bytes, hash 68b3c9c53e2eda33e67de0a202a3d3a44c308e56fdda21861c70bf685470a610
+HEAD name "Same spot" badge "" about ""
 PARM 0
 SETP 1
-  start_together
+  start_gap 0 (0x00000000)
 VARS globals 1, seat words 0
   global 0 = 0
 RULE 1
@@ -28,4 +28,4 @@ CODE 54 bytes
   002e  StoreLocal 0
   0030  Jump 0007
   0035  End
-SRC  240 bytes
+SRC  278 bytes
