@@ -43,7 +43,7 @@ name = "File"
 cs = "LaunchFile"
 doc = "the launch file: every setting of one start of the game"
 cs_order = ["about", "bundle", "widescreen", "trueWidescreen", "lanes", "controllerSetup", "match", "replay",
-            "windowName", "windowNamePicture", "showFrameRate", "showInputs", "renderer", "auroraSize", "auroraEdges", "auroraTextures", "auroraColourblind", "auroraHighRefresh", "auroraRayTracing", "rumble", "present", "verticalSync", "fullScreen",
+            "windowName", "windowNamePicture", "showFrameRate", "renderer", "auroraSize", "auroraEdges", "auroraTextures", "auroraColourblind", "auroraHighRefresh", "auroraRayTracing", "rumble", "present", "verticalSync", "fullScreen",
             "taskbar", "board", "overlay", "debug"]
 member = [
     { key = "about", type = "text", to = "about", missing = "a line that says what this start is for", cs = { name = "About", write = "required" } },
@@ -53,7 +53,6 @@ member = [
     { key = "trueWidescreen", type = "bool", to = "true_widescreen", cs = { name = "TrueWidescreen", write = "true" } },
     { key = "windowName", type = "text", to = "window_name", most_bytes = 64, cs = { name = "WindowName", write = "set" } },
     { key = "showFrameRate", type = "bool", to = "show_frame_rate", cs = { name = "ShowFrameRate", write = "set" } },
-    { key = "showInputs", type = "bool", to = "show_inputs", cs = { name = "ShowInputs", write = "true" } },
     { key = "renderer", type = "one_of", values = ["dolphin", "aurora"], to = "picture_renderer", cs = { name = "Renderer", write = "set" }, doc = "who draws the picture: the emulator (left out), or Aurora with the emulator's video off" },
     { key = "auroraSize", type = "one_of", values = ["auto", "2", "3", "4", "native"], to = "aurora_size", cs = { name = "AuroraSize", write = "set" }, doc = "with renderer aurora: left out is auto, the same as native: the window's own pixels, following its size" },
     { key = "auroraEdges", type = "whole", to = "aurora_edges", low = 1, high = 4, cs = { name = "AuroraEdges", write = "positive" }, doc = "with renderer aurora: multisampling; left out is 1, none" },
