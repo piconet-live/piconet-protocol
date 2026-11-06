@@ -2103,6 +2103,16 @@ only: the Check task writes the gaps whole before its own compare reads them, an
 and the tags are the data window's, which no step reads"""
 doc = "nothing over the race that the HUD's parts do not cover: no CHECK sign (the arrow at the bottom edge that points at a rival close behind) and no name tags, a player's or a mode's `tag`. For footage; the standard parts go with `hide`"
 
+[[setup]]
+name = "damage_cap"
+id = 55
+args = [{ type = "switch" }]
+where = """fn_1_24F10 0x24F50, the player's cap of 20 a hit (`lfs f0, 0x178(r6)`, which a CPU, flag 0x200, branches past): \
+sites_combat.py, through the block's word NO_CAP (mode.h): off, the cap loaded is the largest real, so the game's own \
+compare keeps the hit whole; every caller of fn_1_24F10 (machine contact, damage strips, the mode's `damage`). The cap of \
+1.01 x max energy after it (0x24F84) stays, and so do a wall's and a mine's own caps (fn_1_266A8, fn_1_28184)"""
+doc = "off: a player's hit is not held to 20 (to 20 x damage for machine contact), as a CPU's never is; a hit still takes at most 1.01 x max energy. On, or left out: the game's own cap"
+
 [[action]]
 name = "finish_seat"
 needs_step = true

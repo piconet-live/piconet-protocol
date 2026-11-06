@@ -14,3 +14,4 @@ it at its start (a file that does not load stops the start), and the launcher's 
 | `practice.fzmode` | Not in the rotation: Play's Practice, raced alone (`solo`); the launcher starts it itself, beside the program in this folder |
 | `time_trial.fzmode` | Not in the rotation: a time trial, raced alone (`solo`); no launcher page starts it yet |
 | `ghost_race.fzmode` | Not in the rotation: a time trial raced together: everyone starts on one spot, nobody touches anybody, the others drawn as ghosts, the laps a parameter; a custom lobby's host may choose it |
+| `death_race.fzmode` | Not in the rotation (its `course` word pins Big Blue: Drift Highway): F-Zero X's Death Race, no finish line, three lives each (the game restores a wreck; the last is final), on a six-minute clock; points for every KO the game credits, for staying in and for each life left, a bonus for the first three still in; damage 400% with `damage_cap off`; a custom lobby's host may choose it |

@@ -138,6 +138,11 @@ public sealed class ModeBoardTests
         Assert.Contains(ghosts.Mode!.Setups, s => s.Id == ModeSetup.StartTogether);
         Assert.Equal(3, ModeTerms.Of(ghosts.Mode!).Laps(1));
         Assert.Equal(7, ModeTerms.Of(ghosts.Mode!, [7]).Laps(1));
+        var death = ModeCompiler.Compile(File.ReadAllText(Path.Combine(folder, "death_race.fzmode")));
+        Assert.True(death.Succeeded, string.Join(" ", death.Errors));
+        Assert.Equal(["Points", "KOs", "Lives"], death.Mode!.Board.Select(l => l.Label));
+        Assert.Contains(death.Mode!.Setups, s => s.Id == ModeSetup.DamageCap && s.Arguments[0].Value == 0);
+        Assert.Equal(0, ModeTerms.Of(death.Mode!).Laps(14));
     }
 
     [Fact]

@@ -53,6 +53,7 @@ public sealed class ModeCompilerTests
     [InlineData("gap_reads")]
     [InlineData("together")]
     [InlineData("clean")]
+    [InlineData("death_race")]
     public void AVectorCompilesToItsPackage(string name)
     {
         var result = CompileVector(name);

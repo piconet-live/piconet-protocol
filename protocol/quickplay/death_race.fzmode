@@ -1,0 +1,179 @@
+// Death Race, after F-Zero X's: Big Blue: Drift Highway, no finish line. Three lives each; the last wreck is final. The
+// clock ends it, or the last machine standing. Points for every KO and for staying in, so leading alone does not win and
+// neither does killing alone.
+//
+// Lives: any wreck (a hit, the energy, a fall) costs one. While a seat has more than one life the game restores it (its
+// own restore, as with the lobby's Restore); on its last life nothing restores it, so the next wreck is out. The lives
+// left show beside the Grand Prix spare-machine icon.
+//
+// Scoring, at the defaults (each one a parameter):
+//   KO        3 for every KO the game credits (its own skull count, a restored victim's too); a fall, a wall or a mine
+//             credits no one
+//   survival  1 for every 30 s from GO while the seat is still in
+//   the end   2 for every life left, and among the seats still in, by standing: 1st +5, 2nd +3, 3rd +1
+// The last machine standing before the clock also gets the survival points the rest of the clock would have paid, so
+// outliving everyone is never worth less than lasting to the clock.
+//
+// Balance at the defaults, 6 minutes:
+//   | racer                                 | survival | lives | standing | KOs | total |
+//   |---------------------------------------|----------|-------|----------|-----|-------|
+//   | the leader, no wreck, 0 KOs           | 12       | 6     | 5        | 0   | 23    |
+//   | mid-pack, one wreck, 3 KOs            | 12       | 4     | 0        | 9   | 25    |
+//   | out at 3:00 with 6 KOs                | 6        | 0     | 0        | 18  | 24    |
+// Results by points; ties by time survived, then KOs, then standing.
+//
+// Damage is 400% and the game's cap of 20 a hit for a player is off (a CPU never had it), so a hard hit can end a
+// machine from full; a hit still takes at most 1.01 x max energy. Walls, mines and the pit are the game's own: the pit's
+// refill (1.1 a step) cannot save a machine from one hit at this damage.
+
+mode "Death Race" {
+  api 1;
+  badge "DEATH RACE";
+  about "Drift Highway, no finish line. Three lives each. Points for every machine you take out and for staying in.";
+}
+
+param length      "Race length"         delay 3min..10min step 30s default 6min;
+param dmg         "Damage"              number 100%..1000% step 50% default 400%;
+param ko_points   "Points for a KO"     number 0..10 default 3;
+param tick        "Survival every"      delay 10s..60s step 5s default 30s;
+param tick_points "Points for survival" number 0..5 default 1;
+param lives       "Lives"               number 1..9 default 3;
+param life_points "Points a life left"  number 0..10 default 2;     // at the end, for the seats still in
+param first_bonus  "1st alive"          number 0..20 default 5;    // the standing among the survivors at the end
+param second_bonus "2nd alive"          number 0..20 default 3;
+param third_bonus  "3rd alive"          number 0..20 default 1;
+
+course "Big Blue: Drift Highway";
+cpus on;                       // players may vote CPUs in as targets, as in F-Zero X
+stats "GX Unleashed";          // Quick Play's pack, mines and machine setting (a word left out is the game's own)
+mine_regen on;
+machine_setting 100;
+laps unlimited;                // no finish line
+restore off;                   // the lobby's Restore: off; the lives below restore a seat on its own (respawns)
+rolling_start 1000 km/h;       // as Knockout: speed at the gate, CPU steers through the countdown, control at GO
+race_waits everyone;           // the race goes on until the mode ends it, not until the last player is out
+damage dmg;
+damage_cap off;
+results_title "DEATH RACE";    // the points page, ties in the order below
+
+global bool over;              // the race has ended: nothing scores from then on
+global int hold_until;         // a player's last moment: FINISH! and its place have their 8 s
+seat int score;                // the points awarded so far (seat.points read in the run that awards is the old value)
+seat int kos_paid;             // the skull count already paid for
+seat int lived;                // steps from GO to out; a survivor: the race's length
+seat int lives_left;           // this life included; 0 once out
+seat int rank;
+
+sub pay(seat s, int n) {
+  award s, n;
+  s.score += n;
+}
+
+rule "KOs" {
+  event each seat;
+  while race.started and not over;
+  do {
+    // the game's own record: the skull count rises for the machine credited (two KOs in one step still count)
+    if (seat.kos > seat.kos_paid) {
+      call pay(seat, ko_points * (seat.kos - seat.kos_paid));
+      seat.kos_paid = seat.kos;
+    }
+  }
+}
+
+rule "Lives" {
+  event game_start;
+  do {
+    for each seat {
+      seat.lives_left = lives;
+      show_number seat, lives;
+      if (lives > 1) { respawns seat; }
+    }
+  }
+}
+
+rule "A life lost" {
+  // a wreck the game restores: one life gone; with one left, the next wreck is final (the restore under way finishes)
+  event each seat;
+  when seat.restoring and not over;
+  do {
+    seat.lives_left -= 1;
+    if (seat.lives_left <= 1) { respawns seat off; }
+  }
+}
+
+rule "Out" {
+  event out(s);
+  when not over;
+  do {
+    s.lived = race.steps;
+    s.lives_left = 0;
+  }
+}
+
+rule "Lives shown" {
+  // beside the spare-machine icon, the watched seat's; hidden once it is out
+  event each seat;
+  do {
+    if (seat.racing) { show_number seat, seat.lives_left; } else { show_number seat, -1; }
+  }
+}
+
+rule "Survival" {
+  event every step;
+  while race.started and not over and race.steps > 0 and race.steps % tick == 0 and race.steps <= length;
+  do {
+    for each seat where racing { call pay(seat, tick_points); }
+  }
+}
+
+rule "The clock" {
+  event every step;
+  while race.started;
+  do { show_clock max(0, length - race.steps); }
+}
+
+rule "Everyone sees the clock" {
+  event each seat;
+  when race.started;
+  do { show seat, TIMER; }
+}
+
+rule "End" {
+  event every step;
+  when race.started and (race.steps >= length or (race.seats > 1 and count(seats where racing) <= 1));
+  do {
+    over = true;
+    // the seats still in: their lives left, and before the clock the survival points the rest of it would have paid
+    int rest = max(0, length / tick - race.steps / tick);
+    for each seat where racing {
+      seat.lived = length;
+      call pay(seat, life_points * seat.lives_left + rest * tick_points);
+    }
+    int k = 0;
+    for each seat where racing by standing {
+      k += 1;
+      if (k == 1) { call pay(seat, first_bonus); }
+      else if (k == 2) { call pay(seat, second_bonus); }
+      else if (k == 3) { call pay(seat, third_bonus); }
+    }
+    int n = 1;
+    for each seat by seat.score desc, seat.lived desc, seat.kos_paid desc, standing {
+      seat.rank = n;
+      seat.place = n;
+      n += 1;
+    }
+    // a player still in: the same FINISH! and place as a line crossed, then the results
+    for each seat where seat.racing and seat.is_human {
+      finish_seat seat;
+      hold_until = race.steps + 8s;
+    }
+    if (hold_until > race.steps) { wait hold_until - race.steps; }
+    for each seat { seat.place = seat.rank; }
+    end_race;
+  }
+}
+
+board seat score "Points";
+board seat kos_paid "KOs";
+board seat lives_left "Lives";

@@ -263,7 +263,8 @@ enum Setup : std::uint8_t
   SETUP_TIMEGAPS = 52,  // time_gaps
   SETUP_RESULTSHEADING = 53,  // results_heading
   SETUP_HUDCLEAN = 54,  // hud clean
-  SETUP_COUNT = 55,
+  SETUP_DAMAGECAP = 55,  // damage_cap
+  SETUP_COUNT = 56,
 };
 
 // a read of a seat (OP_SEATREAD)
