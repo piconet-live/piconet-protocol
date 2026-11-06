@@ -255,7 +255,6 @@ enum Setup : std::uint8_t
   SETUP_SPINIMMUNITY = 42,  // spin_immunity
   SETUP_TIMEBONUS = 43,  // time_bonus
   SETUP_POINTSTABLE = 44,  // points_table
-  SETUP_STARTTOGETHER = 45,  // start_together
   SETUP_COURSESALL = 46,  // courses all
   SETUP_COURSES = 47,  // courses
   SETUP_STATSPAGE = 48,  // stats_page
@@ -263,7 +262,9 @@ enum Setup : std::uint8_t
   SETUP_TIMEGAPS = 52,  // time_gaps
   SETUP_RESULTSHEADING = 53,  // results_heading
   SETUP_HUDCLEAN = 54,  // hud clean
-  SETUP_COUNT = 55,
+  SETUP_STARTGAP = 56,  // start_gap
+  SETUP_STARTGAPEVEN = 57,  // start_gap even
+  SETUP_COUNT = 58,
 };
 
 // a read of a seat (OP_SEATREAD)

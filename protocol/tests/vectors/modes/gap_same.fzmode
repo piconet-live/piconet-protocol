@@ -1,0 +1,5 @@
+// start_gap 0: every racer on slot 0's spot, with a rule that reads what it implies (contact off from the start).
+mode "Same spot" { api 1; }
+start_gap 0;
+global int ghosts;
+rule "Count" { event game_start; do { for each seat where seat.no_contact { ghosts = ghosts + 1; } } }

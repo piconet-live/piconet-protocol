@@ -255,8 +255,6 @@ public enum ModeSetup : byte
     TimeBonus = 43,
     /// <summary><c>points_table</c></summary>
     PointsTable = 44,
-    /// <summary><c>start_together</c></summary>
-    StartTogether = 45,
     /// <summary><c>courses all</c></summary>
     CoursesAll = 46,
     /// <summary><c>courses</c></summary>
@@ -271,6 +269,10 @@ public enum ModeSetup : byte
     ResultsHeading = 53,
     /// <summary><c>hud clean</c></summary>
     HudClean = 54,
+    /// <summary><c>start_gap</c></summary>
+    StartGap = 56,
+    /// <summary><c>start_gap even</c></summary>
+    StartGapEven = 57,
 }
 
 /// <summary>A read of a seat (protocol/modes.toml).</summary>
@@ -842,7 +844,6 @@ public static partial class ModeWords
         ("spin_immunity", ModeSetup.SpinImmunity, [new ModeArgument("", ModeType.Bool, 0, 1, null)], false, ""),
         ("time_bonus", ModeSetup.TimeBonus, [new ModeArgument("", ModeType.Int, 1, 120, null, 5)], false, ""),
         ("points_table", ModeSetup.PointsTable, [new ModeArgument("", ModeType.Int, 0, 999, null)], false, ""),
-        ("start_together", ModeSetup.StartTogether, [], false, ""),
         ("courses all", ModeSetup.CoursesAll, [], true, ""),
         ("courses", ModeSetup.Courses, [], true, "list"),
         ("stats_page", ModeSetup.StatsPage, [], false, ""),
@@ -850,6 +851,8 @@ public static partial class ModeWords
         ("time_gaps", ModeSetup.TimeGaps, [], false, ""),
         ("results_heading", ModeSetup.ResultsHeading, [], false, "text"),
         ("hud clean", ModeSetup.HudClean, [], false, ""),
+        ("start_gap", ModeSetup.StartGap, [new ModeArgument("", ModeType.Real, 0.0f, 10000.0f, null)], false, ""),
+        ("start_gap even", ModeSetup.StartGapEven, [], false, ""),
     ];
 
     /// <summary>The reads of a seat (<c>seat.NAME</c>): name, id, type.</summary>

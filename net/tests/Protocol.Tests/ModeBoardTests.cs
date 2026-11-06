@@ -135,7 +135,7 @@ public sealed class ModeBoardTests
         var ghosts = ModeCompiler.Compile(File.ReadAllText(Path.Combine(folder, "ghost_race.fzmode")));
         Assert.True(ghosts.Succeeded, string.Join(" ", ghosts.Errors));
         Assert.False(ModeTerms.Of(ghosts.Mode!).Solo);
-        Assert.Contains(ghosts.Mode!.Setups, s => s.Id == ModeSetup.StartTogether);
+        Assert.Contains(ghosts.Mode!.Setups, s => s.Id == ModeSetup.StartGap && s.Arguments[0] == new ModeSetupValue(false, 0));
         Assert.Equal(3, ModeTerms.Of(ghosts.Mode!).Laps(1));
         Assert.Equal(7, ModeTerms.Of(ghosts.Mode!, [7]).Laps(1));
     }
