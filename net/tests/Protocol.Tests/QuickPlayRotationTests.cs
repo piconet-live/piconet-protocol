@@ -403,14 +403,15 @@ public sealed class QuickPlayRotationTests : IDisposable
 
     /// <summary>Quick Play's normal mode declares what a host may change, and on its defaults it is Quick Play's race of
     /// before: the laps by course, CPU level Master, no boost on the first lap, mines back in 200 ms, 90 s to finish, top
-    /// speed fixed, GX Unleashed. A host's values change it: a number of laps on every course, stock stats, mines that
-    /// stay gone.</summary>
+    /// speed fixed, GX Unleashed; and three lives, every wreck one. A host's values change it: a number of laps on every
+    /// course, stock stats, mines that stay gone.</summary>
     [Fact]
     public void QuickPlaysModeHasItsSettingsAndTheirDefaultsAreQuickPlays()
     {
         var normal = Official().Normal;
-        Assert.Equal(["Laps", "CPU level", "Boost from the start", "Mines respawn", "Finish limit", "Machine setting from", "Machine setting to", "Stats", "CPU racers"],
+        Assert.Equal(["Laps", "CPU level", "Boost from the start", "Mines respawn", "Finish limit", "Machine setting from", "Machine setting to", "Stats", "CPU racers", "Lives"],
             normal.Package.Params.Select(p => p.Label));
+        Assert.Equal((1, 9, 3), (normal.Package.Params[9].Least, normal.Package.Params[9].Most, normal.Package.Params[9].Default));
         var laps = normal.Package.Params[0];
         Assert.Equal(("By course", 100, 100, 99), (laps.Or, laps.Default, laps.Most, laps.Top));
         var sonic = CourseTable.Courses.First(c => c.Track == "Sonic Oval").Course;

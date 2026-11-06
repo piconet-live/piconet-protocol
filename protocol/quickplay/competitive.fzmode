@@ -1,4 +1,4 @@
-// Quick Play's normal rules: the game's own rules with the competitive scene's lap counts.
+// Quick Play's normal rules: the game's own rules with the competitive scene's lap counts, and three lives each.
 // One file with a lap table, not one file per course: the rules are the same on every course and only the laps
 // differ, so a change to the rules is one edit and a vote card is (course, this mode).
 // Every rule of the race is this file's (a word left out is the game's own way); the parameters are what a custom
@@ -6,7 +6,7 @@
 
 mode "Quick Play" {
   api 1;
-  about "Quick Play's rules: laps by course, GX Unleashed stats.";
+  about "Quick Play's rules: laps by course, GX Unleashed stats, three lives.";
 }
 
 param lap_count   "Laps"            number 1..99 or "By course" default "By course";   // a number: every course
@@ -18,6 +18,7 @@ param setting_low  "Machine setting from" number 0..100 default 100;
 param setting_high "Machine setting to"   number 0..100 default 100;
 param pack        "Stats"           choice ["GX Unleashed", "F-Zero GX+", "stock", "file"] default "GX Unleashed";
 param cpu_racers  "CPU racers"      switch default on;   // on: players may vote CPUs in, as today; off: none
+param lives       "Lives"           number 1..9 default 3;   // 1: the game's own rule, one wreck and out
 
 cpus cpu_racers;
 finish_limit finish_in;   // a mode owns its ending: Quick Play's own end, as today
@@ -26,6 +27,7 @@ boost_start boost_first;
 mine_regen mines_back;
 machine_setting setting_low..setting_high;   // Quick Play: top speed, fixed
 stats pack;       // a pack of the server's by name, stock (the disc's own) or file (the host's own pack file)
+lives lives;      // every wreck (a hit, the energy, a fall, a breakdown) costs one, as in Death Race; the last is final
 
 laps by course {
   "Mute City: Sonic Oval": 8;

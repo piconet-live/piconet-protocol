@@ -399,14 +399,17 @@ public sealed class ModeWordFormsTests
         Assert.Equal(warns, result.Warnings.Any(w => w.Contains("did you mean while", StringComparison.Ordinal)));
     }
 
-    /// <summary>The library's lives (design 9.6): it counts on destroyed, not on every restore, and carries the count on
-    /// the spare-machine icon. Its own file needs no show_number or destroyed rule.</summary>
+    /// <summary>The library's lives (design 9.6): every restore the game begins costs a life (a hit, the energy, a fall, a
+    /// breakdown alike, as Death Race's), the respawns go off with one left, and the count is on the spare-machine icon.
+    /// Its own file needs no show_number or restoring rule.</summary>
     [Fact]
-    public void LivesCountsDestroysAndShowsTheCount()
+    public void LivesCountsEveryRestoreAndShowsTheCount()
     {
         var listing = ModeDisassembler.List(Compile("lives 3;").Package!);
         Assert.Contains("show_number", listing, StringComparison.Ordinal);
-        Assert.Contains("destroyed", listing, StringComparison.Ordinal);
+        Assert.Contains("SeatRead restoring", listing, StringComparison.Ordinal);
+        Assert.Contains("respawns off", listing, StringComparison.Ordinal);
+        Assert.DoesNotContain("destroyed", listing, StringComparison.Ordinal);
     }
 
     [Theory]

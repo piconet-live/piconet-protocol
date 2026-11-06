@@ -13,16 +13,14 @@ macro at(time t, block body) {
   rule { event every step; when race.started and race.steps >= t; do body }
 }
 
-// lives n: each explosion (destroyed) costs a life, and the count shows beside the spare-machine icon while the seat
-// races. A fall or a breakdown is restored free while the seat has more than one life. On its last life nothing is
-// restored, so any wreck is final (the game's own out verdict books it): the game cannot refuse a restore by the kind
-// of wreck without a new site. The off waits for the restore that left one life: `when` holds it until that restore has
-// begun, whichever of the two the step shows first, and respawns off lets a restore under way finish.
+// lives n: every wreck the game restores (a hit, the energy, a fall, a breakdown) costs one life, and the count shows
+// beside the spare-machine icon while the seat races (-1 once it is out). While a seat has more than one life the game
+// restores it; the wreck that leaves it one turns respawns off (the restore under way finishes), so its next wreck is
+// final and the game's own out verdict books it. Lives 1 is the game's own rule: no restore at all.
 macro lives(int n) {
   seat int lives_left;
   rule { event game_start; do { for each seat { seat.lives_left = n; show_number seat, n; if (n > 1) { respawns seat; } } } }
-  rule { event destroyed(s); do { if (s.lives_left > 0) { s.lives_left -= 1; } } }
-  rule { event each seat; when seat.restoring and seat.lives_left <= 1; do { respawns seat off; } }
+  rule { event each seat; when seat.restoring; do { seat.lives_left -= 1; if (seat.lives_left <= 1) { respawns seat off; } } }
   rule { event out(s); do { s.lives_left = 0; } }
   rule { event each seat; do {
     if (seat.racing) { show_number seat, seat.lives_left; } else { show_number seat, -1; }
