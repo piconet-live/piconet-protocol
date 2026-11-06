@@ -217,12 +217,13 @@ public sealed class QuickPlayRotationTests : IDisposable
         Assert.Contains("says neither course nor racers", error.Message, StringComparison.Ordinal);
     }
 
-    /// <summary>The official lists: Knockout on Loop Cross, the normal mode on the whole pool.</summary>
+    /// <summary>The official lists: Knockout and the normal mode both on the whole pool (Knockout's courses word went,
+    /// owner 2026-11-05).</summary>
     [Fact]
     public void TheOfficialListsAreInTheModeFiles()
     {
         var rotation = Official();
-        Assert.Equal([8], rotation.Spicy[0].Mode.Terms.Courses);
+        Assert.Null(rotation.Spicy[0].Mode.Terms.Courses);
         Assert.Null(rotation.Normal.Terms.Courses);
     }
 
@@ -245,7 +246,7 @@ public sealed class QuickPlayRotationTests : IDisposable
         Assert.Equal("Quick Play", rotation.Normal.Package.Name);
         var spicy = Assert.Single(rotation.Spicy);
         Assert.Equal("Knockout", spicy.Mode.Package.Name);
-        Assert.Equal([8], spicy.Mode.Terms.Courses!);
+        Assert.Null(spicy.Mode.Terms.Courses);
         Assert.True(rotation.CpusAllowed);
     }
 
@@ -264,7 +265,7 @@ public sealed class QuickPlayRotationTests : IDisposable
                 seen.Add((option.Course, option.Mode.File));
             }
         }
-        Assert.Equal(CoursePool.Default.Count + 1, seen.Count);   // every course of the pool (the spicy one spicy), Random
+        Assert.Equal(2 * CoursePool.Default.Count + 1, seen.Count);   // every course of the pool in both modes, Random
         foreach (var mode in rotation.Modes)
         {
             var again = ModeCompiler.Compile(File.ReadAllText(RepositoryFolder.Protocol("protocol", "quickplay", mode.File)));
@@ -304,11 +305,12 @@ public sealed class QuickPlayRotationTests : IDisposable
     }
 
     [Fact]
-    public void TheOfficialVoteHasOneKnockoutCardOnItsCourse()
+    public void TheOfficialVoteHasOneKnockoutCardOnACourseOfThePool()
     {
         var rotation = Official();
         var random = new Random(13);
         var places = new HashSet<int>();
+        var courses = new HashSet<int>();
         for (var round = 0; round < 300; round++)
         {
             var vote = rotation.Vote(CoursePool.Default, random.Next);
@@ -316,12 +318,16 @@ public sealed class QuickPlayRotationTests : IDisposable
             Assert.Equal(CourseVote.RandomCourse, vote[^1].Course);
             var spicy = Assert.Single(vote, o => o.Spicy);
             places.Add(vote.ToList().IndexOf(spicy));
-            Assert.Equal((8, "Knockout", "KNOCKOUT", 0), (spicy.Course, spicy.Mode.Package.Name, spicy.Card.Badge, spicy.Card.Laps!.Value));
+            Assert.Equal(("Knockout", "KNOCKOUT", 0), (spicy.Mode.Package.Name, spicy.Card.Badge, spicy.Card.Laps!.Value));
+            Assert.Contains(spicy.Course, CoursePool.Default);
+            Assert.Equal(5, vote.Take(5).Select(o => o.Course).Distinct().Count());   // no course twice in a vote
+            courses.Add(spicy.Course);
             Assert.NotNull(spicy.Card.About);
             Assert.All(vote.Where(o => !o.Spicy), o => Assert.Equal(("Quick Play", (string?)null), (o.Mode.Package.Name, o.Card.Badge)));
             Assert.All(vote.Take(5).Where(o => !o.Spicy), o => Assert.Equal(rotation.Normal.Laps(o.Course), o.Card.Laps));
         }
         Assert.Equal([0, 1, 2, 3, 4], places.Order());
+        Assert.Equal(CoursePool.Default.Order(), courses.Order());   // over 300 votes, every course of the pool
     }
 
     [Fact]
@@ -331,7 +337,8 @@ public sealed class QuickPlayRotationTests : IDisposable
         var random = new Random(17);
         var draws = Enumerable.Range(0, 20_000).Select(_ => rotation.Random(CoursePool.Default, random.Next)).ToList();
         Assert.InRange(draws.Count(d => d.Spicy) / (double)draws.Count, 0.13, 0.17);
-        Assert.All(draws.Where(d => d.Spicy), d => Assert.Equal((8, "Knockout"), (d.Course, d.Mode.Package.Name)));
+        Assert.All(draws.Where(d => d.Spicy), d => Assert.Equal("Knockout", d.Mode.Package.Name));
+        Assert.All(draws.Where(d => d.Spicy), d => Assert.Contains(d.Course, CoursePool.Default));
     }
 
     /// <summary>Its terms: no lap count, a race the mode ends, CPUs only by the vote.</summary>
