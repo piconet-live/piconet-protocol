@@ -1331,6 +1331,18 @@ id = 91
 type = "int"
 doc = "steps behind the leader, by mini-sectors; 0 for the leader, -1 before anyone has a time"
 
+[[seat_read]]
+name = "stat.boost_energy"
+id = 92
+type = "real"
+doc = "this step's boost energy: the energy a boost takes each step, times the usage factor M+0x4DC (fn_1_26F34 0x27420, the image's seat_energy: energy -= it x M+0x4DC while the boost's count M+0x18B runs), at the game's 1/6 a D-second boost costs 10 x D. Not a machine field: the seat's stat pack value (the constant BoostEnergyUse), or the mode's once written"
+
+[[seat_read]]
+name = "stat.base.boost_energy"
+id = 93
+type = "real"
+doc = "the seat's own boost energy: its stat pack's BoostEnergyUse (the game's 1/6 without one), whatever the mode wrote"
+
 [[race_read]]
 name = "steps"
 id = 0
@@ -1724,7 +1736,7 @@ where = "the coordinator: the courses its vote and its Random draw from, and a l
 [[setup]]
 name = "stats_page"
 id = 48
-where = "the compiler's own, when a rule writes a stat of the stats page (seat.stat.drift_rotation_resistance and after): the race's mode block has one page more, which the undo log and the checksum then cover; a mode without it has the block of before, byte for byte"
+where = "the compiler's own, when a rule writes a stat of the stats page (seat.stat.drift_rotation_resistance to seat.stat.grip_window, and seat.stat.boost_energy): the race's mode block has one page more, which the undo log and the checksum then cover; a mode without it has the block of before, byte for byte"
 doc = "the block's stats page, which a file never writes itself"
 
 [[setup]]
@@ -2166,3 +2178,10 @@ id = 78
 args = ["seat"]
 where = "the block's story record for the seat"
 doc = "OBJECTS shows the course's own count again"
+
+[[action]]
+name = "seat.stat.boost_energy"
+id = 79
+args = ["seat", "real"]
+where = "the seat's second stat record (the block's stats page); the image's seat_energy (fn_1_26F34 0x27420) loads it in place of the seat's pack value while its bit is set, from the next step on. No machine field is written; the usage factor M+0x4DC stays the game's"
+doc = "the energy a boost takes each step, before the usage factor M+0x4DC: a boost running when it changes pays the new value from the next step. Held to the pack constant's range, 0 to 1.7. It lasts until written again or the race ends: a restore keeps it"

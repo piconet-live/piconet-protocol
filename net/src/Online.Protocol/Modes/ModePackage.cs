@@ -96,7 +96,8 @@ public static class ModeResultsTitle
 /// <c>stats_page</c>, so a mode without them has the block of before, byte for byte.</summary>
 public static class ModeStatsPage
 {
-    public static bool Uses(ModeAction action) => action is >= ModeAction.SeatStatDriftRotationResistance and <= ModeAction.SeatStatGripWindow;
+    public static bool Uses(ModeAction action) =>
+        action is (>= ModeAction.SeatStatDriftRotationResistance and <= ModeAction.SeatStatGripWindow) or ModeAction.SeatStatBoostEnergy;
 }
 
 /// <summary>The texts the <c>tag</c> word draws, which the package carries in the setup word <c>tag_texts</c>: a value a

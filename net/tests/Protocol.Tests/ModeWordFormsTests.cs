@@ -295,6 +295,7 @@ public sealed class ModeWordFormsTests
     [InlineData("rule \"R\" { event each seat; do { seat.stat.drift_accel = 2.0; } }")]
     [InlineData("rule \"R\" { event each seat; do { seat.stat.turn_decel /= 2; } }")]
     [InlineData("rule \"R\" { event each seat; do { seat.stat.grip_window = 3; } }")]
+    [InlineData("rule \"R\" { event game_start; do { for each s in seats { s.stat.boost_energy = s.stat.base.boost_energy * 0.5; } } }")]
     public void AStatWordOrASetValueCompiles(string body)
     {
         Assert.Empty(Compile(body).Errors);
@@ -349,6 +350,8 @@ public sealed class ModeWordFormsTests
         Assert.False(Page("rule \"R\" { event each seat; do { real a = seat.stat.base.drift_rotation_resistance; real b = seat.stat.grip_window; } }"));
         Assert.True(Page("rule \"R\" { event each seat; do { seat.stat.drift_rotation_resistance = 1.0; } }"));
         Assert.True(Page("rule \"R\" { event each seat; do { seat.stat.grip_window = 3; } }"));
+        Assert.False(Page("rule \"R\" { event each seat; do { real a = seat.stat.boost_energy + seat.stat.base.boost_energy; } }"));
+        Assert.True(Page("rule \"R\" { event each seat; do { seat.stat.boost_energy = 0.1; } }"));
         Assert.Contains(Compile("stats_page;\nrule \"R\" { event each seat; do { } }").Errors, e => e.Contains("the compiler's own", StringComparison.Ordinal));
     }
 
