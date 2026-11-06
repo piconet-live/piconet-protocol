@@ -44,7 +44,7 @@ cs = "LaunchFile"
 doc = "the launch file: every setting of one start of the game"
 cs_order = ["about", "bundle", "widescreen", "trueWidescreen", "lanes", "controllerSetup", "match", "replay",
             "windowName", "windowNamePicture", "showFrameRate", "showInputs", "renderer", "auroraSize", "auroraEdges", "auroraTextures", "auroraColourblind", "auroraHighRefresh", "auroraRayTracing", "rumble", "present", "verticalSync", "fullScreen",
-            "refreshRate", "taskbar", "board", "overlay", "debug"]
+            "taskbar", "board", "overlay", "debug"]
 member = [
     { key = "about", type = "text", to = "about", missing = "a line that says what this start is for", cs = { name = "About", write = "required" } },
     { key = "bundle", type = "text", to = "bundle_dir", cs = { name = "Bundle", write = "set" } },
@@ -65,7 +65,7 @@ member = [
     { key = "windowNamePicture", type = "object", cs = { name = "WindowNamePicture", write = "set" } },
     { key = "taskbar", type = "object", cs = { name = "Taskbar", write = "set" } },
     { key = "present", type = "one_of", values = ["field", "console", "copy"], to = "present", cs = { name = "Present", write = "set" } },
-    { key = "refreshRate", type = "one_of", values = ["60", "120", "240", "display"], to = "refresh_rate", cs = { name = "RefreshRate", write = "set" } },
+    { key = "refreshRate", type = "one_of", values = ["60", "120", "240", "display"], to = "refresh_rate", doc = "the emulator's re-draw of pictures between steps; no longer written by the launcher since 0.6.0 (Aurora draws every start): kept for old launch files and tests" },
     { key = "verticalSync", type = "bool", to = "vertical_sync", cs = { name = "VerticalSync", write = "true" } },
     { key = "fullScreen", type = "one_of", values = ["borderless", "exclusive"], to = "full_screen", cs = { name = "FullScreen", write = "set" } },
     { key = "controllerSetup", type = "bool", to = "controller_setup", cs = { name = "ControllerSetup", write = "true" } },
