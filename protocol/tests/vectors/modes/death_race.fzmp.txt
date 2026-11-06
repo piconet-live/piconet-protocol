@@ -1,4 +1,4 @@
-FZMP format 1 api 1, 9348 bytes, hash 46a182958ae7d628a7f7029488cb77848f0cd7fa02d17834cb16383c97cdec8b
+FZMP format 1 api 1, 9459 bytes, hash f059e55951d56e4799beb0a3aee55df006348127abf564057cd1695bab828b6e
 HEAD name "Death Race" badge "DEATH RACE" about "Drift Highway, no finish line. Three lives each. Points for every machine you take out and for staying in."
 PARM 10
   0 length "Race length" delay int 10800..36000 step 1800 default 21600
@@ -11,12 +11,13 @@ PARM 10
   7 first_bonus "1st alive" number int 0..20 step 1 default 5
   8 second_bonus "2nd alive" number int 0..20 step 1 default 3
   9 third_bonus "3rd alive" number int 0..20 step 1 default 1
-SETP 9
+SETP 10
   cpus on
   mine_regen 200
   laps 0
   restore off
   rolling_start 1000 (0x447a0000)
+  start_gap even
   race_waits everyone
   damage param 1 (dmg)
   damage_cap off
@@ -500,7 +501,7 @@ CODE 1100 bytes
   0444  Jump 0427
   0449  Action end_race
   044b  End
-SRC  7190 bytes
+SRC  7299 bytes
 BORD 3
   Seat Int word 0 "Points"
   Seat Int word 1 "KOs"

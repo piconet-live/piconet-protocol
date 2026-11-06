@@ -51,6 +51,7 @@ machine_setting 100;
 laps unlimited;                // no finish line
 restore off;                   // the lobby's Restore: off; the lives below restore a seat on its own (respawns)
 rolling_start 1000 km/h;       // as Knockout: speed at the gate, CPU steers through the countdown, control at GO
+start_gap even;                // spread evenly round the lap behind the line, in grid order: no melee at GO
 race_waits everyone;           // the race goes on until the mode ends it, not until the last player is out
 damage dmg;
 damage_cap off;
