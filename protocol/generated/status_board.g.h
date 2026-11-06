@@ -12,8 +12,8 @@
 namespace fzgx::board
 {
 inline constexpr std::uint32_t MAGIC = 0x42535A46;  // "FZSB" as its first four bytes
-inline constexpr std::uint32_t VERSION = 4;
-inline constexpr std::size_t SIZE = 14912;  // the whole board, in bytes
+inline constexpr std::uint32_t VERSION = 5;
+inline constexpr std::size_t SIZE = 14976;  // the whole board, in bytes
 
 // Where the game is. Set by the game; the launcher reads it to judge a heartbeat that stands.
 enum class Phase : std::uint32_t
@@ -217,6 +217,24 @@ struct Mailbox
   std::array<std::uint8_t, 128> notice_text{};
 };
 
+// The local player's controller as the game reads it (PADStatus of port 1, through the SDK's PADClamp), for the
+// launcher's Inputs window: written each game frame it changed while the player drives a seat of their own (a race or a
+// practice, from the course intro); Held 0 once it is not (a menu, a replay, a watched race: their records hold actions
+// after the player's bindings, no pad). Picture only: nothing of the race reads it. A launcher that shows no window
+// reads nothing.
+struct LocalPad
+{
+  std::uint32_t serial = 0;  // written so far (0: none yet)
+  std::uint32_t held = 0;  // 1: the numbers below are the player's pad now; 0: no pad to show
+  std::uint32_t buttons = 0;
+  std::int32_t stick_x = 0;  // the stick, -72 to 72 after the clamp (right, up positive)
+  std::int32_t stick_y = 0;
+  std::int32_t c_stick_x = 0;  // the C-stick, -59 to 59 after the clamp
+  std::int32_t c_stick_y = 0;
+  std::uint32_t l = 0;  // the analog triggers, 0 to 150 after the clamp
+  std::uint32_t r = 0;
+};
+
 // Where each block and each plain word is, from the board's first byte.
 namespace at
 {
@@ -228,6 +246,7 @@ inline constexpr std::size_t MODE_HEAD = 1792;  // 8824 bytes, seqlock
 inline constexpr std::size_t MODE_VALUES = 10624;  // 1968 bytes, seqlock
 inline constexpr std::size_t EVENTS = 12608;  // 2056 bytes, ring
 inline constexpr std::size_t MAILBOX = 14720;  // 144 bytes, seqlock
+inline constexpr std::size_t LOCAL_PAD = 14912;  // 40 bytes, seqlock
 inline constexpr std::size_t HEADER_MAGIC = 0;
 inline constexpr std::size_t HEADER_VERSION = 4;
 inline constexpr std::size_t HEADER_SIZE = 8;
@@ -682,6 +701,53 @@ public:
     return false;
   }
 
+  // LocalPad (game writes): as one group. The writer alone calls Write.
+  void WriteLocalPad(const LocalPad& v)
+  {
+    std::atomic_ref<std::uint32_t> seq = Ref<std::uint32_t>(at::LOCAL_PAD);
+    const std::uint32_t s = seq.load(std::memory_order_relaxed) & ~1u;
+    seq.store(s + 1, std::memory_order_relaxed);
+    std::atomic_thread_fence(std::memory_order_release);
+    Store<std::uint32_t>(at::LOCAL_PAD + 4, v.serial, std::memory_order_relaxed);
+    Store<std::uint32_t>(at::LOCAL_PAD + 8, v.held, std::memory_order_relaxed);
+    Store<std::uint32_t>(at::LOCAL_PAD + 12, v.buttons, std::memory_order_relaxed);
+    Store<std::int32_t>(at::LOCAL_PAD + 16, v.stick_x, std::memory_order_relaxed);
+    Store<std::int32_t>(at::LOCAL_PAD + 20, v.stick_y, std::memory_order_relaxed);
+    Store<std::int32_t>(at::LOCAL_PAD + 24, v.c_stick_x, std::memory_order_relaxed);
+    Store<std::int32_t>(at::LOCAL_PAD + 28, v.c_stick_y, std::memory_order_relaxed);
+    Store<std::uint32_t>(at::LOCAL_PAD + 32, v.l, std::memory_order_relaxed);
+    Store<std::uint32_t>(at::LOCAL_PAD + 36, v.r, std::memory_order_relaxed);
+    seq.store(s + 2, std::memory_order_release);
+  }
+  // False when every try met the writer at work (or the board was never written: Seq 0 reads as written).
+  bool ReadLocalPad(LocalPad* out, int tries = 64) const
+  {
+    const std::atomic_ref<std::uint32_t> seq = Ref<std::uint32_t>(at::LOCAL_PAD);
+    for (int t = 0; t < tries; ++t)
+    {
+      const std::uint32_t s = seq.load(std::memory_order_acquire);
+      if (s & 1)
+        continue;
+      LocalPad v;
+      v.serial = Load<std::uint32_t>(at::LOCAL_PAD + 4, std::memory_order_relaxed);
+      v.held = Load<std::uint32_t>(at::LOCAL_PAD + 8, std::memory_order_relaxed);
+      v.buttons = Load<std::uint32_t>(at::LOCAL_PAD + 12, std::memory_order_relaxed);
+      v.stick_x = Load<std::int32_t>(at::LOCAL_PAD + 16, std::memory_order_relaxed);
+      v.stick_y = Load<std::int32_t>(at::LOCAL_PAD + 20, std::memory_order_relaxed);
+      v.c_stick_x = Load<std::int32_t>(at::LOCAL_PAD + 24, std::memory_order_relaxed);
+      v.c_stick_y = Load<std::int32_t>(at::LOCAL_PAD + 28, std::memory_order_relaxed);
+      v.l = Load<std::uint32_t>(at::LOCAL_PAD + 32, std::memory_order_relaxed);
+      v.r = Load<std::uint32_t>(at::LOCAL_PAD + 36, std::memory_order_relaxed);
+      std::atomic_thread_fence(std::memory_order_acquire);
+      if (seq.load(std::memory_order_relaxed) == s)
+      {
+        *out = v;
+        return true;
+      }
+    }
+    return false;
+  }
+
 private:
   template <typename T>
   std::atomic_ref<T> Ref(std::size_t at) const
@@ -823,5 +889,6 @@ static_assert(at::MODE_HEAD % 8 == 0);
 static_assert(at::MODE_VALUES % 8 == 0);
 static_assert(at::EVENTS % 8 == 0);
 static_assert(at::MAILBOX % 8 == 0);
+static_assert(at::LOCAL_PAD % 8 == 0);
 static_assert(sizeof(float) == 4 && 4 == 4);
 }  // namespace fzgx::board

@@ -11,8 +11,8 @@ public static class BoardLayout
 {
     /// <summary>"FZSB": the board's first four bytes.</summary>
     public const uint Magic = 0x42535A46;
-    public const uint Version = 4;
-    public const int Size = 14912;
+    public const uint Version = 5;
+    public const int Size = 14976;
     public const int Header = 0;
     public const int HeaderMagic = 0;
     public const int HeaderVersion = 4;
@@ -35,6 +35,7 @@ public static class BoardLayout
     public const int EventsSlot = 32;
     public const int EventsFirst = 12616;
     public const int Mailbox = 14720;
+    public const int LocalPad = 14912;
 }
 
 /// <summary> Where the game is. Set by the game; the launcher reads it to judge a heartbeat that stands.</summary>
@@ -303,6 +304,24 @@ public sealed class BoardMailbox
     public uint NoticeSerial;
     public uint NoticeLength;
     public byte[] NoticeText = new byte[128];
+}
+
+/// <summary> The local player's controller as the game reads it (PADStatus of port 1, through the SDK's PADClamp), for
+/// the launcher's Inputs window: written each game frame it changed while the player drives a seat of their own (a race
+/// or a practice, from the course intro); Held 0 once it is not (a menu, a replay, a watched race: their records hold
+/// actions after the player's bindings, no pad). Picture only: nothing of the race reads it. A launcher that shows no
+/// window reads nothing.</summary>
+public sealed class BoardLocalPad
+{
+    public uint Serial;
+    public uint Held;
+    public uint Buttons;
+    public int StickX;
+    public int StickY;
+    public int CStickX;
+    public int CStickY;
+    public uint L;
+    public uint R;
 }
 
 /// <summary>A ring's event: read, not written yet (or being written), or overwritten by a newer one.</summary>
@@ -730,6 +749,55 @@ public readonly unsafe struct BoardView
             {
                 BinaryPrimitives.WriteUInt32LittleEndian(into.NoticeText.AsSpan(i * 4), Volatile.Read(ref *(uint*)(_at + BoardLayout.Mailbox + 16 + i * 4)));
             }
+            Interlocked.MemoryBarrier();
+            if (Volatile.Read(ref seq) == s)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /// <summary>LocalPad (game writes), as one group. Its writer alone calls this.</summary>
+    public void WriteLocalPad(BoardLocalPad v)
+    {
+        ref var seq = ref *(uint*)(_at + BoardLayout.LocalPad);
+        var s = Volatile.Read(ref seq) & ~1u;
+        Volatile.Write(ref seq, s + 1);
+        Interlocked.MemoryBarrier();
+        Volatile.Write(ref *(uint*)(_at + BoardLayout.LocalPad + 4), v.Serial);
+        Volatile.Write(ref *(uint*)(_at + BoardLayout.LocalPad + 8), v.Held);
+        Volatile.Write(ref *(uint*)(_at + BoardLayout.LocalPad + 12), v.Buttons);
+        Volatile.Write(ref *(int*)(_at + BoardLayout.LocalPad + 16), v.StickX);
+        Volatile.Write(ref *(int*)(_at + BoardLayout.LocalPad + 20), v.StickY);
+        Volatile.Write(ref *(int*)(_at + BoardLayout.LocalPad + 24), v.CStickX);
+        Volatile.Write(ref *(int*)(_at + BoardLayout.LocalPad + 28), v.CStickY);
+        Volatile.Write(ref *(uint*)(_at + BoardLayout.LocalPad + 32), v.L);
+        Volatile.Write(ref *(uint*)(_at + BoardLayout.LocalPad + 36), v.R);
+        Volatile.Write(ref seq, s + 2);
+    }
+
+    /// <summary>Reads LocalPad into <paramref name="into"/>; false when every try met the writer at work (then <paramref name="into"/> holds nothing to use).</summary>
+    public bool TryReadLocalPad(BoardLocalPad into, int tries = 64)
+    {
+        ref var seq = ref *(uint*)(_at + BoardLayout.LocalPad);
+        for (var t = 0; t < tries; t++)
+        {
+            var s = Volatile.Read(ref seq);
+            if ((s & 1) != 0)
+            {
+                Thread.SpinWait(4);
+                continue;
+            }
+            into.Serial = Volatile.Read(ref *(uint*)(_at + BoardLayout.LocalPad + 4));
+            into.Held = Volatile.Read(ref *(uint*)(_at + BoardLayout.LocalPad + 8));
+            into.Buttons = Volatile.Read(ref *(uint*)(_at + BoardLayout.LocalPad + 12));
+            into.StickX = Volatile.Read(ref *(int*)(_at + BoardLayout.LocalPad + 16));
+            into.StickY = Volatile.Read(ref *(int*)(_at + BoardLayout.LocalPad + 20));
+            into.CStickX = Volatile.Read(ref *(int*)(_at + BoardLayout.LocalPad + 24));
+            into.CStickY = Volatile.Read(ref *(int*)(_at + BoardLayout.LocalPad + 28));
+            into.L = Volatile.Read(ref *(uint*)(_at + BoardLayout.LocalPad + 32));
+            into.R = Volatile.Read(ref *(uint*)(_at + BoardLayout.LocalPad + 36));
             Interlocked.MemoryBarrier();
             if (Volatile.Read(ref seq) == s)
             {

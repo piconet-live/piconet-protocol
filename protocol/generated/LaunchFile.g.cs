@@ -36,7 +36,7 @@ public static class LaunchFormat
 }
 
 /// <summary>The launch file's part File: the launch file: every setting of one start of the game.
-/// The launcher writes "about", "bundle", "widescreen", "trueWidescreen", "lanes", "controllerSetup", "match", "replay", "windowName", "windowNamePicture", "showFrameRate", "showInputs", "renderer", "auroraSize", "auroraEdges", "auroraTextures", "auroraColourblind", "auroraHighRefresh", "auroraRayTracing", "rumble", "present", "verticalSync", "fullScreen", "taskbar", "board", "overlay", "debug".</summary>
+/// The launcher writes "about", "bundle", "widescreen", "trueWidescreen", "lanes", "controllerSetup", "match", "replay", "windowName", "windowNamePicture", "showFrameRate", "renderer", "auroraSize", "auroraEdges", "auroraTextures", "auroraColourblind", "auroraHighRefresh", "auroraRayTracing", "rumble", "present", "verticalSync", "fullScreen", "taskbar", "board", "overlay", "debug".</summary>
 public sealed record LaunchFile(
     string About,
     string? Bundle = null,
@@ -48,7 +48,6 @@ public sealed record LaunchFile(
     string? WindowName = null,
     LaunchNamePicture? WindowNamePicture = null,
     bool? ShowFrameRate = null,
-    bool ShowInputs = false,
     string? Renderer = null,
     string? AuroraSize = null,
     int AuroraEdges = 0,
@@ -106,10 +105,6 @@ public sealed record LaunchFile(
         if (ShowFrameRate is { } showFrameRate)
         {
             o["showFrameRate"] = showFrameRate;
-        }
-        if (ShowInputs)
-        {
-            o["showInputs"] = true;
         }
         if (Renderer is { } renderer)
         {

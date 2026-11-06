@@ -26,7 +26,7 @@
 [board]
 name = "status board"
 magic = "FZSB"          # the file's first four bytes
-version = 4             # a new layout is a new version: a game and a launcher of different versions refuse each other
+version = 5             # a new layout is a new version: a game and a launcher of different versions refuse each other
 endian = "little"
 block_align = 64
 
@@ -318,4 +318,25 @@ fields = [
     { name = "NoticeSerial", type = "u32" },
     { name = "NoticeLength", type = "u32" },
     { name = "NoticeText", type = "bytes", size = 128 },
+]
+
+[[block]]
+name = "LocalPad"
+kind = "seqlock"
+writer = "game"
+doc = """The local player's controller as the game reads it (PADStatus of port 1, through the SDK's PADClamp), for the \
+launcher's Inputs window: written each game frame it changed while the player drives a seat of their own (a race or \
+a practice, from the course intro); Held 0 once it is not (a menu, a replay, a watched race: their records hold \
+actions after the player's bindings, no pad). Picture only: nothing of the race reads it. A launcher that shows no \
+window reads nothing."""
+fields = [
+    { name = "Serial", type = "u32", doc = "written so far (0: none yet)" },
+    { name = "Held", type = "u32", doc = "1: the numbers below are the player's pad now; 0: no pad to show" },
+    { name = "Buttons", type = "u32", doc = "PADStatus's button bits (Left 0x1, Right 0x2, Down 0x4, Up 0x8, Z 0x10, R 0x20, L 0x40, A 0x100, B 0x200, X 0x400, Y 0x800, Start 0x1000)" },
+    { name = "StickX", type = "i32", doc = "the stick, -72 to 72 after the clamp (right, up positive)" },
+    { name = "StickY", type = "i32" },
+    { name = "CStickX", type = "i32", doc = "the C-stick, -59 to 59 after the clamp" },
+    { name = "CStickY", type = "i32" },
+    { name = "L", type = "u32", doc = "the analog triggers, 0 to 150 after the clamp" },
+    { name = "R", type = "u32" },
 ]

@@ -190,7 +190,6 @@ turns it into UTF-8 (a letter the code page does not have is lost before the run
 | `windowName` | text, at most 64 bytes: the name in the game window's strip (the launcher's own; the runner has none compiled in) | the strip shows no name |
 | `windowNamePicture` | `{"width": 1-512, "height": 1-64, "rgba": TEXT}`: the name as a picture, drawn in place of its text: the pixels row by row from the top, four bytes each (red, green, blue, opacity), as base64. The launcher gives its title bar's lettering, which it makes from the player's disc | the name's text |
 | `showFrameRate` | `true` or `false`: the game window's strip shows the frame rate (the player's setting in the launcher). Always `true` in a test: a test build's launcher (a review or try copy) and a launcher started with test settings write it whatever the setting says (`LauncherSettings.FrameRateShown`), and every file `launch-file.py` writes has it unless the named file or a `--set` says otherwise. The figure is the emulator's count of pictures presented (`Core::Callback_FramePresented` on `after_present_event`, `PerformanceMetrics::CountFrame`), so pictures drawn between steps count too | `false` |
-| `showInputs` | `true` or `false`: a controller drawn in the picture's bottom right shows the inputs of the racer in view (the player's setting in the launcher). Picture only: it reads, it writes nothing a step uses. Written only when `true` | `false` |
 | `renderer` | `"dolphin"` or `"aurora"`: who draws the picture. `"aurora"`: Aurora draws into the game's window and the emulator's video is off; the launcher writes it in every start with a window since 0.6.0 (the emulator's pictures are no player's choice any more). Left out: the emulator, as tests and files written by hand have it. Nothing of the race changes. |
 | `auroraSize` | With `renderer` `"aurora"`: `auto` (left out too) and `native`: the window's own pixels, following its size, the picture kept in its shape; `2`, `3`, `4`: that many of the picture's lines for each of the game's 448. |
 | `auroraEdges` | With `renderer` `"aurora"`: samples for each pixel, 1 to 4, in practice 1 (left out) or 4, the only counts every graphics card has. |
@@ -978,7 +977,7 @@ has given its seat up and loses the race (a wait, a race that ends under it, `st
 The channel between the launcher and one running game (a file both map, never a localhost
 socket or a pipe). Defined once in `protocol/board.toml`, generated into the launcher's `BoardView`
 (`protocol/generated/StatusBoard.g.cs`, compiled into Launcher.Core) and the core's `View`
-(`protocol/generated/status_board.g.h`); `protocol/README.md` says how it is checked. **Version 4, 14,912 bytes** (version 1, 4,096 bytes, had no mode blocks; 2 had them at 7,168 bytes; 3 grew them to this size for the board's lines and their words; 4 has ModeValues' `Fault`),
+(`protocol/generated/status_board.g.h`); `protocol/README.md` says how it is checked. **Version 5, 14,976 bytes** (version 1, 4,096 bytes, had no mode blocks; 2 had them at 7,168 bytes; 3 grew them to 14,912 for the board's lines and their words; 4 has ModeValues' `Fault`; 5 adds LocalPad),
 little-endian, every word naturally aligned, every block on a 64-byte line:
 
 | Block | At | Kind, writer | Holds |
@@ -991,6 +990,7 @@ little-endian, every word naturally aligned, every block on a 64-byte line:
 | ModeValues | 10624 | seqlock; game | the `board` lines' values every picture drawn, of a race, a practice, a watched race and a replay alike, from the mode's block, and `Fault`, what ended the race when the mode broke: `Serial`, `Frame` (the step of the picture), `Globals[Column]`, `Seats[seat * 8 + Column]`, `Teams[team * 8 + Column]`, each a word read as its line's type. Not written for a mode with no line. Picture only: nothing a step reads |
 | Events | 12608 | ring of 64 records of 32 bytes; game (several threads) | `Head`, then events: Phase, Stop, Stands and Moves (the runner's freeze reports), Notice (taken), Desync, Camera (the local racer's chase camera view, 1 to 3, said at its first reading in a race and at each change while the racer races: the launcher keeps the last for the next race's `match.camera`); overwrite-oldest, the reader counts what it lost |
 | Mailbox | 14720 | seqlock; launcher | `StopSerial` (one more: stop gracefully), `NoticeSerial`, `NoticeLength`, `NoticeText` (128 bytes UTF-8) |
+| LocalPad | 14912 | seqlock; game | the local player's controller as the game reads it (PADStatus of port 1 after the SDK's PADClamp), for the launcher's Inputs window ("Show inputs"): `Serial`, `Held` (1: the player drives a seat of their own, a race or a practice from its course intro; 0: no pad, a menu, a replay or a watched race, whose records hold actions after the bindings), `Buttons` (PADStatus's bits), `StickX`, `StickY` (-72 to 72), `CStickX`, `CStickY` (-59 to 59), `L`, `R` (0 to 150). Written at the frame tick when it changed, in every start with a board. Picture only: nothing a step reads |
 
 A **seqlock** group starts with a sequence word: the writer makes it odd, writes, makes it even; a reader that saw it
 odd or changed reads again (as iRacing's and Assetto Corsa's shared memory). Neither side ever waits on the other.
@@ -999,7 +999,7 @@ odd or changed reads again (as iRacing's and Assetto Corsa's shared memory). Nei
 launcher that ended are removed when the next is made) and names it in the launch file (`board`). The core maps it at
 Init (`port/core/src/board.cpp`, `board_map.cpp`) and takes it: no magic, nothing written; another version, or too
 small a file: its own version, size and process id written, then nothing else, and the log says `fzgx: board:
-FILE refused: ...`; else `fzgx: board: taken (FILE, version 4)`. A launcher whose game refused goes without (no live
+FILE refused: ...`; else `fzgx: board: taken (FILE, version 5)`. A launcher whose game refused goes without (no live
 race, no freeze detection) and says so in its log; the exit code and the log's stop lines stay the floor.
 
 **What the launcher does with it** (`net/src/Launcher.Core/Board/`): looks every 15 ms; passes each new snapshot on

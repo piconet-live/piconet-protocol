@@ -9,7 +9,6 @@
     "rgba": "/wAA/wECA4A="
   },
   "showFrameRate": true,
-  "showInputs": true,
   "renderer": "aurora",
   "auroraSize": "native",
   "auroraEdges": 4,
