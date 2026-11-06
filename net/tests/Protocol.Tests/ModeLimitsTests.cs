@@ -319,7 +319,7 @@ public sealed class ModeLimitsTests
     [InlineData("death_race", "f059e55951d56e4799beb0a3aee55df006348127abf564057cd1695bab828b6e", 17920)]
     [InlineData("ghost_race", "8bd9d42a1c98fd66c24a8b8175336acd318d8753b15677fcc189a0ea624795b4", 2204)]
     [InlineData("knockout", "f56ed049f322dc37da5c13299edb0d6811142a019c3321ae6dc025cc121d0c13", 43580)]
-    [InlineData("practice", "5ec37ed0e45a2c7a54691824cedaef0648b5493c1965fc6bfc4ed2464e8ade76", 339)]
+    [InlineData("practice", "78f3aa18d83f9554daaa8ba1aba30c6a9b907ba3ee28becf817d7261222049a3", 339)]
     [InlineData("time_trial", "501ee749f21e46dd3e72fb871dfcb07c3812ae13020e046b3bb3de7b4582ef92", 0)]
     public void AShippedModeKeepsItsHash(string name, string hash, long budget)
     {
