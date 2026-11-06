@@ -37,6 +37,7 @@
     "rgba": "/wAA/wECA4A="
   },
   "showFrameRate": false,
+  "renderer": "aurora",
   "present": "copy",
   "fullScreen": "borderless",
   "refreshRate": "120",

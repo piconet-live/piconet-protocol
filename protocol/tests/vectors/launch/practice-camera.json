@@ -31,5 +31,6 @@
     "record": "practice.fzrp",
     "camera": 2
   },
-  "showFrameRate": false
+  "showFrameRate": false,
+  "renderer": "aurora"
 }
