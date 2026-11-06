@@ -391,13 +391,14 @@ public sealed class QuickPlayRotationTests : IDisposable
     public void TheOfficialLobbyModesComeInTheHostsOrder()
     {
         var modes = Official().LobbyModes;
-        Assert.Equal(["Quick Play", "Knockout", "Ghost race"], modes.Select(m => m.Package.Name));
-        Assert.Equal(["GX Unleashed", "GX Unleashed", "GX Unleashed"], modes.Select(m => m.Terms.Pack));
+        Assert.Equal(["Quick Play", "Knockout", "Ghost race", "Death Race"], modes.Select(m => m.Package.Name));
+        Assert.Equal(["GX Unleashed", "GX Unleashed", "GX Unleashed", "GX Unleashed"], modes.Select(m => m.Terms.Pack));
         Assert.Equal(Official().Normal.Hash, modes[0].Hash);   // (the rotation's own file)
         Assert.All(modes, m => Assert.False(m.Terms.Solo));
-        var ghost = modes[^1].Named();
-        Assert.Equal(modes[^1].Hash, ghost.Hash);
+        var ghost = modes[2].Named();
+        Assert.Equal(modes[2].Hash, ghost.Hash);
         Assert.Equal(ghost.Params!.Select(p => p.Default), ghost.Values!);
+        Assert.Equal(14, modes[3].Terms.Course);              // Death Race pins Big Blue: Drift Highway
     }
 
     /// <summary>Quick Play's normal mode declares what a host may change, and on its defaults it is Quick Play's race of

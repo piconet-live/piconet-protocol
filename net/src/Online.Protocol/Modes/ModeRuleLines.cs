@@ -48,6 +48,7 @@ public static class ModeRuleLines
         ModeSetup.SpinAttacks => a[0] == 0 ? "No spin attacks" : null,
         ModeSetup.SideAttacks => a[0] == 0 ? "No side attacks" : null,
         ModeSetup.SpinImmunity => a[0] != 0 ? "Spin immunity" : null,
+        ModeSetup.DamageCap => a[0] == 0 ? "No damage cap" : null,
         ModeSetup.TimeBonus => $"Time bonus {Say(a[0])} seconds",
         ModeSetup.PointsTable => "Points by place",
         ModeSetup.TimeGaps => "Time gaps to other racers",

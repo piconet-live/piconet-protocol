@@ -8,6 +8,7 @@ wall_bounce 1000%;
 spin_attacks off;
 side_attacks off;
 spin_immunity on;
+damage_cap off;
 clock_limit 2min;
 time_bonus 10;
 points_table [100, 50, 25];
