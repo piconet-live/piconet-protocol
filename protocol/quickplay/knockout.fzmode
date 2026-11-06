@@ -40,14 +40,9 @@ rule "Cut the last racer" {
   while race.started and race.steps >= next_cut and count(seats where racing and seat.cut_order == 0) > keep;
   do {
     seat v = last(seats where racing and seat.cut_order == 0 by standing);
-    if (v.is_human and count(seats where seat.is_human) == 1) {
-      // the only player's race ends here as a finish does: FINISH! and the place they earned, the CPU takes the machine
-      v.place = count(seats where racing and seat.cut_order == 0);
-      finish_seat v;
-      hold_until = race.steps + 8s;
-    } else {
-      break_down v;            // out of energy, as a last hit: it tumbles, comes to rest or explodes, and is out
-    }
+    // every racer the same, a lone player too (owner 2026-11-05): out of energy, as a last hit: it tumbles, comes to
+    // rest or explodes, and is out; its place comes with the results
+    break_down v;
     cuts += 1;
     v.cut_order = cuts;
     next_cut = race.steps + interval;
