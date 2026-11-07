@@ -276,7 +276,7 @@ public sealed class ModeCompilerTests
         var text = File.ReadAllText(RepositoryFolder.Protocol("protocol", "quickplay", "ghost_race.fzmode"));
         Assert.DoesNotContain("preset ", text, StringComparison.Ordinal);
         var mode = ModeCompiler.Compile(text).Mode!;
-        Assert.Equal(3, mode.Params[0].Default);
+        Assert.Equal(("By course", 100), (mode.Params[0].Or, mode.Params[0].Default));   // Quick Play's laps by course
         Assert.Equal(("Show", "Live"), (mode.Params[1].Choices[mode.Params[1].Default], mode.Params[2].Choices[mode.Params[2].Default]));
     }
 

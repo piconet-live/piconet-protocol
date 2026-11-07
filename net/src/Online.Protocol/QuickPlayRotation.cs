@@ -57,7 +57,8 @@ public sealed record QuickPlayOption(int Course, RotationMode Mode, bool Spicy)
 /// <summary>
 /// Quick Play's rotation (piconet-docs research/game-modes/ design 6): the coordinator's list of mode files, its
 /// <c>quickplay.toml</c>, and those files compiled. A vote card is a (course, mode) pair: the vote shows
-/// <see cref="Cards"/> course cards, exactly <see cref="SpicyCards"/> of them spicy, and "Random course", which lands
+/// <see cref="Cards"/> course cards, <see cref="SpicyCards"/> of them spicy (each another spicy option while there
+/// are more), and "Random course", which lands
 /// on a spicy option with the chance <see cref="RandomSpicyChance"/>. Which courses a mode races on is its own file's
 /// <c>courses</c> word (left out, or <c>all</c>: the pool); the rotation says only which modes, their weights and the
 /// card counts. Quick Play never has leaderboards: a file that
@@ -202,15 +203,16 @@ public sealed class QuickPlayRotation
     /// <summary>A vote's options: <see cref="Cards"/> course cards from the pool, <see cref="SpicyCards"/> of them
     /// spicy (each a spicy option drawn by weight, on one course drawn from those of its list the pool holds; a normal
     /// card when none is held), drawn first, and the normal cards from what is left, at places drawn among the cards,
-    /// every course once; then "Random course". <paramref name="draw"/>(n)
-    /// draws a whole number from 0 to n - 1.</summary>
+    /// every course once; then "Random course". Each spicy card is another option while one not yet on a card has a
+    /// course left (so two spicy cards of a rotation of two are both of them); only past that may an option come
+    /// again, on another course. <paramref name="draw"/>(n) draws a whole number from 0 to n - 1.</summary>
     public IReadOnlyList<QuickPlayOption> Vote(IReadOnlyList<int> pool, Func<int, int> draw)
     {
         ArgumentNullException.ThrowIfNull(pool);
         ArgumentNullException.ThrowIfNull(draw);
         var used = new HashSet<int>();
         var spicy = new List<QuickPlayOption>();
-        for (var i = 0; i < SpicyCards && SpicyOption(pool, draw, used) is { } option; i++)
+        for (var i = 0; i < SpicyCards && SpicyOption(pool, draw, used, spicy) is { } option; i++)
         {
             spicy.Add(option);
             used.Add(option.Course);
@@ -232,7 +234,7 @@ public sealed class QuickPlayRotation
     {
         ArgumentNullException.ThrowIfNull(pool);
         ArgumentNullException.ThrowIfNull(draw);
-        if (Spicy.Count > 0 && draw(ChanceSteps) < RandomSpicyChance * ChanceSteps && SpicyOption(pool, draw, []) is { } spicy)
+        if (Spicy.Count > 0 && draw(ChanceSteps) < RandomSpicyChance * ChanceSteps && SpicyOption(pool, draw, [], []) is { } spicy)
         {
             return spicy;
         }
@@ -241,7 +243,11 @@ public sealed class QuickPlayRotation
         return new QuickPlayOption(courses[draw(courses.Count)], Normal, false);
     }
 
-    private QuickPlayOption? SpicyOption(IReadOnlyList<int> pool, Func<int, int> draw, HashSet<int> used)
+    /// <summary>A spicy option by weight on one of its courses not <paramref name="used"/>: among the options not yet
+    /// on one of the vote's <paramref name="cards"/> while any of them has a course left, else among them all. Null:
+    /// no option has a course left.</summary>
+    private QuickPlayOption? SpicyOption(IReadOnlyList<int> pool, Func<int, int> draw, HashSet<int> used,
+        IReadOnlyList<QuickPlayOption> cards)
     {
         var open = Spicy.Select(s => (Option: s, Courses: Within(s.Mode, pool).Where(x => !used.Contains(x)).ToList()))
             .Where(s => s.Courses.Count > 0).ToList();
@@ -249,6 +255,8 @@ public sealed class QuickPlayRotation
         {
             return null;
         }
+        var fresh = open.Where(s => !cards.Any(c => c.Mode.File == s.Option.Mode.File)).ToList();
+        open = fresh.Count > 0 ? fresh : open;
         var ticket = draw(open.Sum(s => s.Option.Weight));
         var chosen = open.First(s => (ticket -= s.Option.Weight) < 0);
         return new QuickPlayOption(chosen.Courses[draw(chosen.Courses.Count)], chosen.Option.Mode, true);

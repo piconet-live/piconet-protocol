@@ -1,14 +1,16 @@
 // A ghost race: a time trial raced together. Everyone starts on one spot and nobody touches anybody. Until the race starts
 // you see only your own machine; from GO the others are ghosts, as Time Attack draws its ghosts. No place and no faces:
 // the comparison is Time Attack's own live gap at the right edge, and the host may swap it for the game's gap to the
-// leader at each lap line. The results are the game's own, by time.
+// leader at each lap line. The results are the game's own, by time. A spicy Quick Play option on any course of the
+// pool, with Quick Play's laps by course.
 
 mode "Ghost race" {
   api 1;
+  badge "GHOST RACE";
   about "Race the same lap as everyone, through each other, for the best time.";
 }
 
-param lap_count "Laps" number 1..9 default 3;
+param lap_count "Laps" number 1..99 or "By course" default "By course";   // a number: every course
 param map_dots "Ghosts on the map" choice ["Show", "Hide"] default "Show";   // Time Attack marks its ghosts on the map
 param gap_kind "Gap" choice ["Live", "At lap lines", "Both", "None"] default "Live";
 
@@ -18,7 +20,20 @@ mine_regen on;
 machine_setting 100;
 start_gap 0;      // everyone on slot 0's spot
 contact off;
-laps lap_count;
+// Quick Play's laps by course: the same table as competitive.fzmode's (keep the two alike; QuickPlayRotationTests
+// checks they give the same laps on every course). Not a library macro: a mode file's laps change with a put to the
+// mode store, a macro's only with a new build.
+laps by course {
+  "Mute City: Sonic Oval": 8;
+  "Aeropolis: Screw Drive": 6;
+  "Big Blue: Drift Highway": 6;
+  "Casino Palace: Split Oval": 6;
+  "Mute City: Twist Road": 6;
+  "Green Plant: Mobius Ring": 4;
+  "Outer Space: Meteor Stream": 4;
+  else: 3;
+}
+laps lap_count;   // "By course": the table above
 
 rule "Alone on the grid, no standings" {
   event game_start;
