@@ -400,7 +400,7 @@ public sealed class ModeWordFormsTests
     }
 
     /// <summary>The library's lives (design 9.6): every restore the game begins costs a life (a hit, the energy, a fall, a
-    /// breakdown alike, as Death Race's), the respawns go off with one left, and the count is on the spare-machine icon.
+    /// breakdown alike, as Death Race's), the respawns go off with one left, and the lives after this one are on the spare-machine icon.
     /// Its own file needs no show_number or restoring rule.</summary>
     [Fact]
     public void LivesCountsEveryRestoreAndShowsTheCount()
