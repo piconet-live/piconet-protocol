@@ -150,7 +150,7 @@ public sealed class ModeBoardTests
         Assert.True(overdrive.Succeeded, string.Join(" ", overdrive.Errors));
         Assert.Empty(overdrive.Warnings);
         Assert.Equal(["rise"], overdrive.Mode!.Params.Select(p => p.Name));
-        Assert.Equal((5, 50, 10), (overdrive.Mode!.Params[0].Least, overdrive.Mode!.Params[0].Most, overdrive.Mode!.Params[0].Default));
+        Assert.Equal((5, 50, 25), (overdrive.Mode!.Params[0].Least, overdrive.Mode!.Params[0].Most, overdrive.Mode!.Params[0].Default));
         Assert.Equal(["Mines respawn 200 ms", "Pedals locked", "No boost", "Rolling start at 1000 km/h", "Waits for every racer", "Stats", "Machine setting 100"],
             ModeRuleLines.Of(overdrive.Mode!));
         Assert.Contains(overdrive.Mode!.Setups, s => s.Id == ModeSetup.ResultsHeading);

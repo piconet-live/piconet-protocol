@@ -4,8 +4,8 @@
 //
 // Lives: any wreck (a hit, the energy, a fall) costs one. While a seat has more than one life the game restores it (its
 // own restore, as with the lobby's Restore); on its last life nothing restores it, so the next wreck is out. The lives
-// remaining after this one (the spare machines: 2, 1, 0) show beside the Grand Prix spare-machine icon; the points and
-// the board count this life too.
+// remaining after this one (the spare machines: 2, 1, 0) show beside the Grand Prix spare-machine icon and in the
+// board's Lives; the points count this life too.
 //
 // Scoring, at the defaults (each one a parameter):
 //   KO        3 for every KO the game credits (its own skull count, a restored victim's too); a fall, a wall or a mine
@@ -67,6 +67,7 @@ seat int score;                // the points awarded so far (seat.points read in
 seat int kos_paid;             // the skull count already paid for
 seat int lived;                // steps from GO to out; a survivor: the race's length
 seat int lives_left;           // this life included; 0 once out
+seat int lives_shown;          // the lives after this one (2, 1, 0; 0 once out): the counter's and the board's number
 seat int rank;
 
 sub pay(seat s, int n) {
@@ -91,7 +92,8 @@ rule "Lives" {
   do {
     for each seat {
       seat.lives_left = lives;
-      show_number seat, lives - 1;
+      seat.lives_shown = lives - 1;
+      show_number seat, seat.lives_shown;
       if (lives > 1) { respawns seat; }
     }
   }
@@ -111,6 +113,7 @@ rule "A life lost" {
   when seat.restoring and not over;
   do {
     seat.lives_left -= 1;
+    seat.lives_shown = max(0, seat.lives_left - 1);
     if (seat.lives_left <= 1) { respawns seat off; }
   }
 }
@@ -121,6 +124,7 @@ rule "Out" {
   do {
     s.lived = race.steps;
     s.lives_left = 0;
+    s.lives_shown = 0;
   }
 }
 
@@ -128,7 +132,7 @@ rule "Lives shown" {
   // beside the spare-machine icon, the watched seat's lives after this one (2, 1, 0); hidden once it is out
   event each seat;
   do {
-    if (seat.racing) { show_number seat, max(0, seat.lives_left - 1); } else { show_number seat, -1; }
+    if (seat.racing) { show_number seat, seat.lives_shown; } else { show_number seat, -1; }
   }
 }
 
@@ -189,4 +193,4 @@ rule "End" {
 
 board seat score "Points";
 board seat kos_paid "KOs";
-board seat lives_left "Lives";
+board seat lives_shown "Lives";

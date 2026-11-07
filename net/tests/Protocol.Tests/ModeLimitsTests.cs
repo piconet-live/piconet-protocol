@@ -316,10 +316,10 @@ public sealed class ModeLimitsTests
     /// own change writes its new hash here (<c>ModeCompilerTests</c> holds the vectors' bytes).</summary>
     [Theory]
     [InlineData("competitive", "3a0715e5ffa83ad3dc29ef0a310a9e9a5479075eaceb94bfefd0329323a3cbd5", 1807)]
-    [InlineData("death_race", "a8dffe5eb441ded0a6cca37383656f01232db570e77d7981c389909e9d1c4e42", 18557)]
+    [InlineData("death_race", "ea86bfef346c209031d9568fb8fac1f6f2c782c19fd0c6072123bf1ca8d26680", 18887)]
     [InlineData("ghost_race", "a654c6fe97f6a6a68f3e338cf63e619dd2c7640f6d41f0ea0dbc333046398119", 2204)]
     [InlineData("knockout", "f56ed049f322dc37da5c13299edb0d6811142a019c3321ae6dc025cc121d0c13", 43580)]
-    [InlineData("overdrive", "80131cd50e23677657c172ff1f2d4f040707de6a851b86c8b7af53b18603b689", 7776)]
+    [InlineData("overdrive", "8d0bf615a5eabcac3342e987604cc1708c6f88647ced3a2a95aa730bb65c326a", 7776)]
     [InlineData("practice", "78f3aa18d83f9554daaa8ba1aba30c6a9b907ba3ee28becf817d7261222049a3", 339)]
     [InlineData("time_trial", "501ee749f21e46dd3e72fb871dfcb07c3812ae13020e046b3bb3de7b4582ef92", 0)]
     public void AShippedModeKeepsItsHash(string name, string hash, long budget)

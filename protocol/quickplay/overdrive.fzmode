@@ -11,7 +11,7 @@ mode "Overdrive" {
   about "Speed locked and rising. Last one alive wins.";
 }
 
-param rise "Speed added every 10 s" number 5..50 step 5 default 10;
+param rise "Speed added every 10 s" number 5..50 step 5 default 25;
 
 cpus on;
 stats "GX Unleashed";          // Quick Play's pack, mines and machine setting (a word left out is the game's own)
