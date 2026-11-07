@@ -17,7 +17,7 @@ A `.fzmode` file is a UTF-8 text file that sets the rules of a custom lobby's ra
 | Rule | Code that runs at an event | `rule "Label" { event lap(s); when …; do { … } }` |
 | Sub | Named code with arguments, which may give a value | `sub real lead(seat a, seat b) { … }` |
 | Library macro | The standard library's, at the top level; a file cannot declare macros | `lives 3;` `every(30s) { … }` |
-| Board line | A variable shown on the launcher's race page, beside the race; nothing is drawn in the game | `board seat cut_order "Out";` `board seat state "State" ["Racing", "Safe", "Out"];` |
+| Board line | A variable shown on the launcher's race page, beside the race; nothing is drawn in the game. With a list of words, the value picks the word, 0 the first: an empty word shows nothing, a value past the list shows the number. Not for a vec; a real cannot have words | `board seat cut_order "Out";` `board seat state "State" ["Racing", "Safe", "Out"];` |
 | Comment | To the end of the line; or a block, not nested | `// …` `/* … */` |
 
 After the header, parts come in any order. A name is declared above the line that uses it; subs may be called from
@@ -126,7 +126,7 @@ game counts it, 100 a full machine.
 | Written | What it does | Range |
 |---|---|---|
 | `laps n;` `laps unlimited;` | The race's laps. `unlimited` is a race with no finish line: nobody finishes by laps. Left out: 3 | 0 to 99; `unlimited` is 0 |
-| `laps by course { "Mute City: Sonic Oval": 8; else: 3; }` | Laps by the course the race is on; `else` is every course the table leaves out. A row is a number, never a parameter. Not beside `laps` unless one of them has a parameter with a named value | 0 to 99 a row; a cup course a row (the story stages take `else`); `else` 3 if left out |
+| `laps by course { "Mute City: Sonic Oval": 8; else: 3; }` | Laps by the course the race is on; `else` is every course the table leaves out. A row is a number, never a parameter. Not beside `laps` unless one of them has a parameter with a named value. Beside `courses`, a row must name one of its courses | 0 to 99 a row; a cup course a row (the story stages take `else`); `else` 3 if left out |
 | `course "Big Blue: Drift Highway";` | Pins one course: no vote, no course choice in the lobby. Not with `courses`. Quick Play never draws a mode with it | a course of the pool |
 | `courses all;` | Every course of the pool, as leaving it out | |
 | `courses ["Mute City: Sonic Oval", "Story: High-Stakes Jumps"];` | The courses the lobby's vote, random draw or fixed course may use. In Quick Play each card draws one of them | courses of the pool |
