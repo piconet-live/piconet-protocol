@@ -6,6 +6,8 @@ of them spicy (two different spicy options, each on its own course), and Random,
 `QuickPlayRotation` reads the folder and compiles each mode with the one compiler (`ModeCompiler`); the service reads
 it at its start (a file that does not load stops the start), and the launcher's stand-in service races the same.
 
+How to write a mode file of your own, with the official files here annotated: [WRITING-MODES.md](../../WRITING-MODES.md).
+
 | File | What it is |
 |---|---|
 | `quickplay.toml` | The rotation: the card counts, the normal option and the spicy options with their weights. The courses are each mode file's `courses` word (left out: the pool). Also `lobby_modes`: a custom lobby's official modes in the order a host is offered them (Quick Play's normal mode, then the others); the server lists those it can race (`LobbyList.Modes`) |

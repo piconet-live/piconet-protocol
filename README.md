@@ -18,6 +18,8 @@ submodule bump.
 
 No game data is stored here.
 
+To write a game mode of your own (a `.fzmode` file for a custom lobby), read [WRITING-MODES.md](WRITING-MODES.md).
+
 Paths under `port/` named in this repository's comments and pages are piconet-runner's, and `net/src/Launcher.*`
 paths piconet-launcher's; the service's (`Online.Server`, `deploy/`) and the project's test scripts are not public.
 
