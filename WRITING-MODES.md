@@ -898,6 +898,26 @@ results_heading "ONE SPOT";
 ```
 
 ```fzmode
+mode "Setup words: the other forms" { api 1; }
+
+courses all;
+cpus off;
+customs on;
+rolling_start;
+pedals locked;
+boost on;
+mine_regen off;
+time_bonus off;
+points_table [10, 6, 4, 3, 2, 1];
+
+rule "Five minutes" {
+  event every step;
+  when race.started and race.steps >= 5min;
+  do { end_race; }
+}
+```
+
+```fzmode
 mode "Setup words: alone" { api 1; }
 
 param lap_count "Laps" number 0..99 default 0;
@@ -1507,7 +1527,7 @@ sub real dist(seat a, seat b) {
 | `dist(a, b)` | `real d = dist(seat, other);` | The straight-line distance between two seats. It uses `sqrt`, which costs 8 operations: in a loop over pairs, compare squares instead (section 6.5) |
 
 Write `lives 3;` and `pits_off;` as shown: `lives(3);` and `pits_off();` are refused. A file that uses `lives` cannot
-declare its own `lives_left`.
+declare its own `lives_left`, nor one that uses `pits_off` its own `pits_off_energy`.
 
 ```fzmode
 mode "Library" { api 1; }
