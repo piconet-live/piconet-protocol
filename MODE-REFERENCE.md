@@ -535,7 +535,7 @@ Written in the mode language and part of every file. A macro is used at the top 
 |---|---|---|
 | `every(t) { … }` | The block runs at every multiple of t after GO: 30 s, 60 s, 90 s… | a time, or a `delay` parameter without a named value; at least one step |
 | `at(t) { … }` | The block runs once, when the race clock reaches t | a time |
-| `lives n;` | Every wreck the game restores costs a life: a hit, running out of energy, a fall, a breakdown. While a seat has more than one life the game restores it; the wreck that leaves it one turns its restores off, so its next wreck is final. The lives show beside the spare-machine icon. Declares the seat variable `lives_left` (0 once out). `lives 1` is the game's own rule | a whole number or parameter |
+| `lives n;` | Every wreck the game restores costs a life: a hit, running out of energy, a fall, a breakdown. While a seat has more than one life the game restores it; the wreck that leaves it one turns its restores off, so its next wreck is final. The lives remaining after the current one show beside the spare-machine icon (2, 1, 0 with `lives 3`; 0 with `lives 1`), hidden once out. Declares the seat variable `lives_left`, which counts the current life too (3, 2, 1; 0 once out). `lives 1` is the game's own rule | a whole number or parameter |
 | `pits_off;` | The pit strips give no energy. A seat in a pit keeps the energy it came in with (less if it is hit there). Declares `pits_off_energy` | |
 | `gap_to(a, b)` | The distance along the course between two seats, wrapped at the finish line, the shorter way round | two seats; gives a real, metres |
 | `dist(a, b)` | The straight-line distance between two seats. It holds a `sqrt` | two seats; gives a real, metres |

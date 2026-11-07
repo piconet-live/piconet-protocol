@@ -4,7 +4,8 @@
 //
 // Lives: any wreck (a hit, the energy, a fall) costs one. While a seat has more than one life the game restores it (its
 // own restore, as with the lobby's Restore); on its last life nothing restores it, so the next wreck is out. The lives
-// left show beside the Grand Prix spare-machine icon.
+// remaining after this one (the spare machines: 2, 1, 0) show beside the Grand Prix spare-machine icon; the points and
+// the board count this life too.
 //
 // Scoring, at the defaults (each one a parameter):
 //   KO        3 for every KO the game credits (its own skull count, a restored victim's too); a fall, a wall or a mine
@@ -90,7 +91,7 @@ rule "Lives" {
   do {
     for each seat {
       seat.lives_left = lives;
-      show_number seat, lives;
+      show_number seat, lives - 1;
       if (lives > 1) { respawns seat; }
     }
   }
@@ -124,10 +125,10 @@ rule "Out" {
 }
 
 rule "Lives shown" {
-  // beside the spare-machine icon, the watched seat's; hidden once it is out
+  // beside the spare-machine icon, the watched seat's lives after this one (2, 1, 0); hidden once it is out
   event each seat;
   do {
-    if (seat.racing) { show_number seat, seat.lives_left; } else { show_number seat, -1; }
+    if (seat.racing) { show_number seat, max(0, seat.lives_left - 1); } else { show_number seat, -1; }
   }
 }
 

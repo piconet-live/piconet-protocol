@@ -1,4 +1,4 @@
-FZMP format 1 api 1, 917 bytes, hash 92331b14c79705d7ad5761a8a1fdb03160b988fd880e0be785c428d47712b1a5
+FZMP format 1 api 1, 935 bytes, hash 3a775f4295949d259dc163280dd6a274547401e83ffe3260c5748af2523b44de
 HEAD name "Held words" badge "" about "The words that hold for the race."
 PARM 1
   0 spare "Lives" number int 1..9 step 1 default 2
@@ -8,102 +8,108 @@ VARS globals 1, seat words 1
   seat 0 = 0
 RULE 6
   0 "lives spare" event game_start, locals 1, when none, while none, body 0000
-  1 "lives spare" event each seat, locals 1, when 003f, while none, body 0044
-  2 "lives spare" event out, locals 1, when none, while none, body 0069
-  3 "lives spare" event each seat, locals 1, when none, while none, body 0074
-  4 "Course" event countdown, locals 2, when none, while none, body 0095
-  5 "No boost" event destroyed, locals 1, when none, while none, body 00da
-CODE 223 bytes
+  1 "lives spare" event each seat, locals 1, when 0045, while none, body 004a
+  2 "lives spare" event out, locals 1, when none, while none, body 006f
+  3 "lives spare" event each seat, locals 1, when none, while none, body 007a
+  4 "Course" event countdown, locals 2, when none, while none, body 00a7
+  5 "No boost" event destroyed, locals 1, when none, while none, body 00ec
+CODE 241 bytes
   ; rule 0 body
   0000  Push 0
   0005  StoreLocal 0
   0007  LoadLocal 0
   0009  RaceRead seats
   000b  ILt
-  000c  JumpIfZero 003e
+  000c  JumpIfZero 0044
   0011  LoadLocal 0
   0013  Param 0 (spare)
   0015  StoreSeatVar 0
   0018  LoadLocal 0
   001a  Param 0 (spare)
-  001c  Action show_number
-  001e  Param 0 (spare)
-  0020  Push 1
-  0025  IGt
-  0026  JumpIfZero 002f
-  002b  LoadLocal 0
-  002d  Action respawns
-  002f  LoadLocal 0
-  0031  Push 1
-  0036  IAdd
-  0037  StoreLocal 0
-  0039  Jump 0007
-  003e  End
+  001c  Push 1
+  0021  ISub
+  0022  Action show_number
+  0024  Param 0 (spare)
+  0026  Push 1
+  002b  IGt
+  002c  JumpIfZero 0035
+  0031  LoadLocal 0
+  0033  Action respawns
+  0035  LoadLocal 0
+  0037  Push 1
+  003c  IAdd
+  003d  StoreLocal 0
+  003f  Jump 0007
+  0044  End
   ; rule 1 when
-  003f  LoadLocal 0
-  0041  SeatRead restoring
-  0043  Ret
+  0045  LoadLocal 0
+  0047  SeatRead restoring
+  0049  Ret
   ; rule 1 body
-  0044  LoadLocal 0
-  0046  LoadLocal 0
-  0048  LoadSeatVar 0
-  004b  Push 1
-  0050  ISub
-  0051  StoreSeatVar 0
-  0054  LoadLocal 0
-  0056  LoadSeatVar 0
-  0059  Push 1
-  005e  ILe
-  005f  JumpIfZero 0068
-  0064  LoadLocal 0
-  0066  Action respawns off
-  0068  End
+  004a  LoadLocal 0
+  004c  LoadLocal 0
+  004e  LoadSeatVar 0
+  0051  Push 1
+  0056  ISub
+  0057  StoreSeatVar 0
+  005a  LoadLocal 0
+  005c  LoadSeatVar 0
+  005f  Push 1
+  0064  ILe
+  0065  JumpIfZero 006e
+  006a  LoadLocal 0
+  006c  Action respawns off
+  006e  End
   ; rule 2 body
-  0069  LoadLocal 0
-  006b  Push 0
-  0070  StoreSeatVar 0
-  0073  End
+  006f  LoadLocal 0
+  0071  Push 0
+  0076  StoreSeatVar 0
+  0079  End
   ; rule 3 body
-  0074  LoadLocal 0
-  0076  SeatRead racing
-  0078  JumpIfZero 008b
-  007d  LoadLocal 0
-  007f  LoadLocal 0
-  0081  LoadSeatVar 0
-  0084  Action show_number
-  0086  Jump 0094
-  008b  LoadLocal 0
-  008d  Push -1
-  0092  Action show_number
-  0094  End
+  007a  LoadLocal 0
+  007c  SeatRead racing
+  007e  JumpIfZero 009d
+  0083  LoadLocal 0
+  0085  Push 0
+  008a  LoadLocal 0
+  008c  LoadSeatVar 0
+  008f  Push 1
+  0094  ISub
+  0095  IMax
+  0096  Action show_number
+  0098  Jump 00a6
+  009d  LoadLocal 0
+  009f  Push -1
+  00a4  Action show_number
+  00a6  End
   ; rule 4 body
-  0095  RaceRead course
-  0097  StoreGlobal 0
-  009a  Push -1
-  009f  StoreLocal 0
-  00a1  Push 0
-  00a6  StoreLocal 1
-  00a8  LoadLocal 1
-  00aa  RaceRead seats
-  00ac  ILt
-  00ad  JumpIfZero 00d2
-  00b2  LoadLocal 0
-  00b4  Push -1
-  00b9  IEq
-  00ba  JumpIfZero 00c3
-  00bf  LoadLocal 1
-  00c1  StoreLocal 0
-  00c3  LoadLocal 1
-  00c5  Push 1
-  00ca  IAdd
-  00cb  StoreLocal 1
-  00cd  Jump 00a8
-  00d2  LoadLocal 0
-  00d4  LoadGlobal 0
-  00d7  Action show_number
-  00d9  End
+  00a7  RaceRead course
+  00a9  StoreGlobal 0
+  00ac  Push -1
+  00b1  StoreLocal 0
+  00b3  Push 0
+  00b8  StoreLocal 1
+  00ba  LoadLocal 1
+  00bc  RaceRead seats
+  00be  ILt
+  00bf  JumpIfZero 00e4
+  00c4  LoadLocal 0
+  00c6  Push -1
+  00cb  IEq
+  00cc  JumpIfZero 00d5
+  00d1  LoadLocal 1
+  00d3  StoreLocal 0
+  00d5  LoadLocal 1
+  00d7  Push 1
+  00dc  IAdd
+  00dd  StoreLocal 1
+  00df  Jump 00ba
+  00e4  LoadLocal 0
+  00e6  LoadGlobal 0
+  00e9  Action show_number
+  00eb  End
   ; rule 5 body
-  00da  LoadLocal 0
-  00dc  Action boost off
-  00de  End
+  00ec  LoadLocal 0
+  00ee  Action boost off
+  00f0  End
 SRC  363 bytes

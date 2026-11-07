@@ -315,8 +315,8 @@ public sealed class ModeLimitsTests
     /// <summary>The compiler's limits change no mode: each shipped file to the hash it had before them. A shipped file's
     /// own change writes its new hash here (<c>ModeCompilerTests</c> holds the vectors' bytes).</summary>
     [Theory]
-    [InlineData("competitive", "c18e7c99277958040508787852c9443bcf3fbd9de623cb5f470fc91e9edd2d0c", 1627)]
-    [InlineData("death_race", "2b2da44f0146226014bd7e4db1756729f3a459a65829d157cfe643704e9fc334", 18377)]
+    [InlineData("competitive", "3a0715e5ffa83ad3dc29ef0a310a9e9a5479075eaceb94bfefd0329323a3cbd5", 1807)]
+    [InlineData("death_race", "a8dffe5eb441ded0a6cca37383656f01232db570e77d7981c389909e9d1c4e42", 18557)]
     [InlineData("ghost_race", "a654c6fe97f6a6a68f3e338cf63e619dd2c7640f6d41f0ea0dbc333046398119", 2204)]
     [InlineData("knockout", "f56ed049f322dc37da5c13299edb0d6811142a019c3321ae6dc025cc121d0c13", 43580)]
     [InlineData("overdrive", "80131cd50e23677657c172ff1f2d4f040707de6a851b86c8b7af53b18603b689", 7776)]

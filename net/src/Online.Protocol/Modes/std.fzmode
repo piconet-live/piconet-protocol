@@ -13,17 +13,18 @@ macro at(time t, block body) {
   rule { event every step; when race.started and race.steps >= t; do body }
 }
 
-// lives n: every wreck the game restores (a hit, the energy, a fall, a breakdown) costs one life, and the count shows
-// beside the spare-machine icon while the seat races (-1 once it is out). While a seat has more than one life the game
+// lives n: every wreck the game restores (a hit, the energy, a fall, a breakdown) costs one life. The lives remaining
+// after this one (the spare machines: 2, 1, 0 with three; 0 with one) show beside the spare-machine icon while the seat
+// races (-1, hidden, once it is out); lives_left counts this life too. While a seat has more than one life the game
 // restores it; the wreck that leaves it one turns respawns off (the restore under way finishes), so its next wreck is
 // final and the game's own out verdict books it. Lives 1 is the game's own rule: no restore at all.
 macro lives(int n) {
   seat int lives_left;
-  rule { event game_start; do { for each seat { seat.lives_left = n; show_number seat, n; if (n > 1) { respawns seat; } } } }
+  rule { event game_start; do { for each seat { seat.lives_left = n; show_number seat, n - 1; if (n > 1) { respawns seat; } } } }
   rule { event each seat; when seat.restoring; do { seat.lives_left -= 1; if (seat.lives_left <= 1) { respawns seat off; } } }
   rule { event out(s); do { s.lives_left = 0; } }
   rule { event each seat; do {
-    if (seat.racing) { show_number seat, seat.lives_left; } else { show_number seat, -1; }
+    if (seat.racing) { show_number seat, max(0, seat.lives_left - 1); } else { show_number seat, -1; }
   } }
 }
 
