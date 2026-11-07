@@ -1,0 +1,28 @@
+FZMP format 1 api 1, 510 bytes, hash 480b7f0723f5a4ab418e7a962a75036e670ed9b4430dcdc8249b2c722d6fa06b
+HEAD name "Spread" badge "" about ""
+PARM 0
+SETP 1
+  start_gap even
+VARS globals 0, seat words 1
+  seat 0 = 0
+RULE 1
+  0 "Start" event game_start, locals 1, when none, while none, body 0000
+CODE 42 bytes
+  ; rule 0 body
+  0000  Push 0
+  0005  StoreLocal 0
+  0007  LoadLocal 0
+  0009  RaceRead seats
+  000b  ILt
+  000c  JumpIfZero 0029
+  0011  LoadLocal 0
+  0013  LoadLocal 0
+  0015  SeatRead distance
+  0017  StoreSeatVar 0
+  001a  LoadLocal 0
+  001c  Push 1
+  0021  IAdd
+  0022  StoreLocal 0
+  0024  Jump 0007
+  0029  End
+SRC  353 bytes

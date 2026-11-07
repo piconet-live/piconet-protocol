@@ -1,0 +1,96 @@
+FZMP format 1 api 1, 1312 bytes, hash c88853fecb120316a89480f8b002a81332ac13222b8048c74eb1a86bc8ffa564
+HEAD name "Waits" badge "" about ""
+PARM 0
+SETP 0
+VARS globals 1, seat words 2, team words 1
+  global 0 = 0
+  seat 0 = 0
+  seat 1 = 0
+  team 0 = 0
+RULE 4
+  0 "Plain" event each seat, locals 2, when 0000, while none, body 0005
+  1 "Abort" event out, locals 1, when none, while none, body 0041
+  2 "Restart" event every step, locals 2, when 0062, while none, body 0065
+  3 "Teams" event each seat, locals 1, when none, while none, body 00c9
+CODE 218 bytes
+  ; rule 0 when
+  0000  LoadLocal 0
+  0002  SeatRead racing
+  0004  Ret
+  ; rule 0 body
+  0005  LoadLocal 0
+  0007  SeatRead index
+  0009  Push 10
+  000e  IAdd
+  000f  StoreLocal 1
+  0011  Push 2
+  0016  Wait locals 2
+  001d  LoadLocal 0
+  001f  LoadLocal 1
+  0021  StoreSeatVar 0
+  0024  Push 1
+  0029  Wait locals 2
+  0030  LoadLocal 0
+  0032  LoadLocal 0
+  0034  LoadSeatVar 1
+  0037  Push 1
+  003c  IAdd
+  003d  StoreSeatVar 1
+  0040  End
+  ; rule 1 body
+  0041  Jump 004b
+  0046  LoadLocal 0
+  0048  SeatRead racing
+  004a  Ret
+  004b  Push 3
+  0050  Wait locals 1 abort when 0046
+  0057  LoadLocal 0
+  0059  Push 100
+  005e  StoreSeatVar 1
+  0061  End
+  ; rule 2 when
+  0062  RaceRead started
+  0064  Ret
+  ; rule 2 body
+  0065  Jump 00ad
+  006a  Push 0
+  006f  StoreLocal 0
+  0071  Push 0
+  0076  StoreLocal 1
+  0078  LoadLocal 1
+  007a  RaceRead seats
+  007c  ILt
+  007d  JumpIfZero 00a4
+  0082  LoadLocal 1
+  0084  SeatRead broken
+  0086  JumpIfZero 0095
+  008b  LoadLocal 0
+  008d  Push 1
+  0092  IAdd
+  0093  StoreLocal 0
+  0095  LoadLocal 1
+  0097  Push 1
+  009c  IAdd
+  009d  StoreLocal 1
+  009f  Jump 0078
+  00a4  LoadLocal 0
+  00a6  Push 0
+  00ab  IGt
+  00ac  Ret
+  00ad  Push 3
+  00b2  Wait locals 0 restart when 006a
+  00b9  Push 1000
+  00be  Random
+  00bf  Push 1
+  00c4  IAdd
+  00c5  StoreGlobal 0
+  00c8  End
+  ; rule 3 body
+  00c9  LoadLocal 0
+  00cb  LoadLocal 0
+  00cd  LoadTeamVar 0
+  00d0  Push 1
+  00d5  IAdd
+  00d6  StoreTeamVar 0
+  00d9  End
+SRC  897 bytes

@@ -1,0 +1,37 @@
+FZMP format 1 api 1, 1190 bytes, hash 78f3aa18d83f9554daaa8ba1aba30c6a9b907ba3ee28becf817d7261222049a3
+HEAD name "Practice" badge "" about "Race alone with five minutes of rewind and one save."
+PARM 3
+  0 lap_count "Laps" number int 0..99 step 1 default 0
+  1 restore_on "Restore" switch int 0..1 step 1 default 0
+  2 resume "Resume countdown" delay int 0..300 step 60 default 60
+SETP 7
+  solo on
+  results_heading "PRACTICE"
+  laps param 0 (lap_count)
+  rewind 18000
+  pause on
+  save_state on
+  resume_countdown param 2 (resume)
+VARS globals 0, seat words 0
+RULE 1
+  0 "Restore" event game_start, locals 1, when 0000, while none, body 0003
+CODE 40 bytes
+  ; rule 0 when
+  0000  Param 1 (restore_on)
+  0002  Ret
+  ; rule 0 body
+  0003  Push 0
+  0008  StoreLocal 0
+  000a  LoadLocal 0
+  000c  RaceRead seats
+  000e  ILt
+  000f  JumpIfZero 0027
+  0014  LoadLocal 0
+  0016  Action respawns
+  0018  LoadLocal 0
+  001a  Push 1
+  001f  IAdd
+  0020  StoreLocal 0
+  0022  Jump 000a
+  0027  End
+SRC  777 bytes

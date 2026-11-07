@@ -346,6 +346,17 @@ void Known(b::View v)
   std::memcpy(mail.notice_text.data(), "héllo", 6);
   mail.notice_length = 6;
   v.WriteMailbox(mail);
+  b::LocalPad pad;
+  pad.serial = 7;
+  pad.held = 1;
+  pad.buttons = 0x1100;
+  pad.stick_x = -72;
+  pad.stick_y = 40;
+  pad.c_stick_x = 59;
+  pad.c_stick_y = -3;
+  pad.l = 150;
+  pad.r = 12;
+  v.WriteLocalPad(pad);
 }
 
 // What the C# test's --write leaves: the same known board, made there.
@@ -366,6 +377,9 @@ void CheckKnown(b::View v)
   b::Mailbox mail;
   CHECK(v.ReadMailbox(&mail) && mail.stop_serial == 3 && mail.notice_serial == 5 && mail.notice_length == 6 &&
         std::memcmp(mail.notice_text.data(), "héllo", 6) == 0);
+  b::LocalPad pad;
+  CHECK(v.ReadLocalPad(&pad) && pad.serial == 7 && pad.held == 1 && pad.buttons == 0x1100 && pad.stick_x == -72 &&
+        pad.stick_y == 40 && pad.c_stick_x == 59 && pad.c_stick_y == -3 && pad.l == 150 && pad.r == 12);
 }
 
 bool FileBoard(const char* path, bool write)

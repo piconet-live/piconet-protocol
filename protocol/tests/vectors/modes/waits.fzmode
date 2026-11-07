@@ -1,0 +1,48 @@
+// Waits, teams and the generator on a few seats, step by step: a vector for the runner's interpreter tests
+// (port/core/tests/test_mode.cpp), not a mode to race.
+
+mode "Waits" {
+  api 1;
+}
+
+global int draw;
+seat int kept;
+seat int done;
+team int score;
+
+// Each seat as it starts racing: its local kept through two waits.
+rule "Plain" {
+  event each seat;
+  when seat.racing;
+  do {
+    int left = seat.index + 10;
+    wait 2;
+    seat.kept = left;
+    wait 1;
+    seat.done += 1;
+  }
+}
+
+// Out for 3 steps, and not racing again meanwhile.
+rule "Abort" {
+  event out(s);
+  do {
+    wait 3 abort when s.racing;
+    s.done = 100;
+  }
+}
+
+// 3 steps with no seat broken down.
+rule "Restart" {
+  event every step;
+  when race.started;
+  do {
+    wait 3 restart when count(seats where broken) > 0;
+    draw = random(1000) + 1;
+  }
+}
+
+rule "Teams" {
+  event each seat;
+  do { seat.team.score += 1; }
+}

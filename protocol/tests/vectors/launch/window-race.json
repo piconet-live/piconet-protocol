@@ -37,9 +37,9 @@
     "rgba": "/wAA/wECA4A="
   },
   "showFrameRate": false,
+  "renderer": "aurora",
   "present": "copy",
   "fullScreen": "borderless",
-  "refreshRate": "120",
   "taskbar": {
     "id": "Piconet.Launcher",
     "program": "C:\\Piconet\\Launcher.App.exe",

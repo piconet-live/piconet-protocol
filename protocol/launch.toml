@@ -10,8 +10,9 @@
 #
 # A member's `type`: bool, whole (a whole number from `low` to `high`), number (any number from `low` to `high`),
 # text (`may_be_empty` true when "" is a value; `most_bytes`: the longest, a constant the reader's own check uses),
-# one_of (a text of `values`), wholes (a list of `least` to `most` whole numbers, each from `low` to `high`), or
-# object (another part, or an object the reader takes by hand). `to` is the member of the C++ reader's target the
+# one_of (a text of `values`), wholes (a list of `least` to `most` whole numbers, each from `low` to `high`),
+# object (another part, or an object the reader takes by hand), or objects (a list of a part's objects, taken by hand,
+# each by the part's generated reader). `to` is the member of the C++ reader's target the
 # value goes to (fzgx::Options, fzgx::Debug or a part's own struct). `hand` true: the reader takes the member itself
 # (files_launch.cpp, files_launch_debug.cpp: a value of its own form, or parsed further); an object is always taken
 # by hand, its part's members by the generated reader. `missing`: why a file without the member is refused. `doc`:
@@ -42,8 +43,8 @@ name = "File"
 cs = "LaunchFile"
 doc = "the launch file: every setting of one start of the game"
 cs_order = ["about", "bundle", "widescreen", "trueWidescreen", "lanes", "controllerSetup", "match", "replay",
-            "windowName", "windowNamePicture", "showFrameRate", "rumble", "present", "verticalSync", "fullScreen",
-            "refreshRate", "taskbar", "board", "debug"]
+            "windowName", "windowNamePicture", "showFrameRate", "renderer", "auroraSize", "auroraEdges", "auroraTextures", "auroraColourblind", "auroraHighRefresh", "auroraRayTracing", "rumble", "present", "verticalSync", "fullScreen",
+            "taskbar", "board", "overlay", "debug"]
 member = [
     { key = "about", type = "text", to = "about", missing = "a line that says what this start is for", cs = { name = "About", write = "required" } },
     { key = "bundle", type = "text", to = "bundle_dir", cs = { name = "Bundle", write = "set" } },
@@ -52,18 +53,38 @@ member = [
     { key = "trueWidescreen", type = "bool", to = "true_widescreen", cs = { name = "TrueWidescreen", write = "true" } },
     { key = "windowName", type = "text", to = "window_name", most_bytes = 64, cs = { name = "WindowName", write = "set" } },
     { key = "showFrameRate", type = "bool", to = "show_frame_rate", cs = { name = "ShowFrameRate", write = "set" } },
+    { key = "renderer", type = "one_of", values = ["dolphin", "aurora"], to = "picture_renderer", cs = { name = "Renderer", write = "set" }, doc = "who draws the picture: the emulator (left out), or Aurora with the emulator's video off" },
+    { key = "auroraSize", type = "one_of", values = ["auto", "2", "3", "4", "native"], to = "aurora_size", cs = { name = "AuroraSize", write = "set" }, doc = "with renderer aurora: left out is auto, the same as native: the window's own pixels, following its size" },
+    { key = "auroraEdges", type = "whole", to = "aurora_edges", low = 1, high = 4, cs = { name = "AuroraEdges", write = "positive" }, doc = "with renderer aurora: multisampling; left out is 1, none" },
+    { key = "auroraTextures", type = "whole", to = "aurora_textures", low = 1, high = 16, cs = { name = "AuroraTextures", write = "positive" }, doc = "with renderer aurora: anisotropic filtering on every texture with mipmaps; left out is the game's own" },
+    { key = "auroraColourblind", type = "one_of", values = ["off", "deuteranopia", "protanopia", "tritanopia"], to = "aurora_colourblind", cs = { name = "AuroraColourblind", write = "set" }, doc = "with renderer aurora: a colour filter of the whole picture for colourblind players; left out is off" },
+    { key = "auroraHighRefresh", type = "whole", to = "aurora_high_refresh", low = 120, high = 480, cs = { name = "AuroraHighRefresh", write = "positive" }, doc = "with renderer aurora: pictures a second asked for; pictures between the steps, a step run ahead for them, undone" },
+    { key = "auroraRayTracing", type = "bool", to = "aurora_ray_tracing", cs = { name = "AuroraRayTracing", write = "true" }, doc = "with renderer aurora: ray tracing, the runner's whole tested set of Aurora's ray switches; left out is off" },
     { key = "rumble", type = "bool", to = "rumble", cs = { name = "Rumble", write = "false" } },
     { key = "windowNamePicture", type = "object", cs = { name = "WindowNamePicture", write = "set" } },
     { key = "taskbar", type = "object", cs = { name = "Taskbar", write = "set" } },
     { key = "present", type = "one_of", values = ["field", "console", "copy"], to = "present", cs = { name = "Present", write = "set" } },
-    { key = "refreshRate", type = "one_of", values = ["60", "120", "240", "display"], to = "refresh_rate", cs = { name = "RefreshRate", write = "set" } },
+    { key = "refreshRate", type = "one_of", values = ["60", "120", "240", "display"], to = "refresh_rate", doc = "the emulator's re-draw of pictures between steps; no longer written by the launcher since 0.6.0 (Aurora draws every start): kept for old launch files and tests" },
     { key = "verticalSync", type = "bool", to = "vertical_sync", cs = { name = "VerticalSync", write = "true" } },
     { key = "fullScreen", type = "one_of", values = ["borderless", "exclusive"], to = "full_screen", cs = { name = "FullScreen", write = "set" } },
     { key = "controllerSetup", type = "bool", to = "controller_setup", cs = { name = "ControllerSetup", write = "true" } },
     { key = "lanes", type = "whole", hand = true, low = 0, high = 0, cs = { write = "always", value = 0 }, doc = "0 only: the multicore physics is parked on branch parked/lanes (ReadLanesOff)" },
     { key = "match", type = "object", cs = { name = "Match", write = "set" } },
     { key = "replay", type = "object", cs = { name = "Replay", write = "set" } },
+    { key = "overlay", type = "objects", cs = { name = "Overlay", write = "set" }, doc = "a mod pack's files over the disc's, in order (a later entry for a disc path wins); left out or empty: the disc as it is" },
     { key = "debug", type = "object", cs = { name = "Debug", write = "set" } },
+]
+
+[[part]]
+name = "OverlayEntry"
+under = "File"
+key = "overlay"
+cs = "LaunchOverlayEntry"
+doc = "one file of a mod pack, read in place of the disc's: the runner refuses the files it never takes from a mod, and in any start but the offline game a race file whose race fields the launcher did not find equal to the disc's"
+member = [
+    { key = "disc", type = "text", to = "disc", missing = "the file's path on the disc, under files/, with '/' (stage/st05.tpl.lz)", cs = { name = "Disc", write = "required" } },
+    { key = "from", type = "text", to = "from", missing = "the replacement file's whole path", cs = { name = "From", write = "required" } },
+    { key = "raceSame", type = "bool", to = "race_same", cs = { name = "RaceSame", write = "true" }, doc = "the launcher compared the file's race fields with the disc's and found them equal: a race file (car data, a course) is then taken online too" },
 ]
 
 [[part]]
@@ -83,7 +104,7 @@ member = [
     { key = "rejoin", type = "bool", to = "rejoin", cs = { name = "Rejoin", write = "true" } },
     { key = "spectate", type = "bool", to = "spectate" },
     { key = "practice", type = "bool", to = "practice" },
-    { key = "camera", type = "whole", to = "camera", low = 1, high = 3, cs = { name = "Camera", write = "positive" } },
+    { key = "camera", type = "whole", to = "camera", low = 1, high = 4, cs = { name = "Camera", write = "positive" } },
 ]
 
 [[part]]
@@ -164,6 +185,7 @@ member = [
     { key = "undoTrace", type = "object" },
     { key = "standStill", type = "object" },
     { key = "partialRollback", type = "object", hand = true, doc = "a mode alone, or an object (ReadPartialKeys)" },
+    { key = "rollbackWorker", type = "object", hand = true, doc = "tests only: a mode alone, or an object (ReadWorkerKeys); a player's start has none and its race runs the worker" },
     { key = "fullScreenWithoutFocus", type = "bool", to = "full_screen_without_focus" },
     { key = "singleCore", type = "bool", to = "single_core" },
     { key = "jit", type = "bool", to = "jit" },
@@ -172,6 +194,11 @@ member = [
     { key = "automation", type = "bool", to = "automation" },
     { key = "loadState", type = "bool", to = "load_state" },
     { key = "userSettings", type = "bool", to = "user_settings" },
+    { key = "renderer", type = "one_of", values = ["dolphin", "aurora"], to = "renderer", doc = "who draws the picture shown: the emulator (default), or Aurora beside it (presentation only)" },
+    { key = "auroraShots", type = "wholes", to = "aurora_shots", low = 1, high = 4294967295, least = 1, most = 32 },
+    { key = "auroraScale", type = "whole", to = "aurora_scale", low = 1, high = 8, doc = "Aurora's render scale; left out: the window's own pixels with the video off, the emulator's internal resolution with it on" },
+    { key = "auroraLog", type = "text", to = "aurora_log" },
+    { key = "classicHudLayout", type = "text", to = "classic_hud_layout", doc = "a layout file that moves, turns and mirrors the parts of the game's own race HUD (the runner's hud_move.h); left out: the game's HUD as it is" },
 ]
 
 [[part]]

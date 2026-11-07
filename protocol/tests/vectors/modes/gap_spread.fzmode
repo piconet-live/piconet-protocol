@@ -1,0 +1,6 @@
+// start_gap even: the racers spread evenly round the lap. Each seat's distance at the start is kept, so a rule can
+// rank by the distance driven since (the game's own standing counts from the line).
+mode "Spread" { api 1; }
+start_gap even;
+seat real start_at;
+rule "Start" { event game_start; do { for each seat { seat.start_at = seat.distance; } } }

@@ -1,0 +1,53 @@
+FZMP format 1 api 1, 1120 bytes, hash 0c45810cbedc7d16aa1042f23b8e301caa19a17a8f517b9291018ddc08f3b746
+HEAD name "Board" badge "" about ""
+PARM 0
+SETP 0
+VARS globals 5, seat words 3, team words 1
+  global 0 = 7
+  global 1 = 1069547520 (0x3fc00000, real 1.5)
+  global 2 = 0
+  global 3 = -1
+  global 4 = 0
+  seat 0 = 3
+  seat 1 = 0
+  seat 2 = 0
+  team 0 = 100
+RULE 2
+  0 "Count" event every step, locals 1, when none, while none, body 0000
+  1 "Lose" event each seat, locals 1, when none, while none, body 000d
+CODE 50 bytes
+  ; rule 0 body
+  0000  LoadGlobal 0
+  0003  Push 1
+  0008  IAdd
+  0009  StoreGlobal 0
+  000c  End
+  ; rule 1 body
+  000d  LoadLocal 0
+  000f  LoadLocal 0
+  0011  SeatRead index
+  0013  RaceRead steps
+  0015  IAdd
+  0016  StoreSeatVar 0
+  0019  LoadLocal 0
+  001b  LoadLocal 0
+  001d  SeatRead index
+  001f  StoreSeatVar 2
+  0022  LoadLocal 0
+  0024  LoadLocal 0
+  0026  SeatRead index
+  0028  Push 2
+  002d  IMul
+  002e  StoreTeamVar 0
+  0031  End
+SRC  770 bytes
+BORD 9
+  Global Int word 0 "Next cut"
+  Global Real word 1 "Pace"
+  Global Bool word 2 "Armed"
+  Global Seat word 3 "Leader"
+  Global Seats word 4 "Alive"
+  Seat Int word 0 "Lives"
+  Seat Real word 1 "Best"
+  Team Int word 0 "Tank"
+  Seat Int word 2 "State" ["", "Sûr", "Out"]

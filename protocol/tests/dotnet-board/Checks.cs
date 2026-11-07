@@ -152,6 +152,7 @@ internal static class Known
         var mail = new BoardMailbox { StopSerial = 3, NoticeSerial = 5, NoticeLength = (uint)Text.Length };
         Text.CopyTo(mail.NoticeText, 0);
         v.WriteMailbox(mail);
+        v.WriteLocalPad(new BoardLocalPad { Serial = 7, Held = 1, Buttons = 0x1100, StickX = -72, StickY = 40, CStickX = 59, CStickY = -3, L = 150, R = 12 });
     }
 
     public static void Check(BoardView v, Action<bool, string> check)
@@ -168,6 +169,9 @@ internal static class Known
         var mail = new BoardMailbox();
         check(v.TryReadMailbox(mail) && mail.StopSerial == 3 && mail.NoticeSerial == 5 && mail.NoticeLength == Text.Length &&
               mail.NoticeText.AsSpan(0, Text.Length).SequenceEqual(Text), "mailbox");
+        var pad = new BoardLocalPad();
+        check(v.TryReadLocalPad(pad) && pad is { Serial: 7, Held: 1, Buttons: 0x1100, StickX: -72, StickY: 40, CStickX: 59, CStickY: -3, L: 150, R: 12 },
+              "the local pad");
     }
 }
 

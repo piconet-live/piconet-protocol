@@ -1,0 +1,493 @@
+FZMP format 1 api 1, 4784 bytes, hash 0a92c41b16dac99c041c38c8eae429cbe8873b5865a697386e18236dff07d1d1
+HEAD name "Race words" badge "" about "Every race-side word of api 1."
+PARM 1
+  0 limit "Time" delay int 3600..36000 step 1800 default 18000
+SETP 7
+  finish_limit 30
+  mine_regen 0
+  cpu_level 2
+  restore on
+  contact off
+  clock_limit param 0 (limit)
+  rolling_start 1000 (0x447a0000)
+VARS globals 2, seat words 2
+  global 0 = 0
+  global 1 = -1
+  seat 0 = 0
+  seat 1 = 0
+RULE 21
+  0 "Start" event countdown, locals 1, when none, while none, body 0000
+  1 "Go" event race_start, locals 1, when none, while none, body 004d
+  2 "Lap" event lap, locals 1, when none, while none, body 0078
+  3 "Checkpoint" event checkpoint, locals 1, when 008e, while none, body 0099
+  4 "Finish" event finish, locals 1, when none, while none, body 009e
+  5 "Fall" event fall, locals 1, when none, while none, body 00a8
+  6 "Destroyed" event destroyed, locals 1, when none, while none, body 00bd
+  7 "KO" event ko, locals 2, when none, while none, body 00c8
+  8 "Hit" event hit, locals 8, when none, while none, body 00db
+  9 "Damaged" event damaged, locals 1, when 0103, while none, body 010e
+  10 "Boost" event boost, locals 1, when none, while none, body 0113
+  11 "Wall" event wall, locals 1, when none, while none, body 0127
+  12 "Pit" event pit, locals 1, when 013f, while none, body 0155
+  13 "Overtake" event overtake, locals 2, when none, while none, body 015a
+  14 "Respawned" event respawned, locals 5, when none, while none, body 016b
+  15 "Land" event land, locals 4, when 0190, while none, body 01a3
+  16 "Boost end" event boost_end, locals 1, when 01a6, while none, body 01c2
+  17 "Wrong way" event wrong_way, locals 1, when none, while none, body 01d2
+  18 "From the first picture" event game_start, locals 1, when none, while none, body 01dc
+  19 "Out" event out, locals 2, when 020f, while none, body 0218
+  20 "Reads" event each seat, locals 7, when none, while 0229, body 0291
+CODE 917 bytes
+  ; rule 0 body
+  0000  Push 0
+  0005  StoreLocal 0
+  0007  LoadLocal 0
+  0009  RaceRead seats
+  000b  ILt
+  000c  JumpIfZero 003e
+  0011  LoadLocal 0
+  0013  Action respawns
+  0015  LoadLocal 0
+  0017  Action no_contact
+  0019  LoadLocal 0
+  001b  SeatRead is_cpu
+  001d  JumpIfZero 002f
+  0022  LoadLocal 0
+  0024  Push 23
+  0029  Action cpu_mode
+  002b  LoadLocal 0
+  002d  Action hand_to_cpu
+  002f  LoadLocal 0
+  0031  Push 1
+  0036  IAdd
+  0037  StoreLocal 0
+  0039  Jump 0007
+  003e  Push 0
+  0043  Action team no contact
+  0045  AllSeats
+  0046  LoadGlobal 1
+  0049  SeatBit
+  004a  Action no contact
+  004c  End
+  ; rule 1 body
+  004d  Action pads_back
+  004f  Push 0
+  0054  StoreLocal 0
+  0056  LoadLocal 0
+  0058  RaceRead seats
+  005a  ILt
+  005b  JumpIfZero 0077
+  0060  LoadLocal 0
+  0062  Action no_contact off
+  0064  LoadLocal 0
+  0066  Action release
+  0068  LoadLocal 0
+  006a  Push 1
+  006f  IAdd
+  0070  StoreLocal 0
+  0072  Jump 0056
+  0077  End
+  ; rule 2 body
+  0078  LoadGlobal 0
+  007b  Push 1
+  0080  IAdd
+  0081  StoreGlobal 0
+  0084  LoadLocal 0
+  0086  Push 10
+  008b  Action award
+  008d  End
+  ; rule 3 when
+  008e  LoadLocal 0
+  0090  SeatRead checkpoint
+  0092  Push 3
+  0097  IGt
+  0098  Ret
+  ; rule 3 body
+  0099  LoadLocal 0
+  009b  Action boost
+  009d  End
+  ; rule 4 body
+  009e  LoadLocal 0
+  00a0  Push 1
+  00a5  Action seat.place
+  00a7  End
+  ; rule 5 body
+  00a8  LoadLocal 0
+  00aa  LoadLocal 0
+  00ac  LoadSeatVar 0
+  00af  Push 1
+  00b4  IAdd
+  00b5  StoreSeatVar 0
+  00b8  LoadLocal 0
+  00ba  Action respawns off
+  00bc  End
+  ; rule 6 body
+  00bd  LoadLocal 0
+  00bf  Push 50
+  00c4  IToF
+  00c5  Action seat.energy
+  00c7  End
+  ; rule 7 body
+  00c8  LoadLocal 1
+  00ca  StoreGlobal 1
+  00cd  LoadLocal 1
+  00cf  Push 5
+  00d4  Action award
+  00d6  LoadLocal 0
+  00d8  Action retire
+  00da  End
+  ; rule 8 body
+  00db  LoadLocal 0
+  00dd  LoadLocal 1
+  00df  SeatRead velocity
+  00e1  StoreLocal 4
+  00e3  StoreLocal 3
+  00e5  StoreLocal 2
+  00e7  LoadLocal 0
+  00e9  SeatRead velocity
+  00eb  StoreLocal 7
+  00ed  StoreLocal 6
+  00ef  StoreLocal 5
+  00f1  LoadLocal 2
+  00f3  LoadLocal 5
+  00f5  FSub
+  00f6  LoadLocal 3
+  00f8  LoadLocal 6
+  00fa  FSub
+  00fb  LoadLocal 4
+  00fd  LoadLocal 7
+  00ff  FSub
+  0100  Action push
+  0102  End
+  ; rule 9 when
+  0103  LoadLocal 0
+  0105  SeatRead damage_taken
+  0107  Push 1112014848 (0x42480000, real 50)
+  010c  FGt
+  010d  Ret
+  ; rule 9 body
+  010e  LoadLocal 0
+  0110  Action explode
+  0112  End
+  ; rule 10 body
+  0113  LoadLocal 0
+  0115  LoadLocal 0
+  0117  SeatRead energy
+  0119  Push 1
+  011e  IToF
+  011f  FSub
+  0120  Action seat.energy
+  0122  LoadLocal 0
+  0124  Action danger_zone off
+  0126  End
+  ; rule 11 body
+  0127  LoadLocal 0
+  0129  Action freeze
+  012b  LoadLocal 0
+  012d  Push 1133903872 (0x43960000, real 300)
+  0132  Push 1142292480 (0x44160000, real 600)
+  0137  Push 3
+  013c  Action danger_zone
+  013e  End
+  ; rule 12 when
+  013f  LoadLocal 0
+  0141  SeatRead used_pit
+  0143  Dup
+  0144  JumpIfZero 0154
+  0149  Pop
+  014a  LoadLocal 0
+  014c  SeatRead surface
+  014e  Push 1
+  0153  IEq
+  0154  Ret
+  ; rule 12 body
+  0155  LoadLocal 0
+  0157  Action retire
+  0159  End
+  ; rule 13 body
+  015a  LoadLocal 0
+  015c  LoadLocal 0
+  015e  LoadSeatVar 1
+  0161  Push 1
+  0166  IAdd
+  0167  StoreSeatVar 1
+  016a  End
+  ; rule 14 body
+  016b  LoadLocal 0
+  016d  LoadLocal 0
+  016f  SeatRead forward
+  0171  StoreLocal 3
+  0173  StoreLocal 2
+  0175  StoreLocal 1
+  0177  Push 1140457472 (0x43fa0000, real 500)
+  017c  StoreLocal 4
+  017e  LoadLocal 1
+  0180  LoadLocal 4
+  0182  FMul
+  0183  LoadLocal 2
+  0185  LoadLocal 4
+  0187  FMul
+  0188  LoadLocal 3
+  018a  LoadLocal 4
+  018c  FMul
+  018d  Action seat.velocity
+  018f  End
+  ; rule 15 when
+  0190  LoadLocal 0
+  0192  SeatRead up
+  0194  StoreLocal 3
+  0196  StoreLocal 2
+  0198  StoreLocal 1
+  019a  LoadLocal 2
+  019c  Push 1056964608 (0x3f000000, real 0.5)
+  01a1  FLt
+  01a2  Ret
+  ; rule 15 body
+  01a3  Action stop_all
+  01a5  End
+  ; rule 16 when
+  01a6  LoadLocal 0
+  01a8  SeatRead input.accel
+  01aa  Push 1056964608 (0x3f000000, real 0.5)
+  01af  FGt
+  01b0  Dup
+  01b1  JumpIfZero 01c1
+  01b6  Pop
+  01b7  LoadLocal 0
+  01b9  SeatRead input.brake
+  01bb  Push 1036831949 (0x3dcccccd, real 0.1)
+  01c0  FLt
+  01c1  Ret
+  ; rule 16 body
+  01c2  LoadLocal 0
+  01c4  LoadLocal 0
+  01c6  SeatRead energy
+  01c8  Push 1
+  01cd  IToF
+  01ce  FAdd
+  01cf  Action seat.energy
+  01d1  End
+  ; rule 17 body
+  01d2  LoadLocal 0
+  01d4  Push 30
+  01d9  Action seat.place
+  01db  End
+  ; rule 18 body
+  01dc  Push 0
+  01e1  StoreLocal 0
+  01e3  LoadLocal 0
+  01e5  RaceRead seats
+  01e7  ILt
+  01e8  JumpIfZero 020e
+  01ed  LoadLocal 0
+  01ef  Push 2
+  01f4  Action seat.look
+  01f6  LoadLocal 0
+  01f8  Push 0
+  01fd  Action seat.own_look
+  01ff  LoadLocal 0
+  0201  Push 1
+  0206  IAdd
+  0207  StoreLocal 0
+  0209  Jump 01e3
+  020e  End
+  ; rule 19 when
+  020f  LoadLocal 1
+  0211  Push 3
+  0216  IEq
+  0217  Ret
+  ; rule 19 body
+  0218  LoadLocal 0
+  021a  LoadLocal 0
+  021c  LoadSeatVar 0
+  021f  Push 1
+  0224  IAdd
+  0225  StoreSeatVar 0
+  0228  End
+  ; rule 20 while
+  0229  LoadLocal 0
+  022b  SeatRead restoring
+  022d  Dup
+  022e  JumpIfNotZero 0238
+  0233  Pop
+  0234  LoadLocal 0
+  0236  SeatRead airborne
+  0238  Dup
+  0239  JumpIfNotZero 0243
+  023e  Pop
+  023f  LoadLocal 0
+  0241  SeatRead boosting
+  0243  Dup
+  0244  JumpIfNotZero 024e
+  0249  Pop
+  024a  LoadLocal 0
+  024c  SeatRead spinning
+  024e  Dup
+  024f  JumpIfNotZero 0259
+  0254  Pop
+  0255  LoadLocal 0
+  0257  SeatRead side_attack
+  0259  Dup
+  025a  JumpIfNotZero 0264
+  025f  Pop
+  0260  LoadLocal 0
+  0262  SeatRead in_pit
+  0264  Dup
+  0265  JumpIfNotZero 026f
+  026a  Pop
+  026b  LoadLocal 0
+  026d  SeatRead fallen
+  026f  Dup
+  0270  JumpIfNotZero 027a
+  0275  Pop
+  0276  LoadLocal 0
+  0278  SeatRead wrong_way
+  027a  Dup
+  027b  JumpIfNotZero 0285
+  0280  Pop
+  0281  LoadLocal 0
+  0283  SeatRead no_contact
+  0285  Dup
+  0286  JumpIfNotZero 0290
+  028b  Pop
+  028c  LoadLocal 0
+  028e  SeatRead is_human
+  0290  Ret
+  ; rule 20 body
+  0291  LoadLocal 0
+  0293  SeatRead input.steer
+  0295  LoadLocal 0
+  0297  SeatRead input.strafe
+  0299  FAdd
+  029a  LoadLocal 0
+  029c  SeatRead input.pitch
+  029e  FAdd
+  029f  LoadLocal 0
+  02a1  SeatRead lap_distance
+  02a3  FAdd
+  02a4  LoadLocal 0
+  02a6  SeatRead checkpoint_fraction
+  02a8  FAdd
+  02a9  LoadLocal 0
+  02ab  SeatRead top_speed
+  02ad  FAdd
+  02ae  LoadLocal 0
+  02b0  SeatRead max_energy
+  02b2  FAdd
+  02b3  LoadLocal 0
+  02b5  SeatRead last_hit_energy
+  02b7  FAdd
+  02b8  LoadLocal 0
+  02ba  SeatRead velocity
+  02bc  StoreLocal 3
+  02be  StoreLocal 2
+  02c0  StoreLocal 1
+  02c2  LoadLocal 1
+  02c4  LoadLocal 1
+  02c6  FMul
+  02c7  LoadLocal 2
+  02c9  LoadLocal 2
+  02cb  FMul
+  02cc  FAdd
+  02cd  LoadLocal 3
+  02cf  LoadLocal 3
+  02d1  FMul
+  02d2  FAdd
+  02d3  FSqrt
+  02d4  FAdd
+  02d5  LoadLocal 0
+  02d7  SeatRead forward
+  02d9  StoreLocal 3
+  02db  StoreLocal 2
+  02dd  StoreLocal 1
+  02df  LoadLocal 0
+  02e1  SeatRead up
+  02e3  StoreLocal 6
+  02e5  StoreLocal 5
+  02e7  StoreLocal 4
+  02e9  LoadLocal 1
+  02eb  LoadLocal 4
+  02ed  FMul
+  02ee  LoadLocal 2
+  02f0  LoadLocal 5
+  02f2  FMul
+  02f3  FAdd
+  02f4  LoadLocal 3
+  02f6  LoadLocal 6
+  02f8  FMul
+  02f9  FAdd
+  02fa  FAdd
+  02fb  StoreLocal 1
+  02fd  LoadLocal 0
+  02ff  SeatRead race_time
+  0301  LoadLocal 0
+  0303  SeatRead mode_lap_steps
+  0305  IAdd
+  0306  LoadLocal 0
+  0308  SeatRead best_lap
+  030a  IAdd
+  030b  LoadLocal 0
+  030d  SeatRead machine
+  030f  IAdd
+  0310  LoadLocal 0
+  0312  SeatRead hits
+  0314  IAdd
+  0315  LoadLocal 0
+  0317  SeatRead game_lap_steps
+  0319  IAdd
+  031a  LoadLocal 0
+  031c  SeatRead standing
+  031e  IAdd
+  031f  LoadLocal 0
+  0321  SeatRead place
+  0323  IAdd
+  0324  LoadLocal 0
+  0326  SeatRead points
+  0328  IAdd
+  0329  LoadLocal 0
+  032b  SeatRead kos
+  032d  IAdd
+  032e  RaceRead humans_left
+  0330  IAdd
+  0331  RaceRead human_finished
+  0333  IAdd
+  0334  StoreLocal 2
+  0336  LoadLocal 1
+  0338  LoadLocal 2
+  033a  IToF
+  033b  FGt
+  033c  Dup
+  033d  JumpIfZero 038d
+  0342  Pop
+  0343  Push 0
+  0348  StoreLocal 3
+  034a  LoadLocal 0
+  034c  SeatRead touching
+  034e  StoreLocal 4
+  0350  Push 0
+  0355  StoreLocal 5
+  0357  LoadLocal 5
+  0359  RaceRead seats
+  035b  ILt
+  035c  JumpIfZero 0385
+  0361  LoadLocal 5
+  0363  SeatBit
+  0364  LoadLocal 4
+  0366  BitAnd
+  0367  JumpIfZero 0376
+  036c  LoadLocal 3
+  036e  Push 1
+  0373  IAdd
+  0374  StoreLocal 3
+  0376  LoadLocal 5
+  0378  Push 1
+  037d  IAdd
+  037e  StoreLocal 5
+  0380  Jump 0357
+  0385  LoadLocal 3
+  0387  Push 2
+  038c  IGt
+  038d  JumpIfZero 0394
+  0392  Action end_race
+  0394  End
+SRC  3139 bytes

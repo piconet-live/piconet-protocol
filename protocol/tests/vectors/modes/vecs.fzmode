@@ -1,0 +1,7 @@
+// A vec built and crossed: a push sideways.
+mode "Vecs" { api 1; about "A vector of vec and cross."; }
+
+rule "Sideways" {
+  event race_start;
+  do { for each seat { push seat, cross(vec(1, 2, 0), vec(0, 0, 1)) * 216; } }
+}

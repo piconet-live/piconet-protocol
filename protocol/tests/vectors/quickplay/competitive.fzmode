@@ -1,0 +1,10 @@
+// Quick Play's normal rules in today's words: the game's own rules, three laps on every course (the official file,
+// protocol/quickplay/competitive.fzmode, has the competitive scene's lap table, `laps by course`).
+
+mode "Quick Play" {
+  api 1;
+  about "The game's own rules.";
+}
+
+cpus on;
+laps 3;

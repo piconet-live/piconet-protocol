@@ -76,6 +76,8 @@ public sealed record RacerLive(
 /// <summary>A lobby's race, for its members (racing or waiting): the match, the course, the laps and the seats (names,
 /// machines, colours; CPU seats too), and when it started. <paramref name="Over"/>: its relay says the race is over (a
 /// game's race-over test said so): its racers may still be on the results, but no game comes back into it (Rejoin);
-/// a launcher from before it passes over it.</summary>
+/// a launcher from before it passes over it. <paramref name="Teams"/>: each seat's team when the race is a mode's with
+/// teams, as its <c>setup.mode.teams</c>; null: none.</summary>
 public sealed record LobbyRace(string MatchId, int Course, int Laps, IReadOnlyList<SeatSetup> Seats, DateTimeOffset Started,
-    bool Over = false);
+    bool Over = false,
+    [property: System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<int>? Teams = null);

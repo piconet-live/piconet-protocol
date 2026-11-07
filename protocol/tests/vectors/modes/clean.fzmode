@@ -1,0 +1,4 @@
+// hud clean: the setup word, beside the standard parts hidden as a footage mode hides them.
+mode "Clean" { api 1; }
+hud clean;
+rule "Hide" { event race_start; do { for each seat { hide seat, RANK; } } }

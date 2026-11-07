@@ -31,6 +31,17 @@ public sealed class StatPackConstantsTests
 
     private static string Number(double value) => value.ToString("R", CultureInfo.InvariantCulture);
 
+    /// <summary>No pack is the unmodified game: the rule has no default pack, a pack comes only from a server's own
+    /// setting or a host's or mode's word.</summary>
+    [Fact]
+    public void TheRuleHasNoDefaultPack()
+    {
+        Assert.Equal("stat-pack", HostRules.StatPack.Name);
+        Assert.Equal(0, HostRules.StatPack.Default);
+        Assert.Null(typeof(HostRules).GetField("DefaultStatPack"));
+        Assert.DoesNotContain("default", File.ReadAllText(Repository("protocol", "rules.toml")).Split("name = \"stat-pack\"")[1].Split("[[rule]]")[0], StringComparison.Ordinal);
+    }
+
     [Fact]
     public void TheListIsTheHandbooksRowForRow()
     {

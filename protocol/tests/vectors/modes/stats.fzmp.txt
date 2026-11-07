@@ -1,0 +1,221 @@
+FZMP format 1 api 1, 2495 bytes, hash 29924b02f4774fedbed4b5649bb879567bfc407e45b6426d31b09d01d20c0e43
+HEAD name "Stats" badge "" about "A vector of the stat words."
+PARM 2
+  0 bad "A real that is not finite" switch int 0..1 step 1 default 0
+  1 hurt "Damage" number int 0..100 step 1 default 5
+SETP 0
+VARS globals 1, seat words 1
+  global 0 = 0
+  seat 0 = 0
+RULE 4
+  0 "Writes" event each seat, locals 1, when none, while 0000, body 000e
+  1 "Reads" event every step, locals 1, when none, while 00e2, body 00e5
+  2 "Hurts" event race_start, locals 1, when none, while none, body 0135
+  3 "Map" event every step, locals 3, when none, while none, body 0166
+CODE 476 bytes
+  ; rule 0 while
+  0000  RaceRead started
+  0002  Dup
+  0003  JumpIfZero 000d
+  0008  Pop
+  0009  LoadLocal 0
+  000b  SeatRead racing
+  000d  Ret
+  ; rule 0 body
+  000e  LoadLocal 0
+  0010  LoadLocal 0
+  0012  SeatRead stat.base.weight
+  0014  Push 2
+  0019  IToF
+  001a  FMul
+  001b  Action seat.stat.weight
+  001d  LoadLocal 0
+  001f  LoadLocal 0
+  0021  SeatRead stat.base.accel
+  0023  Push 1048576000 (0x3e800000, real 0.25)
+  0028  FAdd
+  0029  Action seat.stat.accel
+  002b  LoadLocal 0
+  002d  LoadLocal 0
+  002f  SeatRead stat.base.max_speed
+  0031  Push 1056964608 (0x3f000000, real 0.5)
+  0036  FMul
+  0037  Action seat.stat.max_speed
+  0039  LoadLocal 0
+  003b  LoadLocal 0
+  003d  SeatRead stat.base.grip
+  003f  Action seat.stat.grip
+  0041  LoadLocal 0
+  0043  LoadLocal 0
+  0045  SeatRead stat.base.turn
+  0047  Action seat.stat.turn
+  0049  LoadLocal 0
+  004b  LoadLocal 0
+  004d  SeatRead stat.base.strafe
+  004f  Action seat.stat.strafe
+  0051  LoadLocal 0
+  0053  LoadLocal 0
+  0055  SeatRead stat.base.drag
+  0057  Action seat.stat.drag
+  0059  LoadLocal 0
+  005b  LoadLocal 0
+  005d  SeatRead stat.base.boost_strength
+  005f  Action seat.stat.boost_strength
+  0061  LoadLocal 0
+  0063  LoadLocal 0
+  0065  SeatRead stat.base.boost_length
+  0067  Action seat.stat.boost_length
+  0069  LoadLocal 0
+  006b  LoadLocal 0
+  006d  SeatRead stat.base.body
+  006f  Push 1
+  0074  IToF
+  0075  FAdd
+  0076  Action seat.stat.body
+  0078  LoadLocal 0
+  007a  LoadLocal 0
+  007c  SeatRead stat.body
+  007e  Push 1
+  0083  IToF
+  0084  FAdd
+  0085  Action seat.stat.body
+  0087  LoadLocal 0
+  0089  SeatRead index
+  008b  Push 1
+  0090  IEq
+  0091  JumpIfZero 00ba
+  0096  LoadLocal 0
+  0098  Push 1120272384 (0x42c60000, real 99)
+  009d  Action seat.stat.drag
+  009f  LoadLocal 0
+  00a1  Push 1091567616 (0x41100000, real 9)
+  00a6  Action seat.stat.boost_length
+  00a8  LoadLocal 0
+  00aa  Push 1148846080 (0x447a0000, real 1000)
+  00af  Action seat.stat.boost_strength
+  00b1  LoadLocal 0
+  00b3  Push 0
+  00b8  Action seat.stat.weight
+  00ba  Param 0 (bad)
+  00bc  Dup
+  00bd  JumpIfZero 00cd
+  00c2  Pop
+  00c3  LoadLocal 0
+  00c5  SeatRead index
+  00c7  Push 2
+  00cc  IEq
+  00cd  JumpIfZero 00e1
+  00d2  LoadLocal 0
+  00d4  Push 1065353216 (0x3f800000, real 1)
+  00d9  Push 0
+  00de  FDiv
+  00df  Action seat.stat.accel
+  00e1  End
+  ; rule 1 while
+  00e2  RaceRead started
+  00e4  Ret
+  ; rule 1 body
+  00e5  Push 0
+  00ea  StoreLocal 0
+  00ec  LoadLocal 0
+  00ee  RaceRead seats
+  00f0  ILt
+  00f1  JumpIfZero 0134
+  00f6  LoadLocal 0
+  00f8  SeatRead stat.weight
+  00fa  LoadLocal 0
+  00fc  SeatRead stat.accel
+  00fe  FAdd
+  00ff  LoadLocal 0
+  0101  SeatRead stat.max_speed
+  0103  FAdd
+  0104  LoadLocal 0
+  0106  SeatRead stat.grip
+  0108  FAdd
+  0109  LoadLocal 0
+  010b  SeatRead stat.turn
+  010d  FAdd
+  010e  LoadLocal 0
+  0110  SeatRead stat.strafe
+  0112  FAdd
+  0113  LoadLocal 0
+  0115  SeatRead stat.drag
+  0117  FAdd
+  0118  LoadLocal 0
+  011a  SeatRead stat.boost_strength
+  011c  FAdd
+  011d  LoadLocal 0
+  011f  SeatRead stat.boost_length
+  0121  FAdd
+  0122  StoreGlobal 0
+  0125  LoadLocal 0
+  0127  Push 1
+  012c  IAdd
+  012d  StoreLocal 0
+  012f  Jump 00ec
+  0134  End
+  ; rule 2 body
+  0135  Push 0
+  013a  StoreLocal 0
+  013c  LoadLocal 0
+  013e  RaceRead seats
+  0140  ILt
+  0141  JumpIfZero 0165
+  0146  LoadLocal 0
+  0148  Param 1 (hurt)
+  014a  IToF
+  014b  Action damage
+  014d  LoadLocal 0
+  014f  Push 1065353216 (0x3f800000, real 1)
+  0154  Action damage
+  0156  LoadLocal 0
+  0158  Push 1
+  015d  IAdd
+  015e  StoreLocal 0
+  0160  Jump 013c
+  0165  End
+  ; rule 3 body
+  0166  Push 0
+  016b  StoreLocal 0
+  016d  LoadLocal 0
+  016f  RaceRead seats
+  0171  ILt
+  0172  JumpIfZero 01db
+  0177  LoadLocal 0
+  0179  LoadSeatVar 0
+  017c  Push 0
+  0181  IGt
+  0182  JumpIfZero 01cc
+  0187  LoadLocal 0
+  0189  Push 0
+  018e  StoreLocal 1
+  0190  Push 0
+  0195  StoreLocal 2
+  0197  LoadLocal 2
+  0199  RaceRead seats
+  019b  ILt
+  019c  JumpIfZero 01c8
+  01a1  LoadLocal 2
+  01a3  LoadSeatVar 0
+  01a6  Push 0
+  01ab  IEq
+  01ac  JumpIfZero 01b9
+  01b1  LoadLocal 1
+  01b3  LoadLocal 2
+  01b5  SeatBit
+  01b6  BitOr
+  01b7  StoreLocal 1
+  01b9  LoadLocal 2
+  01bb  Push 1
+  01c0  IAdd
+  01c1  StoreLocal 2
+  01c3  Jump 0197
+  01c8  LoadLocal 1
+  01ca  Action map_hide
+  01cc  LoadLocal 0
+  01ce  Push 1
+  01d3  IAdd
+  01d4  StoreLocal 0
+  01d6  Jump 016d
+  01db  End
+SRC  1722 bytes

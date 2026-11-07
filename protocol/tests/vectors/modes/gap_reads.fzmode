@@ -1,0 +1,19 @@
+// The gap reads, at least once: a vector for the compiler's tests (protocol/README.md), not a mode to race. Race
+// state: the same on every game.
+
+mode "Gap reads" {
+  api 1;
+  about "The gap reads.";
+}
+
+seat int far;
+
+rule "Gaps" {
+  event every step;
+  while race.started;
+  do {
+    for each seat where seat.racing {
+      if (seat.gap_ahead > 300 or seat.gap_behind > 300 or seat.gap_leader > 3000) { seat.far = seat.far + 1; }
+    }
+  }
+}

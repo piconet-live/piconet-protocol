@@ -1,0 +1,13 @@
+// boost s off, race.course, and lives from a parameter.
+
+mode "Held words" {
+  api 1;
+  about "The words that hold for the race.";
+}
+
+param spare "Lives" number 1..9 default 2;
+lives spare;
+global int here;
+
+rule "Course" { event countdown; do { here = race.course; show_number first(seats), here; } }
+rule "No boost" { event destroyed(s); do { boost s off; } }

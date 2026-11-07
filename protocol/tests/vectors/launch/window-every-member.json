@@ -9,11 +9,17 @@
     "rgba": "/wAA/wECA4A="
   },
   "showFrameRate": true,
+  "renderer": "aurora",
+  "auroraSize": "native",
+  "auroraEdges": 4,
+  "auroraTextures": 16,
+  "auroraColourblind": "deuteranopia",
+  "auroraHighRefresh": 240,
+  "auroraRayTracing": true,
   "rumble": false,
   "present": "field",
   "verticalSync": true,
   "fullScreen": "exclusive",
-  "refreshRate": "240",
   "taskbar": {
     "id": "Piconet.Launcher",
     "program": "C:\\Piconet\\Launcher.App.exe",
