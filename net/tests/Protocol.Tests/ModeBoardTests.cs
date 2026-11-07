@@ -139,7 +139,7 @@ public sealed class ModeBoardTests
         Assert.True(ghosts.Succeeded, string.Join(" ", ghosts.Errors));
         Assert.False(ModeTerms.Of(ghosts.Mode!).Solo);
         Assert.Contains(ghosts.Mode!.Setups, s => s.Id == ModeSetup.StartGap && s.Arguments[0] == new ModeSetupValue(false, 0));
-        Assert.Equal(3, ModeTerms.Of(ghosts.Mode!).Laps(1));
+        Assert.Equal(6, ModeTerms.Of(ghosts.Mode!).Laps(1));   // Quick Play's laps by course: Twist Road 6
         Assert.Equal(7, ModeTerms.Of(ghosts.Mode!, [7]).Laps(1));
         var death = ModeCompiler.Compile(File.ReadAllText(Path.Combine(folder, "death_race.fzmode")));
         Assert.True(death.Succeeded, string.Join(" ", death.Errors));

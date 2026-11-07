@@ -3,7 +3,7 @@
 # Which modes, their weights and the card counts: the courses are each mode file's own `courses` word.
 
 cards = 5                  # course cards a vote shows, plus Random
-spicy_cards = 1            # exactly one spicy card a vote
+spicy_cards = 2            # two spicy cards a vote, each another spicy option on another course
 random_spicy_chance = 0.15 # Random may land on a spicy option, biased toward normal [inf: to tune]
 leaderboards = false       # Quick Play never has leaderboards
 show_laps = true           # cards may show the lap count; never "normally N"
@@ -18,5 +18,9 @@ mode = "competitive.fzmode"
 
 [[spicy]]
 mode = "knockout.fzmode"
+weight = 1
+
+[[spicy]]
+mode = "ghost_race.fzmode"
 weight = 1
 

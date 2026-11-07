@@ -29,6 +29,8 @@ machine_setting setting_low..setting_high;   // Quick Play: top speed, fixed
 stats pack;       // a pack of the server's by name, stock (the disc's own) or file (the host's own pack file)
 lives lives;      // every wreck (a hit, the energy, a fall, a breakdown) costs one, as in Death Race; the last is final
 
+// The same table as ghost_race.fzmode's (keep the two alike; QuickPlayRotationTests checks they give the same laps on
+// every course).
 laps by course {
   "Mute City: Sonic Oval": 8;
   "Aeropolis: Screw Drive": 6;
