@@ -10,7 +10,7 @@ namespace Protocol.Tests;
 /// change to one fails here until the guide follows.</summary>
 public sealed class WritingModesGuideTests
 {
-    private static readonly string Guide = File.ReadAllText(RepositoryFolder.Protocol("WRITING-MODES.md")).ReplaceLineEndings("\n");
+    private static readonly string Guide = File.ReadAllText(RepositoryFolder.Protocol("MODE-REFERENCE.md")).ReplaceLineEndings("\n");
 
     /// <summary>The guide's code blocks of one kind (the word after the opening fence, exactly), each with the line it
     /// starts on.</summary>

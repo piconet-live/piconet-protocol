@@ -6,7 +6,7 @@ of them spicy (two different spicy options, each on its own course), and Random,
 `QuickPlayRotation` reads the folder and compiles each mode with the one compiler (`ModeCompiler`); the service reads
 it at its start (a file that does not load stops the start), and the launcher's stand-in service races the same.
 
-How to write a mode file of your own, with the official files here annotated: [WRITING-MODES.md](../../WRITING-MODES.md).
+Every word a mode file can use: [MODE-REFERENCE.md](../../MODE-REFERENCE.md).
 
 | File | What it is |
 |---|---|
