@@ -1,0 +1,59 @@
+// Overdrive (the game modes' design 9.2, the owner's of 29 October): a spicy Quick Play option. A rolling start at
+// 1000 km/h, then the speed is locked and rises 10 km/h every 10 s, a little more every step. The accelerator, the
+// brake and boost do nothing. Racers are out the normal way (their energy, off the course); the last one in wins.
+//
+// The speed (vocabulary 4.3): 1000 km/h at GO, 1060 at 1:00, 1180 at 3:00, 1360 at 6:00, 1600 at 10:00; the word
+// caps at 9000. No clock: the race goes on until one machine is left (design 9.2).
+
+mode "Overdrive" {
+  api 1;
+  badge "OVERDRIVE";
+  about "Speed locked and rising. Last one alive wins.";
+}
+
+param rise "Speed added every 10 s" number 5..50 step 5 default 10;
+
+cpus on;
+stats "GX Unleashed";          // Quick Play's pack, mines and machine setting (a word left out is the game's own)
+mine_regen on;
+machine_setting 100;
+laps unlimited;
+pedals locked accel 1.0;       // at least 0.5, so side attacks still work
+boost off;
+rolling_start 1000 km/h;       // as Knockout: speed at the gate, CPU steers through the countdown, control at GO
+race_waits everyone;           // the race goes on until the mode ends it, not until the last player is out
+results_heading "OVERDRIVE";   // the times list: the winner first, then the racers out, last out first, each at its time
+
+global int outs;
+global int hold_until;         // a player's win: the race ends when the game's FINISH! and place have had their 8 s
+seat   int out_order;          // 0: still in; 1: first out
+
+rule "Lock the speed" {
+  event each seat;
+  while race.started and seat.racing;
+  do { seat.speed = min(9000.0, 1000.0 + rise * race.steps / 600.0); }   // smooth: a little more every step
+}
+
+rule "Out" {
+  event out(s);
+  do { outs += 1; s.out_order = outs; }
+}
+
+rule "Last alive" {
+  event every step;
+  // a race of one ends when that racer is out
+  when race.started and (count(seats where racing) == 0 or (race.seats > 1 and count(seats where racing) <= 1));
+  do {
+    // a player still in has won: the same FINISH! and place as a line crossed, then the results
+    for each seat where seat.racing and seat.is_human {
+      seat.place = 1;
+      finish_seat seat;
+      hold_until = race.steps + 8s;
+    }
+    if (hold_until > race.steps) { wait hold_until - race.steps; }
+    // the last one in first (end_race places a CPU still racing), then the racers out, last out first
+    int n = 1 + count(seats where seat.out_order == 0);
+    for each seat where seat.out_order > 0 by seat.out_order desc { seat.place = n; n += 1; }
+    end_race;
+  }
+}
