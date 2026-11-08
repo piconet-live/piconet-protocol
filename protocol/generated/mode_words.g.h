@@ -271,7 +271,8 @@ enum Setup : std::uint8_t
   SETUP_MACHINEBYSEAT = 61,  // machine by seat
   SETUP_MACHINEBYTEAM = 62,  // machine by team
   SETUP_MACHINEBYPLACE = 63,  // machine by place
-  SETUP_COUNT = 64,
+  SETUP_HUDLAYOUTAX = 64,  // hud_layout ax
+  SETUP_COUNT = 65,
 };
 
 // a read of a seat (OP_SEATREAD)
@@ -471,7 +472,10 @@ enum Action : std::uint8_t
   ACTION_SHOWOBJECTS = 77,  // show_objects
   ACTION_SHOWOBJECTSOFF = 78,  // show_objects off
   ACTION_SEATSTATBOOSTENERGY = 79,  // seat.stat.boost_energy
-  ACTION_COUNT = 80,
+  ACTION_HUDMOVE = 80,  // hud_move
+  ACTION_MAPCHAR = 81,  // map_char
+  ACTION_MAPCHAROFF = 82,  // map_char off
+  ACTION_COUNT = 83,
 };
 
 // the choice `part`: a part of the game's own race HUD: TIMER the timed mode's clock (clock_limit's time, R+0xA4: seconds, 0 to 999); DISTANCE the metres to the finish (the seat's own; show_distance gives a mode's); DIGIT the story's big digit (danger_zone's seconds, 3 2 1); WARNING, SUCCESS, FAILED, TIME_OVER, SPEED_GAUGE, OBJECTS the story's pictures, off until shown (SUCCESS MISSION CLEAR!, FAILED MISSION FAILED, TIME_OVER "Time is up...": fixed pictures with no value; OBJECTS the course objects' count n/of, show_objects gives a mode's); LEADER_GAP the game's own time gap to the leader, off until shown: at each lap line, for a second, the seat's time behind the leader, and the leader's own lead when second place crosses; GHOST_GAP Time Attack's live gap, off until shown: signed minutes, seconds and thousandths at the right edge (617, 270), all race, against the seat furthest ahead, red while it is ahead, blue while you are; RANK, LAPS, SPEED, ENERGY, LAP_TIMES, RACE_TIME, FACES the standard HUD (the mask .data 0x3D544; FACES the board fn_1_D27B8), on until hidden
@@ -602,6 +606,9 @@ constexpr int ActionArguments(std::uint8_t action)
     case ACTION_SHOWOBJECTS: return 3;
     case ACTION_SHOWOBJECTSOFF: return 1;
     case ACTION_SEATSTATBOOSTENERGY: return 2;
+    case ACTION_HUDMOVE: return 4;
+    case ACTION_MAPCHAR: return 2;
+    case ACTION_MAPCHAROFF: return 1;
     default: return -1;
   }
 }

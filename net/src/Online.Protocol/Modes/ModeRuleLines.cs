@@ -54,6 +54,7 @@ public static class ModeRuleLines
         ModeSetup.PointsTable => "Points by place",
         ModeSetup.TimeGaps => "Time gaps to other racers",
         ModeSetup.HudClean => "No CHECK sign or name tags",
+        ModeSetup.HudLayoutAx => "AX HUD layout",
         _ => null,
     };
 

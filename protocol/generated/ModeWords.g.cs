@@ -287,6 +287,8 @@ public enum ModeSetup : byte
     MachineByTeam = 62,
     /// <summary><c>machine by place</c></summary>
     MachineByPlace = 63,
+    /// <summary><c>hud_layout ax</c></summary>
+    HudLayoutAx = 64,
 }
 
 /// <summary>A read of a seat (protocol/modes.toml).</summary>
@@ -666,6 +668,12 @@ public enum ModeAction : byte
     ShowObjectsOff = 78,
     /// <summary><c>seat.stat.boost_energy</c></summary>
     SeatStatBoostEnergy = 79,
+    /// <summary><c>hud_move</c></summary>
+    HudMove = 80,
+    /// <summary><c>map_char</c></summary>
+    MapChar = 81,
+    /// <summary><c>map_char off</c></summary>
+    MapCharOff = 82,
 }
 
 /// <summary>The vocabulary of one api, by the names a mode file writes (protocol/modes.toml).</summary>
@@ -880,6 +888,7 @@ public static partial class ModeWords
         ("machine by seat", ModeSetup.MachineBySeat, [], true, "list"),
         ("machine by team", ModeSetup.MachineByTeam, [], true, "list"),
         ("machine by place", ModeSetup.MachineByPlace, [], true, "list"),
+        ("hud_layout ax", ModeSetup.HudLayoutAx, [], false, ""),
     ];
 
     /// <summary>The reads of a seat (<c>seat.NAME</c>): name, id, type.</summary>
@@ -1077,6 +1086,9 @@ public static partial class ModeWords
         ("show_objects", ModeAction.ShowObjects, [ModeType.Seat, ModeType.Int, ModeType.Int]),
         ("show_objects off", ModeAction.ShowObjectsOff, [ModeType.Seat]),
         ("seat.stat.boost_energy", ModeAction.SeatStatBoostEnergy, [ModeType.Seat, ModeType.Real]),
+        ("hud_move", ModeAction.HudMove, [ModeType.Seat, ModeType.Int, ModeType.Real, ModeType.Real]),
+        ("map_char", ModeAction.MapChar, [ModeType.Seat, ModeType.Int]),
+        ("map_char off", ModeAction.MapCharOff, [ModeType.Seat]),
     ];
 
     /// <summary>The actions that need a running step, which game_start refuses.</summary>
@@ -1116,6 +1128,7 @@ public static partial class ModeWords
             [(ModeAction.StockBanner, 1)] = "banner",
             [(ModeAction.SeatLook, 1)] = "look",
             [(ModeAction.SeatOwnLook, 1)] = "look",
+            [(ModeAction.HudMove, 1)] = "part",
         };
 
     /// <summary>The actions written with a word between their first two arguments in place of a comma.</summary>

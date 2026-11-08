@@ -71,3 +71,21 @@ rule "The story parts' values" {
     show_objects s off;
   }
 }
+
+rule "A part moved" {
+  event lap(s);
+  do {
+    hud_move s, RANK, -296, 350;
+    hud_move s, RANK, 0, 0;
+  }
+}
+
+rule "Map characters" {
+  event lap(s);
+  do {
+    map_char s, "K";
+    map_char s, "♛";
+    map_char s, CROWN;
+    map_char s off;
+  }
+}

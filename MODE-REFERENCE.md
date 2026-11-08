@@ -199,6 +199,7 @@ game counts it, 100 a full machine.
 | `results_title "KNOCKOUT";` | The points page's title in place of VS TOTAL RANKING. A mode with a title ends on the points page, every row 0 without `award` | A to Z and the space, 1 to 23 characters, no space at either end |
 | `results_heading "OVERDRIVE";` | Heads the times list of a mode with no points page. Refused beside `award`, `results_title` or `points_table`. Left out: RESULTS | as `results_title` |
 | `hud clean;` | Nothing over the race but the HUD's own parts: no CHECK sign and no name tags, a player's or a `tag`. For footage | |
+| `hud_layout ax;` | The race HUD in F-Zero AX's layout: the position at the bottom left, the faces board smaller to leave it room, TIMER at the top. The rest stays where GX puts it; the spare-machine number shares the bottom left, so move it or the position with `hud_move` | |
 
 A race ends by laps and `finish_limit`, at `clock_limit`, at `end_race`, or when the last player is finished or out
 (unless `race_waits everyone`). The results are the times list, then the points page when the mode awards points or
@@ -474,6 +475,7 @@ text where it likes. They never change the race.
 | `show_distance s off;` | DISTANCE reads the metres to the finish again | |
 | `show_objects s, n, of;` | The OBJECTS part reads n/of | 0 to 99 each |
 | `show_objects s off;` | OBJECTS reads the course's own count again | |
+| `hud_move s, PART, dx, dy;` | The seat's player sees the part moved dx right and dy down, in the 640 x 480 screen's units (0, 0: back in place). LEADER_GAP moves the banners with it | -640 to 640 each |
 
 ### Machine and map
 
@@ -486,6 +488,8 @@ text where it likes. They never change the race.
 | `seat.ghost_sound = on;` | A ghost keeps its engine sound; off by default, as in Time Attack | bool |
 | `map_hide s from SET;` | s's dot is left off the course maps of the seats in SET; an empty set shows it to everyone | seats |
 | `map_mark s, 0xRRGGBB;` | s's dot's colour on every course map; -1 gives it its machine's colour | colour |
+| `map_char s, "K";` `map_char s, CROWN;` | The seat's dot on every course map carries this character, or the shape CROWN, as large as the big dots, in the dot's colour; a character the game's fonts lack shows the plain dot | one character, or CROWN |
+| `map_char s off;` | The dot shows no character again | |
 | `tag s, "TEXT";` | TEXT floats over the seat's machine in place of its name, for everyone else, CPUs too. Written in quotes, never a variable | A to Z, 0 to 9, space, `.` and `-`; 1 to 10 characters, no space at either end; at most 8 texts a mode |
 | `tag s off;` | The tag goes; the seat's own name tag, if it has one, comes back | |
 
