@@ -222,14 +222,14 @@ seat"); Quick Play: off, one pack for all (mixed packs only in lobbies)."""
 [[rule]]
 name = "vote-seconds"
 setup = "flow"
-label = "Course vote"
+label = "Vote"
 cs = "VoteSeconds"
 reach = "together"
 kind = "text"
 unit = "s"
 least = 5
 most = 120
-doc = "The course vote's length, in seconds."
+doc = "The vote's length, in seconds (the lobby's step named Vote)."
 
 [[rule]]
 name = "choose-seconds"
