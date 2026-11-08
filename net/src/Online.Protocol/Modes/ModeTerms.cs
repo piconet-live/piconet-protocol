@@ -60,6 +60,10 @@ public sealed record ModeTerms
     /// machines too: the list holds the stock machines.</summary>
     public bool CustomsOff { get; init; }
 
+    /// <summary>How the mode sets each racer's machine (<c>machine</c>, <c>machine random</c>, <c>machine by
+    /// seat</c>, ...: <see cref="ModeMachines.Of"/>); null: each racer's own choice.</summary>
+    public ModeMachineRule? MachineRule { get; init; }
+
     /// <summary>The range a racer's own setting is brought into.</summary>
     public SettingRange? Setting { get; init; }
 
@@ -134,6 +138,12 @@ public sealed record ModeTerms
                 ModeSetup.MachinesAll => terms with { Machines = [] },
                 ModeSetup.Machines => terms with { Machines = [.. a.Select(Cell).Order()] },
                 ModeSetup.Customs => terms with { CustomsOff = Cell(a[0]) == 0 },
+                ModeSetup.Machine => terms with { MachineRule = new(ModeMachineWay.Fixed, [Cell(a[0])]) },
+                ModeSetup.MachineRandom => terms with { MachineRule = new(ModeMachineWay.Random, []) },
+                ModeSetup.MachineRandomEach => terms with { MachineRule = new(ModeMachineWay.RandomEach, []) },
+                ModeSetup.MachineBySeat => terms with { MachineRule = new(ModeMachineWay.BySeat, [.. a.Select(Cell)]) },
+                ModeSetup.MachineByTeam => terms with { MachineRule = new(ModeMachineWay.ByTeam, [.. a.Select(Cell)]) },
+                ModeSetup.MachineByPlace => terms with { MachineRule = new(ModeMachineWay.ByPlace, [.. a.Select(Cell)]) },
                 ModeSetup.MachineSetting => terms with { Setting = new SettingRange(Cell(a[0]), Cell(a[1])) },
                 ModeSetup.Stats when text is null && a is [{ FromParam: true } chosen] =>
                     Chosen(terms, mode.Params[chosen.Value].Choices[Cell(chosen)]) with { PackParam = chosen.Value },

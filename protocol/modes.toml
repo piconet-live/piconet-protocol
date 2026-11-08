@@ -2139,6 +2139,55 @@ where = """start_gap with the gap the lap length over the race's machines ([.bss
 image at the grid): the window's flag SPREAD with the gap word 0. Not with start_gap"""
 doc = "the machines start spread evenly round the whole lap behind the line, in grid order, across three lanes"
 
+# --- the mode sets each racer's machine (the owner, 2026-11-08: "I need to set a seat's machine"). The coordinator's
+# alone: it decides every seat's machine when the machine choice opens (a draw from its own generator, once) and writes it
+# in the match start's setup.seats[].machine, so every game, the replay's header, the lobby and the results name the
+# machine raced, and a game needs nothing new (a game of 0.6.0 races such a mode as it is). A racer whose machine the mode
+# sets is offered that machine alone in the choice; a choice of another, or of a custom machine, is refused. A set machine
+# is the stock one, whatever `customs` says; `own` is the racer's own choice (a custom one too, unless `customs off`,
+# within `machines`), and for a CPU its usual draw. `random` draws from the machines `machines` allows (all 41 left out).
+# A list's entries: a machine's name in quotes, own or random; a seat, team or place past the list's end is own.
+
+[[setup]]
+name = "machine"
+id = 58
+lobby = true
+form = "text"
+where = "the coordinator: every seat, the CPUs' too, races this machine (stock)"
+
+[[setup]]
+name = "machine random"
+id = 59
+lobby = true
+where = "the coordinator: one machine drawn for the race, from the machines `machines` allows, and every seat, the CPUs' too, races it"
+
+[[setup]]
+name = "machine random each"
+id = 60
+lobby = true
+where = "the coordinator: every seat, the CPUs' too, its own draw from the machines `machines` allows"
+
+[[setup]]
+name = "machine by seat"
+id = 61
+lobby = true
+form = "list"
+where = "the coordinator: the list's first entry is seat 0's machine (the seat as the match start numbers it), the next seat 1's, and so on; at most 30"
+
+[[setup]]
+name = "machine by team"
+id = 62
+lobby = true
+form = "list"
+where = "the coordinator: the list's first entry is Team 1's machine, the next Team 2's, and so on; needs `teams`, and at most its most entries"
+
+[[setup]]
+name = "machine by place"
+id = 63
+lobby = true
+form = "list"
+where = "the coordinator: by the lobby's last race, its winner the list's first entry, second place the next, and so on; a racer it did not rank (its first race, a racer who joined since, a CPU) is own; at most 30"
+
 [[action]]
 name = "finish_seat"
 needs_step = true

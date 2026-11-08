@@ -265,7 +265,13 @@ enum Setup : std::uint8_t
   SETUP_DAMAGECAP = 55,  // damage_cap
   SETUP_STARTGAP = 56,  // start_gap
   SETUP_STARTGAPEVEN = 57,  // start_gap even
-  SETUP_COUNT = 58,
+  SETUP_MACHINE = 58,  // machine
+  SETUP_MACHINERANDOM = 59,  // machine random
+  SETUP_MACHINERANDOMEACH = 60,  // machine random each
+  SETUP_MACHINEBYSEAT = 61,  // machine by seat
+  SETUP_MACHINEBYTEAM = 62,  // machine by team
+  SETUP_MACHINEBYPLACE = 63,  // machine by place
+  SETUP_COUNT = 64,
 };
 
 // a read of a seat (OP_SEATREAD)

@@ -142,6 +142,12 @@ game counts it, 100 a full machine.
 | `machines all;` | Every machine, as leaving it out | |
 | `machines ["Blue Falcon", "Golden Fox"];` | The machines racers may choose and CPUs drive | machine names |
 | `customs on;` `customs off;` | `off`: no custom machines; a racer who chose one races their stock machine. Left out: allowed | on or off |
+| `machine "Blue Falcon";` | Every racer, CPUs too, races this machine. A machine a mode sets is the stock one (a racer's custom machine is not raced), and the machine choice offers it alone; the server refuses another. Not with another `machine` form | a machine name |
+| `machine random;` | One machine drawn for the race from the machines `machines` allows (left out: all 41); every racer, CPUs too, races it | |
+| `machine random each;` | Every racer, CPUs too, races a machine of their own drawn from the machines `machines` allows | |
+| `machine by seat ["Blue Falcon", own, random];` | Seat 0 races the list's first entry, seat 1 the next, and so on. `own` is the racer's own choice (a custom machine too, unless `customs off`; a CPU's usual machine), `random` a draw from what `machines` allows. A seat past the list's end is `own` | at most 30 entries |
+| `machine by team ["Blue Falcon", "Fire Stingray"];` | Team 1 races the first entry, Team 2 the next, and so on; entries as `machine by seat`. Needs `teams` | at most `teams`' most entries |
+| `machine by place ["Black Bull", random, own];` | By the lobby's last race: its winner races the first entry, second place the next, and so on; entries as `machine by seat`. A racer it did not rank (the lobby's first race, a racer who joined since, a CPU) is `own` | at most 30 entries |
 | `machine_setting least..most;` `machine_setting n;` | Each racer's machine setting is brought into this range. Left out: each racer's own | 0 to 100 |
 | `stats "GX Unleashed";` | The race's stat pack, by its name; a server without it refuses the mode. With a choice parameter, each choice is a pack's name, `stock`, or `file` (the host's own `.fzstats` file, which the launcher then asks for) | a pack name, at most 64 characters |
 | `stats stock;` | The disc's own stats, as leaving it out | |

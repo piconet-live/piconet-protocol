@@ -275,6 +275,18 @@ public enum ModeSetup : byte
     StartGap = 56,
     /// <summary><c>start_gap even</c></summary>
     StartGapEven = 57,
+    /// <summary><c>machine</c></summary>
+    Machine = 58,
+    /// <summary><c>machine random</c></summary>
+    MachineRandom = 59,
+    /// <summary><c>machine random each</c></summary>
+    MachineRandomEach = 60,
+    /// <summary><c>machine by seat</c></summary>
+    MachineBySeat = 61,
+    /// <summary><c>machine by team</c></summary>
+    MachineByTeam = 62,
+    /// <summary><c>machine by place</c></summary>
+    MachineByPlace = 63,
 }
 
 /// <summary>A read of a seat (protocol/modes.toml).</summary>
@@ -862,6 +874,12 @@ public static partial class ModeWords
         ("damage_cap", ModeSetup.DamageCap, [new ModeArgument("", ModeType.Bool, 0, 1, null)], false, ""),
         ("start_gap", ModeSetup.StartGap, [new ModeArgument("", ModeType.Real, 0.0f, 10000.0f, null)], false, ""),
         ("start_gap even", ModeSetup.StartGapEven, [], false, ""),
+        ("machine", ModeSetup.Machine, [], true, "text"),
+        ("machine random", ModeSetup.MachineRandom, [], true, ""),
+        ("machine random each", ModeSetup.MachineRandomEach, [], true, ""),
+        ("machine by seat", ModeSetup.MachineBySeat, [], true, "list"),
+        ("machine by team", ModeSetup.MachineByTeam, [], true, "list"),
+        ("machine by place", ModeSetup.MachineByPlace, [], true, "list"),
     ];
 
     /// <summary>The reads of a seat (<c>seat.NAME</c>): name, id, type.</summary>

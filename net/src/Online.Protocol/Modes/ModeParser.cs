@@ -661,11 +661,20 @@ internal sealed class ModeParser
     {
         Expect("[");
         var rows = new List<ModeSetupRow>();
+        // (the machine by seat, team or place lists take own and random too, as bare names the compiler reads)
+        var entries = word.StartsWith("machine by ", StringComparison.Ordinal);
         do
         {
+            if (entries && Current.Kind == ModeTokenKind.Name)
+            {
+                var name = Take();
+                rows.Add(new ModeSetupRow(name.Line, name.Text, new ModeName(name.Line, name.Text)));
+                continue;
+            }
             if (Current.Kind != ModeTokenKind.Text)
             {
-                throw Error($"{word} takes names in quotes, not {Describe(Current)}");
+                throw Error(entries ? $"{word} takes machines' names in quotes, own or random, not {Describe(Current)}"
+                    : $"{word} takes names in quotes, not {Describe(Current)}");
             }
             rows.Add(new ModeSetupRow(Current.Line, Take().Text, null));
         }
