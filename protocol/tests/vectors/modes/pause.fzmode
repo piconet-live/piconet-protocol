@@ -40,6 +40,6 @@ rule "A choice at lap 2" {
 
 rule "Hint" {
   event every step;
-  when not race.paused and race.paused_steps == 0 and race.steps > 10s;
+  when not race.paused and race.paused_steps == 0 and race.steps > 20s;
   do { say "Boost costs energy: refill it in the pit."; }
 }
