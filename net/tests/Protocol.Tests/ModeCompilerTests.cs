@@ -55,6 +55,7 @@ public sealed class ModeCompilerTests
     [InlineData("gap_spread")]
     [InlineData("clean")]
     [InlineData("pause")]
+    [InlineData("pause_vote")]
     [InlineData("death_race")]
     [InlineData("same_machine")]
     public void AVectorCompilesToItsPackage(string name)

@@ -1,0 +1,125 @@
+FZMP format 1 api 1, 2634 bytes, hash fe896ce08b891e7e531a75f299882c93775236796b39ff2675a42583828bd89f
+HEAD name "Lap Vote" badge "" about "Between laps, pick more top speed or more boost."
+PARM 0
+SETP 4
+  laps 3
+  cpus on
+  say_texts "Pick one: stick left for 10% more top speed, stick right for 20% more boost."
+  pauses
+VARS globals 1, seat words 1
+  global 0 = 0
+  seat 0 = 0
+RULE 3
+  0 "Vote between laps" event lap, locals 1, when 0000, while none, body 002b
+  1 "Pick" event each seat, locals 1, when none, while 0051, body 006e
+  2 "Apply" event each seat, locals 1, when 00a1, while none, body 00c5
+CODE 268 bytes
+  ; rule 0 when
+  0000  LoadLocal 0
+  0002  SeatRead lap
+  0004  Push 1
+  0009  IGe
+  000a  Dup
+  000b  JumpIfZero 001b
+  0010  Pop
+  0011  LoadLocal 0
+  0013  SeatRead lap
+  0015  Push 2
+  001a  ILe
+  001b  Dup
+  001c  JumpIfZero 002a
+  0021  Pop
+  0022  LoadGlobal 0
+  0025  LoadLocal 0
+  0027  SeatRead lap
+  0029  ILt
+  002a  Ret
+  ; rule 0 body
+  002b  LoadLocal 0
+  002d  SeatRead lap
+  002f  StoreGlobal 0
+  0032  Action pause
+  0034  Push 1
+  0039  Action say
+  003b  Push 420
+  0040  Wait locals 1
+  0047  Action say off
+  0049  Push 60
+  004e  Action resume after
+  0050  End
+  ; rule 1 while
+  0051  RaceRead paused
+  0053  Dup
+  0054  JumpIfZero 0062
+  0059  Pop
+  005a  RaceRead paused_steps
+  005c  Push 390
+  0061  ILt
+  0062  Dup
+  0063  JumpIfZero 006d
+  0068  Pop
+  0069  LoadLocal 0
+  006b  SeatRead is_human
+  006d  Ret
+  ; rule 1 body
+  006e  LoadLocal 0
+  0070  SeatRead pad.steer
+  0072  Push -1090519040 (0xbf000000, real -0.5)
+  0077  FLt
+  0078  JumpIfZero 0087
+  007d  LoadLocal 0
+  007f  Push 1
+  0084  StoreSeatVar 0
+  0087  LoadLocal 0
+  0089  SeatRead pad.steer
+  008b  Push 1056964608 (0x3f000000, real 0.5)
+  0090  FGt
+  0091  JumpIfZero 00a0
+  0096  LoadLocal 0
+  0098  Push 2
+  009d  StoreSeatVar 0
+  00a0  End
+  ; rule 2 when
+  00a1  RaceRead paused
+  00a3  Dup
+  00a4  JumpIfZero 00b2
+  00a9  Pop
+  00aa  RaceRead paused_steps
+  00ac  Push 390
+  00b1  IGe
+  00b2  Dup
+  00b3  JumpIfZero 00c4
+  00b8  Pop
+  00b9  LoadLocal 0
+  00bb  LoadSeatVar 0
+  00be  Push 0
+  00c3  IGt
+  00c4  Ret
+  ; rule 2 body
+  00c5  LoadLocal 0
+  00c7  LoadSeatVar 0
+  00ca  Push 1
+  00cf  IEq
+  00d0  JumpIfZero 00e3
+  00d5  LoadLocal 0
+  00d7  LoadLocal 0
+  00d9  SeatRead stat.max_speed
+  00db  Push 1066192077 (0x3f8ccccd, real 1.1)
+  00e0  FMul
+  00e1  Action seat.stat.max_speed
+  00e3  LoadLocal 0
+  00e5  LoadSeatVar 0
+  00e8  Push 2
+  00ed  IEq
+  00ee  JumpIfZero 0101
+  00f3  LoadLocal 0
+  00f5  LoadLocal 0
+  00f7  SeatRead stat.boost_strength
+  00f9  Push 1067030938 (0x3f99999a, real 1.2)
+  00fe  FMul
+  00ff  Action seat.stat.boost_strength
+  0101  LoadLocal 0
+  0103  Push 0
+  0108  StoreSeatVar 0
+  010b  End
+SRC  1744 bytes
