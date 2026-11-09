@@ -40,10 +40,13 @@ public sealed class ModePauseWordsTests
     public void SaysTextsAreKeptOnceEachInUtf8()
     {
         var mode = Package(Head + Rule("say \"Hold A to accelerate.\"; say \"Café, 速い!\"; say \"Hold A to accelerate.\"; say off;"));
-        var word = Assert.Single(mode.Setups, s => s.Id == ModeSetup.SayTexts);
-        Assert.Equal(["Hold A to accelerate.", "Café, 速い!"], ModeSayTexts.Texts(word.Arguments));
-        Assert.All(word.Arguments, a => Assert.InRange(a.Value, 0, 255));
-        Assert.Contains("say_texts \"Hold A to accelerate.\" \"Café, 速い!\"", ModeDisassembler.List(mode.Write()), StringComparison.Ordinal);
+        // one word a text, in order, its UTF-8 bytes a value each
+        Assert.Equal(["Hold A to accelerate.", "Café, 速い!"], ModeSayTexts.Texts(mode.Setups));
+        Assert.Equal(2, mode.Setups.Count(s => s.Id == ModeSetup.SayTexts));
+        Assert.All(mode.Setups.Where(s => s.Id == ModeSetup.SayTexts).SelectMany(s => s.Arguments), a => Assert.InRange(a.Value, 1, 255));
+        var code = ModeDisassembler.List(mode.Write());
+        Assert.Contains("say_texts \"Hold A to accelerate.\"", code, StringComparison.Ordinal);
+        Assert.Contains("say_texts \"Café, 速い!\"", code, StringComparison.Ordinal);
     }
 
     [Theory]
@@ -63,6 +66,26 @@ public sealed class ModePauseWordsTests
         Assert.Contains("at most 160 bytes", Assert.Single(ModeCompiler.Compile(Head + Rule($"say \"{longest}b\";")).Errors), StringComparison.Ordinal);
         var many = string.Concat(Enumerable.Range(0, ModeWords.SayTexts + 1).Select(i => $"say \"Text {i}.\"; "));
         Assert.Contains("at most 32 different texts", Assert.Single(ModeCompiler.Compile(Head + Rule(many)).Errors), StringComparison.Ordinal);
+        // the most a mode holds: 32 texts of 160 bytes each, a word each, read back as written
+        var full = Enumerable.Range(0, ModeWords.SayTexts).Select(i => $"{i:D2}" + new string('é', (ModeWords.SayText - 2) / 2)).ToArray();
+        var mode = Package(Head + Rule(string.Concat(full.Select(t => $"say \"{t}\"; "))));
+        Assert.Equal(full, ModeSayTexts.Texts(mode.Setups));
+    }
+
+    [Fact]
+    public void APackagesSayTextsAreTheCompilersOrItIsRefused()
+    {
+        var mode = Package(Head + Rule("say \"One.\"; say \"Two.\";"));
+        byte[] With(ModeSetupWord more) => new ModePackage
+        {
+            Api = mode.Api, Name = mode.Name, Params = mode.Params, Setups = [.. mode.Setups, more], Globals = mode.Globals,
+            SeatWords = mode.SeatWords, TeamWords = mode.TeamWords, Rules = mode.Rules, Board = mode.Board, Code = mode.Code,
+            Source = mode.Source,
+        }.Write();
+        Assert.Equal(["One.", "Two.", "Three."], ModeSayTexts.Texts(ModePackage.Read(With(ModeSayTexts.Words(["Three."])[0])).Setups));
+        Assert.Throws<InvalidDataException>(() => ModePackage.Read(With(ModeSayTexts.Words(["One."])[0])));    // twice
+        Assert.Throws<InvalidDataException>(() => ModePackage.Read(With(new ModeSetupWord(ModeSetup.SayTexts, [new(false, 0x41), new(false, 10)]))));
+        Assert.Throws<InvalidDataException>(() => ModePackage.Read(With(new ModeSetupWord(ModeSetup.SayTexts, [new(false, 0xC3)]))));
     }
 
     [Theory]

@@ -1,8 +1,10 @@
-FZMP format 1 api 1, 2197 bytes, hash 675e414191087febbb3b7dc71f7f5d0178280107cda66461351a268893ac90ff
+FZMP format 1 api 1, 2191 bytes, hash 965c33ce94ed30162896c63452eb70a97440f74e315e8e3264fd19ba1eb60c2b
 HEAD name "Pause" badge "" about ""
 PARM 0
-SETP 2
-  say_texts "Hold A to accelerate. Press A to start." "Left: more speed. Right: more boost." "Boost costs energy: refill it in the pit."
+SETP 4
+  say_texts "Hold A to accelerate. Press A to start."
+  say_texts "Left: more speed. Right: more boost."
+  say_texts "Boost costs energy: refill it in the pit."
   pauses
 VARS globals 1, seat words 1
   global 0 = 0

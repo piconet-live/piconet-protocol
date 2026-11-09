@@ -2236,8 +2236,8 @@ where = "the coordinator: by the lobby's last race, its winner the list's first 
 name = "say_texts"
 id = 67
 form = "text"
-where = """the texts of the file's `say` words, which the compiler writes and a file never writes itself (in the package a UTF-8 byte a value, a 0 \
-between texts): the core shows the one `say` names over the picture (port/core/src/mode_say.cpp, the runner's overlay: the launcher's Saira, Segoe UI and \
+where = """the texts of the file's `say` words, which the compiler writes and a file never writes itself (in the package one word a text, in order, \
+its UTF-8 bytes a value each): the core shows the one `say` names over the picture (port/core/src/mode_say.cpp, the runner's overlay: the launcher's Saira, Segoe UI and \
 Yu Gothic for what Saira lacks)"""
 doc = "the texts `say` shows, the first being text 1"
 

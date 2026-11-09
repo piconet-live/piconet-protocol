@@ -152,7 +152,7 @@ public static class ModeCompiler
             }
             if (_emitter.SayTexts.Count > 0)
             {
-                _setups.Add(new ModeSetupWord(ModeSetup.SayTexts, ModeSayTexts.Cells(_emitter.SayTexts)));
+                _setups.AddRange(ModeSayTexts.Words(_emitter.SayTexts));
             }
             if (_emitter.Used.ContainsKey(ModeAction.Pause))
             {

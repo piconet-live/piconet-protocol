@@ -105,7 +105,7 @@ public static class ModeDisassembler
         }
         if (word.Id == ModeSetup.SayTexts)
         {
-            return table.Name + " " + string.Join(' ', ModeSayTexts.Texts(word.Arguments).Select(Quote));
+            return table.Name + " " + Quote(ModeSayTexts.Text(word.Arguments));
         }
         if (word.Id == ModeSetup.TagTexts)
         {

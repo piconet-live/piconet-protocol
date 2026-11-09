@@ -133,10 +133,11 @@ public static class ModeTagTexts
         new string([.. cells.Select(c => (char)c.Value)]).Split('\0');
 }
 
-/// <summary>The texts the <c>say</c> word shows, which the package carries in the setup word <c>say_texts</c>: a UTF-8
-/// byte a value, a 0 between texts; a <c>say</c> names one by its place, from 1. The runner draws them in the overlay's
-/// fonts (the launcher's Saira, and the system's Segoe UI and Yu Gothic for what it lacks), so any text of letters goes;
-/// a control character (a line break included: the panel breaks its lines itself) is refused.</summary>
+/// <summary>The texts the <c>say</c> word shows, which the package carries in the setup words <c>say_texts</c>: one word
+/// a text, in order, its UTF-8 bytes a value each (a word holds at most 255 values; a text is at most 160 bytes); a
+/// <c>say</c> names one by its place, from 1. The runner draws them in the overlay's fonts (the launcher's Saira, and
+/// the system's Segoe UI and Yu Gothic for what it lacks), so any text of letters goes; a control character (a line
+/// break included: the panel breaks its lines itself) is refused.</summary>
 public static class ModeSayTexts
 {
     /// <summary>Why a text cannot be shown; null: it can.</summary>
@@ -156,13 +157,17 @@ public static class ModeSayTexts
             : null;
     }
 
-    /// <summary>The texts as the word's arguments.</summary>
-    public static List<ModeSetupValue> Cells(IEnumerable<string> texts) =>
-        [.. Encoding.UTF8.GetBytes(string.Join('\0', texts)).Select(b => new ModeSetupValue(false, b))];
+    /// <summary>The texts as their words, one a text.</summary>
+    public static List<ModeSetupWord> Words(IEnumerable<string> texts) =>
+        [.. texts.Select(t => new ModeSetupWord(ModeSetup.SayTexts, [.. Encoding.UTF8.GetBytes(t).Select(b => new ModeSetupValue(false, b))]))];
 
-    /// <summary>The word's arguments as its texts.</summary>
-    public static string[] Texts(IEnumerable<ModeSetupValue> cells) =>
-        Encoding.UTF8.GetString([.. cells.Select(c => (byte)c.Value)]).Split('\0');
+    /// <summary>One word's arguments as its text.</summary>
+    public static string Text(IEnumerable<ModeSetupValue> cells) =>
+        Encoding.UTF8.GetString([.. cells.Select(c => (byte)c.Value)]);
+
+    /// <summary>A package's texts, in order: its say_texts words'.</summary>
+    public static string[] Texts(IEnumerable<ModeSetupWord> setups) =>
+        [.. setups.Where(s => s.Id == ModeSetup.SayTexts).Select(s => Text(s.Arguments))];
 }
 
 /// <summary>A setup word as the package keeps it: every argument of the word, in the table's order, the ones the file
@@ -582,6 +587,11 @@ public sealed class ModePackage
             list.Add(new ModeSetupWord(word.Id, arguments));
         }
         s.End();
+        var says = ModeSayTexts.Texts(list);
+        if (says.Length > ModeWords.SayTexts || says.Distinct().Count() != says.Length)
+        {
+            throw new InvalidDataException($"the say texts are not the compiler's: at most {ModeWords.SayTexts}, each once");
+        }
         return list;
     }
 
@@ -594,17 +604,14 @@ public sealed class ModePackage
             {
                 return false;
             }
-            var bytes = arguments.Select(a => (byte)a.Value).ToArray();
-            string[] says;
             try
             {
-                says = new UTF8Encoding(false, true).GetString(bytes).Split('\0');
+                return ModeSayTexts.Refusal(new UTF8Encoding(false, true).GetString([.. arguments.Select(a => (byte)a.Value)])) is null;
             }
             catch (DecoderFallbackException)
             {
                 return false;
             }
-            return says.Length <= ModeWords.SayTexts && says.Distinct().Count() == says.Length && !says.Any(t => ModeSayTexts.Refusal(t) is not null);
         }
         if (id == ModeSetup.PointsTable)
         {
