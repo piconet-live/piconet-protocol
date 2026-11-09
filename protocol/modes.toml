@@ -1343,6 +1343,28 @@ id = 93
 type = "real"
 doc = "the seat's own boost energy: its stat pack's BoostEnergyUse (the game's 1/6 without one), whatever the mode wrote"
 
+# --- the engine's own speed (0.6.1, owner 2026-11-08: "let's build what's needed for Twilight's mod"; Twilight's survival
+# mod drives M+0x224, so the game's grip, slides, slopes and walls still shape the motion: mode-notes twilight-survival.md)
+
+[[seat_read]]
+name = "base_speed"
+id = 94
+type = "real"
+doc = """M+0x224, the base speed: the speed the machine's engine runs at, in the game's units (a metre a step; the speed \
+shown is km/h = 216 x the forward metres a step). The machine step (fn_1_26F34) moves it each step: the thrust adds \
+accel x 40 x M+0x220 / 348, a loss pulls it towards the real forward speed by base / (36 + 40 x max speed + 2 x boost \
+value), the brake and the drag take from it; the drive pushes the machine by the gap between it and the forward speed, \
+against the air drag. Cruising, base is about f + f x f / 125 with f = km/h / 216 [inf]: 4.8 at 1000 km/h, 27 at 5000; \
+the game's rolling start writes km/h / 200. Walls, contact and a breakdown (0) write it too"""
+
+[[seat_read]]
+name = "boost_value"
+id = 95
+type = "real"
+doc = """M+0x228, the game's boost value: a boost adds strength x max(0.2, 1 - value / (9 x strength)) to it (a dash plate \
+twice that), and out of a boost it falls by (2 + value / 2) / 60 a step (3 + ... spinning); the thrust reaches for \
+max speed and 2 x this (fn_1_26F34)"""
+
 [[race_read]]
 name = "steps"
 id = 0
@@ -2250,3 +2272,26 @@ id = 79
 args = ["seat", "real"]
 where = "the seat's second stat record (the block's stats page); the image's seat_energy (fn_1_26F34 0x27420) loads it in place of the seat's pack value while its bit is set, from the next step on. No machine field is written; the usage factor M+0x4DC stays the game's"
 doc = "the energy a boost takes each step, before the usage factor M+0x4DC: a boost running when it changes pays the new value from the next step. Held to the pack constant's range, 0 to 1.7. It lasts until written again or the race ends: a restore keeps it"
+
+[[action]]
+name = "seat.base_speed"
+id = 80
+args = ["seat", "real"]
+where = """the mode point: M+0x224, held to 0 .. 1e17 / 216 (the base speed a held seat.speed of 1e17 km/h writes at site L); \
+the next step's machine step (fn_1_26F34) runs from it, as Twilight's survival mod's write after the machine step \
+(main.rel 0x83C68) is run from. Not a seat frozen (0x8000), broken down (0x80), out of the course (0x800), finished, \
+retired, destroyed or restoring (M+0x214), as seat.speed. Nothing else is written or held: the thrust, the loss, the \
+brake, the drag, walls and contact move it from there. A seat.speed held in the same step writes it again (site L)"""
+doc = """sets the speed the seat's engine runs at (the game's units: see base_speed), for the next step's machine step \
+to move on from; the speed shown follows it through the game's own drive, grip and air drag. Held to 0 and up"""
+
+[[setup]]
+name = "max_speed_open"
+id = 65
+where = """the core holds seat.stat.max_speed to 0 to 10,000 in place of the stat pack's 0 to 4 (protocol/stats.toml \
+MaxSpeed). At 10,000 the thrust's loss, base / (36 + 40 x max speed + 2 x boost value), is about nothing, so the base \
+speed stays where seat.base_speed puts it (Twilight's survival mod writes 10,000 into the car data). The file writes \
+it: the compiler refuses a constant above 4 into seat.stat.max_speed without it, so a mode that keeps to 4 is the \
+package of before (a 0.6.0 game refuses a package with it). Without it a value the race gives is held to 4 as before; \
+stat packs keep 0 to 4"""
+doc = "seat.stat.max_speed goes past the stat pack's 4 (to 10,000). A 0.6.0 game cannot race a mode with it"

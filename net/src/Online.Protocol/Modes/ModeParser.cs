@@ -454,9 +454,9 @@ internal sealed class ModeParser
             do
             {
                 var kind = Take().Text;
-                if (kind is not ("time" or "int" or "block"))
+                if (kind is not ("time" or "int" or "real" or "bool" or "block"))
                 {
-                    throw Error($"a macro's parameter is a time, an int or a block, not '{kind}'");
+                    throw Error($"a macro's parameter is a time, an int, a real, a bool or a block, not '{kind}'");
                 }
                 parameters.Add((kind, Take().Text));
             }

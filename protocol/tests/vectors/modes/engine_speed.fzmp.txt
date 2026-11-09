@@ -1,0 +1,47 @@
+FZMP format 1 api 1, 942 bytes, hash 54c175e1b72ac9b9197c95f30be005cc4923c17c0effeca7dbf3ee37d3b1f740
+HEAD name "Engine speed" badge "" about ""
+PARM 0
+SETP 1
+  max_speed_open
+VARS globals 0, seat words 1
+  seat 0 = 0
+RULE 1
+  0 "Engine" event each seat, locals 1, when none, while none, body 0000
+CODE 96 bytes
+  ; rule 0 body
+  0000  LoadLocal 0
+  0002  LoadLocal 0
+  0004  SeatRead boost_value
+  0006  StoreSeatVar 0
+  0009  LoadLocal 0
+  000b  Push 1176256512 (0x461c4000, real 10000)
+  0010  Action seat.stat.max_speed
+  0012  LoadLocal 0
+  0014  SeatRead index
+  0016  Push 0
+  001b  IEq
+  001c  JumpIfZero 002f
+  0021  LoadLocal 0
+  0023  LoadLocal 0
+  0025  SeatRead base_speed
+  0027  Push 1104674816 (0x41d80000, real 27)
+  002c  FAdd
+  002d  Action seat.base_speed
+  002f  LoadLocal 0
+  0031  SeatRead index
+  0033  Push 1
+  0038  IEq
+  0039  JumpIfZero 0047
+  003e  LoadLocal 0
+  0040  Push -1063256064 (0xc0a00000, real -5)
+  0045  Action seat.base_speed
+  0047  LoadLocal 0
+  0049  SeatRead index
+  004b  Push 2
+  0050  IGe
+  0051  JumpIfZero 005f
+  0056  LoadLocal 0
+  0058  Push 1900671690 (0x7149f2ca, real 1E+30)
+  005d  Action seat.base_speed
+  005f  End
+SRC  724 bytes

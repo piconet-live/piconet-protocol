@@ -56,3 +56,57 @@ sub real dist(seat a, seat b) {
   real dz = a.position.z - b.position.z;
   return sqrt(dx * dx + dy * dy + dz * dz);
 }
+
+// drive target, brake_cost, surge, plates, gate; -- Twilight's drive (their survival mod, with their permission), for
+// every racing seat while `gate` holds (a condition that may name `seat`; `true` for always). It drives the speed the
+// machine's engine runs at (seat.base_speed), so the game's grip, slides, slopes, walls and boosts still move the
+// machine and the speed shown follows:
+// - at its first step a seat's top speed stat goes to 10,000 and its drag to 0, so the game stops pulling the engine's
+//   speed down; the machine's own thrust stays, so a full accelerator runs a little above the target;
+// - the engine's speed is pulled towards a wanted speed: the target (km/h of the speed shown, made the engine's by
+//   base = f + f x f / 125, f = km/h / 216), lowered by the brake (full brake: 0). The accelerator sets how firmly: 1/60
+//   of the gap a step coasting, 3/60 at full throttle, down to a tenth of that far above the wanted speed; the brake
+//   pulls at 1/60 and takes 0.02 more a step (about 4 km/h);
+// - braking costs energy, brake_cost % of Twilight's: more as the target rises and the longer the brake is held (its
+//   heat), never taking the energy below 0.1, and at 0.101 or less the brake stops counting;
+// - a boost raises the wanted speed by surge % plus 1 % for each point of the game's boost value (seat.boost_value), by
+//   how far the accelerator is down: Twilight's is surge 20. A dash plate's boost too when `plates` is on.
+// It writes seat.base_speed, seat.energy (braking) and the two stats; a rule of the file may write them after it. The
+// top speed of 10,000 needs the file's setup word max_speed_open; (the compiler refuses the mode without it).
+macro drive(real target, real brake_cost, real surge, bool plates, bool gate) {
+  seat real drive_heat;
+  seat int  drive_tuned;
+  seat int  drive_was_boosting;
+  seat int  drive_plate;
+  rule { event each seat; while race.started and seat.racing and gate; do {
+    if (seat.drive_tuned == 0) {
+      seat.stat.max_speed = 10000.0;
+      seat.stat.drag = 0.0;
+      seat.drive_tuned = 1;
+    }
+    real f = target / 216.0;
+    real base = f + f * f / 125.0;
+    real accel = seat.input.accel;
+    real brake = seat.input.brake;
+    if (seat.energy <= 0.101) { brake = 0.0; }
+    real lose = (brake * base * 0.015 + brake * seat.drive_heat * 0.02) * brake_cost / 100.0;
+    if (lose > 0.0) { seat.energy = max(min(seat.energy, 0.1), seat.energy - lose); }
+    seat.drive_heat += brake;
+    seat.drive_heat = seat.drive_heat * (1.0 - 0.05 * (1.0 - brake));
+    if (seat.boosting and seat.drive_was_boosting == 0) {
+      seat.drive_plate = 0;
+      if (seat.surface == 2) { seat.drive_plate = 1; }
+    }
+    seat.drive_was_boosting = 0;
+    if (seat.boosting) { seat.drive_was_boosting = 1; }
+    real wanted = base * (1.0 - brake);
+    if (seat.boosting and (plates or seat.drive_plate == 0)) {
+      wanted = wanted * (1.0 + (surge / 100.0 + 0.01 * seat.boost_value) * accel);
+    }
+    real now = seat.base_speed;
+    real rate = (1.0 + 2.0 * accel) / 60.0;
+    rate = rate * (1.0 - 0.9 * min(max(0.0, now - wanted) * 0.01, 1.0));
+    rate = rate + (1.0 / 60.0 - rate) * brake;
+    seat.base_speed = max(0.0, now + (wanted - now) * rate - brake * 0.02);
+  } }
+}

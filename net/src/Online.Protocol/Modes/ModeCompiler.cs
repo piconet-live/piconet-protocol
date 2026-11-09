@@ -297,7 +297,8 @@ private static string? CompilersOwn(ModeSetup id, string name) => id switch
 
     /// <summary>The 0.6.1 tops are the file's own words, so a mode that keeps to the old ones compiles to the package
     /// of before (and a 0.6.0 game takes it): a constant above 9000 into seat.speed, or a rolling start above it, needs
-    /// seat_speed_open. A value the race gives is held to the old top without the word, as before.</summary>
+    /// seat_speed_open; a constant above the stat pack's 4 into seat.stat.max_speed needs max_speed_open. A value the
+    /// race gives is held to the old top without the word, as before.</summary>
     private void OpenWords()
     {
         bool Has(ModeSetup id) => _setups.Any(s => s.Id == id);
@@ -314,9 +315,13 @@ private static string? CompilersOwn(ModeSetup id, string name) => id switch
                 throw new ModeCompileException(1, $"rolling_start above {MostSpeed} km/h needs the setup word seat_speed_open; (0.6.1: a 0.6.0 game refuses the mode)");
             }
         }
+        if (!Has(ModeSetup.MaxSpeedOpen) && _emitter!.MostMaxSpeedWritten is { } max && max.Value > MostMaxSpeed)
+        {
+            throw new ModeCompileException(max.Line, $"seat.stat.max_speed above {MostMaxSpeed} needs the setup word max_speed_open; (0.6.1: a 0.6.0 game refuses the mode)");
+        }
     }
 
-    private const float MostSpeed = 9000.0f;   // the top of before 0.6.1 (the core's mode.h)
+    private const float MostSpeed = 9000.0f, MostMaxSpeed = 4.0f;   // the tops of before 0.6.1 (the core's mode.h)
 
     private void SoloWords(List<ModeItem> items)
         {
