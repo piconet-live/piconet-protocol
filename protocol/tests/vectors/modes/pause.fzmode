@@ -1,0 +1,45 @@
+// A mode's pause (0.6.1): the race stands at GO with a message, the player's A lets it go after a second's countdown;
+// later a timed stand that ends by itself, and a choice read from the stick while it stands.
+
+mode "Pause" {
+  api 1;
+}
+
+global int picked;
+seat int armed;
+
+rule "Stand at GO" {
+  event race_start;
+  do { pause; say "Hold A to accelerate. Press A to start."; }
+}
+
+rule "Ready" {
+  event each seat;
+  while race.paused and seat.pad.accel < 0.2 and not seat.pad.boost and seat.pad.brake < 0.2;
+  do { seat.armed = 1; }
+}
+
+rule "Go on" {
+  event each seat;
+  when race.paused and seat.armed == 1 and seat.pad.accel > 0.5;
+  do { seat.armed = 0; say off; resume after 1s; }
+}
+
+rule "A choice at lap 2" {
+  event lap(s);
+  when s.lap == 1;
+  do {
+    pause;
+    say "Left: more speed. Right: more boost.";
+    wait 7s;
+    if (s.pad.steer < -0.5) { picked = 1; } else if (s.pad.steer > 0.5) { picked = 2; }
+    say off;
+    resume;
+  }
+}
+
+rule "Hint" {
+  event every step;
+  when not race.paused and race.paused_steps == 0 and race.steps > 10s;
+  do { say "Boost costs energy: refill it in the pit."; }
+}

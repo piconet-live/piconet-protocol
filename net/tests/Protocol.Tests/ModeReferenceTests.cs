@@ -16,7 +16,7 @@ public sealed class ModeReferenceTests
 
     /// <summary>The setup words only the compiler writes: a file that writes one is refused ("… is the compiler's
     /// own", ModeCompiler), so the reference leaves them out.</summary>
-    private static readonly HashSet<string> CompilersOwn = ["tag_texts", "stats_page", "time_gaps"];
+    private static readonly HashSet<string> CompilersOwn = ["tag_texts", "stats_page", "time_gaps", "say_texts", "pauses"];
 
     /// <summary>The kinds of word a section of the reference names, by its heading.</summary>
     private static readonly Dictionary<string, string[]> Sections = new()

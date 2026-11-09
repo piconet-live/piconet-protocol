@@ -330,6 +330,10 @@ Written on a seat: `seat.speed`, `s.energy`, `first(seats).lap`. The value as it
 | `seat.input.steer` | Its steering this step | real, -1 to 1 |
 | `seat.input.strafe` | Its strafe this step | real |
 | `seat.input.pitch` | Its pitch this step | real |
+| `seat.pad.steer` | The stick as the player holds it this step, read while the race is paused too (`seat.input.*` stand still then); 0 for a CPU | real, -1 left to 1 right |
+| `seat.pad.accel` | The accelerator (A) as the player holds it this step, paused or not; 0 for a CPU | real, 0 to 1 |
+| `seat.pad.brake` | The brake as the player holds it this step, paused or not; 0 for a CPU | real, 0 to 1 |
+| `seat.pad.boost` | The boost button is held this step, paused or not; false for a CPU | bool |
 
 ## Machine stats
 
@@ -378,6 +382,8 @@ machine its own back. The base cannot be written. All are reals.
 | `race.spin_attacks` | Spin attacks are on | bool |
 | `race.side_attacks` | Side attacks are on | bool |
 | `race.spin_immunity` | Spin immunity is on | bool |
+| `race.paused` | The race stands: `pause` held it and no `resume` has let it go yet (a resume's countdown counts as paused) | bool |
+| `race.paused_steps` | Steps the race has stood in this pause; 0 while it runs | int, 60 a second |
 
 ## Actions
 
@@ -455,6 +461,19 @@ An action is a statement, its seat first; the commas between its values are opti
 | `seat.place = n;` | The seat's place in the results when the race ends, 1 first (0: none). When the mode ends the race, the seats it placed keep their places, every other racing seat follows in race order, and a placed seat that went out shows the time it went out | 1 first; 0 none |
 | `award s, n;` | Adds n points to the seat. The results show a negative total as 0 | any whole number |
 
+### Pause
+
+A paused race stands: no machine, CPU, clock or timer moves and the picture stays, while the mode's rules go on running
+every step, reading the pads (`seat.pad.*`) and counting (`wait`, `race.paused_steps`). Words that act in the race's
+step (`seat.speed`, `boost`, `push`, `damage`, `explode`) do nothing while it stands; a seat's field (`seat.energy`)
+changes at once. In 0.6.1 a mode that pauses is raced by one player (CPUs allowed): a match with two players is refused.
+
+| Written | What it does | Range |
+|---|---|---|
+| `pause;` | The race stands from the next step on | |
+| `resume;` | The race runs on from the next step | |
+| `resume after 1s;` | The race stands that long more, with a 3, 2, 1 over the picture, then runs on | steps; 0 at once |
+
 ## Display words
 
 Displays are the game's own HUD parts, banners and looks, and Piconet's name tags and course map; a mode cannot draw
@@ -474,6 +493,8 @@ text where it likes. They never change the race.
 | `show_distance s off;` | DISTANCE reads the metres to the finish again | |
 | `show_objects s, n, of;` | The OBJECTS part reads n/of | 0 to 99 each |
 | `show_objects s off;` | OBJECTS reads the course's own count again | |
+| `say "Hold A to accelerate.";` | A message for every player on a dark panel: in the middle of the picture while the race is paused, as a line at its foot while it runs, until the next `say` or `say off`. Written in quotes, never a variable | any text, up to 160 bytes of UTF-8; at most 32 texts a mode |
+| `say off;` | The message goes | |
 
 ### Machine and map
 

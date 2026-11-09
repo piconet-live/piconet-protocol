@@ -356,6 +356,11 @@ internal sealed partial class ModeEmitter
                 Push(TagText(statement.Arguments[i]));
                 continue;
             }
+            if (action.Id == ModeAction.Say)
+            {
+                Push(SayText(statement.Arguments[i]));
+                continue;
+            }
             Value(statement.Arguments[i], action.Args[i], action.Name);
         }
         Op(ModeOp.Action, (long)action.Id);
@@ -385,6 +390,31 @@ internal sealed partial class ModeEmitter
         }
         TagTexts.Add(text.Text);
         return TagTexts.Count;
+    }
+
+    /// <summary>The number <c>say</c> names its text by, from 1: its place among the mode's texts, as <c>tag</c>'s. Always
+    /// a constant: the package holds every text a race can show.</summary>
+    private int SayText(ModeExpr expr)
+    {
+        if (expr is not ModeTagText text)
+        {
+            throw new ModeCompileException(expr.Line, "say takes its text in quotes: say \"Hold A to accelerate.\";");
+        }
+        if (ModeSayTexts.Refusal(text.Text) is { } refused)
+        {
+            throw new ModeCompileException(text.Line, refused);
+        }
+        var known = SayTexts.IndexOf(text.Text);
+        if (known >= 0)
+        {
+            return known + 1;
+        }
+        if (SayTexts.Count == ModeWords.SayTexts)
+        {
+            throw new ModeCompileException(text.Line, $"say: a mode uses at most {ModeWords.SayTexts} different texts: \"{text.Text}\" is one more");
+        }
+        SayTexts.Add(text.Text);
+        return SayTexts.Count;
     }
 
     /// <summary>An argument of a choice (protocol/modes.toml's <c>[[choice]]</c>): one of its names, pushed as its

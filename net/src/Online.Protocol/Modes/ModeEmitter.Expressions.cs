@@ -142,10 +142,11 @@ internal sealed partial class ModeEmitter
             Op(ModeOp.LoadTeamVar, kept.Index);
             return kept.Type;
         }
-        if (field.Target is ModeField { Field: "input" } input
-            && ModeWords.SeatReads.FirstOrDefault(r => r.Name == "input." + field.Field) is { Name: not null } control)
+        // seat.input.* (the machine's controls) and seat.pad.* (the step's row: read while the race is paused too)
+        if (field.Target is ModeField { Field: "input" or "pad" } input
+            && ModeWords.SeatReads.FirstOrDefault(r => r.Name == input.Field + "." + field.Field) is { Name: not null } control)
         {
-            Value(input.Target, ModeType.Seat, $"'.input.{field.Field}'");
+            Value(input.Target, ModeType.Seat, $"'.{input.Field}.{field.Field}'");
             Op(ModeOp.SeatRead, (long)control.Id);
             return control.Type;
         }

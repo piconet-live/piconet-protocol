@@ -14,7 +14,7 @@
 # a op b. Every operation costs one operation of the step's budget, but SortRun: 1 + 5 x entries x keys, and FSqrt:
 # [api] fsqrt_cost (the owner, 2026-10-30: the game's square root is the dear one; `sqrt`, and `dist`, which calls it).
 #
-# A setup word's or action's id only rises: a word taken out leaves its id unused (`eliminate` 1; `mine_regen off` 7,
+# A setup word's, action's or read's id only rises (a read's since 0.6.1, where branches take ids side by side): a word taken out leaves its id unused (`eliminate` 1; `mine_regen off` 7,
 # `restore off` 10, `mixed_packs off` 22, `boost_start off` 24, the fixed results titles 35 to 39; the modern HUD's words,
 # retired with it on 2026-11-04 and never in an api: the setup words `hud modern` 50 and `hud_texts` 51, the actions
 # show_bar 69, show_figure 70, show_text 71, show_gap 72 and hud_clear 73; and 45, a setup
@@ -56,6 +56,8 @@ fsqrt_cost = 8         # what one FSqrt takes of the budget (the compiler's coun
 results_title = 23     # a results title's characters: the window's 24 bytes with the NUL (runner mode_hud.h)
 tag_text = 10          # a `tag` text's characters: at the tags' largest, 22 of the screen's 640 pixels a character, 220 in all
 tag_texts = 8          # the different texts of `tag` a mode may use (the window holds them, runner mode_hud.h)
+say_text = 160         # a `say` text's UTF-8 bytes: two lines of the panel at most
+say_texts = 32         # the different texts of `say` a mode may use
 board = 8              # `board` lines a scope (global, seat, team): what the status board holds (board.toml)
 board_label = 32       # a `board` line's label, in UTF-8 bytes
 board_words = 16       # the words a `board` line may name
@@ -1343,6 +1345,34 @@ id = 93
 type = "real"
 doc = "the seat's own boost energy: its stat pack's BoostEnergyUse (the game's 1/6 without one), whatever the mode wrote"
 
+# --- the pad as the step's row has it (0.6.1, for a mode's pause): read whether the race runs or stands. The row is the
+# relay's, the same in every game and in the replay; a row that says "the AI drives" (a CPU, a player gone) reads 0 in
+# each. 94 and 95 are another branch's (seat.base_speed, seat.boost_value).
+
+[[seat_read]]
+name = "pad.steer"
+id = 96
+type = "real"
+doc = "the step's row's stick, -1 full left to 1 full right (byte 1 / 100); 0 for an AI-drives row. Read while the race stands too, where seat.input.steer stays as the last step left it"
+
+[[seat_read]]
+name = "pad.accel"
+id = 97
+type = "real"
+doc = "the step's row's accelerator (A), 0 to 1 (byte 4 / 100); 0 for an AI-drives row. Read while the race stands too"
+
+[[seat_read]]
+name = "pad.brake"
+id = 98
+type = "real"
+doc = "the step's row's brake, 0 to 1 (byte 5 / 100); 0 for an AI-drives row. Read while the race stands too"
+
+[[seat_read]]
+name = "pad.boost"
+id = 99
+type = "bool"
+doc = "the step's row's boost button (bit 0x40 of byte 0); false for an AI-drives row. Read while the race stands too"
+
 [[race_read]]
 name = "steps"
 id = 0
@@ -1427,6 +1457,18 @@ name = "human_finished"
 id = 13
 type = "int"
 doc = "the seats a person drives that have finished, counted from machine flag 0x10000 (not R+0xC, which stays 0 in our image)"
+
+[[race_read]]
+name = "paused"
+id = 14
+type = "bool"
+doc = "the race stands: a `pause` holds it and no `resume` has let it go (a resume's countdown still counts as paused)"
+
+[[race_read]]
+name = "paused_steps"
+id = 15
+type = "int"
+doc = "the steps the race has stood in this pause, 0 while it runs: a timed choice reads it (`when race.paused_steps >= 7s`)"
 
 [[action]]
 name = "seat.speed"
@@ -2188,6 +2230,25 @@ lobby = true
 form = "list"
 where = "the coordinator: by the lobby's last race, its winner the list's first entry, second place the next, and so on; a racer it did not rank (its first race, a racer who joined since, a CPU) is own; at most 30"
 
+# --- a mode's pause and its words (0.6.1). 64 to 66 are other branches' (seat_speed_open, max_speed_open, hud_layout ax).
+
+[[setup]]
+name = "say_texts"
+id = 67
+form = "text"
+where = """the texts of the file's `say` words, which the compiler writes and a file never writes itself (in the package a UTF-8 byte a value, a 0 \
+between texts): the core shows the one `say` names over the picture (port/core/src/mode_say.cpp, the runner's overlay: the launcher's Saira, Segoe UI and \
+Yu Gothic for what Saira lacks)"""
+doc = "the texts `say` shows, the first being text 1"
+
+[[setup]]
+name = "pauses"
+id = 68
+where = """the compiler's own, when a rule writes `pause`: the mode stands the race. In 0.6.1 such a mode is raced by one player alone (CPUs \
+allowed): the core refuses a match start that gives it two player seats or more (files_match.cpp). The pause itself needs no seat count: every \
+game stands at the same step"""
+doc = "the mode pauses the race, which a file never writes itself"
+
 [[action]]
 name = "finish_seat"
 needs_step = true
@@ -2234,3 +2295,47 @@ id = 79
 args = ["seat", "real"]
 where = "the seat's second stat record (the block's stats page); the image's seat_energy (fn_1_26F34 0x27420) loads it in place of the seat's pack value while its bit is set, from the next step on. No machine field is written; the usage factor M+0x4DC stays the game's"
 doc = "the energy a boost takes each step, before the usage factor M+0x4DC: a boost running when it changes pays the new value from the next step. Held to the pack constant's range, 0 to 1.7. It lasts until written again or the race ends: a restore keeps it"
+
+# --- a mode's pause (0.6.1). A paused step is a step: its number, every seat's row, the relay and the replay go on as ever; the game's
+# simulation is not run in it (the image's frame routine skips the simulation manager while the block's pause word is set,
+# port/image/routines/frame_replay.py `manager`), so the machines, the CPUs, the race clock and the timers stand, and the picture is the last
+# one, drawn again. The mode runs in every paused step (the image calls the mode point's host call in the simulation's place), reads
+# the rows (seat.pad.*) and counts the steps (race.paused_steps, wait). Every game pauses and resumes at the same step: the words are the
+# mode's, and the block is rolled back with the rest. 80 to 83 are other branches' (seat.base_speed, hud_move, map_char, map_char off).
+
+[[action]]
+name = "pause"
+id = 84
+where = "the block's pause word (mode.h PAUSED), from this run on: the next step's simulation is not run (frame_replay.py `manager`); nothing else is written"
+doc = """the race stands from the next step on: machines, CPUs, the race clock and timers stop, the picture stays, the mode keeps running each step. \
+A word that acts in the game's step (seat.speed, boost, push, damage, explode) does nothing while it stands; a write of a seat's field (seat.energy) is \
+seen at once. Nothing when already paused"""
+
+[[action]]
+name = "resume"
+id = 85
+where = "the block's pause word"
+doc = "the race runs on from the next step. Nothing when it runs"
+
+[[action]]
+name = "resume after"
+id = 86
+args = ["int"]
+where = "the block's pause word and its resume run; the countdown's figure is the runner's (fzgx/panel.h Counting, as a practice's)"
+doc = """`resume after 1s;`: the race stands t steps more, a 3, 2, 1 over the picture, then runs on; 0, at once. Nothing when it runs"""
+
+[[action]]
+name = "say"
+id = 87
+args = ["int"]
+where = """the block's say word (mode.h SAY); drawn by the runner (port/core/src/mode_say.cpp, port/moderngekko/src/mode_say.cpp). The file writes \
+`say "TEXT";`: the compiler pushes the text's number in say_texts, from 1. Any Unicode text the overlay's fonts draw, api.say_text UTF-8 bytes at \
+most, api.say_texts texts a mode"""
+doc = """TEXT on a dark rounded panel: in the middle of the picture while the race stands, and as a hint line at the picture's foot while it runs, \
+for every player, until another say or `say off`. Drawing only"""
+
+[[action]]
+name = "say off"
+id = 88
+where = "the block's say word"
+doc = "the panel goes (eased out)"

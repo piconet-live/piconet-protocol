@@ -103,6 +103,10 @@ public static class ModeDisassembler
         {
             return table.Name + " " + Quote(ModeResultsTitle.Text(word.Arguments));
         }
+        if (word.Id == ModeSetup.SayTexts)
+        {
+            return table.Name + " " + string.Join(' ', ModeSayTexts.Texts(word.Arguments).Select(Quote));
+        }
         if (word.Id == ModeSetup.TagTexts)
         {
             return table.Name + " " + string.Join(' ', ModeTagTexts.Texts(word.Arguments).Select(Quote));
@@ -128,8 +132,8 @@ public static class ModeDisassembler
         var detail = i.Op switch
         {
             ModeOp.Push => Cell((int)operand),
-            ModeOp.SeatRead => ModeWords.SeatReads[(int)operand].Name,
-            ModeOp.RaceRead => ModeWords.RaceReads[(int)operand].Name,
+            ModeOp.SeatRead => ModeWords.SeatReads.First(r => (long)r.Id == operand).Name,
+            ModeOp.RaceRead => ModeWords.RaceReads.First(r => (long)r.Id == operand).Name,
             ModeOp.Action => ModeWords.Actions.First(a => (long)a.Id == operand).Name,
             ModeOp.Param => Invariant($"{operand} ({mode.Params[(int)operand].Name})"),
             ModeOp.Jump or ModeOp.JumpIfZero or ModeOp.JumpIfNotZero => Invariant($"{operand:x4}"),

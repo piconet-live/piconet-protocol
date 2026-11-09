@@ -26,6 +26,8 @@ inline constexpr int FSQRT_COST = 8;
 inline constexpr int RESULTS_TITLE = 23;
 inline constexpr int TAG_TEXT = 10;
 inline constexpr int TAG_TEXTS = 8;
+inline constexpr int SAY_TEXT = 160;
+inline constexpr int SAY_TEXTS = 32;
 inline constexpr int BOARD = 8;
 inline constexpr int BOARD_LABEL = 32;
 inline constexpr int BOARD_WORDS = 16;
@@ -271,7 +273,9 @@ enum Setup : std::uint8_t
   SETUP_MACHINEBYSEAT = 61,  // machine by seat
   SETUP_MACHINEBYTEAM = 62,  // machine by team
   SETUP_MACHINEBYPLACE = 63,  // machine by place
-  SETUP_COUNT = 64,
+  SETUP_SAYTEXTS = 67,  // say_texts
+  SETUP_PAUSES = 68,  // pauses
+  SETUP_COUNT = 69,
 };
 
 // a read of a seat (OP_SEATREAD)
@@ -371,7 +375,11 @@ enum Seat : std::uint8_t
   SEAT_GAPLEADER = 91,  // gap_leader
   SEAT_STATBOOSTENERGY = 92,  // stat.boost_energy
   SEAT_STATBASEBOOSTENERGY = 93,  // stat.base.boost_energy
-  SEAT_COUNT = 94,
+  SEAT_PADSTEER = 96,  // pad.steer
+  SEAT_PADACCEL = 97,  // pad.accel
+  SEAT_PADBRAKE = 98,  // pad.brake
+  SEAT_PADBOOST = 99,  // pad.boost
+  SEAT_COUNT = 100,
 };
 
 // a read of the race (OP_RACEREAD)
@@ -391,7 +399,9 @@ enum Race : std::uint8_t
   RACE_COURSE = 11,  // course
   RACE_HUMANSLEFT = 12,  // humans_left
   RACE_HUMANFINISHED = 13,  // human_finished
-  RACE_COUNT = 14,
+  RACE_PAUSED = 14,  // paused
+  RACE_PAUSEDSTEPS = 15,  // paused_steps
+  RACE_COUNT = 16,
 };
 
 // an action (OP_ACTION)
@@ -471,7 +481,12 @@ enum Action : std::uint8_t
   ACTION_SHOWOBJECTS = 77,  // show_objects
   ACTION_SHOWOBJECTSOFF = 78,  // show_objects off
   ACTION_SEATSTATBOOSTENERGY = 79,  // seat.stat.boost_energy
-  ACTION_COUNT = 80,
+  ACTION_PAUSE = 84,  // pause
+  ACTION_RESUME = 85,  // resume
+  ACTION_RESUMEAFTER = 86,  // resume after
+  ACTION_SAY = 87,  // say
+  ACTION_SAYOFF = 88,  // say off
+  ACTION_COUNT = 89,
 };
 
 // the choice `part`: a part of the game's own race HUD: TIMER the timed mode's clock (clock_limit's time, R+0xA4: seconds, 0 to 999); DISTANCE the metres to the finish (the seat's own; show_distance gives a mode's); DIGIT the story's big digit (danger_zone's seconds, 3 2 1); WARNING, SUCCESS, FAILED, TIME_OVER, SPEED_GAUGE, OBJECTS the story's pictures, off until shown (SUCCESS MISSION CLEAR!, FAILED MISSION FAILED, TIME_OVER "Time is up...": fixed pictures with no value; OBJECTS the course objects' count n/of, show_objects gives a mode's); LEADER_GAP the game's own time gap to the leader, off until shown: at each lap line, for a second, the seat's time behind the leader, and the leader's own lead when second place crosses; GHOST_GAP Time Attack's live gap, off until shown: signed minutes, seconds and thousandths at the right edge (617, 270), all race, against the seat furthest ahead, red while it is ahead, blue while you are; RANK, LAPS, SPEED, ENERGY, LAP_TIMES, RACE_TIME, FACES the standard HUD (the mask .data 0x3D544; FACES the board fn_1_D27B8), on until hidden
@@ -602,6 +617,11 @@ constexpr int ActionArguments(std::uint8_t action)
     case ACTION_SHOWOBJECTS: return 3;
     case ACTION_SHOWOBJECTSOFF: return 1;
     case ACTION_SEATSTATBOOSTENERGY: return 2;
+    case ACTION_PAUSE: return 0;
+    case ACTION_RESUME: return 0;
+    case ACTION_RESUMEAFTER: return 1;
+    case ACTION_SAY: return 1;
+    case ACTION_SAYOFF: return 0;
     default: return -1;
   }
 }
