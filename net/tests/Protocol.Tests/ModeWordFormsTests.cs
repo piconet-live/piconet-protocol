@@ -355,6 +355,28 @@ public sealed class ModeWordFormsTests
         Assert.Contains(Compile("stats_page;\nrule \"R\" { event each seat; do { } }").Errors, e => e.Contains("the compiler's own", StringComparison.Ordinal));
     }
 
+    [Fact]
+    public void TheSpeedsTopsAreTheFilesOwnWords()
+    {
+        static ModeCompilation Ok(string body)
+        {
+            var result = Compile(body);
+            Assert.Empty(result.Errors);
+            return result;
+        }
+        static bool Has(ModeCompilation result, ModeSetup id) => result.Mode!.Setups.Any(s => s.Id == id);
+        // a write within the old tops, or one the race gives, carries no word: the package of before
+        var within = Ok("rule \"R\" { event each seat; do { seat.speed = 9000.0; seat.speed += 10.0; seat.speed = seat.lap * 20000.0; } }");
+        Assert.False(Has(within, ModeSetup.SeatSpeedOpen));
+        // a constant above them is refused without the word, and taken with it
+        Assert.Contains(Compile("rule \"R\" { event each seat; do { seat.speed = 12000.0; } }").Errors, e => e.Contains("seat_speed_open", StringComparison.Ordinal));
+        Assert.Contains(Compile("rolling_start 12000 km/h;\nrule \"R\" { event each seat; do { } }").Errors, e => e.Contains("seat_speed_open", StringComparison.Ordinal));
+        Assert.True(Has(Ok("seat_speed_open;\nrolling_start 12000 km/h;\nrule \"R\" { event each seat; do { seat.speed = 12000.0; } }"), ModeSetup.SeatSpeedOpen));
+        Assert.NotEmpty(Compile("seat_speed_open;\nrolling_start 200000000000000000 km/h;\nrule \"R\" { event each seat; do { } }").Errors);
+        // a velocity is no speed's write
+        Assert.False(Has(Ok("rule \"R\" { event each seat; do { seat.velocity = vec(0.0, 0.0, 12000.0); } }"), ModeSetup.SeatSpeedOpen));
+    }
+
     [Theory]
     [InlineData("rule \"R\" { event each seat; do { seat.stat.base.body = 1.0; } }", "the machine's own")]
     [InlineData("rule \"R\" { event each seat; do { seat.stat.colour = 1.0; } }", "no stat")]

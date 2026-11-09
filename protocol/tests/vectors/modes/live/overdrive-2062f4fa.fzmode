@@ -1,0 +1,149 @@
+// Overdrive (the game modes' design 9.2, the owner's of 29 October): a spicy Quick Play option. A rolling start at
+// 1000 km/h, then a target speed that rises every 10 s, a little more every step. Racers are out the normal way
+// (their energy, off the course); the last one in wins.
+//
+// The driving follows Twilight's survival script (with their permission; the owner, 8 November: "as Twilight does"):
+// - the machine's drag is 0 and its top speed the most a stat may hold, so the game's own physics stops pulling
+//   the speed down and the mode alone sets it;
+// - the speed is pulled towards a wanted speed: the target, lowered by the brake (full brake: 0); the accelerator sets
+//   how firmly (1/60 of the gap a step coasting, 3/60 at full throttle), the brake also takes 4 km/h a step;
+// - braking costs energy, more as the race gets faster and more the longer it is held (heat), but never below 0.1:
+//   there the brake stops counting. No floor: the energy is the price of slowing down;
+// - an energy boost raises the wanted speed by `surge`, by how far the accelerator is down (a dash plate's does not:
+//   the owner's choice);
+// - above the wanted speed the pull brings the machine down (Twilight's); `above` off keeps the old "bottom only".
+//
+// The target (vocabulary 4.3), at the default rise of 50: 1000 km/h at GO, 1300 at 1:00, 1900 at 3:00, 2800 at 6:00,
+// 4000 at 10:00; the word caps at 9000. No clock: the race goes on until one machine is left (design 9.2).
+
+mode "Overdrive" {
+  api 1;
+  badge "OVERDRIVE";
+  about "Speed always rising. Braking costs energy. Last one alive wins.";
+}
+
+param rise "Speed added every 10 s" number 5..50 step 5 default 50;
+param brake_cost "Brake energy cost (%)" number 0..200 step 25 default 100;
+param surge "Boost surge (% above the speed)" number 0..50 step 5 default 20;
+param above "Pull down above the speed" switch default on;
+
+cpus on;
+stats "GX Unleashed";          // Quick Play's pack, mines and machine setting (a word left out is the game's own)
+mine_regen on;
+machine_setting 100;
+laps unlimited;
+rolling_start 1000 km/h;       // as Knockout: speed at the gate, CPU steers through the countdown, control at GO
+race_waits everyone;           // the race goes on until the mode ends it, not until the last player is out
+results_heading "OVERDRIVE";   // the times list: the winner first, then the racers out, last out first, each at its time
+
+global int outs;
+global int hold_until;         // a player's win: the race ends when the game's FINISH! and place have had their 8 s
+seat   int out_order;          // 0: still in; 1: first out
+// The stall check (the owner, 8 November: racers circled inside pipes for ever): the distance along the course a seat
+// makes in each window, from lap_distance a step at a time (a step moves far less than half a lap, so the line's wrap
+// is read right), counted either way: going backwards is real movement (a spin, a wrong turn), circling is not.
+// Less than STALL_SHARE of what the target speed covers in the window, and the machine overloads: its speed climbs
+// to 9000 km/h (the most seat.speed holds) over OVERLOAD, faster and faster, and then it explodes.
+seat   real last_dist;
+seat   real moved;            // along the course in this window, either way
+seat   int  window;           // steps into this window
+seat   int  tuned;            // 1: drag and top speed set
+seat   real heat;             // the brake's heat (Twilight's)
+seat   int  was_boosting;
+seat   int  plate_boost;      // 1: the boost running began on a dash plate
+seat   int  overload;         // 0: none; else steps into the overload
+seat   real overload_from;    // the speed it began at
+
+rule "Drive to the target" {
+  event each seat;
+  while race.started and seat.racing and seat.overload == 0;
+  do {
+    if (seat.tuned == 0) {
+      seat.stat.drag = 0.0;
+      seat.stat.max_speed = 4.0;      // the most a stat may hold (stock 0.17 to 0.42)
+      seat.tuned = 1;
+    }
+    real target = min(9000.0, 1000.0 + rise * race.steps / 600.0);   // smooth: a little more every step
+    real accel = seat.input.accel;
+    real brake = seat.input.brake;
+    if (seat.energy <= 0.101) { brake = 0.0; }
+    // the brake's energy: Twilight's units are km/h / 200 (5 at 1000 km/h)
+    real lose = (brake * target / 200.0 * 0.015 + brake * seat.heat * 0.02) * brake_cost / 100.0;
+    if (lose > 0.0) { seat.energy = max(min(seat.energy, 0.1), seat.energy - lose); }
+    seat.heat += brake;
+    seat.heat = seat.heat * (1.0 - 0.05 * (1.0 - brake));
+    // a boost's start: an energy boost or a dash plate's
+    if (seat.boosting and seat.was_boosting == 0) {
+      seat.plate_boost = 0;
+      if (seat.surface == 2) { seat.plate_boost = 1; }
+    }
+    seat.was_boosting = 0;
+    if (seat.boosting) { seat.was_boosting = 1; }
+    real wanted = target * (1.0 - brake);
+    if (seat.boosting and seat.plate_boost == 0) { wanted = wanted * (1.0 + surge / 100.0 * accel); }
+    real now = seat.speed;
+    real rate = (1.0 + 2.0 * accel) / 60.0;
+    real over = max(0.0, now - wanted);
+    rate = rate * (1.0 - 0.9 * min(over / 200.0 * 0.01, 1.0));
+    rate = rate + (1.0 / 60.0 - rate) * brake;
+    real change = 0.0 - brake * 4.0;   // 0.02 of Twilight's a step
+    if (now < wanted or above) { change += (wanted - now) * rate; }
+    if (change != 0.0) { seat.speed = max(0.0, now + change); }
+  }
+}
+
+rule "Stall check" {
+  event each seat;
+  while race.started and seat.racing and seat.overload == 0;
+  do {
+    real d = seat.lap_distance - seat.last_dist;
+    if (d < 0.0 - seat.lap_length / 2.0) { d += seat.lap_length; }
+    if (d > seat.lap_length / 2.0) { d -= seat.lap_length; }
+    if (d < 0.0) { d = 0.0 - d; }               // backwards counts too: only staying in place is a stall
+    if (seat.window > 0) { seat.moved += d; }   // (the first step only takes the distance)
+    seat.last_dist = seat.lap_distance;
+    seat.window += 1;
+    if (seat.window > 3s) {
+      real target = min(9000.0, 1000.0 + rise * race.steps / 600.0);
+      // STALL_SHARE 0.4 of the target's distance in the 3 s window (speed / 216 a step)
+      if (seat.moved < 0.4 * target / 216.0 * 180.0) { seat.overload = 1; seat.overload_from = seat.speed; }
+      seat.window = 1;
+      seat.moved = 0.0;
+    }
+  }
+}
+
+rule "Overload" {
+  event each seat;
+  while race.started and seat.racing and seat.overload > 0;
+  do {
+    real f = seat.overload / 300.0;   // OVERLOAD 5 s
+    seat.speed = seat.overload_from + (9000.0 - seat.overload_from) * f * f;
+    seat.overload += 1;
+    if (seat.overload > 5s) { explode seat; }
+  }
+}
+
+rule "Out" {
+  event out(s);
+  do { outs += 1; s.out_order = outs; }
+}
+
+rule "Last alive" {
+  event every step;
+  // a race of one ends when that racer is out
+  when race.started and (count(seats where racing) == 0 or (race.seats > 1 and count(seats where racing) <= 1));
+  do {
+    // a player still in has won: the same FINISH! and place as a line crossed, then the results
+    for each seat where seat.racing and seat.is_human {
+      seat.place = 1;
+      finish_seat seat;
+      hold_until = race.steps + 8s;
+    }
+    if (hold_until > race.steps) { wait hold_until - race.steps; }
+    // the last one in first (end_race places a CPU still racing), then the racers out, last out first
+    int n = 1 + count(seats where seat.out_order == 0);
+    for each seat where seat.out_order > 0 by seat.out_order desc { seat.place = n; n += 1; }
+    end_race;
+  }
+}

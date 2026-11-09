@@ -158,7 +158,8 @@ game counts it, 100 a full machine.
 
 | Written | What it does | Range |
 |---|---|---|
-| `rolling_start 1000 km/h;` `rolling_start;` | Every machine moves at this speed from the first picture, with full energy, a CPU steering it through the countdown at 60% accelerator with no boost or attacks; every pad takes over at GO | 0 to 9000 km/h; 1000 if left out |
+| `rolling_start 1000 km/h;` `rolling_start;` | Every machine moves at this speed from the first picture, with full energy, a CPU steering it through the countdown at 60% accelerator with no boost or attacks; every pad takes over at GO | 0 to 9000 km/h (above with `seat_speed_open;`); 1000 if left out |
+| `seat_speed_open;` | `seat.speed` and `rolling_start` may go past 9000 km/h. A 0.6.0 game cannot race a mode with it | |
 | `start_gap 200 m;` | Machines start this many metres apart, going back from the line in grid order across three lanes; at most the lap over the racers, so the field fits one lap. Every machine starts behind the line, and its first crossing counts no lap. `0` puts everyone on one spot with contact off from the first step, and refuses `contact on`. Above 0 and below 12.9 m (the game's grid step) needs `contact off` | 0 to 10,000 m |
 | `start_gap even;` | The machines spread evenly round the whole lap behind the line. Not with `start_gap` in metres | |
 | `boost_start on;` | Boosting is allowed on the first lap. Left out: not | on or off |
@@ -388,7 +389,7 @@ An action is a statement, its seat first; the commas between its values are opti
 
 | Written | What it does | Range |
 |---|---|---|
-| `seat.speed = v;` | Holds the seat's speed for the next step's travel; write it every step to keep it. A seat frozen, broken down, destroyed, finished, retired or restoring is not held. Long falls get steeper and jumps lower at a held speed; boosting still costs energy | 0 to 9000 km/h |
+| `seat.speed = v;` | Holds the seat's speed for the next step's travel; write it every step to keep it. A seat frozen, broken down, destroyed, finished, retired or restoring is not held. Long falls get steeper and jumps lower at a held speed; boosting still costs energy. Above the stat pack's speed cap (stock 9990 km/h; GX Unleashed has none) the game cuts the speed to a near stop once the hold ends | 0 to 9000 km/h; above with `seat_speed_open;` |
 | `seat.velocity = v;` | Sets the seat's motion for one step's travel; from the next step the game's forces act again | vec, km/h |
 | `push s, v;` | Adds v to the seat's motion in the next step | vec, km/h |
 | `freeze s;` | The seat stands still until released; it can still turn | |

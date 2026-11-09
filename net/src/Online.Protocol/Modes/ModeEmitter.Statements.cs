@@ -207,6 +207,7 @@ internal sealed partial class ModeEmitter
         }
         if (action.Name is not null)
         {
+            Written(field.Field, assign);
             Work(assign, action.Args[1], $"seat.{field.Field}", () =>
             {
                 Emit(field.Target);

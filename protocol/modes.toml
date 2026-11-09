@@ -657,7 +657,7 @@ clause). A time (5min) or steps, at most 65,535 (18 min 12 s)"""
 [[setup]]
 name = "rolling_start"
 id = 13
-args = [{ type = "real", least = 0.0, most = 9000.0, default = 1000.0 }]
+args = [{ type = "real", least = 0.0, most = 1.0e17, default = 1000.0 }]
 where = """the first step after the gate: every seat's speed written as fn_1_23500 computes it (momentum along the nose, \
 M+0x224, flag 0x400, M+0x481 90, no start charge M+0xDC) and the frozen flag 0x8000 cleared; through the countdown the \
 CPU steers every seat (the stand-in's AI path) with the accelerator held at 0.6, no brake, no boost and no attacks; \
@@ -1434,8 +1434,10 @@ needs_step = true
 id = 0
 args = ["seat", "real"]
 where = "site L (main.rel 0x23854, after the air drag) in the next step's machine step, and the rescale at the mode point"
-doc = """holds the seat's speed at v km/h for the step: a written seat.speed. v is held to 0 to 9000; a seat frozen, broken \
-down, destroyed, finished, retired or restoring is not held"""
+doc = """holds the seat's speed at v km/h for the step: a written seat.speed. v is held to 0 to 9000, or to 1e17 with the \
+setup word seat_speed_open; a seat frozen, broken down, destroyed, finished, \
+retired or restoring is not held. Above the stat pack's speed cap (stock 9990, GX Unleashed none) the game cuts the \
+speed to a near stop once the hold ends"""
 
 # --- wave 2A, the race side: actions. Applied after the run, in the queue's order (language 6)
 
@@ -2187,6 +2189,20 @@ id = 63
 lobby = true
 form = "list"
 where = "the coordinator: by the lobby's last race, its winner the list's first entry, second place the next, and so on; a racer it did not rank (its first race, a racer who joined since, a CPU) is own; at most 30"
+
+# --- the speed's top (0.6.1, owner 2026-11-08: "GX Unleashed removed the speed cap"). seat.speed was held to 0 to 9000
+# (under the stock pack's SpeedCap, 9990); a package from before keeps that, so its replays play as they were raced
+
+[[setup]]
+name = "seat_speed_open"
+id = 64
+where = """the core holds a written seat.speed to 0 to 100,000,000,000,000,000 km/h (1e17) in place of 0 to 9000, and takes a \
+rolling_start to 1e17. The top is the largest at which the held momentum (v / 216 x the weight, at most the packs' \
+25,000) and its square, which the next step's drag sums (fn_1_294D0), stay finite binary32. The file writes it: the \
+compiler refuses a constant above 9000 into seat.speed, or a rolling_start above 9000, without it, so a mode that keeps \
+to 9000 is the package of before (a 0.6.0 game refuses a package with it). Without it a value the race gives is held \
+to 9000 as before"""
+doc = "seat.speed and rolling_start go past 9000 km/h (to 1e17). A 0.6.0 game cannot race a mode with it"
 
 [[action]]
 name = "finish_seat"

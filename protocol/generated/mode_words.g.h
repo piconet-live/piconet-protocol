@@ -271,7 +271,8 @@ enum Setup : std::uint8_t
   SETUP_MACHINEBYSEAT = 61,  // machine by seat
   SETUP_MACHINEBYTEAM = 62,  // machine by team
   SETUP_MACHINEBYPLACE = 63,  // machine by place
-  SETUP_COUNT = 64,
+  SETUP_SEATSPEEDOPEN = 64,  // seat_speed_open
+  SETUP_COUNT = 65,
 };
 
 // a read of a seat (OP_SEATREAD)

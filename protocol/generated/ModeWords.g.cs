@@ -287,6 +287,8 @@ public enum ModeSetup : byte
     MachineByTeam = 62,
     /// <summary><c>machine by place</c></summary>
     MachineByPlace = 63,
+    /// <summary><c>seat_speed_open</c></summary>
+    SeatSpeedOpen = 64,
 }
 
 /// <summary>A read of a seat (protocol/modes.toml).</summary>
@@ -834,7 +836,7 @@ public static partial class ModeWords
         ("restore", ModeSetup.Restore, [new ModeArgument("", ModeType.Bool, 0, 1, null)], false, ""),
         ("contact", ModeSetup.Contact, [new ModeArgument("", ModeType.Bool, 0, 1, null)], false, ""),
         ("clock_limit", ModeSetup.ClockLimit, [new ModeArgument("", ModeType.Int, 60, 65535, null)], false, ""),
-        ("rolling_start", ModeSetup.RollingStart, [new ModeArgument("", ModeType.Real, 0.0f, 9000.0f, 1000.0f)], false, ""),
+        ("rolling_start", ModeSetup.RollingStart, [new ModeArgument("", ModeType.Real, 0.0f, 1e+17f, 1000.0f)], false, ""),
         ("course", ModeSetup.Course, [], true, "text"),
         ("racers", ModeSetup.Racers, [new ModeArgument("least", ModeType.Int, 1, 30, null), new ModeArgument("most", ModeType.Int, 1, 30, null)], true, "range"),
         ("machines all", ModeSetup.MachinesAll, [], true, ""),
@@ -880,6 +882,7 @@ public static partial class ModeWords
         ("machine by seat", ModeSetup.MachineBySeat, [], true, "list"),
         ("machine by team", ModeSetup.MachineByTeam, [], true, "list"),
         ("machine by place", ModeSetup.MachineByPlace, [], true, "list"),
+        ("seat_speed_open", ModeSetup.SeatSpeedOpen, [], false, ""),
     ];
 
     /// <summary>The reads of a seat (<c>seat.NAME</c>): name, id, type.</summary>
