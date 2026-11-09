@@ -2190,7 +2190,7 @@ where = "the coordinator: by the lobby's last race, its winner the list's first 
 
 [[setup]]
 name = "hud_layout ax"
-id = 64
+id = 66
 where = """the window's flag HUD_AX (runner mode_hud.h), read by the image's sites (sites_hudmove.py): the one-viewport HUD \
 (fn_1_C72D4) draws its rank with the AX layout's drawer fn_1_CA690 at (24, 412) under the left Wide Screen anchor, as \
 fn_1_C771C does (the layout fn_1_C7224 picks under the menu's arcade bit, .bss 0x8B3A0 +0x94 0x40000000, which is never \
@@ -2248,7 +2248,7 @@ doc = "the energy a boost takes each step, before the usage factor M+0x4DC: a bo
 
 [[action]]
 name = "hud_move"
-id = 80
+id = 81
 args = ["seat", "part", "real", "real"]
 where = """the block's HUD moves record for the seat (page 7's head, runner mode_hud.h MOVES: whole units, each held to \
 -640 .. 640); the HUD pass hands the viewed racer's to the classic HUD's moves (port/core/src/hud_move.cpp), which \
@@ -2258,7 +2258,7 @@ doc = "`hud_move s, PART, dx, dy`: the seat's player sees the part moved dx righ
 
 [[action]]
 name = "map_char"
-id = 81
+id = 82
 args = ["seat", "int"]
 where = """the block's map characters (runner mode_hud.h MAP_CHARS, a code point a seat); read by our own course map \
 (minimap_frame.cpp ModeDots, drawn by moderngekko minimap_draw.cpp with the overlay's display font). The file writes \
@@ -2269,7 +2269,7 @@ doc = "the seat's dot on every course map carries this character (any one Unicod
 
 [[action]]
 name = "map_char off"
-id = 82
+id = 83
 args = ["seat"]
 where = "the block's map characters"
 doc = "the seat's dot shows no character again"

@@ -288,7 +288,7 @@ public enum ModeSetup : byte
     /// <summary><c>machine by place</c></summary>
     MachineByPlace = 63,
     /// <summary><c>hud_layout ax</c></summary>
-    HudLayoutAx = 64,
+    HudLayoutAx = 66,
 }
 
 /// <summary>A read of a seat (protocol/modes.toml).</summary>
@@ -669,11 +669,11 @@ public enum ModeAction : byte
     /// <summary><c>seat.stat.boost_energy</c></summary>
     SeatStatBoostEnergy = 79,
     /// <summary><c>hud_move</c></summary>
-    HudMove = 80,
+    HudMove = 81,
     /// <summary><c>map_char</c></summary>
-    MapChar = 81,
+    MapChar = 82,
     /// <summary><c>map_char off</c></summary>
-    MapCharOff = 82,
+    MapCharOff = 83,
 }
 
 /// <summary>The vocabulary of one api, by the names a mode file writes (protocol/modes.toml).</summary>
