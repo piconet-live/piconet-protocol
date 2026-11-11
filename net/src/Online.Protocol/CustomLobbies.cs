@@ -157,8 +157,8 @@ public static class CustomLobby
     /// <summary>The lobby has as many members as its racers rule.</summary>
     public const string LobbyFull = "lobby_full";
 
-    /// <summary>The lobby takes nobody now (its match is starting or choosing machines), or not this player (the
-    /// host removed them from it).</summary>
+    /// <summary>The lobby does not take this player (the host removed them from it); from a server before 0.6.1 also
+    /// a lobby that takes nobody while its match is starting or choosing machines.</summary>
     public const string LobbyClosed = "lobby_closed";
 
     /// <summary>An unknown rule name, a choice's value it does not have, a stat pack the server does not have, or a
@@ -203,9 +203,11 @@ public sealed record CreateLobby(string Name, LobbyRules Rules, string? Password
 /// <summary>Join a custom lobby of the browser, or a Quick Play lobby by its id as the server's status lists it
 /// (<see cref="LobbyView.Id"/>; <see cref="EnterQuickPlay"/> lets the server pick one), leaving the lobby one is in,
 /// with the racer as <see cref="EnterQuickPlay"/> names one. A locked lobby needs its password: another is refused
-/// with <see cref="CustomLobby.BadPassword"/>. A lobby that is full or whose race is starting refuses with
-/// <see cref="CustomLobby.LobbyFull"/> or <see cref="CustomLobby.LobbyClosed"/>; a server from before 0.6.1 knows
-/// only its custom lobbies and answers <see cref="CustomLobby.NoSuchLobby"/> for a Quick Play lobby.</summary>
+/// with <see cref="CustomLobby.BadPassword"/>. A lobby that is full refuses with
+/// <see cref="CustomLobby.LobbyFull"/>; one whose match is starting, choosing machines or racing takes the player as
+/// a member outside that match, who races its next one (the owner, 2026-11-11). A server from before 0.6.1 knows only
+/// its custom lobbies (<see cref="CustomLobby.NoSuchLobby"/> for a Quick Play lobby) and refuses while a match is
+/// starting (<see cref="CustomLobby.LobbyClosed"/>).</summary>
 public sealed record JoinLobby(string LobbyId, string? Password, int Machine, Rgb Color, int? Setting = null,
     int? StockColor = null, CustomMachine? Custom = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] BoostTrail? Trail = null) : ClientMessage;
