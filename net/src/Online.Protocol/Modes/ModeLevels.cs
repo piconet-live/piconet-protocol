@@ -12,6 +12,15 @@ public static class ModeLevels
     public static string Version(int ruleSet) =>
         ModeWords.RuleSets.FirstOrDefault(r => r.Number == ruleSet).Version ?? ruleSet.ToString(CultureInfo.InvariantCulture);
 
+    /// <summary>The code of the server's word (an <see cref="ErrorMessage"/>) to a launcher whose hello names a lower
+    /// rule set than a lobby's mode is of (<see cref="Hello.Modes"/>): it stays in the lobby, does not race and is sent
+    /// no match of it.</summary>
+    public const string UpdateCode = "mode_needs_update";
+
+    /// <summary>That word's text, shown as it is: the game version the lobby's mode needs.</summary>
+    public static string UpdateText(int ruleSet) =>
+        $"This lobby's game mode needs Piconet {Version(ruleSet)}. Update the launcher to race it.";
+
     /// <summary>The rule set of what a header's <c>api</c> names: a game version this build knows, or 1. False with
     /// the reason, said to the file's author.</summary>
     public static bool TryRuleSet(string api, out int ruleSet, out string refusal)

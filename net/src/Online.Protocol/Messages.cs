@@ -366,7 +366,7 @@ public sealed record RulesChanged(ServerRules Rules) : ServerMessage;
 /// <summary>A refused request, with a short text a launcher can show as it is. Codes: bad_name, bad_version,
 /// bad_build, not_ready, already_welcomed (a second hello), machine_not_allowed (queueing or choosing),
 /// not_in_lobby, voting_closed, bad_channel, bad_text, rate_limited (the connection, before it is closed),
-/// rename_too_soon, bad_message; a custom lobby's: <see cref="CustomLobby"/>'s codes; a chat line the filter refused: <see cref="Chat.ChatRefusal"/>'s codes. Seconds:
+/// rename_too_soon, bad_message, mode_needs_update (<see cref="ModeLevels.UpdateCode"/>); a custom lobby's: <see cref="CustomLobby"/>'s codes; a chat line the filter refused: <see cref="Chat.ChatRefusal"/>'s codes. Seconds:
 /// how long a chat mute lasts still (0: it is over); written only with a value, so a launcher from before it reads
 /// the message as it did.</summary>
 public sealed record ErrorMessage(string Code, string Message, int? Seconds = null) : ServerMessage;

@@ -100,4 +100,8 @@ public sealed class ModeLevelsTests
         Assert.Empty(result.Errors);
         Assert.Equal(ruleSet, result.Mode!.Api);
     }
+
+    [Fact]
+    public void ALowerLauncherIsToldTheVersionItNeeds() =>
+        Assert.Equal("This lobby's game mode needs Piconet 0.6.1. Update the launcher to race it.", ModeLevels.UpdateText(2));
 }
