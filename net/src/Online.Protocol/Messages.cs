@@ -71,13 +71,17 @@ public sealed record Rgb(byte R, byte G, byte B)
 /// Custom: the garage-built machine the player races in place of Machine (<see cref="CustomMachine"/>, as their
 /// <see cref="SeatSetup.Custom"/> will carry it), so the other members see it; null: Machine. A launcher from before
 /// it passes over it. Team: the team the player chose or the host gave them (0 to 29; shown as "Team 1" on); null:
-/// none yet, or a lobby without teams (<see cref="LobbyRules.TeamsKey"/>): the race gives them one.</summary>
+/// none yet, or a lobby without teams (<see cref="LobbyRules.TeamsKey"/>): the race gives them one. NextRace: while
+/// the lobby's match is starting or choosing machines, this member is not of it (they joined meanwhile, measured too
+/// slow for its relay, or their launcher does not run its rules): they have no vote and no machine to choose and race
+/// the lobby's next race. A launcher from before it passes over it.</summary>
 public sealed record PlayerInfo(string Id, string Name, int Machine, Rgb Color, int? StockColor = null, bool Racing = false,
     bool Chosen = false, string? Tag = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool Watching = false,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Pack = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] CustomMachine? Custom = null,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] int? Team = null);
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] int? Team = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool NextRace = false);
 
 /// <summary>A relay the players measure. An empty host means the coordinator's own host.</summary>
 public sealed record RelayEndpoint(string Id, string Host, int Port);
