@@ -14,7 +14,7 @@ API_KEYS = {"number", "budget", "queue", "globals", "seat_words", "locals", "rul
 OP_KEYS = {"name", "code", "operands", "doc"}
 EVENT_KEYS = {"name", "id", "kind", "binds", "doc"}
 SETUP_KEYS = {"name", "id", "args", "where", "doc", "table", "lobby", "form"}
-ARG_KEYS = {"type", "name", "least", "most", "default", "on"}
+ARG_KEYS = {"type", "name", "least", "most", "default", "on", "always"}
 READ_KEYS = {"name", "id", "type", "doc"}
 ACTION_KEYS = {"name", "spelled", "id", "args", "where", "doc", "join", "needs_step"}
 CHOICE_KEYS = {"name", "values", "doc"}
@@ -114,6 +114,9 @@ def load(path=SCHEMA):
                 raise SchemaError(f"setup {s['name']}: an argument is an int, a real or a switch (on, off or a switch parameter)")
             if "on" in a and (a["type"] != "int" or not a.get("least", 0) <= a["on"] <= a.get("most", 0)):
                 raise SchemaError(f"setup {s['name']}: an argument's `on` is an int in its range")
+            # (a switch that takes a third value, the word `always`: off 0, on 1 as ever, and this above them)
+            if "always" in a and (a["type"] != "switch" or type(a["always"]) is not int or a["always"] != 2):
+                raise SchemaError(f"setup {s['name']}: an argument's `always` is a switch's third value, 2")
         if s.get("form", "") not in ("", "range", "text", "list"):
             raise SchemaError(f"setup {s['name']}: form is range, text or list")
         if s.get("form") and not s.get("lobby") and s["form"] != "text":

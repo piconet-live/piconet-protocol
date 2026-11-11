@@ -17,7 +17,7 @@ param finish_in   "Finish limit"    number 0..600 step 5 default 90;            
 param setting_low  "Machine setting from" number 0..100 default 100;
 param setting_high "Machine setting to"   number 0..100 default 100;
 param pack        "Stats"           choice ["GX Unleashed", "F-Zero GX+", "stock", "file"] default "GX Unleashed";
-param cpu_racers  "CPU racers"      switch default on;   // on: players may vote CPUs in, as today; off: none
+param cpu_racers  "CPU racers"      choice ["Off", "Vote", "Always"] default "Vote";   // Vote: players may vote CPUs in, as Quick Play does; Always: CPUs take the empty seats with no vote; Off: none
 param lives       "Lives"           number 1..9 default 3;   // 1: the game's own rule, one wreck and out
 
 cpus cpu_racers;

@@ -35,6 +35,8 @@ def emit(t):
         out += [f"  {c['name'].upper()}_COUNT = {len(c['values'])},", "};", ""]
     out += ["// what `on` is for a setup word that also takes a value"]
     out += [f"inline constexpr int SETUP_{s['pascal'].upper()}_ON = {a['on']};" for s in t["setups"] for a in s.get("args", []) if "on" in a]
+    out += ["// what `always` is for a switch that takes it (off 0, on 1)"]
+    out += [f"inline constexpr int SETUP_{s['pascal'].upper()}_ALWAYS = {a['always']};" for s in t["setups"] for a in s.get("args", []) if "always" in a]
     out += ["", "// the arguments an action pops", "constexpr int ActionArguments(std::uint8_t action)", "{",
             "  switch (action)", "  {"]
     out += [f"    case ACTION_{a['pascal'].upper()}: return {len(a.get('args', []))};" for a in t["actions"]]

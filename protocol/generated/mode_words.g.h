@@ -516,6 +516,8 @@ enum Look : std::uint8_t
 // what `on` is for a setup word that also takes a value
 inline constexpr int SETUP_MINEREGEN_ON = 200;
 inline constexpr int SETUP_TIMEBONUS_ON = 5;
+// what `always` is for a switch that takes it (off 0, on 1)
+inline constexpr int SETUP_CPUS_ALWAYS = 2;
 
 // the arguments an action pops
 constexpr int ActionArguments(std::uint8_t action)

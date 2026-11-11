@@ -37,7 +37,8 @@ anywhere.
   first name. A whole-number or delay default lies on a step from the least.
 - A setup word checks a parameter's whole range against its own. A word that takes a real (`damage`, `rolling_start`,
   `start_gap`, `pedals locked`) needs a real parameter: `500.0..2000.0`, not `500..2000`. A whole-number word takes a
-  `number`, a `delay` or a `choice`; an on-or-off word takes a `switch`.
+  `number`, a `delay` or a `choice`; an on-or-off word takes a `switch` (`cpus`, which has a third value, also a
+  `choice` of three).
 
 ### Types and values
 
@@ -117,7 +118,8 @@ game counts it, 100 a full machine.
 
 - A word is written once. A word with two forms takes one, except beside a parameter with a named value:
   `laps by course { … }` with `laps lap_count;` races the table at "By course" and the number otherwise.
-- An on-or-off word takes `on`, `off` or a switch parameter: `boost;` and `boost 1;` are refused.
+- An on-or-off word takes `on`, `off` or a switch parameter: `boost;` and `boost 1;` are refused. `cpus` also takes
+  `always`.
 - A range word takes `least..most`, or one value for both; either end may be a parameter.
 - `finish_limit` counts seconds and `mine_regen` milliseconds, written plain: a time with a unit is steps.
 
@@ -137,7 +139,7 @@ game counts it, 100 a full machine.
 |---|---|---|
 | `racers least..most;` `racers n;` | The lobby has `most` seats; a race with fewer racers than `least` is refused. Left out: the lobby's seats | 1 to 30 |
 | `teams least..most;` | The race has teams; the lobby offers `most`, and a race with players on fewer teams than `least` is refused. The host picks the count only when it is a parameter. Left out: no teams | 2 to 30 |
-| `cpus on;` `cpus off;` | `on`: players may vote CPUs into the race; it never forces them in. Left out: no CPUs | on or off |
+| `cpus on;` `cpus off;` `cpus always;` | `on`: players may vote CPUs into the race; it does not force them in. `always`: CPUs take the empty seats of every race, with no vote. Left out: no CPUs. A parameter that gives it is a switch (off, on) or a choice of three, read in that order as off, on, always: `param cpu_racers "CPU racers" choice ["Off", "Vote", "Always"] default "Vote";` | on, off or always |
 | `cpu_level n;` | The CPUs' level: 0 Novice, 1 Standard, 2 Expert, 3 Master. Left out: Master | 0 to 3 |
 | `machines all;` | Every machine, as leaving it out | |
 | `machines ["Blue Falcon", "Golden Fox"];` | The machines racers may choose and CPUs drive | machine names |

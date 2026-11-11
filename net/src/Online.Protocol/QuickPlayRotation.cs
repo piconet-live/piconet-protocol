@@ -16,8 +16,11 @@ public sealed record RotationMode(string File, ModePackage Package, string Hash,
     /// it states none, so the lobby's laps. 0: unlimited.</summary>
     public int? Laps(int course) => Terms.Laps(course);
 
-    /// <summary>The mode says <c>cpus on</c>: players may vote CPUs into its race (left out, they may not).</summary>
+    /// <summary>The mode says <c>cpus on</c> or <c>cpus always</c>: its race may hold CPUs (left out, none).</summary>
     public bool CpusAllowed => Terms.CpusAllowed;
+
+    /// <summary>The mode says <c>cpus on</c>: players vote CPUs into its race (off, none; always, no vote is needed).</summary>
+    public bool CpuVote => Terms.CpuFill == CpuFillMode.Vote;
 
     /// <summary>The mode as a lobby's rules and the lobby browser name it (<see cref="LobbyRules.Mode"/>,
     /// <see cref="LobbyList.Modes"/>): its hash and share code, its header, what it owns of the race, and its settings on
@@ -117,8 +120,11 @@ public sealed class QuickPlayRotation
     /// (<see cref="Hello.Modes"/>).</summary>
     public int Api => Modes.Max(m => m.Package.Api);
 
-    /// <summary>Whether any mode of the rotation lets players vote CPUs in (otherwise there is no CPU vote).</summary>
+    /// <summary>Whether any mode of the rotation may hold CPUs.</summary>
     public bool CpusAllowed => Modes.Any(m => m.CpusAllowed);
+
+    /// <summary>Whether any mode of the rotation lets players vote CPUs in (otherwise there is no CPU vote).</summary>
+    public bool CpuVote => Modes.Any(m => m.CpuVote);
 
     /// <summary>The rotation in a folder: its <see cref="FileName"/> and the mode files it names, compiled. Anything
     /// wrong (a file missing, a key unknown, a value out of range, a mode that does not compile) throws

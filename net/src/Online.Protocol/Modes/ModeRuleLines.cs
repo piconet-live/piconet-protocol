@@ -29,7 +29,7 @@ public static class ModeRuleLines
 
     private static string? Line(ModeSetup word, List<int> a) => word switch
     {
-        ModeSetup.Cpus => a[0] == 0 ? "CPU racers Off" : null,
+        ModeSetup.Cpus => a[0] == 0 ? "CPU racers Off" : a[0] == 1 ? null : "CPU racers Always",   // (1: the vote, Quick Play's own way)
         ModeSetup.PedalsLocked => "Pedals locked",
         ModeSetup.Boost => a[0] == 0 ? "No boost" : null,
         ModeSetup.FinishLimit => a[0] == 0 ? "Finish limit Off" : $"Finish limit {Say(a[0])} s",

@@ -241,8 +241,8 @@ public sealed record LobbyList(IReadOnlyList<LobbySummary> Lobbies,
 /// (the header's; "" when it has none), and the api it needs (<see cref="Hello.Modes"/>). Terms: the rules the mode
 /// races, every rule of the race by its key as <see cref="LobbyRules.Values"/> holds them (<see cref="ModeTerms.Rules"/>:
 /// a word left out is the game's own way); Pack: the stat pack it races on its values now ("" the disc's own stats; null:
-/// its stats choice is the host's own file, <see cref="LobbyRules.PackFile"/>). CpusAllowed is in Terms (cpu-fill: the
-/// vote, or never). Null Terms: a server from before them. Params: the mode's parameters as its package declares them, and
+/// its stats choice is the host's own file, <see cref="LobbyRules.PackFile"/>). The CPUs are in Terms (cpu-fill: the
+/// vote, always or never, <see cref="CpuFillMode"/>). Null Terms: a server from before them. Params: the mode's parameters as its package declares them, and
 /// Values their values now, in the same order: the lobby's rule controls and what its panel shows. Null: it has none,
 /// or a server from before them. Machines: the machine ids it allows when it states a list, so a Garage shows them
 /// before the machine choice opens; null: it states none (the lobby's machines stand). CustomsOff: it races no custom

@@ -808,11 +808,11 @@ public static partial class ModeWords
         ("game_start", ModeEvent.GameStart, false, false, null),
     ];
 
-    /// <summary>The setup words: name, id, arguments (name, type, least, most, default, what on is); Lobby: the coordinator's alone, not in the package; Form: how the file writes it (range, text, list; empty: its arguments).</summary>
+    /// <summary>The setup words: name, id, arguments (name, type, least, most, default, what on is, what always is); Lobby: the coordinator's alone, not in the package; Form: how the file writes it (range, text, list; empty: its arguments).</summary>
     public static readonly IReadOnlyList<(string Name, ModeSetup Id, IReadOnlyList<ModeArgument> Args, bool Lobby, string Form)> Setups =
     [
         ("laps", ModeSetup.Laps, [new ModeArgument("", ModeType.Int, 0, 99, null)], false, ""),
-        ("cpus", ModeSetup.Cpus, [new ModeArgument("", ModeType.Bool, 0, 1, null)], false, ""),
+        ("cpus", ModeSetup.Cpus, [new ModeArgument("", ModeType.Bool, 0, 2, null, Always: 2)], false, ""),
         ("pedals locked", ModeSetup.PedalsLocked, [new ModeArgument("accel", ModeType.Real, 0.0f, 1.0f, 1.0f), new ModeArgument("brake", ModeType.Real, 0.0f, 1.0f, 0.0f)], false, ""),
         ("boost", ModeSetup.Boost, [new ModeArgument("", ModeType.Bool, 0, 1, null)], false, ""),
         ("laps by course", ModeSetup.LapsByCourse, [new ModeArgument("else", ModeType.Int, 0, 99, 3)], false, ""),

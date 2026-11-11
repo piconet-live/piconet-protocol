@@ -1,0 +1,6 @@
+// The CPU racers as a host's choice of three: off, by the players' vote, always. The game reads the last two alike.
+mode "CPU fill" { api 1; about "CPU racers by a choice."; }
+param cpu_racers "CPU racers" choice ["Off", "Vote", "Always"] default "Always";
+
+cpus cpu_racers;
+laps 3;

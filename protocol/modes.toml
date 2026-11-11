@@ -586,8 +586,10 @@ where = "the coordinator, at match forming: the match start's laps (0, `unlimite
 [[setup]]
 name = "cpus"
 id = 1
-args = [{ type = "switch" }]
-where = "the coordinator: on, players may vote CPUs into the mode's race (it never forces them); off or left out, they may not"
+args = [{ type = "switch", always = 2 }]
+where = """the coordinator: on (1), players may vote CPUs into the mode's race (it does not force them); always (2), CPUs take the \
+empty seats of every race, with no vote; off (0) or left out, no CPUs. Also a switch parameter (off, on) or a choice parameter of \
+three (off, on, always, in that order). The game reads always as on: a player gone is driven by the AI"""
 [[setup]]
 name = "pedals locked"
 id = 2

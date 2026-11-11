@@ -645,7 +645,7 @@ private static string? CompilersOwn(ModeSetup id, string name) => id switch
             if (given is null)
             {
                 var value = argument.Default ?? throw new ModeCompileException(item.Line, argument.Type == ModeType.Bool
-                    ? $"{what} takes on, off or a switch parameter" : $"{what} needs its value");
+                    ? Switch(what, argument) : $"{what} needs its value");
                 return new ModeSetupValue(false, argument.Type == ModeType.Real ? ModeOperators.Cell((float)value) : (int)value);
             }
             if (argument.Type == ModeType.Bool || argument.On is not null)
@@ -658,9 +658,13 @@ private static string? CompilersOwn(ModeSetup id, string name) => id switch
                 {
                     return new ModeSetupValue(true, flag.Index);
                 }
+                if (Third(argument, given) is { } third)
+                {
+                    return third;
+                }
                 if (argument.Type == ModeType.Bool)
                 {
-                    throw new ModeCompileException(given.Line, $"{what} takes on, off or a switch parameter");
+                    throw new ModeCompileException(given.Line, Switch(what, argument));
                 }
             }
             if (given.Value is ModeName name && _names.Find(name.Name) is { Kind: ModeNameKind.Param } param)
@@ -682,6 +686,25 @@ private static string? CompilersOwn(ModeSetup id, string name) => id switch
             }
             return new ModeSetupValue(false, cell);
         }
+
+        /// <summary>A switch's third value where it has one (cpus): the word <c>always</c>, unless the file gave the name
+        /// to something of its own, or a choice parameter of three, off, on and always in that order. Null: neither.</summary>
+        private ModeSetupValue? Third(ModeArgument argument, ModeSetupArgument given)
+        {
+            if (argument.Always is not { } always || given.Value is not ModeName { Name: var name })
+            {
+                return null;
+            }
+            var found = _names.Find(name);
+            return found is null ? name == "always" ? new ModeSetupValue(false, always) : null
+                : found is { Kind: ModeNameKind.Param, Param: { Kind: ModeParamKind.Choice, Or: null, Least: 0 } choice } && choice.Most == always
+                    ? new ModeSetupValue(true, found.Index) : null;
+        }
+
+        /// <summary>What a switch takes, said to a file that gave it something else.</summary>
+        private static string Switch(string what, ModeArgument argument) => argument.Always is null
+            ? $"{what} takes on, off or a switch parameter"
+            : $"{what} takes on, off, always, a switch parameter or a choice parameter of three (off, on, always)";
 
         private static bool Within(ModeArgument argument, int cell)
         {

@@ -1,0 +1,11 @@
+FZMP format 1 api 1, 472 bytes, hash cb03ea9946129a40a024707fe067922f3a472f2b4f3975e64fd7abe02b75c129
+HEAD name "CPU fill" badge "" about "CPU racers by a choice."
+PARM 1
+  0 cpu_racers "CPU racers" choice int 0..2 step 1 default 2 ["Off", "Vote", "Always"]
+SETP 2
+  cpus param 0 (cpu_racers)
+  laps 3
+VARS globals 0, seat words 0
+RULE 0
+CODE 0 bytes
+SRC  284 bytes

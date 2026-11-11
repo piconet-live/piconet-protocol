@@ -40,6 +40,7 @@ public sealed class QuickPlayRotationTests : IDisposable
         Assert.Equal([8], spicy.Mode.Terms.Courses!);
         Assert.Equal(1, rotation.Api);
         Assert.True(rotation.CpusAllowed);
+        Assert.True(rotation.CpuVote);
     }
 
     [Fact]
@@ -481,6 +482,7 @@ public sealed class QuickPlayRotationTests : IDisposable
         var terms = ModeTerms.Of(compiled.Mode!);
         Assert.Equal(90, terms.FinishLimit);
         Assert.True(terms.CpusAllowed);
+        Assert.Equal(CpuFillMode.Vote, terms.CpuFill);
         Assert.Equal(8, terms.Laps(CourseTable.Courses.First(c => c.Track == "Sonic Oval").Course));
     }
 
@@ -554,6 +556,28 @@ public sealed class QuickPlayRotationTests : IDisposable
         values[7] = normal.Package.Params[7].Choices.ToList().IndexOf(ModeTerms.FileChoice);
         Assert.Equal((null, true), (new RotationMode(normal.File, normal.Package, normal.Hash, values).Terms.Pack,
             new RotationMode(normal.File, normal.Package, normal.Hash, values).Terms.PackFromFile));
+    }
+
+    /// <summary>The "CPU racers" row is a choice of three, Off, Vote, Always, at the values the switch before it kept
+    /// (off 0, on 1): Quick Play's own race is the vote, and a host's Always fills the seats with no vote.</summary>
+    [Fact]
+    public void QuickPlaysCpuRacersAreOffVoteOrAlways()
+    {
+        var normal = Official().Normal;
+        var row = normal.Package.Params[8];
+        Assert.Equal(("CPU racers", ModeParamKind.Choice, 1), (row.Label, row.Kind, row.Default));
+        Assert.Equal(["Off", "Vote", "Always"], row.Choices);
+        Assert.True(normal.CpuVote);
+        var values = normal.Package.Params.Select(p => p.Default).ToArray();
+        (CpuFillMode Fill, bool Vote, bool Allowed) With(int value)
+        {
+            values[8] = value;
+            var hosted = new RotationMode(normal.File, normal.Package, normal.Hash, [.. values]);
+            return ((CpuFillMode)hosted.Terms.Rules()["cpu-fill"], hosted.CpuVote, hosted.CpusAllowed);
+        }
+        Assert.Equal((CpuFillMode.Never, false, false), With(0));
+        Assert.Equal((CpuFillMode.Vote, true, true), With(1));
+        Assert.Equal((CpuFillMode.Always, false, true), With(2));
     }
 
     [Theory]

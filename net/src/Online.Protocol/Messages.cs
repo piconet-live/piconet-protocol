@@ -129,9 +129,13 @@ public sealed record RaceSetup(
 [JsonConverter(typeof(JsonStringEnumConverter<CpuFillMode>))]
 public enum CpuFillMode
 {
-    /// <summary>The lobby votes (more than half: CPUs fill the empty seats).</summary>
+    /// <summary>The lobby votes (more than half: CPUs fill the empty seats). A mode's <c>cpus on</c>.</summary>
     Vote,
+
+    /// <summary>CPUs fill the empty seats of every race, with no vote. A mode's <c>cpus always</c>.</summary>
     Always,
+
+    /// <summary>No CPUs and no vote. A mode's <c>cpus off</c>, or the word left out.</summary>
     Never,
 }
 
@@ -391,7 +395,7 @@ public sealed record ErrorMessage(string Code, string Message, int? Seconds = nu
 /// (<see cref="HostRules.StartCountdown"/>), the milliseconds left when the state was sent; the lobby's match begins
 /// when it runs out, unless its start vote begins it first. Null: no countdown runs (too few players, a custom lobby,
 /// the rule off, or the lobby is past forming); a launcher from before it passes over it. NoCpuVote: the lobby's
-/// modes allow no CPU racers (none says <c>cpus on</c>), so there is no CPU vote; a launcher from before it
+/// modes take no CPU vote (none says <c>cpus on</c>: each has no CPUs, or has them always), so there is none; a launcher from before it
 /// passes over it. CannotRace: the members (player ids) whose launcher cannot run the lobby's mode
 /// (<see cref="Hello.Modes"/>): they stay in the lobby and watch, and are never put in its races; null: none.</summary>
 public sealed record LobbyState(
