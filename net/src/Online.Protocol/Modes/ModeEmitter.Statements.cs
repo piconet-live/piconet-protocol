@@ -227,7 +227,7 @@ internal sealed partial class ModeEmitter
         }
         throw new ModeCompileException(assign.Line, read.Name is not null
             ? $"seat.{field.Field} is the game's to say: it cannot be assigned"
-            : $"a seat has no '{field.Field}' (neither a word of api {ModeWords.Api} nor a seat variable)");
+            : $"a seat has no '{field.Field}' (neither a word of api {ModeWords.ApiVersion} nor a seat variable)");
     }
 
     private void If(ModeIf branch)

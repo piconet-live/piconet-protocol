@@ -1,13 +1,35 @@
 # Mode reference
 
-A `.fzmode` file is a UTF-8 text file that sets the rules of a custom lobby's race. This is the vocabulary of `api 1`
-(Piconet 0.6.0). A file is at most 64 KB, and a word it leaves out is the game's own way.
+A `.fzmode` file is a UTF-8 text file that sets the rules of a custom lobby's race. This is the vocabulary of `api 0.6.1`.
+A file is at most 64 KB, and a word it leaves out is the game's own way.
+
+## The api line
+
+A file names the game version it was written for: `api 0.6.1;`. That version's rules are frozen once it is released,
+so the file means the same in every later version of the game. Players on an older version than the file names are
+asked to update before they can race it.
+
+| Written | Means |
+|---|---|
+| `api 0.6.1;` | The rules of Piconet 0.6.1 |
+| `api 0.6.0;` or `api 1;` | The rules of Piconet 0.6.0 (its files wrote `api 1`, which stays valid) |
+
+- A word or value that arrived later than the file's version is refused, with the version it needs: `cpus always
+  needs api 0.6.1: this file says api 1 (0.6.0)`. Raise the api line to use it.
+- A version that changed no rule has the rules of the one before it.
+- A file that names a version newer than the game is refused: `api 0.7.0 is newer than this build, which knows up to
+  api 0.6.1: update to use this file`.
+
+| Arrived in | Words and values |
+|---|---|
+| 0.6.1 | `cpus always` |
+| 0.6.0 | Everything else on this page |
 
 ## What goes in a file
 
 | Part | What it does | Looks like |
 |---|---|---|
-| Header | First in the file: the mode's name, the api (required), a short badge and a one-line about (both optional) | `mode "Knockout" { api 1; badge "KNOCKOUT"; about "…"; }` |
+| Header | First in the file: the mode's name, the api (required), a short badge and a one-line about (both optional) | `mode "Knockout" { api 0.6.1; badge "KNOCKOUT"; about "…"; }` |
 | Parameter | A setting the host changes in the lobby; a constant in the rules | `param keep "Racers left" number 1..29 default 1;` |
 | Setup word | Fixes a rule of the race before it starts; each written once | `laps 5;` |
 | Constant | Fixed when the file compiles | `const int keep = 8;` |
@@ -139,7 +161,7 @@ game counts it, 100 a full machine.
 |---|---|---|
 | `racers least..most;` `racers n;` | The lobby has `most` seats; a race with fewer racers than `least` is refused. Left out: the lobby's seats | 1 to 30 |
 | `teams least..most;` | The race has teams; the lobby offers `most`, and a race with players on fewer teams than `least` is refused. The host picks the count only when it is a parameter. Left out: no teams | 2 to 30 |
-| `cpus on;` `cpus off;` `cpus always;` | `on`: players may vote CPUs into the race; it does not force them in. `always`: CPUs take the empty seats of every race, with no vote. Left out: no CPUs. A parameter that gives it is a switch (off, on) or a choice of three, read in that order as off, on, always: `param cpu_racers "CPU racers" choice ["Off", "Vote", "Always"] default "Vote";` | on, off or always |
+| `cpus on;` `cpus off;` `cpus always;` | `on`: players may vote CPUs into the race; it does not force them in. `always` (api 0.6.1): CPUs take the empty seats of every race, with no vote. Left out: no CPUs. A parameter that gives it is a switch (off, on) or a choice of three, read in that order as off, on, always: `param cpu_racers "CPU racers" choice ["Off", "Vote", "Always"] default "Vote";` | on, off or always |
 | `cpu_level n;` | The CPUs' level: 0 Novice, 1 Standard, 2 Expert, 3 Master. Left out: Master | 0 to 3 |
 | `machines all;` | Every machine, as leaving it out | |
 | `machines ["Blue Falcon", "Golden Fox"];` | The machines racers may choose and CPUs drive | machine names |
@@ -753,7 +775,7 @@ board global cut_in "Next cut";
 
 | Limit | Value |
 |---|---|
-| Api | 1; a build refuses a newer api, and a later api changes no word of an older one |
+| Api | The game version the file names; a released version's rules never change, and a game refuses a file of a newer version than its own |
 | A file | 65,536 characters |
 | The compiled mode, its text included | 65,536 bytes |
 | Parameters | 256 |

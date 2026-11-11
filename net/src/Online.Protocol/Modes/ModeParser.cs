@@ -213,12 +213,12 @@ internal sealed class ModeParser
         var line = Current.Line;
         if (!Current.Is("mode"))
         {
-            throw Error("a mode file starts with its header: mode \"Name\" { api 1; }");
+            throw Error($"a mode file starts with its header: mode \"Name\" {{ api {ModeWords.ApiVersion}; }}");
         }
         _at++;
         var name = Text();
         Expect("{");
-        int? api = null;
+        string? api = null;
         var apiLine = line;
         string badge = "", about = "";
         while (!Accept("}"))
@@ -226,7 +226,12 @@ internal sealed class ModeParser
             if (Accept("api"))
             {
                 apiLine = Current.Line;
-                api = (int)WholeLiteral("the api");
+                // the game version the file was written for (0.6.1), or 0.6.0's bare 1: ModeLevels reads it
+                if (Current.Kind is not (ModeTokenKind.Version or ModeTokenKind.Whole))
+                {
+                    throw Error($"the api is the game version the file was written for (api {ModeWords.ApiVersion};), not {Describe(Current)}");
+                }
+                api = Take().Text;
             }
             else if (Accept("badge"))
             {
@@ -569,7 +574,7 @@ internal sealed class ModeParser
         var (word, parts) = SetupWords.FirstOrDefault(w => StartsHere(w.Parts));
         if (word is null)
         {
-            throw Error($"'{Current.Text}' is not a word of api {ModeWords.Api}");
+            throw Error($"'{Current.Text}' is not a word of api {ModeWords.ApiVersion}");
         }
         _at += parts.Length;
         if (ModeWords.Setups.Single(s => s.Name == word).Id == ModeSetup.LapsByCourse)
@@ -884,7 +889,7 @@ internal sealed class ModeParser
         var target = Postfix();
         var op = Assignments.FirstOrDefault(Current.Is)
             ?? throw (target is ModeName word
-                ? new ModeCompileException(line, $"'{word.Name}' is not a word of api {ModeWords.Api}")
+                ? new ModeCompileException(line, $"'{word.Name}' is not a word of api {ModeWords.ApiVersion}")
                 : Error($"a statement is expected here: {Describe(Current)} does not start one"));
         _at++;
         var value = Expression();
@@ -906,7 +911,7 @@ internal sealed class ModeParser
         }
         if (!ModeWords.Actions.Any(a => a.Name == name))
         {
-            throw Error($"'{name}' is not an action of api {ModeWords.Api}");
+            throw Error($"'{name}' is not an action of api {ModeWords.ApiVersion}");
         }
         // a word between the first two arguments in place of the comma (map_hide s from seats)
         var join = ModeWords.ActionJoins.GetValueOrDefault(ModeWords.Actions.First(a => a.Name == name).Id);

@@ -10,8 +10,11 @@ def emit(t):
            "// The game mode system's api, its operations and words (protocol/modes.toml; the package: formats.md section 9).",
            "// SPDX-License-Identifier: GPL-3.0-or-later", "", "#pragma once", "", "#include <cstdint>", "",
            f"namespace {t['namespace_cxx']}", "{",
-           "// the api this build runs, and its limits (language 11.1)",
-           f"inline constexpr int API = {api['number']};"]
+           "// the newest rule set this build runs (a package carries its rule set as its api), the newest game version",
+           "// this table knows, and the limits (language 11.1)",
+           f"inline constexpr int API = {api['number']};",
+           f"inline constexpr char API_VERSION[] = \"{t['levels']['newest']}\";"]
+    out += [f"inline constexpr char RULE_SET_{r['number']}_VERSION[] = \"{r['version']}\";" for r in t["levels"]["rule_sets"]]
     out += [f"inline constexpr int {k.upper()} = {v};" for k, v in api.items() if k != "number"]
     out += ["", "// the bytecode's operations: the byte, then the operands' bytes (big-endian)",
             "enum Op : std::uint8_t", "{"]
@@ -37,6 +40,18 @@ def emit(t):
     out += [f"inline constexpr int SETUP_{s['pascal'].upper()}_ON = {a['on']};" for s in t["setups"] for a in s.get("args", []) if "on" in a]
     out += ["// what `always` is for a switch that takes it (off 0, on 1)"]
     out += [f"inline constexpr int SETUP_{s['pascal'].upper()}_ALWAYS = {a['always']};" for s in t["setups"] for a in s.get("args", []) if "always" in a]
+    out += ["// the rule set that value arrived in, where after its word's"]
+    out += [f"inline constexpr int SETUP_{s['pascal'].upper()}_ALWAYS_SINCE = {a['always_since']};"
+            for s in t["setups"] for a in s.get("args", []) if "always_since" in a]
+    for kind, prefix, name, what in (("ops", "OP", "Op", "an operation"), ("events", "EVENT", "Event", "an event"),
+                                     ("setups", "SETUP", "Setup", "a setup word"), ("seat_reads", "SEAT", "Seat", "a read of a seat"),
+                                     ("race_reads", "RACE", "Race", "a read of the race"), ("actions", "ACTION", "Action", "an action")):
+        later = [f"    case {prefix}_{(e['name'] if kind == 'ops' else e['pascal']).upper()}: return {e['since']};" for e in t[kind] if e["since"] > 1]
+        out += ["", f"// the rule set {what} arrived in (a package of an earlier rule set does not hold it)"]
+        # (none yet after the first: no switch of a default alone, which a compiler warns of)
+        out += ([f"constexpr int {name}Since(std::uint8_t {name.lower()})", "{", f"  switch ({name.lower()})", "  {"] + later
+                + ["    default: return 1;", "  }", "}"] if later else
+                [f"constexpr int {name}Since(std::uint8_t /*{name.lower()}*/)", "{", "  return 1;", "}"])
     out += ["", "// the arguments an action pops", "constexpr int ActionArguments(std::uint8_t action)", "{",
             "  switch (action)", "  {"]
     out += [f"    case ACTION_{a['pascal'].upper()}: return {len(a.get('args', []))};" for a in t["actions"]]

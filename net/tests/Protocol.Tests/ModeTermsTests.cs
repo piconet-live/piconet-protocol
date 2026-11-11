@@ -674,7 +674,7 @@ public sealed class ModeTermsTests
     public void CpusAreOffByTheVoteOrAlways(string line, int? given, CpuFillMode fill)
     {
         var compiled = ModeCompiler.Compile(
-            "mode \"S\" { api 1; }\nparam p \"P\" switch default off;\nparam c \"CPU racers\" choice [\"Off\", \"Vote\", \"Always\"] default \"Vote\";\n" + line + "\n");
+            "mode \"S\" { api 0.6.1; }\nparam p \"P\" switch default off;\nparam c \"CPU racers\" choice [\"Off\", \"Vote\", \"Always\"] default \"Vote\";\n" + line + "\n");
         Assert.True(compiled.Succeeded, string.Join("; ", compiled.Errors));
         var terms = ModeTerms.Of(compiled.Mode!, given is { } g ? [g, g] : null);
         Assert.Equal(fill, terms.CpuFill);
@@ -690,7 +690,7 @@ public sealed class ModeTermsTests
     [InlineData("param always \"A\" number 0..2 default 2; cpus always;")]
     public void CpusRefuseAnotherParameter(string body)
     {
-        var result = ModeCompiler.Compile("mode \"S\" { api 1; }\n" + body + "\n");
+        var result = ModeCompiler.Compile("mode \"S\" { api 0.6.1; }\n" + body + "\n");
         Assert.Contains("cpus takes on, off, always", Assert.Single(result.Errors), StringComparison.Ordinal);
     }
 
@@ -700,7 +700,7 @@ public sealed class ModeTermsTests
     [InlineData("cpus always;", "CPU racers Always")]
     public void TheRuleLinesNameTheCpusWhenNotTheVote(string line, string? says)
     {
-        var mode = ModeCompiler.Compile("mode \"M\" { api 1; about \"A.\"; }\n" + line + "\n").Mode!;
+        var mode = ModeCompiler.Compile("mode \"M\" { api 0.6.1; about \"A.\"; }\n" + line + "\n").Mode!;
         Assert.Equal(says is null ? [] : new[] { says }, ModeRuleLines.Of(mode));
     }
 
@@ -708,7 +708,7 @@ public sealed class ModeTermsTests
     [Fact]
     public void CpusAlwaysListsAsWritten()
     {
-        var result = ModeCompiler.Compile("mode \"M\" { api 1; }\ncpus always;\n");
+        var result = ModeCompiler.Compile("mode \"M\" { api 0.6.1; }\ncpus always;\n");
         Assert.Contains("cpus always", ModeDisassembler.List(result.Package!), StringComparison.Ordinal);
         Assert.Equal(new ModeSetupValue(false, 2), Assert.Single(Assert.Single(ModePackage.Read(result.Package!).Setups).Arguments));
     }

@@ -659,8 +659,14 @@ public enum ModeAction : byte
 /// <summary>The vocabulary of one api, by the names a mode file writes (protocol/modes.toml).</summary>
 public static partial class ModeWords
 {
-    /// <summary>The api this build compiles.</summary>
-    public const int Api = 1;
+    /// <summary>The newest rule set this build compiles and runs: what a package carries as its api.</summary>
+    public const int Api = 2;
+    /// <summary>The newest game version this build knows: a mode file names one (<c>api 0.6.1;</c>).</summary>
+    public const string ApiVersion = "0.6.1";
+    /// <summary>The rule sets, oldest first: its number and the game version it arrived in. A version between two
+    /// has the earlier one's.</summary>
+    public static readonly IReadOnlyList<(int Number, string Version)> RuleSets =
+        [(1, "0.6.0"), (2, "0.6.1")];
     /// <summary>The api's limit <c>budget</c>.</summary>
     public const int Budget = 65536;
     /// <summary>The api's limit <c>queue</c>.</summary>
@@ -1105,5 +1111,49 @@ public static partial class ModeWords
         new Dictionary<ModeAction, string>
         {
             [ModeAction.MapHide] = "from",
+        };
+
+    /// <summary>The operations that arrived after rule set 1, and the rule set each arrived in.</summary>
+    public static readonly IReadOnlyDictionary<ModeOp, int> OpsSince =
+        new Dictionary<ModeOp, int>
+        {
+        };
+
+    /// <summary>The events that arrived after rule set 1, and the rule set each arrived in.</summary>
+    public static readonly IReadOnlyDictionary<ModeEvent, int> EventsSince =
+        new Dictionary<ModeEvent, int>
+        {
+        };
+
+    /// <summary>The setup words that arrived after rule set 1, and the rule set each arrived in.</summary>
+    public static readonly IReadOnlyDictionary<ModeSetup, int> SetupsSince =
+        new Dictionary<ModeSetup, int>
+        {
+        };
+
+    /// <summary>The reads of a seat that arrived after rule set 1, and the rule set each arrived in.</summary>
+    public static readonly IReadOnlyDictionary<ModeSeatRead, int> SeatReadsSince =
+        new Dictionary<ModeSeatRead, int>
+        {
+        };
+
+    /// <summary>The reads of the race that arrived after rule set 1, and the rule set each arrived in.</summary>
+    public static readonly IReadOnlyDictionary<ModeRaceRead, int> RaceReadsSince =
+        new Dictionary<ModeRaceRead, int>
+        {
+        };
+
+    /// <summary>The actions that arrived after rule set 1, and the rule set each arrived in.</summary>
+    public static readonly IReadOnlyDictionary<ModeAction, int> ActionsSince =
+        new Dictionary<ModeAction, int>
+        {
+        };
+
+    /// <summary>The values a setup word's argument took after the word itself arrived: (word, argument, value) to
+    /// the rule set.</summary>
+    public static readonly IReadOnlyDictionary<(ModeSetup Word, int Argument, int Value), int> SetupValuesSince =
+        new Dictionary<(ModeSetup Word, int Argument, int Value), int>
+        {
+            [(ModeSetup.Cpus, 0, 2)] = 2,
         };
 }

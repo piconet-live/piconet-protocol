@@ -8,8 +8,12 @@
 
 namespace fzgx::modes
 {
-// the api this build runs, and its limits (language 11.1)
-inline constexpr int API = 1;
+// the newest rule set this build runs (a package carries its rule set as its api), the newest game version
+// this table knows, and the limits (language 11.1)
+inline constexpr int API = 2;
+inline constexpr char API_VERSION[] = "0.6.1";
+inline constexpr char RULE_SET_1_VERSION[] = "0.6.0";
+inline constexpr char RULE_SET_2_VERSION[] = "0.6.1";
 inline constexpr int BUDGET = 65536;
 inline constexpr int QUEUE = 256;
 inline constexpr int GLOBALS = 256;
@@ -518,6 +522,44 @@ inline constexpr int SETUP_MINEREGEN_ON = 200;
 inline constexpr int SETUP_TIMEBONUS_ON = 5;
 // what `always` is for a switch that takes it (off 0, on 1)
 inline constexpr int SETUP_CPUS_ALWAYS = 2;
+// the rule set that value arrived in, where after its word's
+inline constexpr int SETUP_CPUS_ALWAYS_SINCE = 2;
+
+// the rule set an operation arrived in (a package of an earlier rule set does not hold it)
+constexpr int OpSince(std::uint8_t /*op*/)
+{
+  return 1;
+}
+
+// the rule set an event arrived in (a package of an earlier rule set does not hold it)
+constexpr int EventSince(std::uint8_t /*event*/)
+{
+  return 1;
+}
+
+// the rule set a setup word arrived in (a package of an earlier rule set does not hold it)
+constexpr int SetupSince(std::uint8_t /*setup*/)
+{
+  return 1;
+}
+
+// the rule set a read of a seat arrived in (a package of an earlier rule set does not hold it)
+constexpr int SeatSince(std::uint8_t /*seat*/)
+{
+  return 1;
+}
+
+// the rule set a read of the race arrived in (a package of an earlier rule set does not hold it)
+constexpr int RaceSince(std::uint8_t /*race*/)
+{
+  return 1;
+}
+
+// the rule set an action arrived in (a package of an earlier rule set does not hold it)
+constexpr int ActionSince(std::uint8_t /*action*/)
+{
+  return 1;
+}
 
 // the arguments an action pops
 constexpr int ActionArguments(std::uint8_t action)

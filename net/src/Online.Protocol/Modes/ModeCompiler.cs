@@ -48,14 +48,14 @@ public static class ModeCompiler
             // (each char is at least a byte of the package's source)
             if (source.Length > ModeWords.PackageBytes)
             {
-                throw new ModeCompileException(1, $"the file is {source.Length} characters, past api {ModeWords.Api}'s {ModeWords.PackageBytes} bytes for a whole package");
+                throw new ModeCompileException(1, $"the file is {source.Length} characters, past api {ModeWords.ApiVersion}'s {ModeWords.PackageBytes} bytes for a whole package");
             }
             var items = ModeParser.Parse(ModeLexer.Tokens(source, warnings), macros);
             var (mode, budget) = new Build(warnings, subs).File(items, source);
             var package = mode.Write();
             if (package.Length > ModeWords.PackageBytes)
             {
-                throw new ModeCompileException(1, $"the package is {package.Length} bytes, past api {ModeWords.Api}'s {ModeWords.PackageBytes} (the source included)");
+                throw new ModeCompileException(1, $"the package is {package.Length} bytes, past api {ModeWords.ApiVersion}'s {ModeWords.PackageBytes} (the source included)");
             }
             var hash = ModePackage.Hash(package);
             return new ModeCompilation(package, mode, hash, ModePackage.ShareCode(hash), budget, [], warnings);
@@ -100,10 +100,10 @@ public static class ModeCompiler
         public (ModePackage Mode, long Budget) File(List<ModeItem> items, string source)
         {
             var header = (ModeHeaderItem)items[0];
-            var api = header.Api ?? throw new ModeCompileException(header.Line, "the header names no api: api 1;");
-            if (api > ModeWords.Api || api < 1)
+            var named = header.Api ?? throw new ModeCompileException(header.Line, $"the header names no api: api {ModeWords.ApiVersion};");
+            if (!ModeLevels.TryRuleSet(named, out var api, out var refusal))
             {
-                throw new ModeCompileException(header.ApiLine, $"api {api} is not one this build knows: its newest is api {ModeWords.Api}");
+                throw new ModeCompileException(header.ApiLine, refusal);
             }
             _emitter = new ModeEmitter(_names, warnings);
             Subs(items.OfType<ModeSubItem>().ToList());
@@ -168,6 +168,13 @@ public static class ModeCompiler
                 Code = _emitter.Code,
                 Source = source,
             };
+            // a word or a value of a later rule set than the file's own level: the file says which version it needs
+            if (ModeLevels.Newer(mode) is ({ } what, var since))
+            {
+                var line = items.OfType<ModeSetupItem>().FirstOrDefault(s => what == s.Word || what.StartsWith(s.Word + " ", StringComparison.Ordinal))?.Line;
+                throw new ModeCompileException(line ?? header.ApiLine,
+                    $"{what} needs api {ModeLevels.Version(since)}: this file says api {named}{(named.Contains('.', StringComparison.Ordinal) ? "" : $" ({ModeLevels.Version(api)})")}");
+            }
             return (mode, _emitter.Cost);
         }
 
@@ -750,7 +757,7 @@ private static string? CompilersOwn(ModeSetup id, string name) => id switch
             }
             if (e.Name is null)
             {
-                throw new ModeCompileException(item.Line, $"'{item.Event}' is not an event of api {ModeWords.Api}: {string.Join(", ", ModeWords.Events.Select(x => x.Name))}");
+                throw new ModeCompileException(item.Line, $"'{item.Event}' is not an event of api {ModeWords.ApiVersion}: {string.Join(", ", ModeWords.Events.Select(x => x.Name))}");
             }
             if (item.Bound is not null && (!e.BindsSeat || e.Continuous))
             {
@@ -780,7 +787,7 @@ private static string? CompilersOwn(ModeSetup id, string name) => id switch
             if (_emitter.Cost > ModeWords.Budget)
             {
                 throw new ModeCompileException(item.Line, string.Create(CultureInfo.InvariantCulture,
-                    $"the mode takes {_emitter.Cost} operations a step at worst, past api {ModeWords.Api}'s {ModeWords.Budget} (this rule takes {_emitter.Cost - before})"));
+                    $"the mode takes {_emitter.Cost} operations a step at worst, past api {ModeWords.ApiVersion}'s {ModeWords.Budget} (this rule takes {_emitter.Cost - before})"));
             }
         }
 

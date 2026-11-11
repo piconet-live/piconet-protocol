@@ -4,8 +4,20 @@
 # the runner's interpreter, port/core/src/mode.cpp) from this file (README.md). The package's layout and the
 # interpreter's rules are formats.md section 9; the language is the design's language.md.
 #
-# [api]: the vocabulary's number and its limits (language 11.1), the same on both sides. A build refuses a package
-# whose api is newer than its own; a new build adds words and never changes an existing one's meaning.
+# [api]: the newest rule set's number and the limits (language 11.1), the same on both sides. A build refuses a package
+# whose rule set is newer than its own.
+#
+# [levels]: the rule sets. One rule set per release that touches the vocabulary; a mode file names the game version it
+# was written for (`api 0.6.1;`) and compiles to the newest rule set of that version or before, whose number the
+# package carries (`api 1;` stays valid and is 0.6.0's: the files and replays of 0.6.0 carry it). A version with no
+# rule change shares the rule set before it; `newest` is the newest game version this table knows, and a file naming
+# a later one is refused (update to use it). A shipped rule set is frozen entirely: no word or value is added inside
+# it, and none changes. `frozen` is its fingerprint (modes.py: every word and value of that rule set and before, and
+# the limits; not the docs), which generate.py refuses to see change; the last rule set, without one, is the one being
+# built, open until its release, which gives it its fingerprint (generate.py --freeze prints it).
+# Every word carries the rule set it arrived in: `since` (none: 1, 0.6.0's); a setup argument's `always`, a value
+# that came after its word, `always_since`. The compiler refuses a word or value newer than the file's level and names
+# the version it needs; both sides read the generated tables (ModeWords' ...Since, mode_words.g.h's ...Since).
 #
 # An operation ([[op]]): `name` (PascalCase, the C# enum's and the C++ constant's name), `code` its byte, `operands`
 # the bytes after it, in order (u8, u16, u32, i32: big-endian), `doc` what it does. The stack holds 32-bit cells: an
@@ -38,8 +50,20 @@ namespace = "Online.Protocol"
 [codec.cxx]
 namespace = "fzgx::modes"
 
-[api]
+[levels]
+newest = "0.6.1"
+
+[[levels.rule_set]]
 number = 1
+version = "0.6.0"
+frozen = "a74511ec7b891f87576f0ae9e0bc1844fd9b8555b2d41a9beb2ddc807073d75f"
+
+[[levels.rule_set]]
+number = 2
+version = "0.6.1"        # open: CPUs without a vote (`cpus always`)
+
+[api]
+number = 2
 budget = 65536         # operations a step at worst: the compiler's static count, and the interpreter's backstop (a nested loop over 30 x 30 seats fits)
 queue = 256            # queued actions a step (a full queue is a fault): eight a seat for thirty seats
 globals = 256          # global words
@@ -586,7 +610,7 @@ where = "the coordinator, at match forming: the match start's laps (0, `unlimite
 [[setup]]
 name = "cpus"
 id = 1
-args = [{ type = "switch", always = 2 }]
+args = [{ type = "switch", always = 2, always_since = 2 }]
 where = """the coordinator: on (1), players may vote CPUs into the mode's race (it does not force them); always (2), CPUs take the \
 empty seats of every race, with no vote; off (0) or left out, no CPUs. Also a switch parameter (off, on) or a choice parameter of \
 three (off, on, always, in that order). The game reads always as on: a player gone is driven by the AI"""

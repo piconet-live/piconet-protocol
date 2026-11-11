@@ -23,7 +23,7 @@ public sealed class ModeGapWordsTests
     public void TheRetiredWordsAreNoWordsOfTheApi(string text)
     {
         var source = text.EndsWith('\n') ? Head + text : Head + Rule(text);
-        Assert.Contains("of api 1", Assert.Single(ModeCompiler.Compile(source).Errors), StringComparison.Ordinal);
+        Assert.Contains("of api 0.6.1", Assert.Single(ModeCompiler.Compile(source).Errors), StringComparison.Ordinal);
     }
 
     [Fact]
