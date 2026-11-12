@@ -207,80 +207,100 @@ public sealed class QuickPlayRotation
     }
 
     /// <summary>A vote's options: <see cref="Cards"/> course cards from the pool, <see cref="SpicyCards"/> of them
-    /// spicy (each a spicy option drawn by weight, on one course drawn from those of its list the pool holds; a normal
-    /// card when none is held), drawn first, and the normal cards from what is left, at places drawn among the cards,
-    /// every course once; then "Random course". Each spicy card is another option while one not yet on a card has a
-    /// course left (so two spicy cards of a rotation of two are both of them); only past that may an option come
-    /// again, on another course. <paramref name="draw"/>(n) draws a whole number from 0 to n - 1.</summary>
-    public IReadOnlyList<QuickPlayOption> Vote(IReadOnlyList<int> pool, Func<int, int> draw)
+    /// spicy (each a spicy option from the spicy bag, on one course from that mode's bag, among those of its list the
+    /// pool holds; a normal card when none is held), taken first, and the normal cards from the normal mode's bag, at
+    /// places drawn among the cards, every course once; then "Random course". Each spicy card is another option while
+    /// one not yet on a card has a course left (so two spicy cards of a rotation of two are both of them); only past
+    /// that may an option come again, on another course. <paramref name="bags"/> are the lobby's, kept from vote to
+    /// vote: what a card offers is out of its bag until the rest have been offered. No card is a course in a mode
+    /// that <paramref name="allowed"/> refuses (null: none is refused), unless the vote would have no card at all.
+    /// <paramref name="draw"/>(n) draws a whole number from 0 to n - 1.</summary>
+    public IReadOnlyList<QuickPlayOption> Vote(IReadOnlyList<int> pool, Func<int, int> draw, RotationBags bags,
+        Func<int, RotationMode, bool>? allowed = null)
     {
         ArgumentNullException.ThrowIfNull(pool);
         ArgumentNullException.ThrowIfNull(draw);
+        ArgumentNullException.ThrowIfNull(bags);
         var used = new HashSet<int>();
         var spicy = new List<QuickPlayOption>();
-        for (var i = 0; i < SpicyCards && SpicyOption(pool, draw, used, spicy) is { } option; i++)
+        for (var i = 0; i < SpicyCards && SpicyOption(pool, draw, bags, used, spicy, allowed) is { } option; i++)
         {
             spicy.Add(option);
             used.Add(option.Course);
         }
-        var normal = Shuffled(Within(Normal, pool).Where(x => !used.Contains(x)).ToList(), draw)
-            .Take(Cards - spicy.Count).Select(x => new QuickPlayOption(x, Normal, false)).ToList();
+        var cards = new List<QuickPlayOption>();
+        while (cards.Count < Cards - spicy.Count && Course(Normal, pool, draw, bags, used, allowed) is { } course)
+        {
+            cards.Add(new QuickPlayOption(course, Normal, false));
+            used.Add(course);
+        }
+        if (allowed is not null && cards.Count + spicy.Count == 0)
+        {
+            return Vote(pool, draw, bags);   // (a pool of the one course that is refused)
+        }
         foreach (var option in spicy)
         {
-            normal.Insert(draw(normal.Count + 1), option);
+            cards.Insert(draw(cards.Count + 1), option);
         }
-        normal.Add(new QuickPlayOption(CourseVote.RandomCourse, Normal, false));
-        return normal;
+        cards.Add(new QuickPlayOption(CourseVote.RandomCourse, Normal, false));
+        return cards;
     }
 
-    /// <summary>What "Random course" races: with the chance <see cref="RandomSpicyChance"/> a spicy option (by weight,
-    /// then one course of its list the pool holds), otherwise the normal mode on a course of its list the pool holds. A
-    /// list the pool holds nothing of is drawn from whole: the mode's word stands over the pool.</summary>
-    public QuickPlayOption Random(IReadOnlyList<int> pool, Func<int, int> draw)
+    /// <summary>One vote by itself, of bags of its own: every course and spicy option at its chance.</summary>
+    public IReadOnlyList<QuickPlayOption> Vote(IReadOnlyList<int> pool, Func<int, int> draw) => Vote(pool, draw, new RotationBags());
+
+    /// <summary>What "Random course" races: with the chance <see cref="RandomSpicyChance"/> a spicy option (the spicy
+    /// bag's next, then the next course of its bag the pool holds), otherwise the normal mode on the next course of its
+    /// bag. The bags are the vote's (<see cref="Vote(IReadOnlyList{int}, Func{int, int}, RotationBags, Func{int, RotationMode, bool}?)"/>),
+    /// and so is <paramref name="allowed"/>, which gives way when the normal mode has nothing else. A list the pool
+    /// holds nothing of is drawn from whole: the mode's word stands over the pool.</summary>
+    public QuickPlayOption Random(IReadOnlyList<int> pool, Func<int, int> draw, RotationBags bags,
+        Func<int, RotationMode, bool>? allowed = null)
     {
         ArgumentNullException.ThrowIfNull(pool);
         ArgumentNullException.ThrowIfNull(draw);
-        if (Spicy.Count > 0 && draw(ChanceSteps) < RandomSpicyChance * ChanceSteps && SpicyOption(pool, draw, [], []) is { } spicy)
+        ArgumentNullException.ThrowIfNull(bags);
+        if (Spicy.Count > 0 && draw(ChanceSteps) < RandomSpicyChance * ChanceSteps && SpicyOption(pool, draw, bags, [], [], allowed) is { } spicy)
         {
             return spicy;
         }
-        var courses = Within(Normal, pool).ToList();
-        courses = courses.Count > 0 ? courses : [.. Normal.Terms.Courses ?? pool];
-        return new QuickPlayOption(courses[draw(courses.Count)], Normal, false);
+        if ((Course(Normal, pool, draw, bags, [], allowed) ?? Course(Normal, pool, draw, bags, [], null)) is { } course)
+        {
+            return new QuickPlayOption(course, Normal, false);
+        }
+        var whole = (Normal.Terms.Courses ?? pool).ToList();
+        return new QuickPlayOption(whole[draw(whole.Count)], Normal, false);
     }
 
-    /// <summary>A spicy option by weight on one of its courses not <paramref name="used"/>: among the options not yet
-    /// on one of the vote's <paramref name="cards"/> while any of them has a course left, else among them all. Null:
-    /// no option has a course left.</summary>
-    private QuickPlayOption? SpicyOption(IReadOnlyList<int> pool, Func<int, int> draw, HashSet<int> used,
-        IReadOnlyList<QuickPlayOption> cards)
+    /// <summary>One draw by itself, of bags of its own.</summary>
+    public QuickPlayOption Random(IReadOnlyList<int> pool, Func<int, int> draw) => Random(pool, draw, new RotationBags());
+
+    /// <summary>The spicy bag's next option with a course left (of the pool, not <paramref name="used"/>, allowed), on
+    /// the next such course of its bag: an option not yet on one of the vote's <paramref name="cards"/> while there is
+    /// one, else any. Null: no option has a course left.</summary>
+    private QuickPlayOption? SpicyOption(IReadOnlyList<int> pool, Func<int, int> draw, RotationBags bags, HashSet<int> used,
+        IReadOnlyList<QuickPlayOption> cards, Func<int, RotationMode, bool>? allowed)
     {
-        var open = Spicy.Select(s => (Option: s, Courses: Within(s.Mode, pool).Where(x => !used.Contains(x)).ToList()))
-            .Where(s => s.Courses.Count > 0).ToList();
-        if (open.Count == 0)
+        RotationMode Mode(string file) => Spicy.First(s => s.Mode.File == file).Mode;
+        bool Open(string file) => Mode(file) is var mode && Within(mode, pool).Any(c => !used.Contains(c) && (allowed?.Invoke(c, mode) ?? true));
+        var files = Spicy.SelectMany(s => Enumerable.Repeat(s.Mode.File, s.Weight)).ToList();
+        if (!bags.Spicy.TryTake(files, draw, f => Open(f) && !cards.Any(c => c.Mode.File == f), out var chosen)
+            && !bags.Spicy.TryTake(files, draw, Open, out chosen))
         {
             return null;
         }
-        var fresh = open.Where(s => !cards.Any(c => c.Mode.File == s.Option.Mode.File)).ToList();
-        open = fresh.Count > 0 ? fresh : open;
-        var ticket = draw(open.Sum(s => s.Option.Weight));
-        var chosen = open.First(s => (ticket -= s.Option.Weight) < 0);
-        return new QuickPlayOption(chosen.Courses[draw(chosen.Courses.Count)], chosen.Option.Mode, true);
+        return Course(Mode(chosen), pool, draw, bags, used, allowed) is { } course ? new QuickPlayOption(course, Mode(chosen), true) : null;
     }
+
+    /// <summary>The next course of a mode's bag: of the pool, not <paramref name="used"/>, allowed. Null: none.</summary>
+    private static int? Course(RotationMode mode, IReadOnlyList<int> pool, Func<int, int> draw, RotationBags bags, HashSet<int> used,
+        Func<int, RotationMode, bool>? allowed) =>
+        bags.Courses(mode.File).TryTake([.. Within(mode, pool)], draw, c => !used.Contains(c) && (allowed?.Invoke(c, mode) ?? true), out var course)
+            ? course : null;
 
     /// <summary>The courses of the pool a mode may race on: its list's, or all of them (no list, <c>courses all</c>).</summary>
     private static IEnumerable<int> Within(RotationMode mode, IReadOnlyList<int> pool) =>
         mode.Terms.Courses is { Count: > 0 } listed ? listed.Where(pool.Contains) : pool;
-
-    private static List<int> Shuffled(List<int> list, Func<int, int> draw)
-    {
-        for (var i = list.Count - 1; i > 0; i--)
-        {
-            var j = draw(i + 1);
-            (list[i], list[j]) = (list[j], list[i]);
-        }
-        return list;
-    }
 
     private static (RotationMode Mode, int Weight) Option(string folder, TomlTable option,
         string what, Dictionary<string, RotationMode> modes, bool weighted)

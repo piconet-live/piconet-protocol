@@ -2,7 +2,7 @@
 
 Quick Play's rotation (piconet-docs `research/game-modes/`, design 6): `quickplay.toml`, the coordinator's list of
 mode files, and the official mode files it names, and a custom lobby's official modes. A mode file is one choice: its settings are its parameters on their defaults, which a custom lobby's host changes (Quick Play's normal mode: its laps, CPU level, boost, mines, finish limit, machine setting and stats); a variant is a file of its own. Every rule of the race is the mode's: a word left out is the game's own way. A vote card is a (course, mode) pair: five course cards, two
-of them spicy (two different spicy options, each on its own course), and Random, which lands on a spicy option at `random_spicy_chance`. `Online.Protocol`
+of them spicy (two different spicy options, each on its own course), and Random, which lands on a spicy option at `random_spicy_chance`. The cards and Random take from a lobby's shuffle bags (`ShuffleBag`, `RotationBags`): one of the spicy options, each at its weight, and one of courses for every mode, so every course is offered once in a mode before any is offered in it again, and the spicy options take turns. `Online.Protocol`
 `QuickPlayRotation` reads the folder and compiles each mode with the one compiler (`ModeCompiler`); the service reads
 it at its start (a file that does not load stops the start), and the launcher's stand-in service races the same.
 

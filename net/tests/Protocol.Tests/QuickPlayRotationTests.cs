@@ -242,6 +242,87 @@ public sealed class QuickPlayRotationTests : IDisposable
         Assert.Equal(["s0.fzmode", "s1.fzmode", "s2.fzmode"], draws.Select(d => d.Mode.File).Distinct().Order());
     }
 
+    /// <summary>A lobby's bags, kept from vote to vote: every course of the pool is on a normal card once before any is
+    /// on one again, and no vote shows a course twice.</summary>
+    [Fact]
+    public void ALobbysVotesShowEveryCourseBeforeAnyAgain()
+    {
+        var rotation = WithSpicy(0);
+        var (bags, random, shown) = (new RotationBags(), new Random(31), new List<int>());
+        while (shown.Count < CoursePool.Default.Count * 6)
+        {
+            var cards = rotation.Vote(CoursePool.Default, random.Next, bags).Where(o => o.Course != CourseVote.RandomCourse).ToList();
+            Assert.Equal(5, cards.Select(o => o.Course).Distinct().Count());
+            shown.AddRange(cards.Select(o => o.Course));
+        }
+        foreach (var pass in shown.Chunk(CoursePool.Default.Count).Where(c => c.Length == CoursePool.Default.Count))
+        {
+            Assert.Equal(CoursePool.Default.Order(), pass.Order());
+        }
+    }
+
+    /// <summary>The spicy options take turns by the spicy bag: of three weighing 1, 2 and 3, six votes' spicy cards are
+    /// the first once, the second twice and the third three times, each on its own bag of courses.</summary>
+    [Fact]
+    public void ALobbysSpicyCardsGoThroughTheOptionsByWeight()
+    {
+        var rotation = WithSpicy(1, "", "", "");
+        var (bags, random) = (new RotationBags(), new Random(32));
+        var courses = new Dictionary<string, List<int>>();
+        for (var pass = 0; pass < 40; pass++)
+        {
+            var spicy = Enumerable.Range(0, 6).Select(_ => Assert.Single(rotation.Vote(CoursePool.Default, random.Next, bags), o => o.Spicy)).ToList();
+            Assert.Equal(["s0.fzmode", "s1.fzmode", "s1.fzmode", "s2.fzmode", "s2.fzmode", "s2.fzmode"], spicy.Select(o => o.Mode.File).Order());
+            foreach (var o in spicy)
+            {
+                courses.TryAdd(o.Mode.File, []);
+                courses[o.Mode.File].Add(o.Course);
+            }
+        }
+        foreach (var pass in courses.Values.SelectMany(c => c.Chunk(CoursePool.Default.Count)).Where(c => c.Length == CoursePool.Default.Count))
+        {
+            Assert.Equal(CoursePool.Default.Order(), pass.Order());
+        }
+    }
+
+    /// <summary>"Random course" takes from the lobby's bags too: with no spicy chance, its draws go through the pool,
+    /// every course once a pass.</summary>
+    [Fact]
+    public void RandomTakesFromTheLobbysBags()
+    {
+        var rotation = WithSpicy(0);
+        var (bags, random) = (new RotationBags(), new Random(33));
+        for (var pass = 0; pass < 20; pass++)
+        {
+            var draws = Enumerable.Range(0, CoursePool.Default.Count).Select(_ => rotation.Random(CoursePool.Default, random.Next, bags)).ToList();
+            Assert.Equal(CoursePool.Default.Order(), draws.Select(d => d.Course).Order());
+        }
+    }
+
+    /// <summary>What the vote's holder refuses (the lobby's last race) is on no card and no draw while anything else is
+    /// left, in its mode alone; a pool of that one course still has its card.</summary>
+    [Fact]
+    public void ARefusedCourseIsOnNoCardWhileAnotherIsLeft()
+    {
+        var rotation = WithSpicy(1, "");
+        var (bags, random) = (new RotationBags(), new Random(34));
+        bool Allowed(int course, RotationMode mode) => course != 8 || mode.File != "n.fzmode";
+        var spicyOnIt = 0;
+        for (var round = 0; round < 400; round++)
+        {
+            var vote = rotation.Vote(CoursePool.Default, random.Next, bags, Allowed);
+            Assert.Equal(6, vote.Count);
+            Assert.DoesNotContain(vote, o => o.Course == 8 && !o.Spicy);
+            spicyOnIt += vote.Count(o => o.Course == 8 && o.Spicy);
+            var drawn = rotation.Random(CoursePool.Default, random.Next, bags, Allowed);
+            Assert.False(drawn.Course == 8 && !drawn.Spicy);
+        }
+        Assert.True(spicyOnIt > 0);
+        var only = WithSpicy(0).Vote([8], random.Next, new RotationBags(), (_, _) => false);
+        Assert.Equal([8, CourseVote.RandomCourse], only.Select(o => o.Course));
+        Assert.Equal(8, WithSpicy(0).Random([8], random.Next, new RotationBags(), (_, _) => false).Course);
+    }
+
     /// <summary>Two spicy cards of one option are that option twice, on two courses. Two options on one course, the
     /// same one, are one spicy card: the other has no course left, and its place is a normal card's.</summary>
     [Fact]
