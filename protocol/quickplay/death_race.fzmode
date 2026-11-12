@@ -1,4 +1,4 @@
-// Death Race, after F-Zero X's: Big Blue: Drift Highway, no finish line. Three lives each; the last wreck is final. The
+// Death Race, after F-Zero X's: eleven courses, no finish line. Three lives each; the last wreck is final. The
 // clock ends it, or the last machine standing. Points for every KO and for staying in, so leading alone does not win and
 // neither does killing alone.
 //
@@ -40,7 +40,7 @@
 mode "Death Race" {
   api 0.6.1;
   badge "DEATH RACE";
-  about "Drift Highway, no finish line. Three lives each. Boosts take half the energy. Points for every machine you take out and for staying in.";
+  about "No finish line. Three lives each. Boosts take half the energy. Points for every machine you take out and for staying in.";
 }
 
 param length      "Race length"         delay 3min..10min step 30s default 6min;
@@ -56,7 +56,9 @@ param third_bonus  "3rd alive"          number 0..20 default 1;
 param cpu_racers "CPU racers" choice ["Off", "Vote", "Always"] default "Vote";   // Vote: players may vote CPUs in; Always: CPUs take the empty seats with no vote
 param cpu_skill  "CPU level"  choice ["Novice", "Standard", "Expert", "Master"] default "Master";   // (Master: the game's own, as before the setting)
 
-course "Big Blue: Drift Highway";
+courses ["Mute City: Twist Road", "Casino Palace: Split Oval", "Sand Ocean: Surface Slide", "Lightning: Loop Cross",
+         "Big Blue: Drift Highway", "Green Plant: Mobius Ring", "Fire Field: Undulation", "Aeropolis: Screw Drive",
+         "Outer Space: Meteor Stream", "Mute City: Sonic Oval", "Story: Emperor's Trial"];
 cpus cpu_racers;               // CPUs as targets, as in F-Zero X: by the players' vote, or always
 cpu_level cpu_skill;
 stats "GX Unleashed";          // Quick Play's pack, mines and machine setting (a word left out is the game's own)
