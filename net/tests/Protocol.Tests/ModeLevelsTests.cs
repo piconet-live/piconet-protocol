@@ -94,6 +94,7 @@ public sealed class ModeLevelsTests
     [InlineData("knockout", 2)]
     [InlineData("overdrive", 2)]
     [InlineData("death_race", 2)]
+    [InlineData("crown", 2)]
     [InlineData("ghost_race", 1)]
     public void TheOfficialFilesKeepTheirLevels(string name, int ruleSet)
     {
