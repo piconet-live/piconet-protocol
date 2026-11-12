@@ -189,6 +189,7 @@ internal sealed partial class ModeEmitter
                 Op(ModeOp.SeatRead, (long)current.Id);
             });
             Used.TryAdd(word.Id, assign.Line);
+            Written("stat." + field.Field, assign);
             Op(ModeOp.Action, (long)word.Id);
             return;
         }
@@ -207,6 +208,7 @@ internal sealed partial class ModeEmitter
         }
         if (action.Name is not null)
         {
+            Written(field.Field, assign);
             Work(assign, action.Args[1], $"seat.{field.Field}", () =>
             {
                 Emit(field.Target);

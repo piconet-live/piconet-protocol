@@ -47,8 +47,8 @@ public static partial class HostRules
     /// seat"); Quick Play: off, one pack for all (mixed packs only in lobbies).</summary>
     public static HostRule MixedPacks { get; } = new("mixed-packs", "Mixed packs", RuleReach.Together, RuleKind.Switch, 0, 1, Taken: "on or off", SetupWord: "mixed_packs");
 
-    /// <summary>The course vote's length, in seconds.</summary>
-    public static HostRule VoteSeconds { get; } = new("vote-seconds", "Course vote", RuleReach.Together, RuleKind.Text, 5, 120, Unit: "s");
+    /// <summary>The vote's length, in seconds (the lobby's step named Vote).</summary>
+    public static HostRule VoteSeconds { get; } = new("vote-seconds", "Vote", RuleReach.Together, RuleKind.Text, 5, 120, Unit: "s");
 
     /// <summary>The machine choice's length, in seconds.</summary>
     public static HostRule ChooseSeconds { get; } = new("choose-seconds", "Machine choice", RuleReach.Together, RuleKind.Text, 5, 120, Unit: "s");

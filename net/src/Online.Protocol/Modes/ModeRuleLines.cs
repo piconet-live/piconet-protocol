@@ -68,6 +68,12 @@ public static class ModeRuleLines
         ModeSetup.BoostStart => a is [var on] ? (on == 0 ? "Boost from the start Off" : "Boost from the start On") : null,
         ModeSetup.Teams => "Teams",
         ModeSetup.Customs => a is [0] ? "No custom machines" : null,
+        ModeSetup.Machine => a is [var machine] && GameMachines.Has(machine) ? $"Everyone races {GameMachines.Names[machine]}" : "One machine for everyone",
+        ModeSetup.MachineRandom => "Everyone races one random machine",
+        ModeSetup.MachineRandomEach => "Random machines",
+        ModeSetup.MachineBySeat => "Machines by seat",
+        ModeSetup.MachineByTeam => "Machines by team",
+        ModeSetup.MachineByPlace => "Machines by last race's place",
         _ => Line(word.Id, a),   // (a game word the coordinator carries: its line as in the package's setup)
     };
 

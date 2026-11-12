@@ -140,6 +140,7 @@ public static class ModeCompiler
                 throw new ModeCompileException(clockLine, "show_clock and clock_limit both write the game's clock: a mode has one or the other");
             }
             SoloWords(items);
+            MachineWords(items);
             StartGapWords(items);
             if (_emitter.TagTexts.Count > 0)
             {
@@ -150,6 +151,7 @@ public static class ModeCompiler
                 _setups.Add(new ModeSetupWord(ModeSetup.StatsPage, []));
             }
             GapWords();
+            OpenWords();
             CarriedForms();
             var mode = new ModePackage
             {
@@ -293,6 +295,34 @@ private static string? CompilersOwn(ModeSetup id, string name) => id switch
         }
     }
 
+    /// <summary>The 0.6.1 tops are the file's own words, so a mode that keeps to the old ones compiles to the package
+    /// of before (and a 0.6.0 game takes it): a constant above 9000 into seat.speed, or a rolling start above it, needs
+    /// seat_speed_open; a constant above the stat pack's 4 into seat.stat.max_speed needs max_speed_open. A value the
+    /// race gives is held to the old top without the word, as before.</summary>
+    private void OpenWords()
+    {
+        bool Has(ModeSetup id) => _setups.Any(s => s.Id == id);
+        if (!Has(ModeSetup.SeatSpeedOpen))
+        {
+            if (_emitter!.MostSpeedWritten is { } speed && speed.Value > MostSpeed)
+            {
+                throw new ModeCompileException(speed.Line, $"seat.speed above {MostSpeed} km/h needs the setup word seat_speed_open; (0.6.1: a 0.6.0 game refuses the mode)");
+            }
+            var rolling = _setups.FirstOrDefault(s => s.Id == ModeSetup.RollingStart);
+            if (rolling is not null && rolling.Arguments.Count == 1 && !rolling.Arguments[0].FromParam &&
+                BitConverter.Int32BitsToSingle(rolling.Arguments[0].Value) > MostSpeed)
+            {
+                throw new ModeCompileException(1, $"rolling_start above {MostSpeed} km/h needs the setup word seat_speed_open; (0.6.1: a 0.6.0 game refuses the mode)");
+            }
+        }
+        if (!Has(ModeSetup.MaxSpeedOpen) && _emitter!.MostMaxSpeedWritten is { } max && max.Value > MostMaxSpeed)
+        {
+            throw new ModeCompileException(max.Line, $"seat.stat.max_speed above {MostMaxSpeed} needs the setup word max_speed_open; (0.6.1: a 0.6.0 game refuses the mode)");
+        }
+    }
+
+    private const float MostSpeed = 9000.0f, MostMaxSpeed = 4.0f;   // the tops of before 0.6.1 (the core's mode.h)
+
     private void SoloWords(List<ModeItem> items)
         {
             int? Line(ModeSetup id) => items.OfType<ModeSetupItem>().FirstOrDefault(s => ModeWords.Setups.Single(w => w.Name == s.Word).Id == id)?.Line;
@@ -317,6 +347,34 @@ private static string? CompilersOwn(ModeSetup id, string name) => id switch
                         throw new ModeCompileException(line, $"{name}: a solo mode is one seat");
                     }
                 }
+            }
+        }
+
+        /// <summary>The words that set racers' machines: a lobby's race's (a solo mode races the player's own), and
+        /// <c>machine by team</c> on a race with teams, one entry a team at most.</summary>
+        private void MachineWords(List<ModeItem> items)
+        {
+            var set = items.OfType<ModeSetupItem>().FirstOrDefault(s => s.Word.Split(' ')[0] == "machine");
+            if (set is null)
+            {
+                return;
+            }
+            if (_setups.FirstOrDefault(s => s.Id == ModeSetup.Solo) is { } solo && solo.Arguments[0] is not { FromParam: false, Value: 0 })
+            {
+                throw new ModeCompileException(set.Line, $"{set.Word} sets the machines of a lobby's race: a solo mode races the player's own");
+            }
+            if (set.Word != "machine by team")
+            {
+                return;
+            }
+            if (_lobbyWords.FirstOrDefault(w => w.Id == ModeSetup.Teams) is not { } teams)
+            {
+                throw new ModeCompileException(set.Line, "machine by team gives each team its machine: a mode with it says teams");
+            }
+            var entries = _lobbyWords.First(w => w.Id == ModeSetup.MachineByTeam).Values.Count;
+            if (!teams.Values[1].FromParam && entries > teams.Values[1].Value)
+            {
+                throw new ModeCompileException(set.Line, $"machine by team lists {entries} machines, and the race has at most {teams.Values[1].Value} teams");
             }
         }
 
@@ -588,6 +646,14 @@ private static string? CompilersOwn(ModeSetup id, string name) => id switch
                 : throw new ModeCompileException(row.Line, $"\"{row.Key}\" is no course of the pool (\"Venue: Track\", as courses.toml names them)");
         }
 
+        /// <summary>A stock machine by its name, as <c>machine</c> and its lists write one.</summary>
+        private static int StockMachine(ModeSetupRow row)
+        {
+            var machine = GameMachines.Names.ToList().IndexOf(row.Key);
+            return machine >= 0 ? machine
+                : throw new ModeCompileException(row.Line, $"\"{row.Key}\" is no machine of the game's (its name as the machine select shows it, such as \"Blue Falcon\")");
+        }
+
         /// <summary>A word of the coordinator's: a range's ends in order, a course or machines by their numbers, a pack by
         /// its name.</summary>
         private static ModeLobbyWord LobbyWord(ModeSetupItem item, ModeSetup id, string name, List<ModeSetupValue> values)
@@ -624,6 +690,25 @@ private static string? CompilersOwn(ModeSetup id, string name) => id switch
                     }
                     values.Add(new ModeSetupValue(false, machine));
                 }
+            }
+            if (id == ModeSetup.Machine)
+            {
+                values.Add(new ModeSetupValue(false, StockMachine(rows[0])));
+            }
+            if (id is ModeSetup.MachineBySeat or ModeSetup.MachineByTeam or ModeSetup.MachineByPlace)
+            {
+                if (rows.Count > ModeWords.Seats)
+                {
+                    throw new ModeCompileException(rows[ModeWords.Seats].Line, $"{name} lists at most {ModeWords.Seats} machines, one a {name.Split(' ')[^1]}");
+                }
+                values.AddRange(rows.Select(row => new ModeSetupValue(false, row.Value is ModeName { Name: var bare }
+                    ? bare switch
+                    {
+                        "own" => ModeMachines.Own,
+                        "random" => ModeMachines.Random,
+                        _ => throw new ModeCompileException(row.Line, $"{name} takes a machine's name in quotes, own or random, not {bare}"),
+                    }
+                    : StockMachine(row))));
             }
             if (values.Count == 2 && !values[0].FromParam && !values[1].FromParam && values[0].Value > values[1].Value &&
                 id is ModeSetup.Racers or ModeSetup.MachineSetting or ModeSetup.Teams)

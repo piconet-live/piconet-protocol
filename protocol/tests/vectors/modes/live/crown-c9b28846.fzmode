@@ -1,0 +1,259 @@
+// Crown (the owner's, 8 November): one racer holds the crown and scores a point every second they keep it. Touch the
+// holder to take it. Whoever takes it can't be touched for `immune` (they pass through everyone) and runs faster for
+// that long: their own top speed and acceleration raised by `boost` (the owner: "a derived increase in their stats").
+// After that the holder runs `slower` under their own stats (top speed, acceleration and boost strength), a real
+// handicap (the owner, 8 November: "they have to basically dodge everyone ganging up on them"); grip and turning stay
+// their own, so dodging is the way to keep it. Most points at the end wins.
+//
+// No hiding (the owner, 8 November: "make them lose the crown if they try and hide"): each 3 s with the crown, the
+// holder's distance forwards along the course must be at least what `keep_moving` km/h covers. Backwards is a debt
+// that outlasts the window (the owner): forward metres pay it off first and count only after, so the metres driven
+// back must be driven again on top of the pace. Short of it at the end of a window, the crown goes to the racer in
+// last place (the owner). Parking, hiding or driving the wrong way loses it. A holder behind that pace sees it at
+// once: the metres still to drive (the debt included), large in the middle (the DISTANCE part, a mode's own metres),
+// and the warning sign; a holder on pace with no debt sees neither.
+//
+// The course map shows each racer only themselves and the crown's holder (the owner).
+// One crown (the owner). It goes to a racer drawn at random `first_crown` after GO (the owner). A holder who wrecks or
+// falls loses it to last place too (the owner), passing over the one who lost it (a restored machine is often last).
+// Restore on (the owner, 8 November): a wreck or a fall puts the machine back, nobody is ever out; it costs the crown.
+// The holder's energy refills at 1/14 of the pit's rate (the owner), about 4.8 a second.
+
+mode "Crown" {
+  api 1;
+  badge "CROWN";
+  about "Hold the crown to score. Touch the holder to take it. Keep racing or lose it. Most points wins.";
+}
+
+param length      "Race length"          delay 2min..8min step 30s default 4min;
+param first_crown "First crown"          delay 3s..30s step 1s default 8s;
+param immune      "Safe after taking it" delay 1s..8s step 1s default 4s;
+param boost       "Speed after taking it (%)" number 0..60 step 5 default 25;
+param slower      "Holder slower by (%)" number 0..80 step 5 default 60;
+param keep_moving "Holder must keep moving (km/h)" number 0..1000 step 50 default 400;
+
+cpus on;
+stats "GX Unleashed";          // Quick Play's pack, mines and machine setting (a word left out is the game's own)
+mine_regen on;
+machine_setting 100;
+laps unlimited;
+restore on;                    // every wreck and fall is put back: a points race, nobody is out
+race_waits everyone;           // the race goes on until the clock ends it
+results_title "CROWN";          // the points page: a point for every second with the crown
+
+global int given;              // 1: the first crown has gone out
+global int to_last;            // 1: the next crown goes to last place (a holder lost it)
+seat   int crown;              // 1: holds it
+seat   int safe_until;         // the step the holder can be touched again (0: not safe)
+seat   int held;               // steps with the crown
+seat   int score;              // points (seconds with the crown)
+seat   real last_dist;
+seat   real moved;             // the holder's distance forwards in this window, after the debt
+seat   real debt;              // metres driven backwards with the crown, not yet driven again
+seat   int  window;            // steps into this window
+seat   int  hid;               // 1: just lost it: the next crown passes them over
+
+// the holder's stats: `boost` up while safe, `slower` down after (boost strength too); everyone else their own
+rule "Stats" {
+  event each seat;
+  while race.started and seat.racing;
+  do {
+    real f = 1.0;
+    if (seat.crown == 1) {
+      f = 1.0 - slower / 100.0;
+      if (seat.safe_until > race.steps) { f = 1.0 + boost / 100.0; }
+    }
+    seat.stat.max_speed = seat.stat.base.max_speed * f;
+    seat.stat.accel = seat.stat.base.accel * f;
+    real g = 1.0;
+    if (seat.crown == 1 and seat.safe_until <= race.steps) { g = 1.0 - slower / 100.0; }
+    seat.stat.boost_strength = seat.stat.base.boost_strength * g;
+  }
+}
+
+rule "The first crown" {
+  event every step;
+  while race.started and given == 0 and race.steps >= first_crown;
+  do {
+    // a racer drawn at random: the k-th still racing
+    int k = random(count(seats where racing));
+    for each seat where seat.racing {
+      if (k == 0) {
+        seat.crown = 1;
+        seat.window = 0;
+        seat.debt = 0.0;
+      }
+      k -= 1;
+    }
+    given = 1;
+  }
+}
+
+rule "Take it" {
+  event hit(a, b);
+  do {
+    if (a.racing and b.racing and a.crown != b.crown) {
+      seat from = a;
+      seat to = b;
+      if (b.crown == 1) { from = b; to = a; }
+      if (from.safe_until <= race.steps) {
+        from.crown = 0;
+        from.safe_until = 0;
+        no_contact from off;
+        to.crown = 1;
+        to.window = 0;
+        to.debt = 0.0;
+        to.safe_until = race.steps + immune;
+        no_contact to;          // untouchable while safe: nobody takes it straight back
+      }
+    }
+  }
+}
+
+rule "Safe no more" {
+  event each seat;
+  while seat.safe_until > 0 and race.steps >= seat.safe_until;
+  do {
+    no_contact seat off;
+    seat.safe_until = 0;
+  }
+}
+
+// a wreck, a fall or out: the crown goes to last place, as for hiding (the owner)
+rule "Lost in a wreck" {
+  event destroyed(s);
+  do { if (s.crown == 1) { s.crown = 0; s.hid = 1; to_last = 1; } }
+}
+
+rule "Lost in a fall" {
+  event fall(s);
+  do { if (s.crown == 1) { s.crown = 0; s.hid = 1; to_last = 1; } }
+}
+
+rule "Lost when out" {
+  event out(s);
+  do { if (s.crown == 1) { s.crown = 0; s.hid = 1; to_last = 1; } }
+}
+
+rule "Crown again" {
+  event every step;
+  while race.started and given == 1 and count(seats where seat.crown == 1) == 0 and count(seats where racing) > 0;
+  do {
+    seat v = first(seats where racing and seat.crown == 0 and seat.hid == 0 by standing);
+    if (to_last == 1) { v = last(seats where racing and seat.crown == 0 and seat.hid == 0 by standing); }
+    if (count(seats where racing and seat.crown == 0 and seat.hid == 0) == 0) {
+      v = last(seats where racing and seat.crown == 0 by standing);   // nobody else is left: the one who lost it
+    }
+    v.crown = 1;
+    v.window = 0;
+    v.debt = 0.0;
+    to_last = 0;
+    for each seat { seat.hid = 0; }
+  }
+}
+
+rule "No hiding" {
+  event each seat;
+  while race.started and seat.crown == 1 and seat.racing;
+  do {
+    real d = seat.lap_distance - seat.last_dist;
+    if (d < 0.0 - seat.lap_length / 2.0) { d += seat.lap_length; }
+    if (d > seat.lap_length / 2.0) { d -= seat.lap_length; }
+    if (seat.window > 0) {   // (the first step only takes the distance)
+      if (d < 0.0) { seat.debt -= d; }
+      else {
+        real pay = min(d, seat.debt);
+        seat.debt -= pay;
+        seat.moved += d - pay;
+      }
+    }
+    seat.last_dist = seat.lap_distance;
+    seat.window += 1;
+    // behind the pace the window asks for so far: the metres still to drive (the debt too), and the warning
+    real need = keep_moving / 216.0 * 180.0;
+    if (seat.debt > 0.0 or seat.moved < need * seat.window / 180.0) {
+      show_distance seat, max(0.0, need - seat.moved) + seat.debt;
+      show seat, DISTANCE;
+      show seat, WARNING;
+    } else {
+      hide seat, DISTANCE;
+      hide seat, WARNING;
+    }
+    if (seat.window > 3s) {
+      // km/h / 216 is metres a step: what keep_moving covers in 3 s
+      if (seat.moved < keep_moving / 216.0 * 180.0) {
+        seat.hid = 1;
+        seat.debt = 0.0;
+        to_last = 1;
+        seat.crown = 0;
+        seat.safe_until = 0;
+        no_contact seat off;
+      }
+      seat.window = 1;
+      seat.moved = 0.0;
+    }
+  }
+}
+
+rule "Score" {
+  event each seat;
+  while race.started and seat.crown == 1 and seat.racing;
+  do {
+    // the holder's energy comes back at 1/14 of the pit's refill (1.1111112 a step: race-map.md 3) (the owner)
+    seat.energy = min(seat.max_energy, seat.energy + 1.1111112 / 14.0);
+    seat.held += 1;
+    if (seat.held % 60 == 0) { seat.score += 1; award seat, 1; }
+  }
+}
+
+rule "The look of the crown" {
+  event each seat;
+  while race.started;
+  do {
+    if (seat.crown == 1 and seat.racing) {
+      tag seat, "CROWN";
+      map_mark seat, 0xFFD000;
+      map_hide seat from seats - seats;   // on every map
+      // a rainbow, round the colour wheel every 2 s (three times as fast while safe)
+      int turn = 3;
+      if (seat.safe_until > race.steps) { turn = 9; }
+      int h = (race.steps * turn) % 360;
+      int x = (h % 60) * 255 / 60;
+      int r = 255;
+      int g = x;
+      int b = 0;
+      if (h >= 60)  { r = 255 - x; g = 255; b = 0; }
+      if (h >= 120) { r = 0; g = 255; b = x; }
+      if (h >= 180) { r = 0; g = 255 - x; b = 255; }
+      if (h >= 240) { r = x; g = 0; b = 255; }
+      if (h >= 300) { r = 255; g = 0; b = 255 - x; }
+      seat.colour = r * 16777216 + g * 65536 + b * 256 + 255;   // 0xRRGGBBAA
+    } else {
+      tag seat off;
+      map_mark seat, -1;
+      map_hide seat from seats - seat;    // on its own map only (the owner: you and the crown holder)
+      seat.colour = 0;
+      hide seat, DISTANCE;
+      hide seat, WARNING;
+    }
+    show seat, TIMER;
+  }
+}
+
+rule "Clock" {
+  event every step;
+  while race.started;
+  do { show_clock length - race.steps; }
+}
+
+rule "Time" {
+  event every step;
+  when race.started and (race.steps >= length or count(seats where racing) == 0);
+  do {
+    int n = 1;
+    for each seat by seat.score desc { seat.place = n; n += 1; }
+    end_race;
+  }
+}
+
+board seat score "Points";

@@ -265,7 +265,18 @@ enum Setup : std::uint8_t
   SETUP_DAMAGECAP = 55,  // damage_cap
   SETUP_STARTGAP = 56,  // start_gap
   SETUP_STARTGAPEVEN = 57,  // start_gap even
-  SETUP_COUNT = 58,
+  SETUP_MACHINE = 58,  // machine
+  SETUP_MACHINERANDOM = 59,  // machine random
+  SETUP_MACHINERANDOMEACH = 60,  // machine random each
+  SETUP_MACHINEBYSEAT = 61,  // machine by seat
+  SETUP_MACHINEBYTEAM = 62,  // machine by team
+  SETUP_MACHINEBYPLACE = 63,  // machine by place
+  SETUP_SEATSPEEDOPEN = 64,  // seat_speed_open
+  SETUP_MAXSPEEDOPEN = 65,  // max_speed_open
+  SETUP_LIVEPLACES = 66,  // live_places
+  SETUP_DISTANCELABEL = 67,  // distance_label
+  SETUP_RESULTSTIMES = 68,  // results_times
+  SETUP_COUNT = 69,
 };
 
 // a read of a seat (OP_SEATREAD)
@@ -365,7 +376,9 @@ enum Seat : std::uint8_t
   SEAT_GAPLEADER = 91,  // gap_leader
   SEAT_STATBOOSTENERGY = 92,  // stat.boost_energy
   SEAT_STATBASEBOOSTENERGY = 93,  // stat.base.boost_energy
-  SEAT_COUNT = 94,
+  SEAT_BASESPEED = 94,  // base_speed
+  SEAT_BOOSTVALUE = 95,  // boost_value
+  SEAT_COUNT = 96,
 };
 
 // a read of the race (OP_RACEREAD)
@@ -465,7 +478,8 @@ enum Action : std::uint8_t
   ACTION_SHOWOBJECTS = 77,  // show_objects
   ACTION_SHOWOBJECTSOFF = 78,  // show_objects off
   ACTION_SEATSTATBOOSTENERGY = 79,  // seat.stat.boost_energy
-  ACTION_COUNT = 80,
+  ACTION_SEATBASESPEED = 80,  // seat.base_speed
+  ACTION_COUNT = 81,
 };
 
 // the choice `part`: a part of the game's own race HUD: TIMER the timed mode's clock (clock_limit's time, R+0xA4: seconds, 0 to 999); DISTANCE the metres to the finish (the seat's own; show_distance gives a mode's); DIGIT the story's big digit (danger_zone's seconds, 3 2 1); WARNING, SUCCESS, FAILED, TIME_OVER, SPEED_GAUGE, OBJECTS the story's pictures, off until shown (SUCCESS MISSION CLEAR!, FAILED MISSION FAILED, TIME_OVER "Time is up...": fixed pictures with no value; OBJECTS the course objects' count n/of, show_objects gives a mode's); LEADER_GAP the game's own time gap to the leader, off until shown: at each lap line, for a second, the seat's time behind the leader, and the leader's own lead when second place crosses; GHOST_GAP Time Attack's live gap, off until shown: signed minutes, seconds and thousandths at the right edge (617, 270), all race, against the seat furthest ahead, red while it is ahead, blue while you are; RANK, LAPS, SPEED, ENERGY, LAP_TIMES, RACE_TIME, FACES the standard HUD (the mask .data 0x3D544; FACES the board fn_1_D27B8), on until hidden
@@ -596,6 +610,7 @@ constexpr int ActionArguments(std::uint8_t action)
     case ACTION_SHOWOBJECTS: return 3;
     case ACTION_SHOWOBJECTSOFF: return 1;
     case ACTION_SEATSTATBOOSTENERGY: return 2;
+    case ACTION_SEATBASESPEED: return 2;
     default: return -1;
   }
 }

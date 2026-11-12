@@ -81,7 +81,7 @@ public sealed record LobbyView(string Id, IReadOnlyList<RacerView> Players, int 
     IReadOnlyList<LobbyBuildView>? Builds = null, string? Line = null);
 
 /// <summary>A match between its lobby and its race. Stage: "picking a relay" (the players measure the relays),
-/// "course vote", "course drawn" (the vote's draw shown), "choosing machines".</summary>
+/// "vote" (the lobby's step named Vote), "vote's end" (its draw shown), "choosing machines".</summary>
 public sealed record FormingMatchView(string Id, int Players, string Stage);
 
 public sealed record RaceView(

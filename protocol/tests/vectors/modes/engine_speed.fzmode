@@ -1,0 +1,21 @@
+// The engine's own speed (0.6.1): seat 0's base speed raised by 27, seat 1's set to -5 (held to 0), seats 2 and up to
+// 1e30 (held to 1e17 / 216), a seat the game would not hold left as it is; every seat's max speed stat to 10000 (the
+// file's max_speed_open; without it the stat is held to 4); the boost value read into a seat word.
+mode "Engine speed" {
+  api 1;
+}
+
+max_speed_open;
+
+seat real bv;
+
+rule "Engine" {
+  event each seat;
+  do {
+    seat.bv = seat.boost_value;
+    seat.stat.max_speed = 10000.0;
+    if (seat.index == 0) { seat.base_speed = seat.base_speed + 27.0; }
+    if (seat.index == 1) { seat.base_speed = -5.0; }
+    if (seat.index >= 2) { seat.base_speed = 1000000000000000000000000000000.0; }
+  }
+}

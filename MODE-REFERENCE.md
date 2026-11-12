@@ -142,6 +142,12 @@ game counts it, 100 a full machine.
 | `machines all;` | Every machine, as leaving it out | |
 | `machines ["Blue Falcon", "Golden Fox"];` | The machines racers may choose and CPUs drive | machine names |
 | `customs on;` `customs off;` | `off`: no custom machines; a racer who chose one races their stock machine. Left out: allowed | on or off |
+| `machine "Blue Falcon";` | Every racer, CPUs too, races this machine. A machine a mode sets is the stock one (a racer's custom machine is not raced), and the machine choice offers it alone; the server refuses another. Not with another `machine` form | a machine name |
+| `machine random;` | One machine drawn for the race from the machines `machines` allows (left out: all 41); every racer, CPUs too, races it | |
+| `machine random each;` | Every racer, CPUs too, races a machine of their own drawn from the machines `machines` allows | |
+| `machine by seat ["Blue Falcon", own, random];` | Seat 0 races the list's first entry, seat 1 the next, and so on. `own` is the racer's own choice (a custom machine too, unless `customs off`; a CPU's usual machine), `random` a draw from what `machines` allows. A seat past the list's end is `own` | at most 30 entries |
+| `machine by team ["Blue Falcon", "Fire Stingray"];` | Team 1 races the first entry, Team 2 the next, and so on; entries as `machine by seat`. Needs `teams` | at most `teams`' most entries |
+| `machine by place ["Black Bull", random, own];` | By the lobby's last race: its winner races the first entry, second place the next, and so on; entries as `machine by seat`. A racer it did not rank (the lobby's first race, a racer who joined since, a CPU) is `own` | at most 30 entries |
 | `machine_setting least..most;` `machine_setting n;` | Each racer's machine setting is brought into this range. Left out: each racer's own | 0 to 100 |
 | `stats "GX Unleashed";` | The race's stat pack, by its name; a server without it refuses the mode. With a choice parameter, each choice is a pack's name, `stock`, or `file` (the host's own `.fzstats` file, which the launcher then asks for) | a pack name, at most 64 characters |
 | `stats stock;` | The disc's own stats, as leaving it out | |
@@ -152,7 +158,9 @@ game counts it, 100 a full machine.
 
 | Written | What it does | Range |
 |---|---|---|
-| `rolling_start 1000 km/h;` `rolling_start;` | Every machine moves at this speed from the first picture, with full energy, a CPU steering it through the countdown at 60% accelerator with no boost or attacks; every pad takes over at GO | 0 to 9000 km/h; 1000 if left out |
+| `rolling_start 1000 km/h;` `rolling_start;` | Every machine moves at this speed from the first picture, with full energy, a CPU steering it through the countdown at 60% accelerator with no boost or attacks; every pad takes over at GO | 0 to 9000 km/h (above with `seat_speed_open;`); 1000 if left out |
+| `seat_speed_open;` | `seat.speed` and `rolling_start` may go past 9000 km/h. A 0.6.0 game cannot race a mode with it | |
+| `max_speed_open;` | `seat.stat.max_speed` may go past a stat pack's 4, to 10,000. A 0.6.0 game cannot race a mode with it | |
 | `start_gap 200 m;` | Machines start this many metres apart, going back from the line in grid order across three lanes; at most the lap over the racers, so the field fits one lap. Every machine starts behind the line, and its first crossing counts no lap. `0` puts everyone on one spot with contact off from the first step, and refuses `contact on`. Above 0 and below 12.9 m (the game's grid step) needs `contact off` | 0 to 10,000 m |
 | `start_gap even;` | The machines spread evenly round the whole lap behind the line. Not with `start_gap` in metres | |
 | `boost_start on;` | Boosting is allowed on the first lap. Left out: not | on or off |
@@ -192,7 +200,10 @@ game counts it, 100 a full machine.
 | `results points;` | The times page passes by itself, and the results are the points page. Needs `award` or `points_table` | |
 | `results_title "KNOCKOUT";` | The points page's title in place of VS TOTAL RANKING. A mode with a title ends on the points page, every row 0 without `award` | A to Z and the space, 1 to 23 characters, no space at either end |
 | `results_heading "OVERDRIVE";` | Heads the times list of a mode with no points page. Refused beside `award`, `results_title` or `points_table`. Left out: RESULTS | as `results_title` |
+| `results_times off;` | The results show no page of race times and open on the points page, for a mode that is not scored by time. Needs a points page (`award`, `points_table` or `results_title`). A 0.6.0 game cannot race a mode with it | on or off |
+| `live_places;` | The places the mode gives show during the race: the place at the top of the screen and the faces at the side follow `seat.place`, from the step it is written. Seats with no place follow in race order. Left out: `seat.place` counts only when the race ends. A 0.6.0 game cannot race a mode with it | |
 | `hud clean;` | Nothing over the race but the HUD's own parts: no CHECK sign and no name tags, a player's or a `tag`. For footage | |
+| `distance_label off;` | DISTANCE shows its number and m without the game's REST label, for metres that are not the metres left; the number then has six digits (to 999999) in place of five. A 0.6.0 game cannot race a mode with it | on or off |
 
 A race ends by laps and `finish_limit`, at `clock_limit`, at `end_race`, or when the last player is finished or out
 (unless `race_waits everyone`). The results are the times list, then the points page when the mode awards points or
@@ -260,7 +271,7 @@ Written on a seat: `seat.speed`, `s.energy`, `first(seats).lap`. The value as it
 
 | Read | What it gives | Type |
 |---|---|---|
-| `seat.standing` | Its place in the race order now, 1 first | int |
+| `seat.standing` | Its place in the race order now, 1 first: the game's own order, also when the mode shows other places with `live_places;` | int |
 | `seat.lap` | Laps completed | int |
 | `seat.distance` | Metres along the course over all laps | real |
 | `seat.lap_distance` | Metres into this lap | real |
@@ -285,6 +296,8 @@ Written on a seat: `seat.speed`, `s.energy`, `first(seats).lap`. The value as it
 | `seat.airborne` | All four hover points are in the air | bool |
 | `seat.boosting` | A boost is running: an energy boost or a dash plate | bool |
 | `seat.boost_left` | Steps left on the running boost: while `boosting`, `boost_left + 1` remain, this one counted | int |
+| `seat.base_speed` | The speed its engine runs at, in the game's units (a metre a step): the speed shown follows it through the game's drive, grip and air drag. Cruising it is about f + f × f / 125, with f the speed shown / 216: 4.8 at 1000 km/h, 27 at 5000 | real |
+| `seat.boost_value` | The game's boost value: each boost adds to it and it falls away after; the thrust reaches higher with it | real |
 
 ### Energy and contact
 
@@ -329,7 +342,8 @@ Written on a seat: `seat.speed`, `s.energy`, `first(seats).lap`. The value as it
 
 `seat.stat.NAME` is the stat the machine drives with this step; `seat.stat.base.NAME` its own, before the mode changed
 it; `seat.stat.NAME = v;` (and `+=`, `-=`, `*=`, `/=`) changes it from the next step, held to the range a stat pack may
-use, until written again or the race ends, a restore included. `seat.stat.NAME = seat.stat.base.NAME;` gives the
+use (`seat.stat.max_speed` to 10,000 with `max_speed_open;`: at that the game no longer pulls the engine's speed down), until written again
+or the race ends, a restore included. `seat.stat.NAME = seat.stat.base.NAME;` gives the
 machine its own back. The base cannot be written. All are reals.
 
 | Written | What it is | Takes effect |
@@ -382,7 +396,8 @@ An action is a statement, its seat first; the commas between its values are opti
 
 | Written | What it does | Range |
 |---|---|---|
-| `seat.speed = v;` | Holds the seat's speed for the next step's travel; write it every step to keep it. A seat frozen, broken down, destroyed, finished, retired or restoring is not held. Long falls get steeper and jumps lower at a held speed; boosting still costs energy | 0 to 9000 km/h |
+| `seat.speed = v;` | Holds the seat's speed for the next step's travel; write it every step to keep it. A seat frozen, broken down, destroyed, finished, retired or restoring is not held. Long falls get steeper and jumps lower at a held speed; boosting still costs energy. Above the stat pack's speed cap (stock 9990 km/h; GX Unleashed has none) the game cuts the speed to a near stop once the hold ends | 0 to 9000 km/h; above with `seat_speed_open;` |
+| `seat.base_speed = v;` | Sets the speed the seat's engine runs at (see `seat.base_speed`); the next step's thrust, drag and walls move on from it, and the machine's grip, slides and slopes act as ever. Nothing is held. A seat frozen, broken down, destroyed, finished, retired or restoring is left as it is | 0 and up, the game's units |
 | `seat.velocity = v;` | Sets the seat's motion for one step's travel; from the next step the game's forces act again | vec, km/h |
 | `push s, v;` | Adds v to the seat's motion in the next step | vec, km/h |
 | `freeze s;` | The seat stands still until released; it can still turn | |
@@ -446,7 +461,7 @@ An action is a statement, its seat first; the commas between its values are opti
 
 | Written | What it does | Range |
 |---|---|---|
-| `seat.place = n;` | The seat's place in the results when the race ends, 1 first (0: none). When the mode ends the race, the seats it placed keep their places, every other racing seat follows in race order, and a placed seat that went out shows the time it went out | 1 first; 0 none |
+| `seat.place = n;` | The seat's place in the results when the race ends, 1 first (0: none). When the mode ends the race, the seats it placed keep their places, every other racing seat follows in race order, and a placed seat that went out shows the time it went out. With `live_places;` the place shows during the race too | 1 first; 0 none |
 | `award s, n;` | Adds n points to the seat. The results show a negative total as 0 | any whole number |
 
 ## Display words
@@ -464,7 +479,7 @@ text where it likes. They never change the race.
 | `show_number s off;` | Hides the number | |
 | `stock_banner s, BANNER;` | The seat's player sees one of the game's banners once, as the game raises it | a banner |
 | `show_clock n;` | The timed race's clock reads n steps, shown as seconds rounded up, red below 10. It ends nothing and must be written every step it should follow; players see it with `show s, TIMER`. Not with `clock_limit` | steps |
-| `show_distance s, metres;` | The DISTANCE part reads these metres instead of the metres to the finish; under 1000 drawn large in the middle | 0 to 99,999 |
+| `show_distance s, metres;` | The DISTANCE part reads these metres instead of the metres to the finish; under 1000 drawn large in the middle | 0 to 99,999; 0 to 999,999 under `distance_label off;` |
 | `show_distance s off;` | DISTANCE reads the metres to the finish again | |
 | `show_objects s, n, of;` | The OBJECTS part reads n/of | 0 to 99 each |
 | `show_objects s off;` | OBJECTS reads the course's own count again | |
@@ -499,7 +514,7 @@ text where it likes. They never change the race.
 | `TIMER` | The timed race's clock, with `clock_limit` or `show_clock` | when shown |
 | `LEADER_GAP` | The gap to the leader at each lap line, for a second; the leader sees its lead when second place crosses | when shown |
 | `GHOST_GAP` | Time Attack's live gap at the right edge, all race, against the seat furthest ahead; red while it is ahead | when shown |
-| `DISTANCE` | REST and the metres to the finish, or `show_distance`'s | when shown |
+| `DISTANCE` | REST and the metres to the finish, or `show_distance`'s; without REST under `distance_label off;` | when shown |
 | `OBJECTS` | The objects count, or `show_objects`'s | when shown |
 | `DIGIT` | The story mode's big 3-2-1 digit; it shows a `danger_zone`'s count | when shown |
 | `WARNING` | The story mode's warning sign | when shown |
@@ -537,11 +552,12 @@ Written in the mode language and part of every file. A macro is used at the top 
 | `at(t) { … }` | The block runs once, when the race clock reaches t | a time |
 | `lives n;` | Every wreck the game restores costs a life: a hit, running out of energy, a fall, a breakdown. While a seat has more than one life the game restores it; the wreck that leaves it one turns its restores off, so its next wreck is final. The lives remaining after the current one show beside the spare-machine icon (2, 1, 0 with `lives 3`; 0 with `lives 1`), hidden once out. Declares the seat variable `lives_left`, which counts the current life too (3, 2, 1; 0 once out). `lives 1` is the game's own rule | a whole number or parameter |
 | `pits_off;` | The pit strips give no energy. A seat in a pit keeps the energy it came in with (less if it is hit there). Declares `pits_off_energy` | |
+| `drive target, brake_cost, surge, plates, gate;` | Twilight's drive (their survival mod) for every racing seat while `gate` holds (it may name `seat`; `true` for always; `plates` true or false), on the engine's speed so grip, slides, slopes and walls still move the machine: the top speed stat goes to 10,000 and drag to 0; the engine's speed is pulled towards the target (km/h), lowered by the brake (full brake: 0), firmer with the accelerator; braking costs energy (`brake_cost` % of Twilight's), more as the target rises and the longer it is held, never below 0.1; a boost raises the wanted speed by `surge` % plus 1 % a point of `seat.boost_value`, by how far the accelerator is down, a dash plate's too when `plates` is on. Needs `max_speed_open;`. Declares `drive_heat`, `drive_tuned`, `drive_was_boosting`, `drive_plate` | a real (km/h), two reals (%), a bool, a bool |
 | `gap_to(a, b)` | The distance along the course between two seats, wrapped at the finish line, the shorter way round | two seats; gives a real, metres |
 | `dist(a, b)` | The straight-line distance between two seats. It holds a `sqrt` | two seats; gives a real, metres |
 
-Write `lives 3;` and `pits_off;`: `lives(3);` and `pits_off();` are refused. A file cannot declare `lives_left`,
-`pits_off_energy`, `gap_to` or `dist` again.
+Write `lives 3;`, `pits_off;` and `drive t, c, s, p, g;`: `lives(3);` and `pits_off();` are refused. A file cannot
+declare `lives_left`, `pits_off_energy`, the four `drive_` words, `gap_to` or `dist` again.
 
 ## Operators and functions
 

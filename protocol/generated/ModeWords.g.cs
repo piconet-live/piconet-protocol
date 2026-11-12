@@ -275,6 +275,28 @@ public enum ModeSetup : byte
     StartGap = 56,
     /// <summary><c>start_gap even</c></summary>
     StartGapEven = 57,
+    /// <summary><c>machine</c></summary>
+    Machine = 58,
+    /// <summary><c>machine random</c></summary>
+    MachineRandom = 59,
+    /// <summary><c>machine random each</c></summary>
+    MachineRandomEach = 60,
+    /// <summary><c>machine by seat</c></summary>
+    MachineBySeat = 61,
+    /// <summary><c>machine by team</c></summary>
+    MachineByTeam = 62,
+    /// <summary><c>machine by place</c></summary>
+    MachineByPlace = 63,
+    /// <summary><c>seat_speed_open</c></summary>
+    SeatSpeedOpen = 64,
+    /// <summary><c>max_speed_open</c></summary>
+    MaxSpeedOpen = 65,
+    /// <summary><c>live_places</c></summary>
+    LivePlaces = 66,
+    /// <summary><c>distance_label</c></summary>
+    DistanceLabel = 67,
+    /// <summary><c>results_times</c></summary>
+    ResultsTimes = 68,
 }
 
 /// <summary>A read of a seat (protocol/modes.toml).</summary>
@@ -468,6 +490,10 @@ public enum ModeSeatRead : byte
     StatBoostEnergy = 92,
     /// <summary><c>stat.base.boost_energy</c></summary>
     StatBaseBoostEnergy = 93,
+    /// <summary><c>base_speed</c></summary>
+    BaseSpeed = 94,
+    /// <summary><c>boost_value</c></summary>
+    BoostValue = 95,
 }
 
 /// <summary>A read of the race (protocol/modes.toml).</summary>
@@ -654,6 +680,8 @@ public enum ModeAction : byte
     ShowObjectsOff = 78,
     /// <summary><c>seat.stat.boost_energy</c></summary>
     SeatStatBoostEnergy = 79,
+    /// <summary><c>seat.base_speed</c></summary>
+    SeatBaseSpeed = 80,
 }
 
 /// <summary>The vocabulary of one api, by the names a mode file writes (protocol/modes.toml).</summary>
@@ -822,7 +850,7 @@ public static partial class ModeWords
         ("restore", ModeSetup.Restore, [new ModeArgument("", ModeType.Bool, 0, 1, null)], false, ""),
         ("contact", ModeSetup.Contact, [new ModeArgument("", ModeType.Bool, 0, 1, null)], false, ""),
         ("clock_limit", ModeSetup.ClockLimit, [new ModeArgument("", ModeType.Int, 60, 65535, null)], false, ""),
-        ("rolling_start", ModeSetup.RollingStart, [new ModeArgument("", ModeType.Real, 0.0f, 9000.0f, 1000.0f)], false, ""),
+        ("rolling_start", ModeSetup.RollingStart, [new ModeArgument("", ModeType.Real, 0.0f, 1e+17f, 1000.0f)], false, ""),
         ("course", ModeSetup.Course, [], true, "text"),
         ("racers", ModeSetup.Racers, [new ModeArgument("least", ModeType.Int, 1, 30, null), new ModeArgument("most", ModeType.Int, 1, 30, null)], true, "range"),
         ("machines all", ModeSetup.MachinesAll, [], true, ""),
@@ -862,6 +890,17 @@ public static partial class ModeWords
         ("damage_cap", ModeSetup.DamageCap, [new ModeArgument("", ModeType.Bool, 0, 1, null)], false, ""),
         ("start_gap", ModeSetup.StartGap, [new ModeArgument("", ModeType.Real, 0.0f, 10000.0f, null)], false, ""),
         ("start_gap even", ModeSetup.StartGapEven, [], false, ""),
+        ("machine", ModeSetup.Machine, [], true, "text"),
+        ("machine random", ModeSetup.MachineRandom, [], true, ""),
+        ("machine random each", ModeSetup.MachineRandomEach, [], true, ""),
+        ("machine by seat", ModeSetup.MachineBySeat, [], true, "list"),
+        ("machine by team", ModeSetup.MachineByTeam, [], true, "list"),
+        ("machine by place", ModeSetup.MachineByPlace, [], true, "list"),
+        ("seat_speed_open", ModeSetup.SeatSpeedOpen, [], false, ""),
+        ("max_speed_open", ModeSetup.MaxSpeedOpen, [], false, ""),
+        ("live_places", ModeSetup.LivePlaces, [], false, ""),
+        ("distance_label", ModeSetup.DistanceLabel, [new ModeArgument("", ModeType.Bool, 0, 1, null)], false, ""),
+        ("results_times", ModeSetup.ResultsTimes, [new ModeArgument("", ModeType.Bool, 0, 1, null)], false, ""),
     ];
 
     /// <summary>The reads of a seat (<c>seat.NAME</c>): name, id, type.</summary>
@@ -961,6 +1000,8 @@ public static partial class ModeWords
         ("gap_leader", ModeSeatRead.GapLeader, ModeType.Int),
         ("stat.boost_energy", ModeSeatRead.StatBoostEnergy, ModeType.Real),
         ("stat.base.boost_energy", ModeSeatRead.StatBaseBoostEnergy, ModeType.Real),
+        ("base_speed", ModeSeatRead.BaseSpeed, ModeType.Real),
+        ("boost_value", ModeSeatRead.BoostValue, ModeType.Real),
     ];
 
     /// <summary>The reads of the race (<c>race.NAME</c>): name, id, type.</summary>
@@ -1059,6 +1100,7 @@ public static partial class ModeWords
         ("show_objects", ModeAction.ShowObjects, [ModeType.Seat, ModeType.Int, ModeType.Int]),
         ("show_objects off", ModeAction.ShowObjectsOff, [ModeType.Seat]),
         ("seat.stat.boost_energy", ModeAction.SeatStatBoostEnergy, [ModeType.Seat, ModeType.Real]),
+        ("seat.base_speed", ModeAction.SeatBaseSpeed, [ModeType.Seat, ModeType.Real]),
     ];
 
     /// <summary>The actions that need a running step, which game_start refuses.</summary>

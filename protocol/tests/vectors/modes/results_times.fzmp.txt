@@ -1,0 +1,16 @@
+FZMP format 1 api 1, 445 bytes, hash a91e88fcbc6081fab3f0606b099b70c899cf45d5d64e9e455b358f8c20913f7b
+HEAD name "Results times" badge "" about ""
+PARM 0
+SETP 2
+  results_title "POINTS"
+  results_times off
+VARS globals 0, seat words 0
+RULE 1
+  0 "A point a lap" event lap, locals 1, when none, while none, body 0000
+CODE 10 bytes
+  ; rule 0 body
+  0000  LoadLocal 0
+  0002  Push 1
+  0007  Action award
+  0009  End
+SRC  272 bytes
