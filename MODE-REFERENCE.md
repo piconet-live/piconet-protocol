@@ -197,6 +197,7 @@ game counts it, 100 a full machine.
 | `boost off;` `boost on;` | `off`: no machine can start an energy boost; a dash plate still boosts | on or off |
 | `contact off;` `contact on;` | `off`: every machine passes through every other | on or off |
 | `restore on;` | Every machine is restored after a wreck (a fall, an explosion, running out of energy; never time over) instead of going out. Left out: no restores | on or off |
+| `wreck_slide off;` | A machine that gets restores and breaks down is restored at once, as before 0.6.1. Left out or `on`: it slides on as a wreck, can cross the line and finish, and its restore starts when a race without restores would have taken it out. A 0.6.0 game cannot race a mode with it | on or off |
 | `mine_regen 200;` `mine_regen on;` `mine_regen off;` | A mine comes back this many milliseconds after it goes off; `on` is 200. Left out or `off`: it stays gone | 50 to 5000 ms |
 
 ### Combat

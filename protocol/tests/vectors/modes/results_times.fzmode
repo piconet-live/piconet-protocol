@@ -1,11 +1,12 @@
 // Results without race times (0.6.1, the file's results_times off): a point for every lap, and the points page as the
-// results.
+// results. And the restore at once of a machine that breaks down, as before 0.6.1 (wreck_slide off).
 mode "Results times" {
   api 0.6.1;
 }
 
 results_title "POINTS";
 results_times off;
+wreck_slide off;
 
 rule "A point a lap" {
   event lap(s);

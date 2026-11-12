@@ -303,6 +303,8 @@ public enum ModeSetup : byte
     SayTexts = 70,
     /// <summary><c>pauses</c></summary>
     Pauses = 71,
+    /// <summary><c>wreck_slide</c></summary>
+    WreckSlide = 72,
 }
 
 /// <summary>A read of a seat (protocol/modes.toml).</summary>
@@ -948,6 +950,7 @@ public static partial class ModeWords
         ("hud_layout ax", ModeSetup.HudLayoutAx, [], false, ""),
         ("say_texts", ModeSetup.SayTexts, [], false, "text"),
         ("pauses", ModeSetup.Pauses, [], false, ""),
+        ("wreck_slide", ModeSetup.WreckSlide, [new ModeArgument("", ModeType.Bool, 0, 1, null)], false, ""),
     ];
 
     /// <summary>The reads of a seat (<c>seat.NAME</c>): name, id, type.</summary>
@@ -1241,6 +1244,7 @@ public static partial class ModeWords
             [ModeSetup.HudLayoutAx] = 2,
             [ModeSetup.SayTexts] = 2,
             [ModeSetup.Pauses] = 2,
+            [ModeSetup.WreckSlide] = 2,
         };
 
     /// <summary>The reads of a seat that arrived after rule set 1, and the rule set each arrived in.</summary>

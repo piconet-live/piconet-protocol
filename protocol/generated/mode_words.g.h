@@ -285,7 +285,8 @@ enum Setup : std::uint8_t
   SETUP_HUDLAYOUTAX = 69,  // hud_layout ax
   SETUP_SAYTEXTS = 70,  // say_texts
   SETUP_PAUSES = 71,  // pauses
-  SETUP_COUNT = 72,
+  SETUP_WRECKSLIDE = 72,  // wreck_slide
+  SETUP_COUNT = 73,
 };
 
 // a read of a seat (OP_SEATREAD)
@@ -589,6 +590,7 @@ constexpr int SetupSince(std::uint8_t setup)
     case SETUP_HUDLAYOUTAX: return 2;
     case SETUP_SAYTEXTS: return 2;
     case SETUP_PAUSES: return 2;
+    case SETUP_WRECKSLIDE: return 2;
     default: return 1;
   }
 }

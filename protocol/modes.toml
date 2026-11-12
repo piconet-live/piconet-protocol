@@ -2455,6 +2455,19 @@ allowed): the core refuses a match start that gives it two player seats or more 
 game stands at the same step"""
 doc = "the mode pauses the race, which a file never writes itself"
 
+# --- a wreck slides before its restore (0.6.1, owner 2026-11-09: "the game's physics take over right up until the point
+# where the machine would have been KO'd or retired anyways, and when that happens, do a restore")
+
+[[setup]]
+name = "wreck_slide"
+id = 72
+since = 2
+args = [{ type = "switch" }]
+where = """the race block's RACE_WRECK_SLIDE (files_match.cpp; the image's sites_wreck.py): on or left out, a seat that gets \
+restores (`restore on`, `respawns s`) and breaks down is not restored yet: it slides as the game's wreck without restore does, \
+may cross the line and finish, and its restore starts at the step the game without restore would have taken it out \
+(destroyed, fallen, or the wreck at rest). Off: the restore starts at the step of the breakdown, as before 0.6.1"""
+
 [[action]]
 name = "hud_move"
 id = 81
