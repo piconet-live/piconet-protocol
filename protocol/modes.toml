@@ -1853,13 +1853,17 @@ doc = "every seat's full energy, and every seat begins full. Left out: the game'
 
 [[choice]]
 name = "part"
-values = ["TIMER", "DISTANCE", "DIGIT", "WARNING", "SUCCESS", "FAILED", "TIME_OVER", "SPEED_GAUGE", "OBJECTS", "LEADER_GAP", "GHOST_GAP", "RANK", "LAPS", "SPEED", "ENERGY", "LAP_TIMES", "RACE_TIME", "FACES", "SPARE"]
-values_since = { SPARE = 2 }
+values = ["TIMER", "DISTANCE", "DIGIT", "WARNING", "SUCCESS", "FAILED", "TIME_OVER", "SPEED_GAUGE", "OBJECTS", "LEADER_GAP", "GHOST_GAP", "RANK", "LAPS", "SPEED", "ENERGY", "LAP_TIMES", "RACE_TIME", "FACES", "SPARE", "SKULLS", "WRONG_WAY", "BANNERS", "FINISH", "CHECK"]
+values_since = { SPARE = 2, SKULLS = 2, WRONG_WAY = 2, BANNERS = 2, FINISH = 2, CHECK = 2 }
 doc = """a part of the game's own race HUD: TIMER the timed mode's clock (clock_limit's time, R+0xA4: seconds, 0 to \
 999); DISTANCE the metres to the finish (the seat's own; show_distance gives a mode's); DIGIT the story's big digit (danger_zone's seconds, 3 2 1); \
 WARNING, SUCCESS, FAILED, TIME_OVER, SPEED_GAUGE, OBJECTS the story's pictures, off until shown (SUCCESS MISSION CLEAR!, FAILED MISSION FAILED, TIME_OVER "Time is up...": fixed pictures with no value; OBJECTS the course objects' count n/of, show_objects gives a mode's); LEADER_GAP the game's own time gap to the leader, off until shown: at each lap line, for a second, the seat's time behind the leader, and the leader's own lead when second place crosses; GHOST_GAP Time Attack's live gap, off until shown: signed minutes, seconds and thousandths at the right edge (617, 270), all race, against the seat furthest ahead, red while it is ahead, blue while you are; RANK, LAPS, SPEED, ENERGY, \
 LAP_TIMES, RACE_TIME, FACES the standard HUD (the mask .data 0x3D544; FACES the board fn_1_D27B8), on until hidden; \
-SPARE (0.6.1) the Grand Prix spare-machine counter (the star icon and show_number's number, fn_1_CA8FC), for hud_move: show_number shows and hides it, not show and hide"""
+SPARE (0.6.1) the Grand Prix spare-machine counter (the star icon and show_number's number, fn_1_CA8FC), for hud_move: show_number shows and hides it, not show and hide; \
+the rest (0.6.1) are for hud_move alone, drawn as the game draws them (show and hide refuse them): SKULLS the KO skulls at the right edge (fn_1_CAB38); \
+WRONG_WAY the wrong-way sign (the banner WRONG_WAY's picture 0x9435, fn_1_CD51C's sprite); BANNERS the banners FINAL LAP, BOOST POWER, TIME BONUS and the gap popup \
+(fn_1_15EFEC; LEADER_GAP's place takes them too, a BANNERS place of its own wins); FINISH the FINISH and RETIRED pictures (fn_1_15DFD4); CHECK the CHECK sign at the \
+screen's foot that points at the rival close behind (fn_1_12907C, image 0x944F): its row moves, and it still slides sideways after that rival; hud clean takes it off"""
 
 [[choice]]
 name = "banner"
@@ -2476,7 +2480,7 @@ id = 81
 since = 2
 args = ["seat", "part", "real", "real", "real"]
 where = """the block's HUD places record for the seat (page 7's head, runner mode_hud.h MOVES: a mask of the placed parts, then \
-x, y and the angle a part, s16 each, whole; x and y held to -1280 .. 1280, the angle to 0 .. 359); the HUD pass hands the viewed racer's \
+then a word a part: x + 1024 and y + 1024 in 11 bits each, the angle in 9, whole; x and y held to -1000 .. 1000, the angle to 0 .. 359); the HUD pass hands the viewed racer's \
 to the classic HUD's moves (port/core/src/hud_move.cpp), which moves the part's queued packets about the part's own centre (the \
 measured PIVOTS, else its box) as the queue is drawn (fn_1_4FD64), and gives each squeezed packet the place as its Wide Screen \
 anchor (+0x34) so the part stays centred on x in Wide Screen too. For that part it takes the place of the player's own \
@@ -2484,8 +2488,9 @@ layout's move (the test key debug.classicHudLayout). Drawing only: nothing a ste
 doc = """`hud_move s, PART, x, y, angle`: the seat's player sees the part with its centre at (x, y) of the 640 x 480 screen, turned \
 angle degrees clockwise (0: upright), from now on; the same point of the screen in 4:3, Wide Screen and true wide screen. The \
 part's own centre is its box's: RANK (320.5, 62) or under hud_layout ax (86, 435), LAPS (439, 43), SPEED (550, 440), ENERGY \
-(548.5, 43), LAP_TIMES (556.8, 126.6), RACE_TIME (532, 86), FACES (51, 214), SPARE (56, 444); TIMER, the story parts and the \
-gaps the centre of what they have drawn. LEADER_GAP is drawn as a banner, so its place takes the banners (FINAL LAP, BOOST \
+(548.5, 43), LAP_TIMES (556.8, 126.6), RACE_TIME (532, 86), FACES (51, 214), SPARE (56, 444), SKULLS (608, 120: the first skull), \
+BANNERS (320, 150), WRONG_WAY and FINISH (320, 240), CHECK (320, 445: its row; it still slides sideways after the rival it points at); TIMER, \
+the story parts and the gaps the centre of what they have drawn. LEADER_GAP is drawn as a banner, so its place takes the banners (FINAL LAP, BOOST \
 POWER, TIME BONUS) with it"""
 
 [[action]]

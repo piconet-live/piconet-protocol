@@ -44,6 +44,12 @@ class ModesLevels(unittest.TestCase):
         # `cpus always` without its rule set would be a new value of 0.6.0's
         self.assertIn("rule set 1 (0.6.0) is shipped and frozen", self.error(CPUS, 'args = [{ type = "switch", always = 2 }]'))
 
+    def test_a_value_is_named_once_in_its_choice(self):
+        # one name in two choices is fine when they name one thing (the banner and the part WRONG_WAY); twice in one is not
+        self.assertIn("choice banner: a value's name twice",
+                      self.error('"GAP", "WRONG_WAY", "TICK"]', '"GAP", "WRONG_WAY", "TICK", "GAP"]'))
+        self.assertIn("WRONG_WAY", modes.load()["choices"][0]["values"])  # (`part` is the first choice)
+
     def test_a_word_added_inside_a_shipped_rule_set_is_refused(self):
         new = '[[setup]]\nname = "zz_new"\nid = 250\nargs = [{ type = "switch" }]\n\n'
         last = SCHEMA.rindex("\n[[setup]]\n")

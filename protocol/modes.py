@@ -230,9 +230,12 @@ def load(path=SCHEMA, frozen=True):
             raise SchemaError(f"choice {name}: `values_since` names values of the choice and the rule set 2 .. {newest} each arrived in")
         choices[name] = {"name": name, "pascal": pascal(name, "choice"), "values": values, "doc": entry.get("doc", ""),
                          "values_since": added}
-    named = [v for c in choices.values() for v in c["values"]]
-    if len(set(named)) != len(named):
-        raise SchemaError("choice: a value's name twice")
+    # (a value's name may be two choices' when they name one thing of the game, as the banner WRONG_WAY and the part
+    # WRONG_WAY are one sign: the compiler reads a value by the word's own choice, and the generated enums carry the
+    # choice's prefix)
+    for c in choices.values():
+        if len(set(c["values"])) != len(c["values"]):
+            raise SchemaError(f"choice {c['name']}: a value's name twice")
     actions = numbered(raw.get("action", []), ACTION_KEYS, "action", gaps=True)
     for a in actions:
         a["since"] = since(a, f"action {a['name']}", newest)

@@ -20,6 +20,18 @@ internal sealed partial class ModeEmitter(ModeNames names, List<string> warnings
 {
     private const long MostMultiplier = 1L << 28;
 
+    /// <summary>The parts <c>hud_move</c> places that <c>show</c> and <c>hide</c> refuse, with why: the game draws each as
+    /// it does (0.6.1).</summary>
+    private static readonly Dictionary<string, string> PlacedOnly = new()
+    {
+        ["SPARE"] = "the spare-machine counter is shown and hidden by show_number",
+        ["SKULLS"] = "the KO skulls are shown as the game shows them",
+        ["WRONG_WAY"] = "the wrong-way sign is raised by the race and stock_banner",
+        ["BANNERS"] = "the banners are raised by the race and stock_banner",
+        ["FINISH"] = "FINISH and RETIRED are the race's own",
+        ["CHECK"] = "the CHECK sign is the game's own; hud clean takes it off",
+    };
+
     /// <summary>The file's rule set (its <c>api</c>): a choice's value of a later one is refused.</summary>
     public int Api { get; init; } = int.MaxValue;
 

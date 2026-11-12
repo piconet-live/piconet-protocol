@@ -350,9 +350,9 @@ internal sealed partial class ModeEmitter
             }
             if (ModeWords.ActionChoices.TryGetValue((action.Id, i), out var choice))
             {
-                if (action.Id is ModeAction.Show or ModeAction.Hide && statement.Arguments[i] is ModeName { Name: "SPARE" })
+                if (action.Id is ModeAction.Show or ModeAction.Hide && statement.Arguments[i] is ModeName { Name: var part } && PlacedOnly.TryGetValue(part, out var why))
                 {
-                    throw new ModeCompileException(statement.Line, $"{action.Name} SPARE: the spare-machine counter is shown and hidden by show_number (hud_move places it)");
+                    throw new ModeCompileException(statement.Line, $"{action.Name} {part}: {why} (hud_move places it)");
                 }
                 Choice(statement.Arguments[i], choice, action.Name);
                 continue;

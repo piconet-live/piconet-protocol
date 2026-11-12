@@ -57,6 +57,24 @@ public sealed class ModeHudPlaceTests
     }
 
     [Fact]
+    public void TheGamesOwnSignsArePartsForHudMoveAlone()
+    {
+        // SKULLS, WRONG_WAY, BANNERS, FINISH, CHECK (0.6.1): placed, never shown or hidden; WRONG_WAY is the banner's name too
+        foreach (var (part, index) in new[] { ("SKULLS", 19), ("WRONG_WAY", 20), ("BANNERS", 21), ("FINISH", 22), ("CHECK", 23) })
+        {
+            var code = Code(Rule($"hud_move seat, {part}, 320, 240, 90;"));
+            Assert.Equal($"Push {index}", Word(code[code.IndexOf("Action hud_move") - 7]));
+            Assert.Contains("Action hud_move off", Code(Rule($"hud_move seat, {part} off;")));
+            Assert.Contains("hud_move places it", Assert.Single(Compile(Rule($"show seat, {part};")).Errors));
+            Assert.Single(Compile(Rule($"hide seat, {part};")).Errors);
+            var old = ModeCompiler.Compile("mode \"T\" { api 0.6.0; }\n" + Rule($"hud_move seat, {part}, 320, 240, 0;"));
+            Assert.Contains(old.Errors, e => e.Contains("needs api 0.6.1", StringComparison.Ordinal));
+        }
+        var banner = Code(Rule("stock_banner seat, WRONG_WAY;"));
+        Assert.Equal("Push 4", Word(banner[banner.IndexOf("Action stock_banner") - 1]));
+    }
+
+    [Fact]
     public void MapCharPushesTheCharacterOrTheShape()
     {
         var code = Code(Rule("map_char seat, \"K\";"));

@@ -1193,7 +1193,7 @@ public static partial class ModeWords
     public static readonly IReadOnlyDictionary<string, IReadOnlyList<string>> Choices =
         new Dictionary<string, IReadOnlyList<string>>
         {
-            ["part"] = ["TIMER", "DISTANCE", "DIGIT", "WARNING", "SUCCESS", "FAILED", "TIME_OVER", "SPEED_GAUGE", "OBJECTS", "LEADER_GAP", "GHOST_GAP", "RANK", "LAPS", "SPEED", "ENERGY", "LAP_TIMES", "RACE_TIME", "FACES", "SPARE"],
+            ["part"] = ["TIMER", "DISTANCE", "DIGIT", "WARNING", "SUCCESS", "FAILED", "TIME_OVER", "SPEED_GAUGE", "OBJECTS", "LEADER_GAP", "GHOST_GAP", "RANK", "LAPS", "SPEED", "ENERGY", "LAP_TIMES", "RACE_TIME", "FACES", "SPARE", "SKULLS", "WRONG_WAY", "BANNERS", "FINISH", "CHECK"],
             ["banner"] = ["FINAL_LAP", "BOOST_POWER", "TIME_BONUS", "GAP", "WRONG_WAY", "TICK"],
             ["look"] = ["normal", "ghost", "invisible"],
         };
@@ -1300,5 +1300,10 @@ public static partial class ModeWords
         new Dictionary<(string Choice, int Value), int>
         {
             [("part", 18)] = 2,
+            [("part", 19)] = 2,
+            [("part", 20)] = 2,
+            [("part", 21)] = 2,
+            [("part", 22)] = 2,
+            [("part", 23)] = 2,
         };
 }
