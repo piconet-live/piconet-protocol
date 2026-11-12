@@ -2319,3 +2319,13 @@ runner's mode_distance_label). The digits and the m stay where they are, for the
 alike. On or left out: the label drawn, the package of before (a 0.6.0 game refuses a package with it). Drawing only: \
 nothing a step reads"""
 doc = "off: the DISTANCE part shows its number and m without the game's REST label, for a mode whose metres are not the metres left; the number then has a sixth digit where the label was (to 999999). A 0.6.0 game cannot race a mode with it"
+
+[[setup]]
+name = "results_times"
+id = 68
+args = [{ type = "switch" }]
+where = """off: the window's flag NO_RESULTS_TIMES (mode_hud.h), for which a results row's race time is not drawn \
+(fn_1_148950 0x148DCC, the row's +0x30 on the times list and VS RESULTS, layouts 7 and 2; the runner's \
+mode_results_time). The row's place, name, machine and points stay where they are. On or left out: the time drawn, \
+the package of before (a 0.6.0 game refuses a package with it). Drawing only: nothing a step reads"""
+doc = "off: the results pages show no race times, for a mode that is not scored by time. A 0.6.0 game cannot race a mode with it"
