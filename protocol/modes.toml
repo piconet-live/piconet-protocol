@@ -2324,8 +2324,9 @@ doc = "off: the DISTANCE part shows its number and m without the game's REST lab
 name = "results_times"
 id = 68
 args = [{ type = "switch" }]
-where = """off: the window's flag NO_RESULTS_TIMES (mode_hud.h), for which a results row's race time is not drawn \
-(fn_1_148950 0x148DCC, the row's +0x30 on the times list and VS RESULTS, layouts 7 and 2; the runner's \
-mode_results_time). The row's place, name, machine and points stay where they are. On or left out: the time drawn, \
-the package of before (a 0.6.0 game refuses a package with it). Drawing only: nothing a step reads"""
-doc = "off: the results pages show no race times, for a mode that is not scored by time. A 0.6.0 game cannot race a mode with it"
+where = """off: the window's flag NO_RESULTS_TIMES (mode_hud.h), for which VS RESULTS, the results' page of race times \
+(page 3 of the results, fn_1_14B62C), turns to the points page in the update after its opening and is never drawn (the \
+runner's mode_results_skip, 0x14B6A8), without the page turn's sound (mode_results_quiet, 0x14B8D0), and the points \
+page's B does not come back to it (mode_results_back, fn_1_14B93C 0x14BA14). On or left out: the page of before, the \
+package of before (a 0.6.0 game refuses a package with it). Presentation only: nothing a step reads"""
+doc = "off: the results show no page of race times and open on the points page, for a mode that is not scored by time. Needs a points page (`award`, `points_table` or `results_title`). A 0.6.0 game cannot race a mode with it"

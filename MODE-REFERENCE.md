@@ -200,7 +200,7 @@ game counts it, 100 a full machine.
 | `results points;` | The times page passes by itself, and the results are the points page. Needs `award` or `points_table` | |
 | `results_title "KNOCKOUT";` | The points page's title in place of VS TOTAL RANKING. A mode with a title ends on the points page, every row 0 without `award` | A to Z and the space, 1 to 23 characters, no space at either end |
 | `results_heading "OVERDRIVE";` | Heads the times list of a mode with no points page. Refused beside `award`, `results_title` or `points_table`. Left out: RESULTS | as `results_title` |
-| `results_times off;` | The results pages show no race times, for a mode that is not scored by time: each row keeps its place, racer and points. A 0.6.0 game cannot race a mode with it | on or off |
+| `results_times off;` | The results show no page of race times and open on the points page, for a mode that is not scored by time. Needs a points page (`award`, `points_table` or `results_title`). A 0.6.0 game cannot race a mode with it | on or off |
 | `live_places;` | The places the mode gives show during the race: the place at the top of the screen and the faces at the side follow `seat.place`, from the step it is written. Seats with no place follow in race order. Left out: `seat.place` counts only when the race ends. A 0.6.0 game cannot race a mode with it | |
 | `hud clean;` | Nothing over the race but the HUD's own parts: no CHECK sign and no name tags, a player's or a `tag`. For footage | |
 | `distance_label off;` | DISTANCE shows its number and m without the game's REST label, for metres that are not the metres left; the number then has six digits (to 999999) in place of five. A 0.6.0 game cannot race a mode with it | on or off |
