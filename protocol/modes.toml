@@ -1864,7 +1864,7 @@ the rest (0.6.1) are for hud_move alone, drawn as the game draws them (show and 
 WRONG_WAY the wrong-way sign (the banner WRONG_WAY's picture 0x9435, fn_1_CD51C's sprite); BANNERS the banners FINAL LAP, BOOST POWER, TIME BONUS and the gap popup \
 (fn_1_15EFEC; LEADER_GAP's place takes them too, a BANNERS place of its own wins); FINISH the FINISH and RETIRED pictures (fn_1_15DFD4); CHECK the CHECK sign at the \
 screen's foot that points at the rival close behind (fn_1_12907C, image 0x944F): its row moves, and it still slides sideways after that rival; hud clean takes it off; \
-SCORE (0.6.1) a mode's counter, show_score's whole number in the race time's digit pictures under a label in the game's text font, at the race time's place (the top right, under the energy meter): show_score shows and hides it, not show and hide; \
+SCORE (0.6.1) a mode's counter, show_score's whole number in the race time's digit pictures under a label in the letters of the game's own HUD labels (a label with a letter they have not got, in the game's text font), at the race time's place (the top right, under the energy meter): show_score shows and hides it, not show and hide; \
 TEXT (0.6.1) a mode's short text in one of the game's fonts (`font`), centred at the top of the screen under the position (320, 116): show_text shows and hides it, not show and hide"""
 
 [[choice]]
@@ -2585,14 +2585,19 @@ doc = "the part is drawn where the game draws it again"
 
 # --- a mode's counter (0.6.1; the owner, 2026-11-12: "Death race doesn't need a lap timer. It needs a points counter",
 # where the lap timer is). The part SCORE: a whole number in the race time's own digit pictures (0x9440 to 0x9449 with
-# their shadows 0x9430, 22 units a digit, right-aligned at the race time's last digit, x 596) under a short label in the
-# game's text font 5 (the ASCII font the Time Attack ghost names and our name tags use) where the TIME label is (586, 67).
-# The label is the mode's: `show_score s, n, "KOS";` carries its text as `tag` does (the package's tag_texts, the same
-# table and limits: tag and show_score share the api.tag_texts texts); left out, SCORE. Drawn by a routine of the image
+# their shadows 0x9430, 22 units a digit, right-aligned at the race time's last digit, x 596) under a short label on the
+# TIME label's row (y 67), its right edge at TIME's (618), in the letters of the game's own HUD labels (the cyan italic
+# capitals of ENERGY, LAP, NAME, ND, POS., RD, ST, TH and TIME, cut from those pictures by their texel columns: A D E G H
+# I L M N O P R S T Y and the full stop; the owner, 2026-11-12: "it should look like it belongs there"). A label with any
+# other character (B C F J K Q U V W X Z, a digit, -) is written by the game's text drawer in the label's font (a `font`,
+# BLOCK unless given), the HUD labels' cyan, two thirds of the font's size, right-aligned at the same edge. The label is
+# the mode's: `show_score s, n, "KOS";` carries its text as `tag` does (the package's tag_texts, the same table and
+# limits: tag and show_score share the api.tag_texts texts); left out, POINTS (the game's own word for them; SCORE has
+# no C in the HUD's letters). Drawn by a routine of the image
 # in the race time's call (sites_hudmove.py race_time_score, in the RACE_TIME wraps of both one-viewport layouts), from
 # the window's two words the HUD pass writes for the racer the picture follows (runner mode_hud.h WINDOW_SCORE), so a
 # spectator sees the watched racer's. Tagged SCORE for hud_move (its centre (552, 86): the box of the label and six
-# digits), like every other part. Drawing only: nothing a step reads. The label's font is a `font` (BLOCK unless given).
+# digits), like every other part. Drawing only: nothing a step reads.
 
 [[action]]
 name = "show_score"
@@ -2607,7 +2612,9 @@ number in tag_texts, from 1 (0: no text given), as `tag` does, then the font (0,
 doc = """`show_score s, n;`, `show_score s, n, "TEXT";` or `show_score s, n, "TEXT", FONT;`: the seat's player sees SCORE, the whole \
 number n in the race time's digits (0 to 999999: six digits at most, a negative number reads 0) under the label TEXT (A to Z, 0 to 9, \
 the space, `.` and `-`, api.tag_text long at most; tag, show_score and show_text share the api.tag_texts texts a mode may use) or, with \
-no text, SCORE, in the font FONT (a `font`; BLOCK unless given); at the race time's place, the top right under the energy meter, until \
+no text, POINTS, drawn in the letters of the game's own HUD labels (those of ENERGY, LAP, NAME, POS., TIME and the rest: A D E G H I L \
+M N O P R S T Y and `.`), as TIME is drawn over the race time; a label with any other letter, a digit or `-` is written in the font FONT \
+(a `font`; BLOCK unless given) in the labels' cyan; at the race time's place, the top right under the energy meter, until \
 `show_score s off`. A spectator sees the watched racer's. The part is movable with hud_move SCORE"""
 
 [[action]]
