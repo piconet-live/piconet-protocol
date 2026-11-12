@@ -917,6 +917,12 @@ internal sealed class ModeParser
         {
             throw Error($"'{name}' is not an action of api {ModeWords.Api}");
         }
+        // an action's longer form whose words start with it (resume after t), but an off form (below)
+        while (Current.Kind == ModeTokenKind.Name && !Current.Is("off")
+               && ModeWords.Actions.Any(a => a.Name == name + " " + Current.Text))
+        {
+            name += " " + Take().Text;
+        }
         // a word between the first two arguments in place of the comma (map_hide s from seats)
         var join = ModeWords.ActionJoins.GetValueOrDefault(ModeWords.Actions.First(a => a.Name == name).Id);
         var arguments = new List<ModeExpr>();
@@ -939,7 +945,7 @@ internal sealed class ModeParser
             {
                 Accept(",");
             }
-            arguments.Add(name is "tag" or "map_char" && Current.Kind == ModeTokenKind.Text
+            arguments.Add(name is "tag" or "map_char" or "say" && Current.Kind == ModeTokenKind.Text
                 ? new ModeTagText(Current.Line, Take().Text)
                 : Expression());
         }

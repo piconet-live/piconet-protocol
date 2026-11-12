@@ -1,0 +1,127 @@
+FZMP format 1 api 1, 2191 bytes, hash 62a0304c38267f5844ad360dda8d1ce556d97e624e9ddd5c6d380aa2ae0d4d0c
+HEAD name "Pause" badge "" about ""
+PARM 0
+SETP 4
+  say_texts "Hold A to accelerate. Press A to start."
+  say_texts "Left: more speed. Right: more boost."
+  say_texts "Boost costs energy: refill it in the pit."
+  pauses
+VARS globals 1, seat words 1
+  global 0 = 0
+  seat 0 = 0
+RULE 5
+  0 "Stand at GO" event race_start, locals 1, when none, while none, body 0000
+  1 "Ready" event each seat, locals 1, when none, while 000a, body 003b
+  2 "Go on" event each seat, locals 1, when 0046, while none, body 006c
+  3 "A choice at lap 2" event lap, locals 1, when 0080, while none, body 008b
+  4 "Hint" event every step, locals 1, when 00d8, while none, body 00fa
+CODE 258 bytes
+  ; rule 0 body
+  0000  Action pause
+  0002  Push 1
+  0007  Action say
+  0009  End
+  ; rule 1 while
+  000a  RaceRead paused
+  000c  Dup
+  000d  JumpIfZero 001d
+  0012  Pop
+  0013  LoadLocal 0
+  0015  SeatRead pad.accel
+  0017  Push 1045220557 (0x3e4ccccd, real 0.2)
+  001c  FLt
+  001d  Dup
+  001e  JumpIfZero 0029
+  0023  Pop
+  0024  LoadLocal 0
+  0026  SeatRead pad.boost
+  0028  Not
+  0029  Dup
+  002a  JumpIfZero 003a
+  002f  Pop
+  0030  LoadLocal 0
+  0032  SeatRead pad.brake
+  0034  Push 1045220557 (0x3e4ccccd, real 0.2)
+  0039  FLt
+  003a  Ret
+  ; rule 1 body
+  003b  LoadLocal 0
+  003d  Push 1
+  0042  StoreSeatVar 0
+  0045  End
+  ; rule 2 when
+  0046  RaceRead paused
+  0048  Dup
+  0049  JumpIfZero 005a
+  004e  Pop
+  004f  LoadLocal 0
+  0051  LoadSeatVar 0
+  0054  Push 1
+  0059  IEq
+  005a  Dup
+  005b  JumpIfZero 006b
+  0060  Pop
+  0061  LoadLocal 0
+  0063  SeatRead pad.accel
+  0065  Push 1056964608 (0x3f000000, real 0.5)
+  006a  FGt
+  006b  Ret
+  ; rule 2 body
+  006c  LoadLocal 0
+  006e  Push 0
+  0073  StoreSeatVar 0
+  0076  Action say off
+  0078  Push 60
+  007d  Action resume after
+  007f  End
+  ; rule 3 when
+  0080  LoadLocal 0
+  0082  SeatRead lap
+  0084  Push 1
+  0089  IEq
+  008a  Ret
+  ; rule 3 body
+  008b  Action pause
+  008d  Push 2
+  0092  Action say
+  0094  Push 420
+  0099  Wait locals 1
+  00a0  LoadLocal 0
+  00a2  SeatRead pad.steer
+  00a4  Push -1090519040 (0xbf000000, real -0.5)
+  00a9  FLt
+  00aa  JumpIfZero 00bc
+  00af  Push 1
+  00b4  StoreGlobal 0
+  00b7  Jump 00d3
+  00bc  LoadLocal 0
+  00be  SeatRead pad.steer
+  00c0  Push 1056964608 (0x3f000000, real 0.5)
+  00c5  FGt
+  00c6  JumpIfZero 00d3
+  00cb  Push 2
+  00d0  StoreGlobal 0
+  00d3  Action say off
+  00d5  Action resume
+  00d7  End
+  ; rule 4 when
+  00d8  RaceRead paused
+  00da  Not
+  00db  Dup
+  00dc  JumpIfZero 00ea
+  00e1  Pop
+  00e2  RaceRead paused_steps
+  00e4  Push 0
+  00e9  IEq
+  00ea  Dup
+  00eb  JumpIfZero 00f9
+  00f0  Pop
+  00f1  RaceRead steps
+  00f3  Push 1200
+  00f8  IGt
+  00f9  Ret
+  ; rule 4 body
+  00fa  Push 3
+  00ff  Action say
+  0101  End
+SRC  1120 bytes

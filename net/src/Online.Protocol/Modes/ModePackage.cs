@@ -133,6 +133,43 @@ public static class ModeTagTexts
         new string([.. cells.Select(c => (char)c.Value)]).Split('\0');
 }
 
+/// <summary>The texts the <c>say</c> word shows, which the package carries in the setup words <c>say_texts</c>: one word
+/// a text, in order, its UTF-8 bytes a value each (a word holds at most 255 values; a text is at most 160 bytes); a
+/// <c>say</c> names one by its place, from 1. The runner draws them in the overlay's fonts (the launcher's Saira, and
+/// the system's Segoe UI and Yu Gothic for what it lacks), so any text of letters goes; a control character (a line
+/// break included: the panel breaks its lines itself) is refused.</summary>
+public static class ModeSayTexts
+{
+    /// <summary>Why a text cannot be shown; null: it can.</summary>
+    public static string? Refusal(string text)
+    {
+        ArgumentNullException.ThrowIfNull(text);
+        if (Encoding.UTF8.GetByteCount(text) > ModeWords.SayText)
+        {
+            return $"say: a text is at most {ModeWords.SayText} bytes of UTF-8: \"{text}\" has {Encoding.UTF8.GetByteCount(text)}";
+        }
+        if (text.EnumerateRunes().Any(r => Rune.IsControl(r)))
+        {
+            return "say: a text has no control characters (the panel breaks its own lines)";
+        }
+        return text.Trim().Length != text.Length || text.Length == 0
+            ? "say needs a text, with no space at either end"
+            : null;
+    }
+
+    /// <summary>The texts as their words, one a text.</summary>
+    public static List<ModeSetupWord> Words(IEnumerable<string> texts) =>
+        [.. texts.Select(t => new ModeSetupWord(ModeSetup.SayTexts, [.. Encoding.UTF8.GetBytes(t).Select(b => new ModeSetupValue(false, b))]))];
+
+    /// <summary>One word's arguments as its text.</summary>
+    public static string Text(IEnumerable<ModeSetupValue> cells) =>
+        Encoding.UTF8.GetString([.. cells.Select(c => (byte)c.Value)]);
+
+    /// <summary>A package's texts, in order: its say_texts words'.</summary>
+    public static string[] Texts(IEnumerable<ModeSetupWord> setups) =>
+        [.. setups.Where(s => s.Id == ModeSetup.SayTexts).Select(s => Text(s.Arguments))];
+}
+
 /// <summary>A setup word as the package keeps it: every argument of the word, in the table's order, the ones the file
 /// left out at their defaults (so a reader needs no table of defaults).</summary>
 public sealed record ModeSetupWord(ModeSetup Id, IReadOnlyList<ModeSetupValue> Arguments);
@@ -530,7 +567,7 @@ public sealed class ModePackage
                 1 => true,
                 _ => throw new InvalidDataException($"the setup word {word.Name}'s argument has an unknown source"),
             }, s.I32())).ToList();
-            if (word.Id is ModeSetup.ResultsTitle or ModeSetup.ResultsHeading or ModeSetup.TagTexts or ModeSetup.PointsTable)
+            if (word.Id is ModeSetup.ResultsTitle or ModeSetup.ResultsHeading or ModeSetup.TagTexts or ModeSetup.SayTexts or ModeSetup.PointsTable)
             {
                 if (!OwnValues(word.Id, arguments))
                 {
@@ -550,12 +587,32 @@ public sealed class ModePackage
             list.Add(new ModeSetupWord(word.Id, arguments));
         }
         s.End();
+        var says = ModeSayTexts.Texts(list);
+        if (says.Length > ModeWords.SayTexts || says.Distinct().Count() != says.Length)
+        {
+            throw new InvalidDataException($"the say texts are not the compiler's: at most {ModeWords.SayTexts}, each once");
+        }
         return list;
     }
 
     /// <summary>Whether a word of many values holds what the compiler would write for it.</summary>
     private static bool OwnValues(ModeSetup id, List<ModeSetupValue> arguments)
     {
+        if (id == ModeSetup.SayTexts)
+        {
+            if (arguments.Any(a => a.FromParam || a.Value is < 0 or > 255))
+            {
+                return false;
+            }
+            try
+            {
+                return ModeSayTexts.Refusal(new UTF8Encoding(false, true).GetString([.. arguments.Select(a => (byte)a.Value)])) is null;
+            }
+            catch (DecoderFallbackException)
+            {
+                return false;
+            }
+        }
         if (id == ModeSetup.PointsTable)
         {
             return arguments.Count is > 0 and <= ModeWords.Seats && !arguments.Any(a => a.FromParam || a.Value is < 0 or > 999);

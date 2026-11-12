@@ -55,6 +55,8 @@ public sealed class ModeCompilerTests
     [InlineData("gap_spread")]
     [InlineData("clean")]
     [InlineData("ax_hud")]
+    [InlineData("pause")]
+    [InlineData("pause_vote")]
     [InlineData("death_race")]
     [InlineData("same_machine")]
     [InlineData("speed_open")]
@@ -158,15 +160,16 @@ public sealed class ModeCompilerTests
         var cuts = CompileVector("cuts").Mode!;
         // every word, and with the language vector every operation (the words vector's are the first slice's, the
         // race vector's the race side's of wave 2A)
-        var code = Code("words").Concat(Code("gap_reads")).Concat(Code("race")).Concat(Code("cuts")).Concat(Code("stats")).Concat(Code("stats_page")).Concat(Code("energy_words")).Concat(Code("combat")).Concat(Code("held_words")).Concat(Code("engine_speed")).ToList();
+        var code = Code("words").Concat(Code("gap_reads")).Concat(Code("race")).Concat(Code("cuts")).Concat(Code("stats")).Concat(Code("stats_page")).Concat(Code("energy_words")).Concat(Code("combat")).Concat(Code("held_words")).Concat(Code("engine_speed")).Concat(Code("pause")).ToList();
         var ops = code.Concat(Code("language")).Select(l => l.Split(' ')[0]).ToHashSet();
         Assert.Equal(Enum.GetNames<ModeOp>().Order(), ops.Order());
         Assert.All(ModeWords.SeatReads, r => Assert.Contains(code.Concat(Code("language")), l => l.EndsWith("SeatRead " + r.Name, StringComparison.Ordinal)));
         Assert.All(ModeWords.RaceReads, r => Assert.Contains(code, l => l.EndsWith("RaceRead " + r.Name, StringComparison.Ordinal)));
         Assert.All(ModeWords.Actions, a => Assert.Contains(code.Concat(Code("display")), l => l.EndsWith("Action " + a.Name, StringComparison.Ordinal)));
-        // every setup word but laps by course (the competitive vector's); the practice vector's are a solo mode's
+        // every setup word but laps by course (the competitive vector's); the practice vector's are a solo mode's (the
+        // pause vector's say_texts once: a word a text)
         var solo = CompileVector("practice").Mode!.Setups.Where(s => s.Id is not (ModeSetup.Laps or ModeSetup.ResultsHeading));
-        var setups = mode.Setups.Concat(CompileVector("gap_reads").Mode!.Setups).Concat(cuts.Setups).Concat(race.Setups).Concat(solo).Concat(CompileVector("combat").Mode!.Setups.Where(s => s.Id != ModeSetup.ClockLimit)).Concat(CompileVector("gap_same").Mode!.Setups).Concat(CompileVector("gap_spread").Mode!.Setups).Concat(CompileVector("clean").Mode!.Setups).Concat(CompileVector("ax_hud").Mode!.Setups).Concat(CompileVector("stats_page").Mode!.Setups).Concat(CompileVector("energy_words").Mode!.Setups).Concat(CompileVector("engine_speed").Mode!.Setups.Concat(CompileVector("speed_open").Mode!.Setups).Concat(CompileVector("live_places").Mode!.Setups).Concat(CompileVector("distance_label").Mode!.Setups).Where(s => s.Id is ModeSetup.SeatSpeedOpen or ModeSetup.MaxSpeedOpen or ModeSetup.LivePlaces or ModeSetup.DistanceLabel)).Concat(CompileVector("results_times").Mode!.Setups.Where(s => s.Id == ModeSetup.ResultsTimes)).Select(s => s.Id).ToList();
+        var setups = mode.Setups.Concat(CompileVector("gap_reads").Mode!.Setups).Concat(cuts.Setups).Concat(race.Setups).Concat(solo).Concat(CompileVector("combat").Mode!.Setups.Where(s => s.Id != ModeSetup.ClockLimit)).Concat(CompileVector("gap_same").Mode!.Setups).Concat(CompileVector("gap_spread").Mode!.Setups).Concat(CompileVector("clean").Mode!.Setups).Concat(CompileVector("ax_hud").Mode!.Setups).Concat(CompileVector("pause").Mode!.Setups.DistinctBy(s => s.Id)).Concat(CompileVector("stats_page").Mode!.Setups).Concat(CompileVector("energy_words").Mode!.Setups).Concat(CompileVector("engine_speed").Mode!.Setups.Concat(CompileVector("speed_open").Mode!.Setups).Concat(CompileVector("live_places").Mode!.Setups).Concat(CompileVector("distance_label").Mode!.Setups).Where(s => s.Id is ModeSetup.SeatSpeedOpen or ModeSetup.MaxSpeedOpen or ModeSetup.LivePlaces or ModeSetup.DistanceLabel)).Concat(CompileVector("results_times").Mode!.Setups.Where(s => s.Id == ModeSetup.ResultsTimes)).Select(s => s.Id).ToList();
         Assert.Equal(ModeWords.Setups.Where(s => !s.Lobby).Select(s => s.Id).Where(id => id is not ModeSetup.LapsByCourse).Order(),
             setups.Order());
         Assert.Equal(ModeWords.Events.Select(e => e.Id).Order(), mode.Rules.Concat(race.Rules).Select(r => r.Event).Distinct().Order());

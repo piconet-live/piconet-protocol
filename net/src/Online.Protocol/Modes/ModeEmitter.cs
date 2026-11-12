@@ -50,6 +50,9 @@ internal sealed partial class ModeEmitter(ModeNames names, List<string> warnings
     /// <summary>The different texts the file's <c>tag</c> words use, in the order they came: the package's <c>tag_texts</c>.</summary>
     public List<string> TagTexts { get; } = [];
 
+    /// <summary>The different texts the file's <c>say</c> words use, in the order they came: the package's <c>say_texts</c>.</summary>
+    public List<string> SayTexts { get; } = [];
+
     /// <summary>A rule reads a time gap: the package says so (<c>time_gaps</c>) and the game keeps the arrivals.</summary>
     public bool UsesGaps { get; private set; }
     /// <summary>The highest constant a rule writes into seat.speed with <c>=</c>, and its line: above 9000 the file must

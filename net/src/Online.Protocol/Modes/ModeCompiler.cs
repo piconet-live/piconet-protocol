@@ -150,6 +150,14 @@ public static class ModeCompiler
             {
                 _setups.Add(new ModeSetupWord(ModeSetup.StatsPage, []));
             }
+            if (_emitter.SayTexts.Count > 0)
+            {
+                _setups.AddRange(ModeSayTexts.Words(_emitter.SayTexts));
+            }
+            if (_emitter.Used.ContainsKey(ModeAction.Pause))
+            {
+                _setups.Add(new ModeSetupWord(ModeSetup.Pauses, []));
+            }
             GapWords();
             OpenWords();
             CarriedForms();
@@ -283,6 +291,8 @@ private static string? CompilersOwn(ModeSetup id, string name) => id switch
     ModeSetup.TagTexts => "tag_texts is the compiler's own: a rule writes tag s, \"TEXT\"; and the text is kept",
     ModeSetup.StatsPage => "stats_page is the compiler's own: a rule writes the stat, and the page is kept",
     ModeSetup.TimeGaps => "time_gaps is the compiler's own: the gap reads set it",
+    ModeSetup.SayTexts => "say_texts is the compiler's own: a rule writes say \"TEXT\"; and the text is kept",
+    ModeSetup.Pauses => "pauses is the compiler's own: a rule writes pause; and the word is kept",
     _ => null,
 };
 

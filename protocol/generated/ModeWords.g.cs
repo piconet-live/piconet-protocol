@@ -299,6 +299,10 @@ public enum ModeSetup : byte
     ResultsTimes = 68,
     /// <summary><c>hud_layout ax</c></summary>
     HudLayoutAx = 69,
+    /// <summary><c>say_texts</c></summary>
+    SayTexts = 70,
+    /// <summary><c>pauses</c></summary>
+    Pauses = 71,
 }
 
 /// <summary>A read of a seat (protocol/modes.toml).</summary>
@@ -496,6 +500,14 @@ public enum ModeSeatRead : byte
     BaseSpeed = 94,
     /// <summary><c>boost_value</c></summary>
     BoostValue = 95,
+    /// <summary><c>pad.steer</c></summary>
+    PadSteer = 96,
+    /// <summary><c>pad.accel</c></summary>
+    PadAccel = 97,
+    /// <summary><c>pad.brake</c></summary>
+    PadBrake = 98,
+    /// <summary><c>pad.boost</c></summary>
+    PadBoost = 99,
 }
 
 /// <summary>A read of the race (protocol/modes.toml).</summary>
@@ -529,6 +541,10 @@ public enum ModeRaceRead : byte
     HumansLeft = 12,
     /// <summary><c>human_finished</c></summary>
     HumanFinished = 13,
+    /// <summary><c>paused</c></summary>
+    Paused = 14,
+    /// <summary><c>paused_steps</c></summary>
+    PausedSteps = 15,
 }
 
 /// <summary>An action (protocol/modes.toml).</summary>
@@ -690,6 +706,16 @@ public enum ModeAction : byte
     MapChar = 82,
     /// <summary><c>map_char off</c></summary>
     MapCharOff = 83,
+    /// <summary><c>pause</c></summary>
+    Pause = 84,
+    /// <summary><c>resume</c></summary>
+    Resume = 85,
+    /// <summary><c>resume after</c></summary>
+    ResumeAfter = 86,
+    /// <summary><c>say</c></summary>
+    Say = 87,
+    /// <summary><c>say off</c></summary>
+    SayOff = 88,
 }
 
 /// <summary>The vocabulary of one api, by the names a mode file writes (protocol/modes.toml).</summary>
@@ -729,6 +755,10 @@ public static partial class ModeWords
     public const int TagText = 10;
     /// <summary>The api's limit <c>tag_texts</c>.</summary>
     public const int TagTexts = 8;
+    /// <summary>The api's limit <c>say_text</c>.</summary>
+    public const int SayText = 160;
+    /// <summary>The api's limit <c>say_texts</c>.</summary>
+    public const int SayTexts = 32;
     /// <summary>The api's limit <c>board</c>.</summary>
     public const int Board = 8;
     /// <summary>The api's limit <c>board_label</c>.</summary>
@@ -910,6 +940,8 @@ public static partial class ModeWords
         ("distance_label", ModeSetup.DistanceLabel, [new ModeArgument("", ModeType.Bool, 0, 1, null)], false, ""),
         ("results_times", ModeSetup.ResultsTimes, [new ModeArgument("", ModeType.Bool, 0, 1, null)], false, ""),
         ("hud_layout ax", ModeSetup.HudLayoutAx, [], false, ""),
+        ("say_texts", ModeSetup.SayTexts, [], false, "text"),
+        ("pauses", ModeSetup.Pauses, [], false, ""),
     ];
 
     /// <summary>The reads of a seat (<c>seat.NAME</c>): name, id, type.</summary>
@@ -1011,6 +1043,10 @@ public static partial class ModeWords
         ("stat.base.boost_energy", ModeSeatRead.StatBaseBoostEnergy, ModeType.Real),
         ("base_speed", ModeSeatRead.BaseSpeed, ModeType.Real),
         ("boost_value", ModeSeatRead.BoostValue, ModeType.Real),
+        ("pad.steer", ModeSeatRead.PadSteer, ModeType.Real),
+        ("pad.accel", ModeSeatRead.PadAccel, ModeType.Real),
+        ("pad.brake", ModeSeatRead.PadBrake, ModeType.Real),
+        ("pad.boost", ModeSeatRead.PadBoost, ModeType.Bool),
     ];
 
     /// <summary>The reads of the race (<c>race.NAME</c>): name, id, type.</summary>
@@ -1030,6 +1066,8 @@ public static partial class ModeWords
         ("course", ModeRaceRead.Course, ModeType.Int),
         ("humans_left", ModeRaceRead.HumansLeft, ModeType.Int),
         ("human_finished", ModeRaceRead.HumanFinished, ModeType.Int),
+        ("paused", ModeRaceRead.Paused, ModeType.Bool),
+        ("paused_steps", ModeRaceRead.PausedSteps, ModeType.Int),
     ];
 
     /// <summary>The actions: name, id, the types of their arguments in order.</summary>
@@ -1113,6 +1151,11 @@ public static partial class ModeWords
         ("hud_move", ModeAction.HudMove, [ModeType.Seat, ModeType.Int, ModeType.Real, ModeType.Real]),
         ("map_char", ModeAction.MapChar, [ModeType.Seat, ModeType.Int]),
         ("map_char off", ModeAction.MapCharOff, [ModeType.Seat]),
+        ("pause", ModeAction.Pause, []),
+        ("resume", ModeAction.Resume, []),
+        ("resume after", ModeAction.ResumeAfter, [ModeType.Int]),
+        ("say", ModeAction.Say, [ModeType.Int]),
+        ("say off", ModeAction.SayOff, []),
     ];
 
     /// <summary>The actions that need a running step, which game_start refuses.</summary>

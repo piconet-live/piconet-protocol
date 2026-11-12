@@ -10,7 +10,7 @@ SCHEMA = os.path.join(here, "modes.toml")
 
 TOP_KEYS = {"codec", "api", "op", "event", "setup", "seat_read", "race_read", "action", "choice"}
 API_KEYS = {"number", "budget", "queue", "globals", "seat_words", "locals", "rules", "sorts", "package_bytes", "seats",
-            "team_words", "teams", "waits", "wait_locals", "subs", "board", "board_label", "board_words", "board_word", "fsqrt_cost", "results_title", "tag_text", "tag_texts"}
+            "team_words", "teams", "waits", "wait_locals", "subs", "board", "board_label", "board_words", "board_word", "fsqrt_cost", "results_title", "tag_text", "tag_texts", "say_text", "say_texts"}
 OP_KEYS = {"name", "code", "operands", "doc"}
 EVENT_KEYS = {"name", "id", "kind", "binds", "doc"}
 SETUP_KEYS = {"name", "id", "args", "where", "doc", "table", "lobby", "form"}
@@ -122,7 +122,7 @@ def load(path=SCHEMA):
             raise SchemaError(f"setup {s['name']}: a table is of courses")
     reads = {}
     for kind in ("seat_read", "race_read"):
-        reads[kind] = numbered(raw.get(kind, []), READ_KEYS, kind)
+        reads[kind] = numbered(raw.get(kind, []), READ_KEYS, kind, gaps=True)
         for r in reads[kind]:
             if r.get("type") not in TYPES:
                 raise SchemaError(f"{kind} {r['name']}: type one of {sorted(TYPES)}")
