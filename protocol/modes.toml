@@ -2308,3 +2308,14 @@ start). Racers level in distance keep the order of the step before (the pass's t
 writes it: without it seat.place is kept for the end clause only, the package of before (a 0.6.0 game refuses a \
 package with it)"""
 doc = "the places the mode gives show during the race: the place at the top of the screen and the faces follow seat.place. A 0.6.0 game cannot race a mode with it"
+
+[[setup]]
+name = "distance_label"
+id = 67
+args = [{ type = "switch" }]
+where = """off: the window's flag NO_DISTANCE_LABEL (mode_hud.h), for which the DISTANCE drawer's label is not queued \
+(fn_1_CDC8C 0xCE948, `bl fn_1_4F734`, the picture 0xBA13: REST, the game's word for the metres to the finish; the \
+runner's mode_distance_label). The digits and the m stay where they are, for the game's metres and show_distance's \
+alike. On or left out: the label drawn, the package of before (a 0.6.0 game refuses a package with it). Drawing only: \
+nothing a step reads"""
+doc = "off: the DISTANCE part shows its number and m without the game's REST label, for a mode whose metres are not the metres left. A 0.6.0 game cannot race a mode with it"

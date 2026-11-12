@@ -202,6 +202,7 @@ game counts it, 100 a full machine.
 | `results_heading "OVERDRIVE";` | Heads the times list of a mode with no points page. Refused beside `award`, `results_title` or `points_table`. Left out: RESULTS | as `results_title` |
 | `live_places;` | The places the mode gives show during the race: the place at the top of the screen and the faces at the side follow `seat.place`, from the step it is written. Seats with no place follow in race order. Left out: `seat.place` counts only when the race ends. A 0.6.0 game cannot race a mode with it | |
 | `hud clean;` | Nothing over the race but the HUD's own parts: no CHECK sign and no name tags, a player's or a `tag`. For footage | |
+| `distance_label off;` | DISTANCE shows its number and m without the game's REST label, for metres that are not the metres left. A 0.6.0 game cannot race a mode with it | on or off |
 
 A race ends by laps and `finish_limit`, at `clock_limit`, at `end_race`, or when the last player is finished or out
 (unless `race_waits everyone`). The results are the times list, then the points page when the mode awards points or
@@ -512,7 +513,7 @@ text where it likes. They never change the race.
 | `TIMER` | The timed race's clock, with `clock_limit` or `show_clock` | when shown |
 | `LEADER_GAP` | The gap to the leader at each lap line, for a second; the leader sees its lead when second place crosses | when shown |
 | `GHOST_GAP` | Time Attack's live gap at the right edge, all race, against the seat furthest ahead; red while it is ahead | when shown |
-| `DISTANCE` | REST and the metres to the finish, or `show_distance`'s | when shown |
+| `DISTANCE` | REST and the metres to the finish, or `show_distance`'s; without REST under `distance_label off;` | when shown |
 | `OBJECTS` | The objects count, or `show_objects`'s | when shown |
 | `DIGIT` | The story mode's big 3-2-1 digit; it shows a `danger_zone`'s count | when shown |
 | `WARNING` | The story mode's warning sign | when shown |

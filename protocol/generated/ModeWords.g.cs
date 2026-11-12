@@ -293,6 +293,8 @@ public enum ModeSetup : byte
     MaxSpeedOpen = 65,
     /// <summary><c>live_places</c></summary>
     LivePlaces = 66,
+    /// <summary><c>distance_label</c></summary>
+    DistanceLabel = 67,
 }
 
 /// <summary>A read of a seat (protocol/modes.toml).</summary>
@@ -895,6 +897,7 @@ public static partial class ModeWords
         ("seat_speed_open", ModeSetup.SeatSpeedOpen, [], false, ""),
         ("max_speed_open", ModeSetup.MaxSpeedOpen, [], false, ""),
         ("live_places", ModeSetup.LivePlaces, [], false, ""),
+        ("distance_label", ModeSetup.DistanceLabel, [new ModeArgument("", ModeType.Bool, 0, 1, null)], false, ""),
     ];
 
     /// <summary>The reads of a seat (<c>seat.NAME</c>): name, id, type.</summary>

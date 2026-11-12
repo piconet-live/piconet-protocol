@@ -274,7 +274,8 @@ enum Setup : std::uint8_t
   SETUP_SEATSPEEDOPEN = 64,  // seat_speed_open
   SETUP_MAXSPEEDOPEN = 65,  // max_speed_open
   SETUP_LIVEPLACES = 66,  // live_places
-  SETUP_COUNT = 67,
+  SETUP_DISTANCELABEL = 67,  // distance_label
+  SETUP_COUNT = 68,
 };
 
 // a read of a seat (OP_SEATREAD)
