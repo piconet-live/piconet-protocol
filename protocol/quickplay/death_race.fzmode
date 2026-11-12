@@ -26,7 +26,9 @@
 // The HUD is F-Zero AX's (owner 2026-11-12): the position at the bottom left, the clock at the top where AX's timer is,
 // the six faces on AX's rows. The position and the faces follow the points order above during the race (live_places),
 // not the road order. The lives counter (the Grand Prix spare-machine icon, bottom left in the game) is placed at the
-// bottom centre (hud_move SPARE), clear of the position at the bottom left and the speed at the bottom right.
+// bottom centre (hud_move SPARE), clear of the position at the bottom left and the speed at the bottom right. No lap
+// timer (the owner, 2026-11-12: "Death race doesn't need a lap timer. It needs a points counter"): the race time and the
+// lap times at the top right are hidden, and the points so far stand where the race time was (SCORE, show_score).
 //
 // Damage is 400% and the game's cap of 20 a hit for a player is off (a CPU never had it), so a hard hit can end a
 // machine from full; a hit still takes at most 1.01 x max energy. Walls, mines and the pit are the game's own: the pit's
@@ -162,6 +164,16 @@ rule "Everyone sees the clock" {
   event each seat;
   when race.started;
   do { show seat, TIMER; }
+}
+
+rule "Points, not the lap timer" {
+  // the points awarded so far (the number the results add up) where the race time was; the lap timer's two parts off
+  event each seat;
+  do {
+    hide seat, RACE_TIME;
+    hide seat, LAP_TIMES;
+    show_score seat, seat.score;
+  }
 }
 
 rule "Places" {
