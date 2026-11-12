@@ -1,4 +1,4 @@
-FZMP format 1 api 1, 685 bytes, hash 5b4c4e5b6a9121c8872a21e92eb5852718e0ecbc1a7cea6ea3f21f8abc2b7df1
+FZMP format 1 api 2, 689 bytes, hash bc6721045d792649f1c5769948d6a53e3ad42cc2ce6b43857d25fc6f8da4e436
 HEAD name "Same machine" badge "SAME MACHINE" about "Everyone races one machine, drawn at random each race."
 PARM 0
 SETP 1
@@ -6,4 +6,4 @@ SETP 1
 VARS globals 0, seat words 0
 RULE 0
 CODE 0 bytes
-SRC  520 bytes
+SRC  524 bytes

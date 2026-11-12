@@ -121,7 +121,7 @@ public static class ModeDisassembler
         {
             var a = word.Arguments[i];
             var name = table.Args[i].Name.Length > 0 ? table.Args[i].Name + " " : "";
-            parts.Add(name + (a.FromParam ? Invariant($"param {a.Value} ({mode.Params[a.Value].Name})") : table.Args[i].Type == ModeType.Bool ? (a.Value == 0 ? "off" : "on") : Typed(table.Args[i].Type, a.Value)));
+            parts.Add(name + (a.FromParam ? Invariant($"param {a.Value} ({mode.Params[a.Value].Name})") : table.Args[i].Type == ModeType.Bool ? (a.Value == 0 ? "off" : a.Value == table.Args[i].Always ? "always" : "on") : Typed(table.Args[i].Type, a.Value)));
         }
         return string.Join(' ', parts);
     }

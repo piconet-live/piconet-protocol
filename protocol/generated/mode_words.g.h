@@ -8,8 +8,12 @@
 
 namespace fzgx::modes
 {
-// the api this build runs, and its limits (language 11.1)
-inline constexpr int API = 1;
+// the newest rule set this build runs (a package carries its rule set as its api), the newest game version
+// this table knows, and the limits (language 11.1)
+inline constexpr int API = 2;
+inline constexpr char API_VERSION[] = "0.6.1";
+inline constexpr char RULE_SET_1_VERSION[] = "0.6.0";
+inline constexpr char RULE_SET_2_VERSION[] = "0.6.1";
 inline constexpr int BUDGET = 65536;
 inline constexpr int QUEUE = 256;
 inline constexpr int GLOBALS = 256;
@@ -549,6 +553,89 @@ enum Look : std::uint8_t
 // what `on` is for a setup word that also takes a value
 inline constexpr int SETUP_MINEREGEN_ON = 200;
 inline constexpr int SETUP_TIMEBONUS_ON = 5;
+// what `always` is for a switch that takes it (off 0, on 1)
+inline constexpr int SETUP_CPUS_ALWAYS = 2;
+// the rule set that value arrived in, where after its word's
+inline constexpr int SETUP_CPUS_ALWAYS_SINCE = 2;
+
+// the rule set an operation arrived in (a package of an earlier rule set does not hold it)
+constexpr int OpSince(std::uint8_t /*op*/)
+{
+  return 1;
+}
+
+// the rule set an event arrived in (a package of an earlier rule set does not hold it)
+constexpr int EventSince(std::uint8_t /*event*/)
+{
+  return 1;
+}
+
+// the rule set a setup word arrived in (a package of an earlier rule set does not hold it)
+constexpr int SetupSince(std::uint8_t setup)
+{
+  switch (setup)
+  {
+    case SETUP_MACHINE: return 2;
+    case SETUP_MACHINERANDOM: return 2;
+    case SETUP_MACHINERANDOMEACH: return 2;
+    case SETUP_MACHINEBYSEAT: return 2;
+    case SETUP_MACHINEBYTEAM: return 2;
+    case SETUP_MACHINEBYPLACE: return 2;
+    case SETUP_SEATSPEEDOPEN: return 2;
+    case SETUP_MAXSPEEDOPEN: return 2;
+    case SETUP_LIVEPLACES: return 2;
+    case SETUP_DISTANCELABEL: return 2;
+    case SETUP_RESULTSTIMES: return 2;
+    case SETUP_HUDLAYOUTAX: return 2;
+    case SETUP_SAYTEXTS: return 2;
+    case SETUP_PAUSES: return 2;
+    default: return 1;
+  }
+}
+
+// the rule set a read of a seat arrived in (a package of an earlier rule set does not hold it)
+constexpr int SeatSince(std::uint8_t seat)
+{
+  switch (seat)
+  {
+    case SEAT_BASESPEED: return 2;
+    case SEAT_BOOSTVALUE: return 2;
+    case SEAT_PADSTEER: return 2;
+    case SEAT_PADACCEL: return 2;
+    case SEAT_PADBRAKE: return 2;
+    case SEAT_PADBOOST: return 2;
+    default: return 1;
+  }
+}
+
+// the rule set a read of the race arrived in (a package of an earlier rule set does not hold it)
+constexpr int RaceSince(std::uint8_t race)
+{
+  switch (race)
+  {
+    case RACE_PAUSED: return 2;
+    case RACE_PAUSEDSTEPS: return 2;
+    default: return 1;
+  }
+}
+
+// the rule set an action arrived in (a package of an earlier rule set does not hold it)
+constexpr int ActionSince(std::uint8_t action)
+{
+  switch (action)
+  {
+    case ACTION_SEATBASESPEED: return 2;
+    case ACTION_HUDMOVE: return 2;
+    case ACTION_MAPCHAR: return 2;
+    case ACTION_MAPCHAROFF: return 2;
+    case ACTION_PAUSE: return 2;
+    case ACTION_RESUME: return 2;
+    case ACTION_RESUMEAFTER: return 2;
+    case ACTION_SAY: return 2;
+    case ACTION_SAYOFF: return 2;
+    default: return 1;
+  }
+}
 
 // the arguments an action pops
 constexpr int ActionArguments(std::uint8_t action)

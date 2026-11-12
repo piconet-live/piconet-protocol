@@ -1,4 +1,4 @@
-FZMP format 1 api 1, 2191 bytes, hash 62a0304c38267f5844ad360dda8d1ce556d97e624e9ddd5c6d380aa2ae0d4d0c
+FZMP format 1 api 2, 2195 bytes, hash 593490602da4bcf2c3df061f4d1975d105da45e10d377c5de2bd26240df2379c
 HEAD name "Pause" badge "" about ""
 PARM 0
 SETP 4
@@ -124,4 +124,4 @@ CODE 258 bytes
   00fa  Push 3
   00ff  Action say
   0101  End
-SRC  1120 bytes
+SRC  1124 bytes

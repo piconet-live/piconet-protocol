@@ -3,7 +3,7 @@
 // game, replay and results page names it.
 
 mode "Same machine" {
-  api 1;
+  api 0.6.1;
   badge "SAME MACHINE";
   about "Everyone races one machine, drawn at random each race.";
 }

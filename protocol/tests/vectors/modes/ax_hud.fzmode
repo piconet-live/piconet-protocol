@@ -1,6 +1,6 @@
 // hud_layout ax and hud_move: the race HUD in F-Zero AX's layout, with the spare-machine icon's number and the
 // distance moved out of the way. Presentation only.
-mode "AX HUD" { api 1; }
+mode "AX HUD" { api 0.6.1; }
 hud_layout ax;
 rule "Places" {
   event race_start;

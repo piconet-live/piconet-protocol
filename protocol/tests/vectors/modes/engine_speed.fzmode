@@ -2,7 +2,7 @@
 // 1e30 (held to 1e17 / 216), a seat the game would not hold left as it is; every seat's max speed stat to 10000 (the
 // file's max_speed_open; without it the stat is held to 4); the boost value read into a seat word.
 mode "Engine speed" {
-  api 1;
+  api 0.6.1;
 }
 
 max_speed_open;

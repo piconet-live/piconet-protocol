@@ -1,4 +1,4 @@
-FZMP format 1 api 1, 455 bytes, hash a0ca86081a442108e1c85161780fb696e6780d2a85b8f401c7b1e0c1bbc0ac58
+FZMP format 1 api 2, 459 bytes, hash 0fdfb3dd10ef1c14de56b6f6c22ef71544e391861e71dfc3bc8001b17024d9af
 HEAD name "Distance label" badge "" about ""
 PARM 0
 SETP 1
@@ -16,4 +16,4 @@ CODE 18 bytes
   000d  SeatRead distance
   000f  Action show_distance
   0011  End
-SRC  312 bytes
+SRC  316 bytes

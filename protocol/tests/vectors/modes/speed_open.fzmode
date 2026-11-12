@@ -1,7 +1,7 @@
 // seat.speed past the 9000 of before 0.6.1: seat 0 held at 12000, seat 1 at 1e30 (the core holds it to 1e17), seat 2
 // at -5 (0); a rolling start at 12000. Both need the file's setup word seat_speed_open.
 mode "Speed open" {
-  api 1;
+  api 0.6.1;
 }
 
 seat_speed_open;

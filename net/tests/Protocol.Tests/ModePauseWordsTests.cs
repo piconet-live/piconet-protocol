@@ -7,7 +7,7 @@ namespace Protocol.Tests;
 /// step row's seat.pad.*. The compiler's own words: pauses (a mode that writes pause), say_texts (the texts, UTF-8).</summary>
 public sealed class ModePauseWordsTests
 {
-    private const string Head = "mode \"T\" { api 1; }\n";
+    private const string Head = "mode \"T\" { api 0.6.1; }\n";
 
     private static string Rule(string body) => $"rule \"R\" {{ event race_start; do {{ {body} }} }}\n";
 

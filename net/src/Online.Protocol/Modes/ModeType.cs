@@ -22,4 +22,4 @@ public enum ModeType
 /// file leaves it out (null: it must be written). A Bool argument is an on or off: <c>on</c>, <c>off</c> or a switch
 /// parameter. On: a number that also takes those: <c>off</c> is 0, <c>on</c> this value (from a switch parameter, 1 in
 /// the package, which the readers take for it).</summary>
-public sealed record ModeArgument(string Name, ModeType Type, double Least, double Most, double? Default, int? On = null);
+public sealed record ModeArgument(string Name, ModeType Type, double Least, double Most, double? Default, int? On = null, int? Always = null);

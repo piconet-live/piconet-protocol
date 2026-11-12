@@ -1,4 +1,4 @@
-FZMP format 1 api 1, 527 bytes, hash 385952b089d8450f1ddf7208ed83a487b7db11abc9abe2a887e7b72d3d950048
+FZMP format 1 api 2, 531 bytes, hash 2ccdafa843ae4d33afc7112b498149dcf37b7792dfdcb78e173343bcbdc71e44
 HEAD name "Live places" badge "" about ""
 PARM 0
 SETP 1
@@ -25,4 +25,4 @@ CODE 49 bytes
   0029  Push 2
   002e  Action seat.place
   0030  End
-SRC  362 bytes
+SRC  366 bytes

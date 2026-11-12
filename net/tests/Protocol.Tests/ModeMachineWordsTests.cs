@@ -8,7 +8,7 @@ namespace Protocol.Tests;
 /// <see cref="ModeMachines.Of"/> decides it, and the rule lines a vote shows.</summary>
 public sealed class ModeMachineWordsTests
 {
-    private const string Header = "mode \"T\" { api 1; }\n";
+    private const string Header = "mode \"T\" { api 0.6.1; }\n";
 
     private static ModeCompilation Compile(string body) => ModeCompiler.Compile(Header + body);
 

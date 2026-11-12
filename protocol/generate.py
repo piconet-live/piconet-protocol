@@ -285,6 +285,17 @@ def pages(root=ROOT, stats_path=stats.SCHEMA):
 def main(args, folder=here, path=SCHEMA, root=ROOT):
     """`folder` takes the generated files, `root` holds the pages (PAGES): a page is written only when its table
     changed."""
+    if args == ["--freeze"]:
+        # (a release step: the fingerprint an open rule set takes as `frozen` in modes.toml when its version ships)
+        try:
+            table = modes.load()
+        except modes.SchemaError as e:
+            print(f"generate.py: {e}", file=sys.stderr)
+            return 1
+        for rule_set in table["levels"]["rule_sets"]:
+            print(f"rule set {rule_set['number']} ({rule_set['version']}): {modes.fingerprint(table, rule_set['number'])}"
+                  + ("" if rule_set["frozen"] else "  (open)"))
+        return 0
     if args not in ([], ["--check"]):
         print(__doc__, file=sys.stderr)
         return 2

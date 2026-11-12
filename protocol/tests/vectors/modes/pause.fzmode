@@ -2,7 +2,7 @@
 // later a timed stand that ends by itself, and a choice read from the stick while it stands.
 
 mode "Pause" {
-  api 1;
+  api 0.6.1;
 }
 
 global int picked;

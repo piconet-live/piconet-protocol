@@ -5,7 +5,7 @@
 // races a pausing mode with one player (CPUs allowed).
 
 mode "Lap Vote" {
-  api 1;
+  api 0.6.1;
   about "Between laps, pick more top speed or more boost.";
 }
 

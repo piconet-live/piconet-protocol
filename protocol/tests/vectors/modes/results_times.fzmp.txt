@@ -1,4 +1,4 @@
-FZMP format 1 api 1, 445 bytes, hash a91e88fcbc6081fab3f0606b099b70c899cf45d5d64e9e455b358f8c20913f7b
+FZMP format 1 api 2, 449 bytes, hash 0512a11e9c15089320d1b190ebd4a151d235f21bb0ecb5bf808ecc282ecbb37a
 HEAD name "Results times" badge "" about ""
 PARM 0
 SETP 2
@@ -13,4 +13,4 @@ CODE 10 bytes
   0002  Push 1
   0007  Action award
   0009  End
-SRC  272 bytes
+SRC  276 bytes

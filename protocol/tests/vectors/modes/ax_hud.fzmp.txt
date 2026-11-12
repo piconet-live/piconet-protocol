@@ -1,4 +1,4 @@
-FZMP format 1 api 1, 577 bytes, hash 4fee31a63eb994a806aa6d77e2fbd66d13ece34553eb14e3bdbc27f26ce815e7
+FZMP format 1 api 2, 581 bytes, hash dce36959560ae971b148756c0f5a35047d247e55df1314d0f1130ed7a9038de5
 HEAD name "AX HUD" badge "" about ""
 PARM 0
 SETP 1
@@ -36,4 +36,4 @@ CODE 83 bytes
   004b  StoreLocal 0
   004d  Jump 0007
   0052  End
-SRC  382 bytes
+SRC  386 bytes

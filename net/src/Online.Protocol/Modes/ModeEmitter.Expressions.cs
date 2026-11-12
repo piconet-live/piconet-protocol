@@ -182,7 +182,7 @@ internal sealed partial class ModeEmitter
         {
             throw new ModeCompileException(field.Line, $"'.{field.Field}' is called .{now} now: write seat.{now}");
         }
-        throw new ModeCompileException(field.Line, $"a seat has no '{field.Field}' (neither a read of api {ModeWords.Api} nor a seat variable)");
+        throw new ModeCompileException(field.Line, $"a seat has no '{field.Field}' (neither a read of api {ModeWords.ApiVersion} nor a seat variable)");
     }
 
     private ModeType StatRead(ModeExpr seat, string name, ModeField field)
@@ -476,7 +476,7 @@ internal sealed partial class ModeEmitter
         {
             throw new ModeCompileException(call.Line, ModeOperators.Functions.ContainsKey(call.Function) || call.Function is "min" or "max"
                 ? $"{call.Function} takes {(call.Function is "min" or "max" ? "two numbers or more" : "one number")}"
-                : $"'{call.Function}' is not a function of api {ModeWords.Api}");
+                : $"'{call.Function}' is not a function of api {ModeWords.ApiVersion}");
         }
         var argument = Emit(call.Arguments[0]);
         var result = ModeTypes.FunctionResult(call, argument, f);

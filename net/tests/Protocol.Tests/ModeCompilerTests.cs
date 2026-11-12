@@ -64,6 +64,7 @@ public sealed class ModeCompilerTests
     [InlineData("live_places")]
     [InlineData("distance_label")]
     [InlineData("results_times")]
+    [InlineData("cpu_fill")]
     public void AVectorCompilesToItsPackage(string name)
     {
         var result = CompileVector(name);
@@ -340,8 +341,8 @@ public sealed class ModeCompilerTests
     {
         var package = CompileVector("overdrive").Package!;
         var newer = (byte[])package.Clone();
-        newer[7] = 2;
-        Assert.Contains("api 2", Assert.Throws<InvalidDataException>(() => ModePackage.Read(newer)).Message, StringComparison.Ordinal);
+        newer[7] = (byte)(ModeWords.Api + 1);
+        Assert.Contains($"rule set {ModeWords.Api + 1}, newer than this build's", Assert.Throws<InvalidDataException>(() => ModePackage.Read(newer)).Message, StringComparison.Ordinal);
         Assert.Throws<InvalidDataException>(() => ModePackage.Read(package[..^1]));
         Assert.Throws<InvalidDataException>(() => ModePackage.Read([.. package, 0]));
         Assert.Throws<InvalidDataException>(() => ModePackage.Read([.. "FZMQ"u8, .. package[4..]]));
@@ -350,12 +351,11 @@ public sealed class ModeCompilerTests
     private const string Head = "mode \"Test\" { api 1; }\n";
 
     [Theory]
-    [InlineData(Head + "laps 3;\nflying_start 1000 km/h;\n", "line 3: 'flying_start' is not a word of api 1")]
+    [InlineData(Head + "laps 3;\nflying_start 1000 km/h;\n", "line 3: 'flying_start' is not a word of api 0.6.1")]
     [InlineData(Head + "global int n;\nrule \"R\" {\n  event every step;\n  do { n = 1.5; }\n}\n",
         "line 5: the int n takes an int, not a real: floor, ceil, round or trunc make an int of a real")]
     [InlineData(Head + "rule \"R\" {\n  event out(s);\n  while race.started;\n  do { retire s; }\n}\n",
         "line 4: while is for the events that go on (every step, each seat): out happens once, so its rule takes when")]
-    [InlineData("mode \"Test\" {\n  api 2;\n}\n", "line 2: api 2 is not one this build knows: its newest is api 1")]
     [InlineData(Head + "param rise \"Rise\" number 5..50 step 5 default 60;\n", "line 2: rise's default 60 is outside 5..50")]
     [InlineData(Head + "param rise \"Rise\" number 50..5;\n", "line 2: rise's range 50..5 is empty: the least comes first")]
     [InlineData(Head + "laps 100;\n", "line 2: laps is 0..99")]
@@ -409,7 +409,7 @@ public sealed class ModeCompilerTests
         var result = ModeCompiler.Compile(source);
         var error = Assert.Single(result.Errors);
         Assert.StartsWith("line 3: the mode takes ", error, StringComparison.Ordinal);
-        Assert.Contains("past api 1's 65536", error, StringComparison.Ordinal);
+        Assert.Contains("past api 0.6.1's 65536", error, StringComparison.Ordinal);
     }
 
     [Fact]

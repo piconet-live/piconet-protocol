@@ -721,8 +721,14 @@ public enum ModeAction : byte
 /// <summary>The vocabulary of one api, by the names a mode file writes (protocol/modes.toml).</summary>
 public static partial class ModeWords
 {
-    /// <summary>The api this build compiles.</summary>
-    public const int Api = 1;
+    /// <summary>The newest rule set this build compiles and runs: what a package carries as its api.</summary>
+    public const int Api = 2;
+    /// <summary>The newest game version this build knows: a mode file names one (<c>api 0.6.1;</c>).</summary>
+    public const string ApiVersion = "0.6.1";
+    /// <summary>The rule sets, oldest first: its number and the game version it arrived in. A version between two
+    /// has the earlier one's.</summary>
+    public static readonly IReadOnlyList<(int Number, string Version)> RuleSets =
+        [(1, "0.6.0"), (2, "0.6.1")];
     /// <summary>The api's limit <c>budget</c>.</summary>
     public const int Budget = 65536;
     /// <summary>The api's limit <c>queue</c>.</summary>
@@ -874,11 +880,11 @@ public static partial class ModeWords
         ("game_start", ModeEvent.GameStart, false, false, null),
     ];
 
-    /// <summary>The setup words: name, id, arguments (name, type, least, most, default, what on is); Lobby: the coordinator's alone, not in the package; Form: how the file writes it (range, text, list; empty: its arguments).</summary>
+    /// <summary>The setup words: name, id, arguments (name, type, least, most, default, what on is, what always is); Lobby: the coordinator's alone, not in the package; Form: how the file writes it (range, text, list; empty: its arguments).</summary>
     public static readonly IReadOnlyList<(string Name, ModeSetup Id, IReadOnlyList<ModeArgument> Args, bool Lobby, string Form)> Setups =
     [
         ("laps", ModeSetup.Laps, [new ModeArgument("", ModeType.Int, 0, 99, null)], false, ""),
-        ("cpus", ModeSetup.Cpus, [new ModeArgument("", ModeType.Bool, 0, 1, null)], false, ""),
+        ("cpus", ModeSetup.Cpus, [new ModeArgument("", ModeType.Bool, 0, 2, null, Always: 2)], false, ""),
         ("pedals locked", ModeSetup.PedalsLocked, [new ModeArgument("accel", ModeType.Real, 0.0f, 1.0f, 1.0f), new ModeArgument("brake", ModeType.Real, 0.0f, 1.0f, 0.0f)], false, ""),
         ("boost", ModeSetup.Boost, [new ModeArgument("", ModeType.Bool, 0, 1, null)], false, ""),
         ("laps by course", ModeSetup.LapsByCourse, [new ModeArgument("else", ModeType.Int, 0, 99, 3)], false, ""),
@@ -1203,5 +1209,80 @@ public static partial class ModeWords
         new Dictionary<ModeAction, string>
         {
             [ModeAction.MapHide] = "from",
+        };
+
+    /// <summary>The operations that arrived after rule set 1, and the rule set each arrived in.</summary>
+    public static readonly IReadOnlyDictionary<ModeOp, int> OpsSince =
+        new Dictionary<ModeOp, int>
+        {
+        };
+
+    /// <summary>The events that arrived after rule set 1, and the rule set each arrived in.</summary>
+    public static readonly IReadOnlyDictionary<ModeEvent, int> EventsSince =
+        new Dictionary<ModeEvent, int>
+        {
+        };
+
+    /// <summary>The setup words that arrived after rule set 1, and the rule set each arrived in.</summary>
+    public static readonly IReadOnlyDictionary<ModeSetup, int> SetupsSince =
+        new Dictionary<ModeSetup, int>
+        {
+            [ModeSetup.Machine] = 2,
+            [ModeSetup.MachineRandom] = 2,
+            [ModeSetup.MachineRandomEach] = 2,
+            [ModeSetup.MachineBySeat] = 2,
+            [ModeSetup.MachineByTeam] = 2,
+            [ModeSetup.MachineByPlace] = 2,
+            [ModeSetup.SeatSpeedOpen] = 2,
+            [ModeSetup.MaxSpeedOpen] = 2,
+            [ModeSetup.LivePlaces] = 2,
+            [ModeSetup.DistanceLabel] = 2,
+            [ModeSetup.ResultsTimes] = 2,
+            [ModeSetup.HudLayoutAx] = 2,
+            [ModeSetup.SayTexts] = 2,
+            [ModeSetup.Pauses] = 2,
+        };
+
+    /// <summary>The reads of a seat that arrived after rule set 1, and the rule set each arrived in.</summary>
+    public static readonly IReadOnlyDictionary<ModeSeatRead, int> SeatReadsSince =
+        new Dictionary<ModeSeatRead, int>
+        {
+            [ModeSeatRead.BaseSpeed] = 2,
+            [ModeSeatRead.BoostValue] = 2,
+            [ModeSeatRead.PadSteer] = 2,
+            [ModeSeatRead.PadAccel] = 2,
+            [ModeSeatRead.PadBrake] = 2,
+            [ModeSeatRead.PadBoost] = 2,
+        };
+
+    /// <summary>The reads of the race that arrived after rule set 1, and the rule set each arrived in.</summary>
+    public static readonly IReadOnlyDictionary<ModeRaceRead, int> RaceReadsSince =
+        new Dictionary<ModeRaceRead, int>
+        {
+            [ModeRaceRead.Paused] = 2,
+            [ModeRaceRead.PausedSteps] = 2,
+        };
+
+    /// <summary>The actions that arrived after rule set 1, and the rule set each arrived in.</summary>
+    public static readonly IReadOnlyDictionary<ModeAction, int> ActionsSince =
+        new Dictionary<ModeAction, int>
+        {
+            [ModeAction.SeatBaseSpeed] = 2,
+            [ModeAction.HudMove] = 2,
+            [ModeAction.MapChar] = 2,
+            [ModeAction.MapCharOff] = 2,
+            [ModeAction.Pause] = 2,
+            [ModeAction.Resume] = 2,
+            [ModeAction.ResumeAfter] = 2,
+            [ModeAction.Say] = 2,
+            [ModeAction.SayOff] = 2,
+        };
+
+    /// <summary>The values a setup word's argument took after the word itself arrived: (word, argument, value) to
+    /// the rule set.</summary>
+    public static readonly IReadOnlyDictionary<(ModeSetup Word, int Argument, int Value), int> SetupValuesSince =
+        new Dictionary<(ModeSetup Word, int Argument, int Value), int>
+        {
+            [(ModeSetup.Cpus, 0, 2)] = 2,
         };
 }

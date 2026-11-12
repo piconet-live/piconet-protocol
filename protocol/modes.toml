@@ -4,8 +4,21 @@
 # the runner's interpreter, port/core/src/mode.cpp) from this file (README.md). The package's layout and the
 # interpreter's rules are formats.md section 9; the language is the design's language.md.
 #
-# [api]: the vocabulary's number and its limits (language 11.1), the same on both sides. A build refuses a package
-# whose api is newer than its own; a new build adds words and never changes an existing one's meaning.
+# [api]: the newest rule set's number and the limits (language 11.1), the same on both sides. A build refuses a package
+# whose rule set is newer than its own.
+#
+# [levels]: the rule sets. One rule set per release that touches the vocabulary; a mode file names the game version it
+# was written for (`api 0.6.1;`) and compiles to the newest rule set of that version or before, whose number the
+# package carries (`api 1;` stays valid and is 0.6.0's: the files and replays of 0.6.0 carry it). A version with no
+# rule change shares the rule set before it; `newest` is the newest game version this table knows, and a file naming
+# a later one is refused (update to use it). A shipped rule set is frozen entirely: no word or value is added inside
+# it, and none changes. `frozen` is its fingerprint (modes.py: every word and value of that rule set and before, and
+# the limits; not the docs), which generate.py refuses to see change; the last rule set, without one, is the one being
+# built, open until its release, which gives it its fingerprint (generate.py --freeze prints it).
+# Every word carries the rule set it arrived in: `since` (none: 1, 0.6.0's); a setup argument's `always`, a value
+# that came after its word, `always_since`; an argument's top raised after its word, `most_was` (the top before) and
+# `most_since`. The compiler refuses a word or value newer than the file's level and names
+# the version it needs; both sides read the generated tables (ModeWords' ...Since, mode_words.g.h's ...Since).
 #
 # An operation ([[op]]): `name` (PascalCase, the C# enum's and the C++ constant's name), `code` its byte, `operands`
 # the bytes after it, in order (u8, u16, u32, i32: big-endian), `doc` what it does. The stack holds 32-bit cells: an
@@ -38,8 +51,24 @@ namespace = "Online.Protocol"
 [codec.cxx]
 namespace = "fzgx::modes"
 
-[api]
+[levels]
+newest = "0.6.1"
+
+[[levels.rule_set]]
 number = 1
+version = "0.6.0"
+frozen = "a74511ec7b891f87576f0ae9e0bc1844fd9b8555b2d41a9beb2ddc807073d75f"
+
+[[levels.rule_set]]
+number = 2
+version = "0.6.1"        # open: CPUs without a vote (`cpus always`), a mode's machines, speeds past 9000, live_places, the AX HUD, pause and say
+
+[levels.limit]           # a limit of [api] that came after rule set 1, and the rule set it arrived in
+say_text = 2
+say_texts = 2
+
+[api]
+number = 2
 budget = 65536         # operations a step at worst: the compiler's static count, and the interpreter's backstop (a nested loop over 30 x 30 seats fits)
 queue = 256            # queued actions a step (a full queue is a fault): eight a seat for thirty seats
 globals = 256          # global words
@@ -588,8 +617,10 @@ where = "the coordinator, at match forming: the match start's laps (0, `unlimite
 [[setup]]
 name = "cpus"
 id = 1
-args = [{ type = "switch" }]
-where = "the coordinator: on, players may vote CPUs into the mode's race (it never forces them); off or left out, they may not"
+args = [{ type = "switch", always = 2, always_since = 2 }]
+where = """the coordinator: on (1), players may vote CPUs into the mode's race (it does not force them); always (2), CPUs take the \
+empty seats of every race, with no vote; off (0) or left out, no CPUs. Also a switch parameter (off, on) or a choice parameter of \
+three (off, on, always, in that order). The game reads always as on: a player gone is driven by the AI"""
 [[setup]]
 name = "pedals locked"
 id = 2
@@ -659,7 +690,7 @@ clause). A time (5min) or steps, at most 65,535 (18 min 12 s)"""
 [[setup]]
 name = "rolling_start"
 id = 13
-args = [{ type = "real", least = 0.0, most = 1.0e17, default = 1000.0 }]
+args = [{ type = "real", least = 0.0, most = 1.0e17, most_was = 9000.0, most_since = 2, default = 1000.0 }]
 where = """the first step after the gate: every seat's speed written as fn_1_23500 computes it (momentum along the nose, \
 M+0x224, flag 0x400, M+0x481 90, no start charge M+0xDC) and the frozen flag 0x8000 cleared; through the countdown the \
 CPU steers every seat (the stand-in's AI path) with the accelerator held at 0.6, no brake, no boost and no attacks; \
@@ -1351,6 +1382,7 @@ doc = "the seat's own boost energy: its stat pack's BoostEnergyUse (the game's 1
 [[seat_read]]
 name = "base_speed"
 id = 94
+since = 2
 type = "real"
 doc = """M+0x224, the base speed: the speed the machine's engine runs at, in the game's units (a metre a step; the speed \
 shown is km/h = 216 x the forward metres a step). The machine step (fn_1_26F34) moves it each step: the thrust adds \
@@ -1362,6 +1394,7 @@ the game's rolling start writes km/h / 200. Walls, contact and a breakdown (0) w
 [[seat_read]]
 name = "boost_value"
 id = 95
+since = 2
 type = "real"
 doc = """M+0x228, the game's boost value: a boost adds strength x max(0.2, 1 - value / (9 x strength)) to it (a dash plate \
 twice that), and out of a boost it falls by (2 + value / 2) / 60 a step (3 + ... spinning); the thrust reaches for \
@@ -1374,24 +1407,28 @@ max speed and 2 x this (fn_1_26F34)"""
 [[seat_read]]
 name = "pad.steer"
 id = 96
+since = 2
 type = "real"
 doc = "the step's row's stick, -1 full left to 1 full right (byte 1 / 100); 0 for an AI-drives row. Read while the race stands too, where seat.input.steer stays as the last step left it"
 
 [[seat_read]]
 name = "pad.accel"
 id = 97
+since = 2
 type = "real"
 doc = "the step's row's accelerator (A), 0 to 1 (byte 4 / 100); 0 for an AI-drives row. Read while the race stands too"
 
 [[seat_read]]
 name = "pad.brake"
 id = 98
+since = 2
 type = "real"
 doc = "the step's row's brake, 0 to 1 (byte 5 / 100); 0 for an AI-drives row. Read while the race stands too"
 
 [[seat_read]]
 name = "pad.boost"
 id = 99
+since = 2
 type = "bool"
 doc = "the step's row's boost button (bit 0x40 of byte 0); false for an AI-drives row. Read while the race stands too"
 
@@ -1483,12 +1520,14 @@ doc = "the seats a person drives that have finished, counted from machine flag 0
 [[race_read]]
 name = "paused"
 id = 14
+since = 2
 type = "bool"
 doc = "the race stands: a `pause` holds it and no `resume` has let it go (a resume's countdown still counts as paused)"
 
 [[race_read]]
 name = "paused_steps"
 id = 15
+since = 2
 type = "int"
 doc = "the steps the race has stood in this pause, 0 while it runs: a timed choice reads it (`when race.paused_steps >= 7s`)"
 
@@ -2217,6 +2256,7 @@ doc = "the machines start spread evenly round the whole lap behind the line, in 
 [[setup]]
 name = "machine"
 id = 58
+since = 2
 lobby = true
 form = "text"
 where = "the coordinator: every seat, the CPUs' too, races this machine (stock)"
@@ -2224,18 +2264,21 @@ where = "the coordinator: every seat, the CPUs' too, races this machine (stock)"
 [[setup]]
 name = "machine random"
 id = 59
+since = 2
 lobby = true
 where = "the coordinator: one machine drawn for the race, from the machines `machines` allows, and every seat, the CPUs' too, races it"
 
 [[setup]]
 name = "machine random each"
 id = 60
+since = 2
 lobby = true
 where = "the coordinator: every seat, the CPUs' too, its own draw from the machines `machines` allows"
 
 [[setup]]
 name = "machine by seat"
 id = 61
+since = 2
 lobby = true
 form = "list"
 where = "the coordinator: the list's first entry is seat 0's machine (the seat as the match start numbers it), the next seat 1's, and so on; at most 30"
@@ -2243,6 +2286,7 @@ where = "the coordinator: the list's first entry is seat 0's machine (the seat a
 [[setup]]
 name = "machine by team"
 id = 62
+since = 2
 lobby = true
 form = "list"
 where = "the coordinator: the list's first entry is Team 1's machine, the next Team 2's, and so on; needs `teams`, and at most its most entries"
@@ -2250,6 +2294,7 @@ where = "the coordinator: the list's first entry is Team 1's machine, the next T
 [[setup]]
 name = "machine by place"
 id = 63
+since = 2
 lobby = true
 form = "list"
 where = "the coordinator: by the lobby's last race, its winner the list's first entry, second place the next, and so on; a racer it did not rank (its first race, a racer who joined since, a CPU) is own; at most 30"
@@ -2260,6 +2305,7 @@ where = "the coordinator: by the lobby's last race, its winner the list's first 
 [[setup]]
 name = "seat_speed_open"
 id = 64
+since = 2
 where = """the core holds a written seat.speed to 0 to 100,000,000,000,000,000 km/h (1e17) in place of 0 to 9000, and takes a \
 rolling_start to 1e17. The top is the largest at which the held momentum (v / 216 x the weight, at most the packs' \
 25,000) and its square, which the next step's drag sums (fn_1_294D0), stay finite binary32. The file writes it: the \
@@ -2318,6 +2364,7 @@ doc = "the energy a boost takes each step, before the usage factor M+0x4DC: a bo
 [[action]]
 name = "seat.base_speed"
 id = 80
+since = 2
 args = ["seat", "real"]
 where = """the mode point: M+0x224, held to 0 .. 1e17 / 216 (the base speed a held seat.speed of 1e17 km/h writes at site L); \
 the next step's machine step (fn_1_26F34) runs from it, as Twilight's survival mod's write after the machine step \
@@ -2330,6 +2377,7 @@ to move on from; the speed shown follows it through the game's own drive, grip a
 [[setup]]
 name = "max_speed_open"
 id = 65
+since = 2
 where = """the core holds seat.stat.max_speed to 0 to 10,000 in place of the stat pack's 0 to 4 (protocol/stats.toml \
 MaxSpeed). At 10,000 the thrust's loss, base / (36 + 40 x max speed + 2 x boost value), is about nothing, so the base \
 speed stays where seat.base_speed puts it (Twilight's survival mod writes 10,000 into the car data). The file writes \
@@ -2341,6 +2389,7 @@ doc = "seat.stat.max_speed goes past the stat pack's 4 (to 10,000). A 0.6.0 game
 [[setup]]
 name = "live_places"
 id = 66
+since = 2
 where = """the mode point, after the queue and before the end clause, every run in which a seat has a place: the order \
 the end clause would write (the placed seats at their rows, every other seat by the ranking pass's order of this step, \
 fn_1_8B9B8) into R+0xE, R+0x2C, P+0x115, CM+0x23C, CM+0x21C. The ranking pass rewrites them each step before the mode \
@@ -2354,6 +2403,7 @@ doc = "the places the mode gives show during the race: the place at the top of t
 [[setup]]
 name = "distance_label"
 id = 67
+since = 2
 args = [{ type = "switch" }]
 where = """off: the window's flag NO_DISTANCE_LABEL (mode_hud.h), for which the DISTANCE drawer's label is not queued \
 (fn_1_CDC8C 0xCE948, `bl fn_1_4F734`, the picture 0xBA13: REST, the game's word for the metres to the finish; the \
@@ -2365,6 +2415,7 @@ doc = "off: the DISTANCE part shows its number and m without the game's REST lab
 [[setup]]
 name = "results_times"
 id = 68
+since = 2
 args = [{ type = "switch" }]
 where = """off: the window's flag NO_RESULTS_TIMES (mode_hud.h), for which VS RESULTS, the results' page of race times \
 (page 3 of the results, fn_1_14B62C), turns to the points page in the update after its opening and is never drawn (the \
@@ -2376,6 +2427,7 @@ doc = "off: the results show no page of race times and open on the points page, 
 [[setup]]
 name = "hud_layout ax"
 id = 69
+since = 2
 where = """the window's flag HUD_AX (runner mode_hud.h), read by the image's sites (sites_hudmove.py): the one-viewport HUD \
 (fn_1_C72D4) draws its rank with the AX layout's drawer fn_1_CA690 at (24, 412) under the left Wide Screen anchor, as \
 fn_1_C771C does (the layout fn_1_C7224 picks under the menu's arcade bit, .bss 0x8B3A0 +0x94 0x40000000, which is never \
@@ -2387,6 +2439,7 @@ doc = "the race HUD in F-Zero AX's layout: the position (N/30) at the bottom lef
 [[setup]]
 name = "say_texts"
 id = 70
+since = 2
 form = "text"
 where = """the texts of the file's `say` words, which the compiler writes and a file never writes itself (in the package one word a text, in order, \
 its UTF-8 bytes a value each): the core shows the one `say` names over the picture (port/core/src/mode_say.cpp, the runner's overlay: the launcher's Saira, Segoe UI and \
@@ -2396,6 +2449,7 @@ doc = "the texts `say` shows, the first being text 1"
 [[setup]]
 name = "pauses"
 id = 71
+since = 2
 where = """the compiler's own, when a rule writes `pause`: the mode stands the race. In 0.6.1 such a mode is raced by one player alone (CPUs \
 allowed): the core refuses a match start that gives it two player seats or more (files_match.cpp). The pause itself needs no seat count: every \
 game stands at the same step"""
@@ -2404,6 +2458,7 @@ doc = "the mode pauses the race, which a file never writes itself"
 [[action]]
 name = "hud_move"
 id = 81
+since = 2
 args = ["seat", "part", "real", "real"]
 where = """the block's HUD moves record for the seat (page 7's head, runner mode_hud.h MOVES: whole units, each held to \
 -640 .. 640); the HUD pass hands the viewed racer's to the classic HUD's moves (port/core/src/hud_move.cpp), which \
@@ -2414,6 +2469,7 @@ doc = "`hud_move s, PART, dx, dy`: the seat's player sees the part moved dx righ
 [[action]]
 name = "map_char"
 id = 82
+since = 2
 args = ["seat", "int"]
 where = """the block's map characters (runner mode_hud.h MAP_CHARS, a code point a seat); read by our own course map \
 (minimap_frame.cpp ModeDots, drawn by moderngekko minimap_draw.cpp with the overlay's display font). The file writes \
@@ -2425,6 +2481,7 @@ doc = "the seat's dot on every course map carries this character (any one Unicod
 [[action]]
 name = "map_char off"
 id = 83
+since = 2
 args = ["seat"]
 where = "the block's map characters"
 doc = "the seat's dot shows no character again"
@@ -2439,6 +2496,7 @@ doc = "the seat's dot shows no character again"
 [[action]]
 name = "pause"
 id = 84
+since = 2
 where = "the block's pause word (mode.h PAUSED), from this run on: the next step's simulation is not run (frame_replay.py `manager`); nothing else is written"
 doc = """the race stands from the next step on: machines, CPUs, the race clock and timers stop, the picture stays, the mode keeps running each step. \
 A word that acts in the game's step (seat.speed, boost, push, damage, explode) does nothing while it stands; a write of a seat's field (seat.energy) is \
@@ -2447,12 +2505,14 @@ seen at once. Nothing when already paused"""
 [[action]]
 name = "resume"
 id = 85
+since = 2
 where = "the block's pause word"
 doc = "the race runs on from the next step. Nothing when it runs"
 
 [[action]]
 name = "resume after"
 id = 86
+since = 2
 args = ["int"]
 where = "the block's pause word and its resume run; the countdown's figure is the runner's (fzgx/panel.h Counting, as a practice's)"
 doc = """`resume after 1s;`: the race stands t steps more, a 3, 2, 1 over the picture, then runs on; 0, at once. Nothing when it runs"""
@@ -2460,6 +2520,7 @@ doc = """`resume after 1s;`: the race stands t steps more, a 3, 2, 1 over the pi
 [[action]]
 name = "say"
 id = 87
+since = 2
 args = ["int"]
 where = """the block's say word (mode.h SAY); drawn by the runner (port/core/src/mode_say.cpp, port/moderngekko/src/mode_say.cpp). The file writes \
 `say "TEXT";`: the compiler pushes the text's number in say_texts, from 1. Any Unicode text the overlay's fonts draw, api.say_text UTF-8 bytes at \
@@ -2470,5 +2531,6 @@ for every player, until another say or `say off`. Drawing only"""
 [[action]]
 name = "say off"
 id = 88
+since = 2
 where = "the block's say word"
 doc = "the panel goes (eased out)"

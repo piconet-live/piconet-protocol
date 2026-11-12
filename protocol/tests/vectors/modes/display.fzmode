@@ -2,7 +2,7 @@
 // interpreter tests (protocol/README.md), not a mode to race. Presentation only: none of these changes the race.
 
 mode "Displays" {
-  api 1;
+  api 0.6.1;
   about "Every display word of api 1.";
 }
 

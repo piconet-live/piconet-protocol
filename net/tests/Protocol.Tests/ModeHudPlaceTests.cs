@@ -8,7 +8,7 @@ namespace Protocol.Tests;
 /// <c>map_char</c>.</summary>
 public sealed class ModeHudPlaceTests
 {
-    private const string Header = "mode \"T\" { api 1; }\n";
+    private const string Header = "mode \"T\" { api 0.6.1; }\n";
 
     private static ModeCompilation Compile(string body) => ModeCompiler.Compile(Header + body);
 

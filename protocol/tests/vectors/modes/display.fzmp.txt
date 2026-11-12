@@ -1,4 +1,4 @@
-FZMP format 1 api 1, 2429 bytes, hash 90887bd92ab2183799a80333d9e6bd77b49996eb6bfa4172fe94b50092abd1a9
+FZMP format 1 api 2, 2433 bytes, hash 88a43fce5ce37b8a780fe5ab8be9f541f344407ecd7c98a696f41067ebe93544
 HEAD name "Displays" badge "" about "Every display word of api 1."
 PARM 0
 SETP 1
@@ -164,4 +164,4 @@ CODE 361 bytes
   0164  LoadLocal 0
   0166  Action map_char off
   0168  End
-SRC  1675 bytes
+SRC  1679 bytes

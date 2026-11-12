@@ -457,7 +457,7 @@ public sealed class ModePackage
         }
         if (api > ModeWords.Api)
         {
-            throw new InvalidDataException($"the package is of api {api}, newer than this build's {ModeWords.Api}");
+            throw new InvalidDataException($"the package is of rule set {api}, newer than this build's {ModeWords.Api} (api {ModeWords.ApiVersion}): update to use it");
         }
         var sections = Sections.Select(tag => r.Section(tag)).ToArray();
         var board = r.Left > 0 ? ReadBoard(r.Section("BORD")) : [];
@@ -484,6 +484,11 @@ public sealed class ModePackage
             Source = sections[6].Utf8(sections[6].Left),
         };
         ModeCode.Check(result);
+        // (a frozen rule set holds nothing that arrived after it: such a package is no compiler's)
+        if (ModeLevels.Newer(result) is ({ } what, var since))
+        {
+            throw new InvalidDataException($"the package is of rule set {api} and holds {what}, which is of rule set {since} (api {ModeLevels.Version(since)})");
+        }
         return result;
     }
 
@@ -505,11 +510,11 @@ public sealed class ModePackage
             }
             if (words.Count > ModeWords.BoardWords || type == (int)ModeType.Real && words.Count > 0 || words.Any(w => Encoding.UTF8.GetByteCount(w) > ModeWords.BoardWord))
             {
-                throw new InvalidDataException($"the board's line \"{label}\" names words not of api {ModeWords.Api}");
+                throw new InvalidDataException($"the board's line \"{label}\" names words not of api {ModeWords.ApiVersion}");
             }
             if (scope > (int)ModeScope.Team || type >= (int)ModeType.Vec || Encoding.UTF8.GetByteCount(label) is 0 or > ModeWords.BoardLabel)
             {
-                throw new InvalidDataException($"the board's line \"{label}\" is not one of api {ModeWords.Api}");
+                throw new InvalidDataException($"the board's line \"{label}\" is not one of api {ModeWords.ApiVersion}");
             }
             list.Add(new ModeBoardLine((ModeScope)scope, (ModeType)type, word, label) { Words = words });
         }
@@ -559,7 +564,7 @@ public sealed class ModePackage
             var word = ModeWords.Setups.FirstOrDefault(w => (int)w.Id == id);
             if (word.Name is null)
             {
-                throw new InvalidDataException($"setup word {id} is not of api {ModeWords.Api}");
+                throw new InvalidDataException($"setup word {id} is not of api {ModeWords.ApiVersion}");
             }
             var arguments = Enumerable.Range(0, s.U8()).Select(_ => new ModeSetupValue(s.U8() switch
             {
@@ -668,7 +673,7 @@ public sealed class ModePackage
                 || (rule.When != ModeRule.None && rule.When >= code) || (rule.While != ModeRule.None && rule.While >= code)
                 || rule.Body >= code)
             {
-                throw new InvalidDataException($"the rule \"{label}\" is not a rule of api {ModeWords.Api}");
+                throw new InvalidDataException($"the rule \"{label}\" is not a rule of api {ModeWords.ApiVersion}");
             }
             list.Add(rule);
         }
