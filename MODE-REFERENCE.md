@@ -202,7 +202,7 @@ game counts it, 100 a full machine.
 | `results_heading "OVERDRIVE";` | Heads the times list of a mode with no points page. Refused beside `award`, `results_title` or `points_table`. Left out: RESULTS | as `results_title` |
 | `live_places;` | The places the mode gives show during the race: the place at the top of the screen and the faces at the side follow `seat.place`, from the step it is written. Seats with no place follow in race order. Left out: `seat.place` counts only when the race ends. A 0.6.0 game cannot race a mode with it | |
 | `hud clean;` | Nothing over the race but the HUD's own parts: no CHECK sign and no name tags, a player's or a `tag`. For footage | |
-| `distance_label off;` | DISTANCE shows its number and m without the game's REST label, for metres that are not the metres left. A 0.6.0 game cannot race a mode with it | on or off |
+| `distance_label off;` | DISTANCE shows its number and m without the game's REST label, for metres that are not the metres left; the number then has six digits (to 999999) in place of five. A 0.6.0 game cannot race a mode with it | on or off |
 
 A race ends by laps and `finish_limit`, at `clock_limit`, at `end_race`, or when the last player is finished or out
 (unless `race_waits everyone`). The results are the times list, then the points page when the mode awards points or
@@ -478,7 +478,7 @@ text where it likes. They never change the race.
 | `show_number s off;` | Hides the number | |
 | `stock_banner s, BANNER;` | The seat's player sees one of the game's banners once, as the game raises it | a banner |
 | `show_clock n;` | The timed race's clock reads n steps, shown as seconds rounded up, red below 10. It ends nothing and must be written every step it should follow; players see it with `show s, TIMER`. Not with `clock_limit` | steps |
-| `show_distance s, metres;` | The DISTANCE part reads these metres instead of the metres to the finish; under 1000 drawn large in the middle | 0 to 99,999 |
+| `show_distance s, metres;` | The DISTANCE part reads these metres instead of the metres to the finish; under 1000 drawn large in the middle | 0 to 99,999; 0 to 999,999 under `distance_label off;` |
 | `show_distance s off;` | DISTANCE reads the metres to the finish again | |
 | `show_objects s, n, of;` | The OBJECTS part reads n/of | 0 to 99 each |
 | `show_objects s off;` | OBJECTS reads the course's own count again | |
