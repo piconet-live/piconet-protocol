@@ -950,7 +950,7 @@ internal sealed class ModeParser
             {
                 Accept(",");
             }
-            arguments.Add(name is "tag" or "map_char" or "say" && Current.Kind == ModeTokenKind.Text
+            arguments.Add(name is "tag" or "map_char" or "say" or "show_score" && Current.Kind == ModeTokenKind.Text
                 ? new ModeTagText(Current.Line, Take().Text)
                 : Expression());
         }

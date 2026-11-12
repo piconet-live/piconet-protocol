@@ -75,6 +75,29 @@ public sealed class ModeHudPlaceTests
     }
 
     [Fact]
+    public void ShowScoreTakesANumberAndAnOptionalLabel()
+    {
+        // SCORE (0.6.1): show_score's number and label, the label a tag text (0: the default); show and hide leave it to show_score
+        var code = Code(Rule("show_score seat, seat.points;"));
+        var at = code.IndexOf("Action show_score");
+        Assert.Equal("Push 0", Word(code[at - 1]));
+        code = Code(Rule("show_score seat, 7, \"KOS\";") + Rule("tag seat, \"KOS\";"));
+        Assert.Equal(["Push 7", "Push 1"], code[(code.IndexOf("Action show_score") - 2)..code.IndexOf("Action show_score")].Select(Word));
+        Assert.Equal("Push 1", Word(code[code.IndexOf("Action tag") - 1]));  // the same text, one entry of tag_texts
+        Assert.Contains("Action show_score off", Code(Rule("show_score seat off;")));
+        code = Code(Rule("hud_move seat, SCORE, 552, 86, 0;"));
+        Assert.Equal("Push 24", Word(code[code.IndexOf("Action hud_move") - 7]));
+        Assert.Contains("hud_move places it", Assert.Single(Compile(Rule("show seat, SCORE;")).Errors));
+        Assert.Single(Compile(Rule("hide seat, SCORE;")).Errors);
+        foreach (var bad in new[] { "show_score seat, 7, kos;", "show_score seat, 7, \"k,s\";", "show_score seat, 7, \"TOO LONG A LABEL\";", "show_score seat;", "show_score seat, 1, \"A\", 2;" })
+        {
+            Assert.Single(Compile(Rule(bad)).Errors);
+        }
+        var old = ModeCompiler.Compile("mode \"T\" { api 0.6.0; }\n" + Rule("show_score seat, 1;"));
+        Assert.Contains(old.Errors, e => e.Contains("needs api 0.6.1", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public void MapCharPushesTheCharacterOrTheShape()
     {
         var code = Code(Rule("map_char seat, \"K\";"));

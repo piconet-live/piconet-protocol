@@ -1,8 +1,8 @@
-FZMP format 1 api 2, 2428 bytes, hash 77695c7725a9a1606c790d994890bf863145a7179f85960fc6526b94a98656df
+FZMP format 1 api 2, 2621 bytes, hash 7d96257906059290405dc6751646b2b08da4501569114b36e764dab582c4ccbd
 HEAD name "Displays" badge "" about "Every display word of api 1."
 PARM 0
 SETP 1
-  tag_texts "OUT"
+  tag_texts "OUT" "KOS"
 VARS globals 0, seat words 1
   seat 0 = 3
 RULE 8
@@ -13,8 +13,8 @@ RULE 8
   4 "The owner's words of 2026-10-31" event finish, locals 1, when none, while none, body 00b7
   5 "The story parts' values" event lap, locals 1, when none, while none, body 00e9
   6 "A part moved" event lap, locals 1, when none, while none, body 011e
-  7 "Map characters" event lap, locals 1, when none, while none, body 0142
-CODE 354 bytes
+  7 "Map characters" event lap, locals 1, when none, while none, body 017d
+CODE 413 bytes
   ; rule 0 when
   0000  RaceRead started
   0002  Ret
@@ -147,18 +147,37 @@ CODE 354 bytes
   0138  LoadLocal 0
   013a  Push 11
   013f  Action hud_move off
-  0141  End
-  ; rule 7 body
-  0142  LoadLocal 0
-  0144  Push 75
-  0149  Action map_char
-  014b  LoadLocal 0
-  014d  Push 9819
-  0152  Action map_char
-  0154  LoadLocal 0
-  0156  Push 1114112 (0x00110000, real 1.561203E-39)
-  015b  Action map_char
+  0141  LoadLocal 0
+  0143  Push 1234567 (0x0012d687, real 1.729997E-39)
+  0148  Push 0
+  014d  Action show_score
+  014f  LoadLocal 0
+  0151  Push -5
+  0156  Push 2
+  015b  Action show_score
   015d  LoadLocal 0
-  015f  Action map_char off
-  0161  End
-SRC  1681 bytes
+  015f  Push 24
+  0164  Push 320
+  0169  IToF
+  016a  Push 100
+  016f  IToF
+  0170  Push 0
+  0175  IToF
+  0176  Action hud_move
+  0178  LoadLocal 0
+  017a  Action show_score off
+  017c  End
+  ; rule 7 body
+  017d  LoadLocal 0
+  017f  Push 75
+  0184  Action map_char
+  0186  LoadLocal 0
+  0188  Push 9819
+  018d  Action map_char
+  018f  LoadLocal 0
+  0191  Push 1114112 (0x00110000, real 1.561203E-39)
+  0196  Action map_char
+  0198  LoadLocal 0
+  019a  Action map_char off
+  019c  End
+SRC  1795 bytes

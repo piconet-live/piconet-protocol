@@ -720,6 +720,10 @@ public enum ModeAction : byte
     SayOff = 88,
     /// <summary><c>hud_move off</c></summary>
     HudMoveOff = 89,
+    /// <summary><c>show_score</c></summary>
+    ShowScore = 90,
+    /// <summary><c>show_score off</c></summary>
+    ShowScoreOff = 91,
 }
 
 /// <summary>The vocabulary of one api, by the names a mode file writes (protocol/modes.toml).</summary>
@@ -1168,6 +1172,8 @@ public static partial class ModeWords
         ("say", ModeAction.Say, [ModeType.Int]),
         ("say off", ModeAction.SayOff, []),
         ("hud_move off", ModeAction.HudMoveOff, [ModeType.Seat, ModeType.Int]),
+        ("show_score", ModeAction.ShowScore, [ModeType.Seat, ModeType.Int, ModeType.Int]),
+        ("show_score off", ModeAction.ShowScoreOff, [ModeType.Seat]),
     ];
 
     /// <summary>The actions that need a running step, which game_start refuses.</summary>
@@ -1193,7 +1199,7 @@ public static partial class ModeWords
     public static readonly IReadOnlyDictionary<string, IReadOnlyList<string>> Choices =
         new Dictionary<string, IReadOnlyList<string>>
         {
-            ["part"] = ["TIMER", "DISTANCE", "DIGIT", "WARNING", "SUCCESS", "FAILED", "TIME_OVER", "SPEED_GAUGE", "OBJECTS", "LEADER_GAP", "GHOST_GAP", "RANK", "LAPS", "SPEED", "ENERGY", "LAP_TIMES", "RACE_TIME", "FACES", "SPARE", "SKULLS", "WRONG_WAY", "BANNERS", "FINISH", "CHECK"],
+            ["part"] = ["TIMER", "DISTANCE", "DIGIT", "WARNING", "SUCCESS", "FAILED", "TIME_OVER", "SPEED_GAUGE", "OBJECTS", "LEADER_GAP", "GHOST_GAP", "RANK", "LAPS", "SPEED", "ENERGY", "LAP_TIMES", "RACE_TIME", "FACES", "SPARE", "SKULLS", "WRONG_WAY", "BANNERS", "FINISH", "CHECK", "SCORE"],
             ["banner"] = ["FINAL_LAP", "BOOST_POWER", "TIME_BONUS", "GAP", "WRONG_WAY", "TICK"],
             ["look"] = ["normal", "ghost", "invisible"],
         };
@@ -1285,6 +1291,8 @@ public static partial class ModeWords
             [ModeAction.Say] = 2,
             [ModeAction.SayOff] = 2,
             [ModeAction.HudMoveOff] = 2,
+            [ModeAction.ShowScore] = 2,
+            [ModeAction.ShowScoreOff] = 2,
         };
 
     /// <summary>The values a setup word's argument took after the word itself arrived: (word, argument, value) to
@@ -1305,5 +1313,6 @@ public static partial class ModeWords
             [("part", 21)] = 2,
             [("part", 22)] = 2,
             [("part", 23)] = 2,
+            [("part", 24)] = 2,
         };
 }

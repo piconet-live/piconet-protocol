@@ -338,6 +338,11 @@ internal sealed partial class ModeEmitter
     private void Act(ModeActionStatement statement)
     {
         var action = ModeWords.Actions.First(a => a.Name == statement.Action);
+        // show_score's label is optional: `show_score s, n;` is `show_score s, n` with no text (0: the default label)
+        if (action.Id == ModeAction.ShowScore && statement.Arguments.Count == action.Args.Count - 1)
+        {
+            statement = statement with { Arguments = [.. statement.Arguments, new ModeLiteral(statement.Line, ModeType.Int, 0, "")] };
+        }
         if (statement.Arguments.Count != action.Args.Count)
         {
             throw new ModeCompileException(statement.Line, $"{action.Name} takes {action.Args.Count} argument{(action.Args.Count == 1 ? "" : "s")}, not {statement.Arguments.Count}");
@@ -357,9 +362,9 @@ internal sealed partial class ModeEmitter
                 Choice(statement.Arguments[i], choice, action.Name);
                 continue;
             }
-            if (action.Id == ModeAction.Tag && i == 1)
+            if (action.Id == ModeAction.Tag && i == 1 || action.Id == ModeAction.ShowScore && i == 2)
             {
-                Push(TagText(statement.Arguments[i]));
+                Push(statement.Arguments[i] is ModeLiteral { Text: "" } ? 0 : TagText(statement.Arguments[i], action.Name));
                 continue;
             }
             if (action.Id == ModeAction.MapChar && i == 1)
@@ -378,17 +383,18 @@ internal sealed partial class ModeEmitter
         Used.TryAdd(action.Id, statement.Line);
     }
 
-    /// <summary>The number <c>tag</c> names its text by, from 1: its place among the mode's texts, which a text joins the
-    /// first time it is used. Always a constant: the package holds every text a race can draw.</summary>
-    private int TagText(ModeExpr expr)
+    /// <summary>The number <c>tag</c> (or <c>show_score</c>, whose label is a text of the same table) names its text by, from 1: its
+    /// place among the mode's texts, which a text joins the first time it is used. Always a constant: the package holds every text a
+    /// race can draw.</summary>
+    private int TagText(ModeExpr expr, string word)
     {
         if (expr is not ModeTagText text)
         {
-            throw new ModeCompileException(expr.Line, "tag takes its text in quotes: tag s, \"BOMB\";");
+            throw new ModeCompileException(expr.Line, word == "tag" ? "tag takes its text in quotes: tag s, \"BOMB\";" : "show_score takes its label in quotes: show_score s, n, \"KOS\";");
         }
         if (ModeTagTexts.Refusal(text.Text) is { } refused)
         {
-            throw new ModeCompileException(text.Line, refused);
+            throw new ModeCompileException(text.Line, word == "tag" ? refused : refused.Replace("tag", "show_score", StringComparison.Ordinal));
         }
         var known = TagTexts.IndexOf(text.Text);
         if (known >= 0)
@@ -397,7 +403,7 @@ internal sealed partial class ModeEmitter
         }
         if (TagTexts.Count == ModeWords.TagTexts)
         {
-            throw new ModeCompileException(text.Line, $"tag: a mode uses at most {ModeWords.TagTexts} different texts: \"{text.Text}\" is one more");
+            throw new ModeCompileException(text.Line, $"{word}: a mode uses at most {ModeWords.TagTexts} different texts (tag's and show_score's together): \"{text.Text}\" is one more");
         }
         TagTexts.Add(text.Text);
         return TagTexts.Count;

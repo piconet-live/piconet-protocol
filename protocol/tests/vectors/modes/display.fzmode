@@ -77,6 +77,10 @@ rule "A part moved" {
   do {
     hud_move s, RANK, 24.5, 412, 90;
     hud_move s, RANK off;
+    show_score s, 1234567;
+    show_score s, -5, "KOS";
+    hud_move s, SCORE, 320, 100, 0;
+    show_score s off;
   }
 }
 
