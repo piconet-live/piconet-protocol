@@ -26,7 +26,7 @@
 [board]
 name = "status board"
 magic = "FZSB"          # the file's first four bytes
-version = 5             # a new layout is a new version: a game and a launcher of different versions refuse each other
+version = 6             # a new layout is a new version: a game and a launcher of different versions refuse each other
 endian = "little"
 block_align = 64
 
@@ -113,7 +113,20 @@ values = [
 name = "RacerFlags"
 type = "u8"
 doc = "A racer record's Flags."
-values = [{ name = "HasBestLap", value = 1, doc = "BestLapMs holds a lap (none before the first lap is done)" }]
+values = [
+    { name = "HasBestLap", value = 1, doc = "BestLapMs holds a lap (none before the first lap is done)" },
+    { name = "HasScore", value = 2, doc = "Score holds the mode's number for this racer, of the snapshot's ScoreKind (none: the mode shows this racer no score)" },
+]
+
+[[enum]]
+name = "ScoreKind"
+type = "u32"
+doc = "What the racers' Score is: what the race's mode shows on the HUD where the race time was (show_score) or as the distance (show_distance). The launcher's standings show it in place of the race time where the mode scores by it."
+values = [
+    { name = "None", value = 0, doc = "no score: the mode shows none, or there is no mode (the standings show times and laps)" },
+    { name = "Points", value = 1, doc = "points: show_score's number, under the snapshot's ScoreLabel (POINTS unless the mode names a label)" },
+    { name = "Metres", value = 2, doc = "metres: show_distance's number (a mode scored by distance)" },
+]
 
 [[record]]
 name = "Racer"
@@ -123,12 +136,13 @@ position in the course's units."""
 fields = [
     { name = "Seat", type = "u8" },
     { name = "State", type = "u8", enum = "RacerState" },
-    { name = "Rank", type = "u8", doc = "the game's ranking byte (progress +0x115), not the race position" },
+    { name = "Rank", type = "u8", doc = "the game's ranking byte (progress +0x115); the race position only through Place" },
     { name = "Flags", type = "u8", flags = "RacerFlags" },
     { name = "Lap", type = "u16", doc = "laps completed" },
     { name = "Kos", type = "u16", doc = "machines this racer knocked out" },
     { name = "MaxEnergy", type = "u16" },
-    { name = "Pad", type = "u16" },
+    { name = "Place", type = "u8", doc = "the place the race's mode gives the racer, 1 first (its live_places order during the race, its results order once it ended the race: what the game's HUD shows); 0: the mode gives none, or there is no mode (the standings order by finish times and distances)" },
+    { name = "Pad", type = "u8" },
     { name = "LapMs", type = "u32", doc = "the current lap's time" },
     { name = "TotalMs", type = "u32", doc = "the race time so far; the finish time once finished" },
     { name = "BestLapMs", type = "u32", doc = "the best lap, when Flags has HasBestLap" },
@@ -138,7 +152,8 @@ fields = [
     { name = "X", type = "f32" },
     { name = "Y", type = "f32" },
     { name = "Z", type = "f32" },
-    { name = "Distance", type = "f32", doc = "distance covered over all laps (progress +0xF8): what orders the racers still racing" },
+    { name = "Distance", type = "f32", doc = "distance covered over all laps (progress +0xF8): what orders the racers still racing when the mode gives no places" },
+    { name = "Score", type = "f32", doc = "the mode's number for this racer when Flags has HasScore: points or metres by the snapshot's ScoreKind" },
 ]
 
 [[enum]]
@@ -260,6 +275,9 @@ fields = [
     { name = "Frame", type = "u32", doc = "the race's step" },
     { name = "LocalSeat", type = "u32" },
     { name = "Count", type = "u32", doc = "racers that follow (at most 30)" },
+    { name = "ScoreKind", type = "u32", enum = "ScoreKind", doc = "what the racers' Score is (None: the standings show times)" },
+    { name = "ScoreLabelLength", type = "u32" },
+    { name = "ScoreLabel", type = "bytes", size = 16, doc = "the label the HUD gives the score (POINTS, or the mode's own), UTF-8, ScoreLabelLength bytes; empty with ScoreKind None or Metres" },
     { name = "Racers", type = "Racer", count = 30 },
 ]
 

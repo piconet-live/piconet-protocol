@@ -38,16 +38,16 @@ class Schema(unittest.TestCase):
 
     def test_the_layout(self):
         b, enums, flags, records, blocks = board.load()
-        self.assertEqual((b["magic_word"], b["version"], b["size"]), (0x42535A46, 5, 14976))
+        self.assertEqual((b["magic_word"], b["version"], b["size"]), (0x42535A46, 6, 15104))
         self.assertEqual([(x.name, x.offset, x.size) for x in blocks],
-                         [("Header", 0, 32), ("Pulse", 64, 16), ("Status", 128, 24), ("Snapshot", 192, 1580),
-                          ("ModeHead", 1792, 8824), ("ModeValues", 10624, 1968), ("Events", 12608, 2056),
-                          ("Mailbox", 14720, 144), ("LocalPad", 14912, 40)])
-        self.assertEqual((records["Racer"].size, records["Event"].size), (52, 32))
+                         [("Header", 0, 32), ("Pulse", 64, 16), ("Status", 128, 24), ("Snapshot", 192, 1724),
+                          ("ModeHead", 1920, 8824), ("ModeValues", 10752, 1968), ("Events", 12736, 2056),
+                          ("Mailbox", 14848, 144), ("LocalPad", 15040, 40)])
+        self.assertEqual((records["Racer"].size, records["Event"].size), (56, 32))
         self.assertTrue(all(x.offset % 64 == 0 for x in blocks))
 
     def test_broken_rules_are_named(self):
-        self.assertIn("not aligned", self.error('{ name = "Pad", type = "u16" },\n    { name = "LapMs"',
+        self.assertIn("not aligned", self.error('{ name = "Pad", type = "u8" },\n    { name = "LapMs"',
                                                 '{ name = "LapMs"'))
         self.assertIn("endian is little", self.error('endian = "little"', 'endian = "big"'))
         self.assertIn("moved a word", self.error('{ name = "Version", type = "u32", doc = "the launcher\'s layout version" },',

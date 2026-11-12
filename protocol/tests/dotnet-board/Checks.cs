@@ -9,7 +9,11 @@ internal static class Values
 {
     public static BoardSnapshot SnapshotOf(uint k)
     {
-        var s = new BoardSnapshot { Serial = k, Frame = k * 3, LocalSeat = k % 30, Count = 30 };
+        var s = new BoardSnapshot { Serial = k, Frame = k * 3, LocalSeat = k % 30, Count = 30, ScoreKind = (BoardScoreKind)(k % 3), ScoreLabelLength = k % 17 };
+        for (var i = 0; i < 16; i++)
+        {
+            s.ScoreLabel[i] = (byte)(k + i);
+        }
         for (var i = 0u; i < 30; i++)
         {
             s.Racers[i] = new BoardRacer
@@ -17,7 +21,7 @@ internal static class Values
                 Seat = (byte)i, State = (BoardRacerState)(k % 3), Rank = (byte)(k + i), Flags = BoardRacerFlags.HasBestLap,
                 Lap = (ushort)k, Kos = (ushort)(k + 1), MaxEnergy = (ushort)(k + 2), LapMs = k + i, TotalMs = k * 2 + i,
                 BestLapMs = k * 5, Speed = k + 0.5f, Energy = k * 2f, TopSpeed = k * 3f, X = k - 1f, Y = i, Z = -(float)k,
-                Distance = k * 10f,
+                Distance = k * 10f, Place = (byte)((k + i) % 31), Score = k * 4f + i,
             };
         }
         return s;
@@ -25,7 +29,8 @@ internal static class Values
 
     public static bool Same(BoardSnapshot a, BoardSnapshot b)
     {
-        if (a.Serial != b.Serial || a.Frame != b.Frame || a.LocalSeat != b.LocalSeat || a.Count != b.Count)
+        if (a.Serial != b.Serial || a.Frame != b.Frame || a.LocalSeat != b.LocalSeat || a.Count != b.Count ||
+            a.ScoreKind != b.ScoreKind || a.ScoreLabelLength != b.ScoreLabelLength || !a.ScoreLabel.AsSpan().SequenceEqual(b.ScoreLabel))
         {
             return false;
         }
@@ -36,7 +41,7 @@ internal static class Values
             if (x.Seat != y.Seat || x.State != y.State || x.Rank != y.Rank || x.Flags != y.Flags || x.Lap != y.Lap ||
                 x.Kos != y.Kos || x.MaxEnergy != y.MaxEnergy || x.LapMs != y.LapMs || x.TotalMs != y.TotalMs ||
                 x.BestLapMs != y.BestLapMs || x.Speed != y.Speed || x.Energy != y.Energy || x.TopSpeed != y.TopSpeed ||
-                x.X != y.X || x.Y != y.Y || x.Z != y.Z || x.Distance != y.Distance)
+                x.X != y.X || x.Y != y.Y || x.Z != y.Z || x.Distance != y.Distance || x.Place != y.Place || x.Score != y.Score)
             {
                 return false;
             }
