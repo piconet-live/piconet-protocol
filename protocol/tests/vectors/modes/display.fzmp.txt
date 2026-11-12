@@ -1,18 +1,20 @@
-FZMP format 1 api 1, 2038 bytes, hash 1f4e0f2310726eb26ec7f731265f6798b2ea503d6000c093b1a8526e87046281
+FZMP format 1 api 1, 2429 bytes, hash 90887bd92ab2183799a80333d9e6bd77b49996eb6bfa4172fe94b50092abd1a9
 HEAD name "Displays" badge "" about "Every display word of api 1."
 PARM 0
 SETP 1
   tag_texts "OUT"
 VARS globals 0, seat words 1
   seat 0 = 3
-RULE 6
+RULE 8
   0 "Parts" event every step, locals 1, when 0000, while none, body 0003
   1 "The number" event each seat, locals 1, when none, while none, body 003f
   2 "Looks" event each seat, locals 1, when 004f, while none, body 0060
   3 "Out of sight" event out, locals 1, when none, while none, body 007c
   4 "The owner's words of 2026-10-31" event finish, locals 1, when none, while none, body 00b7
   5 "The story parts' values" event lap, locals 1, when none, while none, body 00e9
-CODE 286 bytes
+  6 "A part moved" event lap, locals 1, when none, while none, body 011e
+  7 "Map characters" event lap, locals 1, when none, while none, body 0149
+CODE 361 bytes
   ; rule 0 when
   0000  RaceRead started
   0002  Ret
@@ -133,4 +135,33 @@ CODE 286 bytes
   0119  LoadLocal 0
   011b  Action show_objects off
   011d  End
-SRC  1421 bytes
+  ; rule 6 body
+  011e  LoadLocal 0
+  0120  Push 11
+  0125  Push -296
+  012a  IToF
+  012b  Push 350
+  0130  IToF
+  0131  Action hud_move
+  0133  LoadLocal 0
+  0135  Push 11
+  013a  Push 0
+  013f  IToF
+  0140  Push 0
+  0145  IToF
+  0146  Action hud_move
+  0148  End
+  ; rule 7 body
+  0149  LoadLocal 0
+  014b  Push 75
+  0150  Action map_char
+  0152  LoadLocal 0
+  0154  Push 9819
+  0159  Action map_char
+  015b  LoadLocal 0
+  015d  Push 1114112 (0x00110000, real 1.561203E-39)
+  0162  Action map_char
+  0164  LoadLocal 0
+  0166  Action map_char off
+  0168  End
+SRC  1675 bytes

@@ -54,6 +54,7 @@ public sealed class ModeCompilerTests
     [InlineData("gap_same")]
     [InlineData("gap_spread")]
     [InlineData("clean")]
+    [InlineData("ax_hud")]
     [InlineData("death_race")]
     [InlineData("same_machine")]
     [InlineData("speed_open")]
@@ -165,7 +166,7 @@ public sealed class ModeCompilerTests
         Assert.All(ModeWords.Actions, a => Assert.Contains(code.Concat(Code("display")), l => l.EndsWith("Action " + a.Name, StringComparison.Ordinal)));
         // every setup word but laps by course (the competitive vector's); the practice vector's are a solo mode's
         var solo = CompileVector("practice").Mode!.Setups.Where(s => s.Id is not (ModeSetup.Laps or ModeSetup.ResultsHeading));
-        var setups = mode.Setups.Concat(CompileVector("gap_reads").Mode!.Setups).Concat(cuts.Setups).Concat(race.Setups).Concat(solo).Concat(CompileVector("combat").Mode!.Setups.Where(s => s.Id != ModeSetup.ClockLimit)).Concat(CompileVector("gap_same").Mode!.Setups).Concat(CompileVector("gap_spread").Mode!.Setups).Concat(CompileVector("clean").Mode!.Setups).Concat(CompileVector("stats_page").Mode!.Setups).Concat(CompileVector("energy_words").Mode!.Setups).Concat(CompileVector("engine_speed").Mode!.Setups.Concat(CompileVector("speed_open").Mode!.Setups).Concat(CompileVector("live_places").Mode!.Setups).Concat(CompileVector("distance_label").Mode!.Setups).Where(s => s.Id is ModeSetup.SeatSpeedOpen or ModeSetup.MaxSpeedOpen or ModeSetup.LivePlaces or ModeSetup.DistanceLabel)).Concat(CompileVector("results_times").Mode!.Setups.Where(s => s.Id == ModeSetup.ResultsTimes)).Select(s => s.Id).ToList();
+        var setups = mode.Setups.Concat(CompileVector("gap_reads").Mode!.Setups).Concat(cuts.Setups).Concat(race.Setups).Concat(solo).Concat(CompileVector("combat").Mode!.Setups.Where(s => s.Id != ModeSetup.ClockLimit)).Concat(CompileVector("gap_same").Mode!.Setups).Concat(CompileVector("gap_spread").Mode!.Setups).Concat(CompileVector("clean").Mode!.Setups).Concat(CompileVector("ax_hud").Mode!.Setups).Concat(CompileVector("stats_page").Mode!.Setups).Concat(CompileVector("energy_words").Mode!.Setups).Concat(CompileVector("engine_speed").Mode!.Setups.Concat(CompileVector("speed_open").Mode!.Setups).Concat(CompileVector("live_places").Mode!.Setups).Concat(CompileVector("distance_label").Mode!.Setups).Where(s => s.Id is ModeSetup.SeatSpeedOpen or ModeSetup.MaxSpeedOpen or ModeSetup.LivePlaces or ModeSetup.DistanceLabel)).Concat(CompileVector("results_times").Mode!.Setups.Where(s => s.Id == ModeSetup.ResultsTimes)).Select(s => s.Id).ToList();
         Assert.Equal(ModeWords.Setups.Where(s => !s.Lobby).Select(s => s.Id).Where(id => id is not ModeSetup.LapsByCourse).Order(),
             setups.Order());
         Assert.Equal(ModeWords.Events.Select(e => e.Id).Order(), mode.Rules.Concat(race.Rules).Select(r => r.Event).Distinct().Order());

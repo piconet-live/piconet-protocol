@@ -358,6 +358,11 @@ internal sealed partial class ModeEmitter
                 Push(TagText(statement.Arguments[i]));
                 continue;
             }
+            if (action.Id == ModeAction.MapChar && i == 1)
+            {
+                Push(MapChar(statement.Arguments[i]));
+                continue;
+            }
             Value(statement.Arguments[i], action.Args[i], action.Name);
         }
         Op(ModeOp.Action, (long)action.Id);
@@ -387,6 +392,28 @@ internal sealed partial class ModeEmitter
         }
         TagTexts.Add(text.Text);
         return TagTexts.Count;
+    }
+
+    /// <summary>The shapes <c>map_char</c> draws by name, with no font: their codes from <see cref="MapShapes"/>, past
+    /// Unicode's last code point. A new one takes the next code; a code never changes.</summary>
+    internal static readonly string[] MapSymbols = ["CROWN"];
+
+    internal const int MapShapes = 0x110000;
+
+    /// <summary>What <c>map_char</c> draws: one Unicode character in quotes (one code point, not a control or a space),
+    /// its code point; or a shape's name (MapSymbols), MapShapes + its place. Always a constant.</summary>
+    private int MapChar(ModeExpr expr)
+    {
+        if (expr is ModeName name && FindLocal(name.Name) is null && Array.IndexOf(MapSymbols, name.Name) is var shape and >= 0)
+        {
+            return MapShapes + shape;
+        }
+        var runes = expr is ModeTagText text ? text.Text.EnumerateRunes().ToList() : [];
+        if (runes is not [var c] || System.Text.Rune.IsControl(c) || System.Text.Rune.IsWhiteSpace(c))
+        {
+            throw new ModeCompileException(expr.Line, $"map_char takes one character in quotes, as map_char s, \"K\"; or map_char s, \"\u265B\";, or a shape: {string.Join(", ", MapSymbols)}");
+        }
+        return c.Value;
     }
 
     /// <summary>An argument of a choice (protocol/modes.toml's <c>[[choice]]</c>): one of its names, pushed as its
