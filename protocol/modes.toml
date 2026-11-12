@@ -2295,3 +2295,16 @@ it: the compiler refuses a constant above 4 into seat.stat.max_speed without it,
 package of before (a 0.6.0 game refuses a package with it). Without it a value the race gives is held to 4 as before; \
 stat packs keep 0 to 4"""
 doc = "seat.stat.max_speed goes past the stat pack's 4 (to 10,000). A 0.6.0 game cannot race a mode with it"
+
+[[setup]]
+name = "live_places"
+id = 66
+where = """the mode point, after the queue and before the end clause, every run in which a seat has a place: the order \
+the end clause would write (the placed seats at their rows, every other seat by the ranking pass's order of this step, \
+fn_1_8B9B8) into R+0xE, R+0x2C, P+0x115, CM+0x23C, CM+0x21C. The ranking pass rewrites them each step before the mode \
+point, so the write lasts one step: the HUD's place (fn_1_CA2A4), the faces (fn_1_D2404), the CPU drivers, the gap \
+popups and a finish's booking read the mode's order; seat.standing and overtake read the pass's own (read at the run's \
+start). Racers level in distance keep the order of the step before (the pass's tie rule), so the mode's. The file \
+writes it: without it seat.place is kept for the end clause only, the package of before (a 0.6.0 game refuses a \
+package with it)"""
+doc = "the places the mode gives show during the race: the place at the top of the screen and the faces follow seat.place. A 0.6.0 game cannot race a mode with it"

@@ -200,6 +200,7 @@ game counts it, 100 a full machine.
 | `results points;` | The times page passes by itself, and the results are the points page. Needs `award` or `points_table` | |
 | `results_title "KNOCKOUT";` | The points page's title in place of VS TOTAL RANKING. A mode with a title ends on the points page, every row 0 without `award` | A to Z and the space, 1 to 23 characters, no space at either end |
 | `results_heading "OVERDRIVE";` | Heads the times list of a mode with no points page. Refused beside `award`, `results_title` or `points_table`. Left out: RESULTS | as `results_title` |
+| `live_places;` | The places the mode gives show during the race: the place at the top of the screen and the faces at the side follow `seat.place`, from the step it is written. Seats with no place follow in race order. Left out: `seat.place` counts only when the race ends. A 0.6.0 game cannot race a mode with it | |
 | `hud clean;` | Nothing over the race but the HUD's own parts: no CHECK sign and no name tags, a player's or a `tag`. For footage | |
 
 A race ends by laps and `finish_limit`, at `clock_limit`, at `end_race`, or when the last player is finished or out
@@ -268,7 +269,7 @@ Written on a seat: `seat.speed`, `s.energy`, `first(seats).lap`. The value as it
 
 | Read | What it gives | Type |
 |---|---|---|
-| `seat.standing` | Its place in the race order now, 1 first | int |
+| `seat.standing` | Its place in the race order now, 1 first: the game's own order, also when the mode shows other places with `live_places;` | int |
 | `seat.lap` | Laps completed | int |
 | `seat.distance` | Metres along the course over all laps | real |
 | `seat.lap_distance` | Metres into this lap | real |
@@ -458,7 +459,7 @@ An action is a statement, its seat first; the commas between its values are opti
 
 | Written | What it does | Range |
 |---|---|---|
-| `seat.place = n;` | The seat's place in the results when the race ends, 1 first (0: none). When the mode ends the race, the seats it placed keep their places, every other racing seat follows in race order, and a placed seat that went out shows the time it went out | 1 first; 0 none |
+| `seat.place = n;` | The seat's place in the results when the race ends, 1 first (0: none). When the mode ends the race, the seats it placed keep their places, every other racing seat follows in race order, and a placed seat that went out shows the time it went out. With `live_places;` the place shows during the race too | 1 first; 0 none |
 | `award s, n;` | Adds n points to the seat. The results show a negative total as 0 | any whole number |
 
 ## Display words

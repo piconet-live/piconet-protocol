@@ -273,7 +273,8 @@ enum Setup : std::uint8_t
   SETUP_MACHINEBYPLACE = 63,  // machine by place
   SETUP_SEATSPEEDOPEN = 64,  // seat_speed_open
   SETUP_MAXSPEEDOPEN = 65,  // max_speed_open
-  SETUP_COUNT = 66,
+  SETUP_LIVEPLACES = 66,  // live_places
+  SETUP_COUNT = 67,
 };
 
 // a read of a seat (OP_SEATREAD)
