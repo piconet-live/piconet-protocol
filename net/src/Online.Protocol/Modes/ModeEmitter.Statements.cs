@@ -338,10 +338,15 @@ internal sealed partial class ModeEmitter
     private void Act(ModeActionStatement statement)
     {
         var action = ModeWords.Actions.First(a => a.Name == statement.Action);
-        // show_score's label is optional: `show_score s, n;` is `show_score s, n` with no text (0: the default label)
-        if (action.Id == ModeAction.ShowScore && statement.Arguments.Count == action.Args.Count - 1)
+        // show_score's label and font are optional, as show_text's font is: `show_score s, n;` is `show_score s, n, "", BLOCK` (0: the
+        // default label; 0: the first font), `show_text s, "T";` is `show_text s, "T", BLOCK`. A trailing argument left out is a blank
+        // literal, which the loop below pushes as 0
+        if (action.Id is ModeAction.ShowScore or ModeAction.ShowText)
         {
-            statement = statement with { Arguments = [.. statement.Arguments, new ModeLiteral(statement.Line, ModeType.Int, 0, "")] };
+            while (statement.Arguments.Count >= 2 && statement.Arguments.Count < action.Args.Count)
+            {
+                statement = statement with { Arguments = [.. statement.Arguments, new ModeLiteral(statement.Line, ModeType.Int, 0, "")] };
+            }
         }
         if (statement.Arguments.Count != action.Args.Count)
         {
@@ -353,6 +358,11 @@ internal sealed partial class ModeEmitter
             {
                 warnings.Add(ModeCompiler.Message(statement.Line, $"{action.Name} on none does nothing"));
             }
+            if (action.Id is ModeAction.ShowScore or ModeAction.ShowText && statement.Arguments[i] is ModeLiteral { Text: "", Type: ModeType.Int } && i >= 2)
+            {
+                Push(0);  // (the font left out: the first, BLOCK)
+                continue;
+            }
             if (ModeWords.ActionChoices.TryGetValue((action.Id, i), out var choice))
             {
                 if (action.Id is ModeAction.Show or ModeAction.Hide && statement.Arguments[i] is ModeName { Name: var part } && PlacedOnly.TryGetValue(part, out var why))
@@ -362,7 +372,7 @@ internal sealed partial class ModeEmitter
                 Choice(statement.Arguments[i], choice, action.Name);
                 continue;
             }
-            if (action.Id == ModeAction.Tag && i == 1 || action.Id == ModeAction.ShowScore && i == 2)
+            if (action.Id == ModeAction.Tag && i == 1 || action.Id == ModeAction.ShowScore && i == 2 || action.Id == ModeAction.ShowText && i == 1)
             {
                 Push(statement.Arguments[i] is ModeLiteral { Text: "" } ? 0 : TagText(statement.Arguments[i], action.Name));
                 continue;
@@ -383,18 +393,23 @@ internal sealed partial class ModeEmitter
         Used.TryAdd(action.Id, statement.Line);
     }
 
-    /// <summary>The number <c>tag</c> (or <c>show_score</c>, whose label is a text of the same table) names its text by, from 1: its
+    /// <summary>The number <c>tag</c> (or <c>show_score</c>, whose label, and <c>show_text</c>, whose text, are of the same table) names its text by, from 1: its
     /// place among the mode's texts, which a text joins the first time it is used. Always a constant: the package holds every text a
     /// race can draw.</summary>
     private int TagText(ModeExpr expr, string word)
     {
         if (expr is not ModeTagText text)
         {
-            throw new ModeCompileException(expr.Line, word == "tag" ? "tag takes its text in quotes: tag s, \"BOMB\";" : "show_score takes its label in quotes: show_score s, n, \"KOS\";");
+            throw new ModeCompileException(expr.Line, word switch
+            {
+                "tag" => "tag takes its text in quotes: tag s, \"BOMB\";",
+                "show_text" => "show_text takes its text in quotes: show_text s, \"GO\";",
+                _ => "show_score takes its label in quotes: show_score s, n, \"KOS\";",
+            });
         }
         if (ModeTagTexts.Refusal(text.Text) is { } refused)
         {
-            throw new ModeCompileException(text.Line, word == "tag" ? refused : refused.Replace("tag", "show_score", StringComparison.Ordinal));
+            throw new ModeCompileException(text.Line, word == "tag" ? refused : refused.Replace("tag", word, StringComparison.Ordinal));
         }
         var known = TagTexts.IndexOf(text.Text);
         if (known >= 0)
@@ -403,7 +418,7 @@ internal sealed partial class ModeEmitter
         }
         if (TagTexts.Count == ModeWords.TagTexts)
         {
-            throw new ModeCompileException(text.Line, $"{word}: a mode uses at most {ModeWords.TagTexts} different texts (tag's and show_score's together): \"{text.Text}\" is one more");
+            throw new ModeCompileException(text.Line, $"{word}: a mode uses at most {ModeWords.TagTexts} different texts (tag's, show_score's and show_text's together): \"{text.Text}\" is one more");
         }
         TagTexts.Add(text.Text);
         return TagTexts.Count;

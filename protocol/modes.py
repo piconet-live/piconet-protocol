@@ -129,8 +129,9 @@ def fingerprint(t, rule_set):
     what = {"limits": {k: v for k, v in t["api"].items() if k != "number" and t["levels"]["limits"].get(k, 1) <= rule_set}, "ops": of("ops"), "events": of("events"),
             "setups": of("setups", setup), "seat_reads": of("seat_reads"), "race_reads": of("race_reads"),
             "actions": of("actions"),
+            # (a choice whose every value arrived after the rule set is a later rule set's: not in this one)
             "choices": [{k: v for k, v in kept(c).items() if k != "values_since"} | {"values": [v for v in c["values"] if c["values_since"].get(v, 1) <= rule_set]}
-                        for c in t["choices"]]}
+                        for c in t["choices"] if any(c["values_since"].get(v, 1) <= rule_set for v in c["values"])]}
     return hashlib.sha256(json.dumps(what, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
 
 

@@ -1,8 +1,8 @@
-FZMP format 1 api 2, 2621 bytes, hash 7d96257906059290405dc6751646b2b08da4501569114b36e764dab582c4ccbd
+FZMP format 1 api 2, 2912 bytes, hash 95986fdaecae4b81c76f925759fa8fa1402a883b8520be5db3ff05a1c1d0aca1
 HEAD name "Displays" badge "" about "Every display word of api 1."
 PARM 0
 SETP 1
-  tag_texts "OUT" "KOS"
+  tag_texts "OUT" "KOS" "GO" "WAVE 2"
 VARS globals 0, seat words 1
   seat 0 = 3
 RULE 8
@@ -13,8 +13,8 @@ RULE 8
   4 "The owner's words of 2026-10-31" event finish, locals 1, when none, while none, body 00b7
   5 "The story parts' values" event lap, locals 1, when none, while none, body 00e9
   6 "A part moved" event lap, locals 1, when none, while none, body 011e
-  7 "Map characters" event lap, locals 1, when none, while none, body 017d
-CODE 413 bytes
+  7 "Map characters" event lap, locals 1, when none, while none, body 01d5
+CODE 501 bytes
   ; rule 0 when
   0000  RaceRead started
   0002  Ret
@@ -150,34 +150,60 @@ CODE 413 bytes
   0141  LoadLocal 0
   0143  Push 1234567 (0x0012d687, real 1.729997E-39)
   0148  Push 0
-  014d  Action show_score
-  014f  LoadLocal 0
-  0151  Push -5
-  0156  Push 2
-  015b  Action show_score
-  015d  LoadLocal 0
-  015f  Push 24
-  0164  Push 320
-  0169  IToF
-  016a  Push 100
-  016f  IToF
-  0170  Push 0
-  0175  IToF
-  0176  Action hud_move
-  0178  LoadLocal 0
-  017a  Action show_score off
-  017c  End
-  ; rule 7 body
-  017d  LoadLocal 0
-  017f  Push 75
-  0184  Action map_char
+  014d  Push 0
+  0152  Action show_score
+  0154  LoadLocal 0
+  0156  Push -5
+  015b  Push 2
+  0160  Push 0
+  0165  Action show_score
+  0167  LoadLocal 0
+  0169  Push 24
+  016e  Push 320
+  0173  IToF
+  0174  Push 100
+  0179  IToF
+  017a  Push 0
+  017f  IToF
+  0180  Action hud_move
+  0182  LoadLocal 0
+  0184  Action show_score off
   0186  LoadLocal 0
-  0188  Push 9819
-  018d  Action map_char
-  018f  LoadLocal 0
-  0191  Push 1114112 (0x00110000, real 1.561203E-39)
-  0196  Action map_char
-  0198  LoadLocal 0
-  019a  Action map_char off
-  019c  End
-SRC  1795 bytes
+  0188  Push 3
+  018d  Push 2
+  0192  Push 1
+  0197  Action show_score
+  0199  LoadLocal 0
+  019b  Push 3
+  01a0  Push 0
+  01a5  Action show_text
+  01a7  LoadLocal 0
+  01a9  Push 4
+  01ae  Push 5
+  01b3  Action show_text
+  01b5  LoadLocal 0
+  01b7  Push 25
+  01bc  Push 320
+  01c1  IToF
+  01c2  Push 400
+  01c7  IToF
+  01c8  Push 180
+  01cd  IToF
+  01ce  Action hud_move
+  01d0  LoadLocal 0
+  01d2  Action show_text off
+  01d4  End
+  ; rule 7 body
+  01d5  LoadLocal 0
+  01d7  Push 75
+  01dc  Action map_char
+  01de  LoadLocal 0
+  01e0  Push 9819
+  01e5  Action map_char
+  01e7  LoadLocal 0
+  01e9  Push 1114112 (0x00110000, real 1.561203E-39)
+  01ee  Action map_char
+  01f0  LoadLocal 0
+  01f2  Action map_char off
+  01f4  End
+SRC  1948 bytes

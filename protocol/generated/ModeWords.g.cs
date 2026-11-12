@@ -724,6 +724,10 @@ public enum ModeAction : byte
     ShowScore = 90,
     /// <summary><c>show_score off</c></summary>
     ShowScoreOff = 91,
+    /// <summary><c>show_text</c></summary>
+    ShowText = 92,
+    /// <summary><c>show_text off</c></summary>
+    ShowTextOff = 93,
 }
 
 /// <summary>The vocabulary of one api, by the names a mode file writes (protocol/modes.toml).</summary>
@@ -1172,8 +1176,10 @@ public static partial class ModeWords
         ("say", ModeAction.Say, [ModeType.Int]),
         ("say off", ModeAction.SayOff, []),
         ("hud_move off", ModeAction.HudMoveOff, [ModeType.Seat, ModeType.Int]),
-        ("show_score", ModeAction.ShowScore, [ModeType.Seat, ModeType.Int, ModeType.Int]),
+        ("show_score", ModeAction.ShowScore, [ModeType.Seat, ModeType.Int, ModeType.Int, ModeType.Int]),
         ("show_score off", ModeAction.ShowScoreOff, [ModeType.Seat]),
+        ("show_text", ModeAction.ShowText, [ModeType.Seat, ModeType.Int, ModeType.Int]),
+        ("show_text off", ModeAction.ShowTextOff, [ModeType.Seat]),
     ];
 
     /// <summary>The actions that need a running step, which game_start refuses.</summary>
@@ -1199,8 +1205,9 @@ public static partial class ModeWords
     public static readonly IReadOnlyDictionary<string, IReadOnlyList<string>> Choices =
         new Dictionary<string, IReadOnlyList<string>>
         {
-            ["part"] = ["TIMER", "DISTANCE", "DIGIT", "WARNING", "SUCCESS", "FAILED", "TIME_OVER", "SPEED_GAUGE", "OBJECTS", "LEADER_GAP", "GHOST_GAP", "RANK", "LAPS", "SPEED", "ENERGY", "LAP_TIMES", "RACE_TIME", "FACES", "SPARE", "SKULLS", "WRONG_WAY", "BANNERS", "FINISH", "CHECK", "SCORE"],
+            ["part"] = ["TIMER", "DISTANCE", "DIGIT", "WARNING", "SUCCESS", "FAILED", "TIME_OVER", "SPEED_GAUGE", "OBJECTS", "LEADER_GAP", "GHOST_GAP", "RANK", "LAPS", "SPEED", "ENERGY", "LAP_TIMES", "RACE_TIME", "FACES", "SPARE", "SKULLS", "WRONG_WAY", "BANNERS", "FINISH", "CHECK", "SCORE", "TEXT"],
             ["banner"] = ["FINAL_LAP", "BOOST_POWER", "TIME_BONUS", "GAP", "WRONG_WAY", "TICK"],
+            ["font"] = ["BLOCK", "CAPS", "PLAIN", "NARROW", "SERIF", "BIG_SERIF"],
             ["look"] = ["normal", "ghost", "invisible"],
         };
 
@@ -1215,6 +1222,8 @@ public static partial class ModeWords
             [(ModeAction.SeatOwnLook, 1)] = "look",
             [(ModeAction.HudMove, 1)] = "part",
             [(ModeAction.HudMoveOff, 1)] = "part",
+            [(ModeAction.ShowScore, 3)] = "font",
+            [(ModeAction.ShowText, 2)] = "font",
         };
 
     /// <summary>The actions written with a word between their first two arguments in place of a comma.</summary>
@@ -1293,6 +1302,8 @@ public static partial class ModeWords
             [ModeAction.HudMoveOff] = 2,
             [ModeAction.ShowScore] = 2,
             [ModeAction.ShowScoreOff] = 2,
+            [ModeAction.ShowText] = 2,
+            [ModeAction.ShowTextOff] = 2,
         };
 
     /// <summary>The values a setup word's argument took after the word itself arrived: (word, argument, value) to
@@ -1314,5 +1325,12 @@ public static partial class ModeWords
             [("part", 22)] = 2,
             [("part", 23)] = 2,
             [("part", 24)] = 2,
+            [("part", 25)] = 2,
+            [("font", 0)] = 2,
+            [("font", 1)] = 2,
+            [("font", 2)] = 2,
+            [("font", 3)] = 2,
+            [("font", 4)] = 2,
+            [("font", 5)] = 2,
         };
 }

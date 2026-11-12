@@ -81,6 +81,11 @@ rule "A part moved" {
     show_score s, -5, "KOS";
     hud_move s, SCORE, 320, 100, 0;
     show_score s off;
+    show_score s, 3, "KOS", CAPS;
+    show_text s, "GO";
+    show_text s, "WAVE 2", BIG_SERIF;
+    hud_move s, TEXT, 320, 400, 180;
+    show_text s off;
   }
 }
 
