@@ -710,7 +710,7 @@ mode "Knockout" {
 }
 
 param length    "Race length" delay 4min..10min step 30s default 7min;
-param first_cut "First cut"   delay 20s..120s step 5s default 45s;   // a 30-machine grid is 374 m long
+param first_cut "First cut"   delay 20s..45s step 5s default 45s;    // a 30-machine grid is 374 m long
 param keep      "Racers left" number 1..29 default 1;
 param warn_from "Warn from"   number 3..9 default 5;                  // seconds before the cut
 
@@ -734,7 +734,8 @@ rule "Arm" {
   event race_start;
   do {
     next_cut = first_cut;
-    interval = max(10s, (length - first_cut) / max(1, count(seats where racing) - keep - 1));
+    // the cuts share the race's length, never more than 30 s apart (owner 2026-11-11): a small grid ends early
+    interval = min(30s, max(10s, (length - first_cut) / max(1, count(seats where racing) - keep - 1)));
   }
 }
 
