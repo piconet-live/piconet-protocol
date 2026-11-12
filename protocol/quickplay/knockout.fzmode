@@ -1,7 +1,11 @@
 // A spicy Quick Play option: a rolling start, then the last racer is out at every cut.
+//
+// The HUD is F-Zero AX's (owner 2026-11-12): the position at the bottom left, the clock to the next cut at the top where
+// AX's timer is, the six faces on AX's rows. The position and the faces follow the mode's own places during the race
+// (live_places): the racers still in by the race order, then the racers out, so a cut leaves no gap in the top six.
 
 mode "Knockout" {
-  api 1;
+  api 0.6.1;
   badge "KNOCKOUT";
   about "The racer in last place is out at every cut. A point for every cut you survive.";
 }
@@ -19,6 +23,8 @@ laps unlimited;
 rolling_start 1000 km/h;       // speed at the gate, CPU steers through the countdown at 60% accelerator, control at GO
 race_waits everyone;           // the race goes on until the mode ends it, not until the last player is out
 results_title "KNOCKOUT";       // the points page: a point for every cut survived, ties in the order below
+hud_layout ax;                 // AX's HUD: the position bottom left, the faces on AX's rows, the clock at AX's timer place
+live_places;                   // the position and the faces show the places the rule "Places" gives, every step
 
 global int interval;           // steps between cuts, worked out once at the race start
 global int next_cut;
@@ -85,6 +91,18 @@ rule "Warn the last racer" {
     } else {
       hide seat, WARNING;
     }
+  }
+}
+
+rule "Places" {
+  // the places shown during the race, the results' order: the racers still in (not cut) by the race order, then the
+  // racers cut or out, the last out first (the first out is last). A cut racer still tumbling is already below the rest
+  event every step;
+  while race.started;
+  do {
+    int n = 1;
+    for each seat where seat.cut_order == 0 by standing { seat.place = n; n += 1; }
+    for each seat where seat.cut_order > 0 by seat.cut_order desc { seat.place = n; n += 1; }
   }
 }
 

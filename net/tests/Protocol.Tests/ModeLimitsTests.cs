@@ -316,9 +316,9 @@ public sealed class ModeLimitsTests
     /// own change writes its new hash here (<c>ModeCompilerTests</c> holds the vectors' bytes).</summary>
     [Theory]
     [InlineData("competitive", "4e162ffc587d940201e526c0e4a78d6a7aeadbcd19fa9f503c43f4f1cc0e2512", 1807)]
-    [InlineData("death_race", "ea86bfef346c209031d9568fb8fac1f6f2c782c19fd0c6072123bf1ca8d26680", 18887)]
+    [InlineData("death_race", "5d97d64424b3351cd88b3106ffc2c5619aa4f90b9983f9fdaec0b6948e2a78d3", 21341)]
     [InlineData("ghost_race", "a654c6fe97f6a6a68f3e338cf63e619dd2c7640f6d41f0ea0dbc333046398119", 2204)]
-    [InlineData("knockout", "d12875340eee9a201bc8640049118108be5a1635059d8720f0ab9725fa8d8d53", 43582)]
+    [InlineData("knockout", "c6795a963f6effbc8953e981e6753bde7192a7647eb44b132eac78202e615c02", 45835)]
     [InlineData("overdrive", "9fc822274982cb829132acf97975238832bd517afd46a74a6caf70dad43d72a0", 7776)]
     [InlineData("practice", "78f3aa18d83f9554daaa8ba1aba30c6a9b907ba3ee28becf817d7261222049a3", 339)]
     [InlineData("time_trial", "501ee749f21e46dd3e72fb871dfcb07c3812ae13020e046b3bb3de7b4582ef92", 0)]

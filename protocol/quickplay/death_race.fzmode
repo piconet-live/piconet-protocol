@@ -21,7 +21,12 @@
 //   | the leader, no wreck, 0 KOs           | 12       | 6     | 5        | 0   | 23    |
 //   | mid-pack, one wreck, 3 KOs            | 12       | 4     | 0        | 9   | 25    |
 //   | out at 3:00 with 6 KOs                | 6        | 0     | 0        | 18  | 24    |
-// Results by points; ties by time survived, then KOs, then standing.
+// Results by points; ties by time survived (a seat still in before one out), then KOs, then standing.
+//
+// The HUD is F-Zero AX's (owner 2026-11-12): the position at the bottom left, the clock at the top where AX's timer is,
+// the six faces on AX's rows. The position and the faces follow the points order above during the race (live_places),
+// not the road order. The lives counter shares the bottom left with AX's position, so the position is moved 72 units
+// right (hud_move RANK: the lives at 24-88, the position from 96).
 //
 // Damage is 400% and the game's cap of 20 a hit for a player is off (a CPU never had it), so a hard hit can end a
 // machine from full; a hit still takes at most 1.01 x max energy. Walls, mines and the pit are the game's own: the pit's
@@ -31,7 +36,7 @@
 // here; the game's 1/6 would be 1/12), from the start to the end, a restore included.
 
 mode "Death Race" {
-  api 1;
+  api 0.6.1;
   badge "DEATH RACE";
   about "Drift Highway, no finish line. Three lives each. Boosts take half the energy. Points for every machine you take out and for staying in.";
 }
@@ -60,6 +65,8 @@ race_waits everyone;           // the race goes on until the mode ends it, not u
 damage dmg;
 damage_cap off;
 results_title "DEATH RACE";    // the points page, ties in the order below
+hud_layout ax;                 // AX's HUD: the position bottom left, the faces on AX's rows, the clock at AX's timer place
+live_places;                   // the position and the faces show the places the rule "Places" gives, every step
 
 global bool over;              // the race has ended: nothing scores from then on
 global int hold_until;         // a player's last moment: FINISH! and its place have their 8 s
@@ -95,6 +102,7 @@ rule "Lives" {
       seat.lives_shown = lives - 1;
       show_number seat, seat.lives_shown;
       if (lives > 1) { respawns seat; }
+      hud_move seat, RANK, 72, 0;   // AX's position clear of the lives counter (both at the bottom left)
     }
   }
 }
@@ -156,6 +164,18 @@ rule "Everyone sees the clock" {
   do { show seat, TIMER; }
 }
 
+rule "Places" {
+  // the places shown during the race: the points order the end gives, with the points paid so far (the end's bonuses
+  // for the lives left and the standing come at the end); ties as there: a seat still in before one out, longer in,
+  // more KOs, the race order
+  event every step;
+  while race.started and not over;
+  do {
+    int n = 1;
+    for each seat by seat.score desc, seat.racing desc, seat.lived desc, seat.kos_paid desc, standing { seat.place = n; n += 1; }
+  }
+}
+
 rule "End" {
   event every step;
   when race.started and (race.steps >= length or (race.seats > 1 and count(seats where racing) <= 1));
@@ -175,7 +195,7 @@ rule "End" {
       else if (k == 3) { call pay(seat, third_bonus); }
     }
     int n = 1;
-    for each seat by seat.score desc, seat.lived desc, seat.kos_paid desc, standing {
+    for each seat by seat.score desc, seat.racing desc, seat.lived desc, seat.kos_paid desc, standing {
       seat.rank = n;
       seat.place = n;
       n += 1;
