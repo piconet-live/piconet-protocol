@@ -522,15 +522,17 @@ text where it likes. They never change the race.
 | `hide s, PART;` | The seat's player no longer sees the part | a part |
 | `show_number s, n;` | A number in two digits (07) beside the spare-machine icon; above 99 shows 99, a negative number hides it. A spectator sees the watched racer's | whole number |
 | `show_number s off;` | Hides the number | |
-| `show_score s, n;` `show_score s, n, "KOS";` | A counter where the race time is (top right, under the energy meter): n in the race time's own digits under a short label, SCORE unless the text says otherwise. A spectator sees the watched racer's; `hud_move s, SCORE, ...` moves it | 0 to 999,999 (a negative number reads 0); the label as `tag`'s text: A to Z, 0 to 9, space, `.` and `-`, 1 to 10 characters, at most 8 texts a mode with `tag`'s |
+| `show_score s, n;` `show_score s, n, "KOS";` `show_score s, n, "KOS", CAPS;` | A counter where the race time is (top right, under the energy meter): n in the race time's own digits under a short label, SCORE unless the text says otherwise, in one of the game's fonts (BLOCK unless given). A spectator sees the watched racer's; `hud_move s, SCORE, ...` moves it | 0 to 999,999 (a negative number reads 0); the label as `tag`'s text: A to Z, 0 to 9, space, `.` and `-`, 1 to 10 characters, at most 8 texts a mode with `tag`'s and `show_text`'s; a font |
 | `show_score s off;` | The counter goes | |
+| `show_text s, "GO";` `show_text s, "GO", SERIF;` | A short text at the top of the screen under the position, centred, in one of the game's fonts (BLOCK unless given), until the next `show_text` or `show_text s off`. A spectator sees the watched racer's; `hud_move s, TEXT, ...` moves it | the text as `tag`'s: A to Z, 0 to 9, space, `.` and `-`, 1 to 10 characters, at most 8 texts a mode with `tag`'s and `show_score`'s; a font |
+| `show_text s off;` | The text goes | |
 | `stock_banner s, BANNER;` | The seat's player sees one of the game's banners once, as the game raises it | a banner |
 | `show_clock n;` | The timed race's clock reads n steps, shown as seconds rounded up, red below 10. It ends nothing and must be written every step it should follow; players see it with `show s, TIMER`. Not with `clock_limit` | steps |
 | `show_distance s, metres;` | The DISTANCE part reads these metres instead of the metres to the finish; under 1000 drawn large in the middle | 0 to 99,999; 0 to 999,999 under `distance_label off;` |
 | `show_distance s off;` | DISTANCE reads the metres to the finish again | |
 | `show_objects s, n, of;` | The OBJECTS part reads n/of | 0 to 99 each |
 | `show_objects s off;` | OBJECTS reads the course's own count again | |
-| `hud_move s, PART, x, y, angle;` | The seat's player sees the part with its centre at (x, y) of the 640 x 480 screen, turned angle degrees clockwise: the same point of the screen in 4:3, Wide Screen and true wide screen. The parts' own centres: RANK (320.5, 62), or (86, 435) under `hud_layout ax`; LAPS (439, 43); SPEED (550, 440); ENERGY (548.5, 43); LAP_TIMES (556.8, 126.6); RACE_TIME (532, 86); FACES (51, 214); SPARE (56, 444); SKULLS (608, 120), its first skull; BANNERS (320, 150); WRONG_WAY and FINISH (320, 240); CHECK (320, 445); SCORE (552, 86). LEADER_GAP moves the banners with it | x and y -1000 to 1000, the angle 0 to 359 |
+| `hud_move s, PART, x, y, angle;` | The seat's player sees the part with its centre at (x, y) of the 640 x 480 screen, turned angle degrees clockwise: the same point of the screen in 4:3, Wide Screen and true wide screen. The parts' own centres: RANK (320.5, 62), or (86, 435) under `hud_layout ax`; LAPS (439, 43); SPEED (550, 440); ENERGY (548.5, 43); LAP_TIMES (556.8, 126.6); RACE_TIME (532, 86); FACES (51, 214); SPARE (56, 444); SKULLS (608, 120), its first skull; BANNERS (320, 150); WRONG_WAY and FINISH (320, 240); CHECK (320, 445); SCORE (552, 86); TEXT (320, 116). LEADER_GAP moves the banners with it | x and y -1000 to 1000, the angle 0 to 359 |
 | `hud_move s, PART off;` | The part is drawn where the game draws it again | |
 | `say "Hold A to accelerate.";` | A message for every player on a dark panel: in the middle of the picture while the race is paused, as a line at its foot while it runs, until the next `say` or `say off`. Written in quotes, never a variable | any text, up to 160 bytes of UTF-8; at most 32 texts a mode |
 | `say off;` | The message goes | |
@@ -571,6 +573,7 @@ text where it likes. They never change the race.
 | `FINISH` | FINISH and RETIRED. For `hud_move` only (0.6.1) | as the game shows them |
 | `CHECK` | The CHECK sign at the foot of the screen that points at the rival close behind: `hud_move` moves its row, and it still slides sideways after that rival. For `hud_move` only (0.6.1); `hud clean` takes it off | as the game shows it |
 | `SCORE` | A mode's counter at the race time's place: `show_score`'s number in the race time's digits under its label. For `hud_move` only: `show_score` shows and hides it (0.6.1) | with `show_score` |
+| `TEXT` | A mode's short text, centred at the top of the screen under the position. For `hud_move` only: `show_text` shows and hides it (0.6.1) | with `show_text` |
 | `TIMER` | The timed race's clock, with `clock_limit` or `show_clock` | when shown |
 | `LEADER_GAP` | The gap to the leader at each lap line, for a second; the leader sees its lead when second place crosses | when shown |
 | `GHOST_GAP` | Time Attack's live gap at the right edge, all race, against the seat furthest ahead; red while it is ahead | when shown |
@@ -593,6 +596,19 @@ text where it likes. They never change the race.
 | `GAP` | The gap popup for the seat's last lap line |
 | `WRONG_WAY` | WRONG WAY |
 | `TICK` | The timed race's countdown beep |
+
+### Fonts
+
+The game's own text fonts a mode may write `show_text` and `show_score`'s label in (0.6.1): those of its common picture sheet, loaded in every race. Each draws a small letter as a capital.
+
+| Font | What it looks like |
+|---|---|
+| `BLOCK` | Squared bold capitals, 18 tall: the font of the name tags and the Time Attack ghost names. Digits, the space, `.` and `-` too. The default |
+| `CAPS` | Small bold capitals, 14 tall. Letters only: a digit, `.` or `-` leaves a blank |
+| `PLAIN` | A small plain font, 12 tall, with digits |
+| `NARROW` | A narrow font, 16 tall and 8 wide, with digits |
+| `SERIF` | A typewriter serif, 16 tall, with digits |
+| `BIG_SERIF` | The same serif, 24 tall |
 
 ### Looks
 

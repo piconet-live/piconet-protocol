@@ -506,10 +506,12 @@ enum Action : std::uint8_t
   ACTION_HUDMOVEOFF = 89,  // hud_move off
   ACTION_SHOWSCORE = 90,  // show_score
   ACTION_SHOWSCOREOFF = 91,  // show_score off
-  ACTION_COUNT = 92,
+  ACTION_SHOWTEXT = 92,  // show_text
+  ACTION_SHOWTEXTOFF = 93,  // show_text off
+  ACTION_COUNT = 94,
 };
 
-// the choice `part`: a part of the game's own race HUD: TIMER the timed mode's clock (clock_limit's time, R+0xA4: seconds, 0 to 999); DISTANCE the metres to the finish (the seat's own; show_distance gives a mode's); DIGIT the story's big digit (danger_zone's seconds, 3 2 1); WARNING, SUCCESS, FAILED, TIME_OVER, SPEED_GAUGE, OBJECTS the story's pictures, off until shown (SUCCESS MISSION CLEAR!, FAILED MISSION FAILED, TIME_OVER "Time is up...": fixed pictures with no value; OBJECTS the course objects' count n/of, show_objects gives a mode's); LEADER_GAP the game's own time gap to the leader, off until shown: at each lap line, for a second, the seat's time behind the leader, and the leader's own lead when second place crosses; GHOST_GAP Time Attack's live gap, off until shown: signed minutes, seconds and thousandths at the right edge (617, 270), all race, against the seat furthest ahead, red while it is ahead, blue while you are; RANK, LAPS, SPEED, ENERGY, LAP_TIMES, RACE_TIME, FACES the standard HUD (the mask .data 0x3D544; FACES the board fn_1_D27B8), on until hidden; SPARE (0.6.1) the Grand Prix spare-machine counter (the star icon and show_number's number, fn_1_CA8FC), for hud_move: show_number shows and hides it, not show and hide; the rest (0.6.1) are for hud_move alone, drawn as the game draws them (show and hide refuse them): SKULLS the KO skulls at the right edge (fn_1_CAB38); WRONG_WAY the wrong-way sign (the banner WRONG_WAY's picture 0x9435, fn_1_CD51C's sprite); BANNERS the banners FINAL LAP, BOOST POWER, TIME BONUS and the gap popup (fn_1_15EFEC; LEADER_GAP's place takes them too, a BANNERS place of its own wins); FINISH the FINISH and RETIRED pictures (fn_1_15DFD4); CHECK the CHECK sign at the screen's foot that points at the rival close behind (fn_1_12907C, image 0x944F): its row moves, and it still slides sideways after that rival; hud clean takes it off; SCORE (0.6.1) a mode's counter, show_score's whole number in the race time's digit pictures under a label in the game's text font, at the race time's place (the top right, under the energy meter): show_score shows and hides it, not show and hide
+// the choice `part`: a part of the game's own race HUD: TIMER the timed mode's clock (clock_limit's time, R+0xA4: seconds, 0 to 999); DISTANCE the metres to the finish (the seat's own; show_distance gives a mode's); DIGIT the story's big digit (danger_zone's seconds, 3 2 1); WARNING, SUCCESS, FAILED, TIME_OVER, SPEED_GAUGE, OBJECTS the story's pictures, off until shown (SUCCESS MISSION CLEAR!, FAILED MISSION FAILED, TIME_OVER "Time is up...": fixed pictures with no value; OBJECTS the course objects' count n/of, show_objects gives a mode's); LEADER_GAP the game's own time gap to the leader, off until shown: at each lap line, for a second, the seat's time behind the leader, and the leader's own lead when second place crosses; GHOST_GAP Time Attack's live gap, off until shown: signed minutes, seconds and thousandths at the right edge (617, 270), all race, against the seat furthest ahead, red while it is ahead, blue while you are; RANK, LAPS, SPEED, ENERGY, LAP_TIMES, RACE_TIME, FACES the standard HUD (the mask .data 0x3D544; FACES the board fn_1_D27B8), on until hidden; SPARE (0.6.1) the Grand Prix spare-machine counter (the star icon and show_number's number, fn_1_CA8FC), for hud_move: show_number shows and hides it, not show and hide; the rest (0.6.1) are for hud_move alone, drawn as the game draws them (show and hide refuse them): SKULLS the KO skulls at the right edge (fn_1_CAB38); WRONG_WAY the wrong-way sign (the banner WRONG_WAY's picture 0x9435, fn_1_CD51C's sprite); BANNERS the banners FINAL LAP, BOOST POWER, TIME BONUS and the gap popup (fn_1_15EFEC; LEADER_GAP's place takes them too, a BANNERS place of its own wins); FINISH the FINISH and RETIRED pictures (fn_1_15DFD4); CHECK the CHECK sign at the screen's foot that points at the rival close behind (fn_1_12907C, image 0x944F): its row moves, and it still slides sideways after that rival; hud clean takes it off; SCORE (0.6.1) a mode's counter, show_score's whole number in the race time's digit pictures under a label in the game's text font, at the race time's place (the top right, under the energy meter): show_score shows and hides it, not show and hide; TEXT (0.6.1) a mode's short text in one of the game's fonts (`font`), centred at the top of the screen under the position (320, 116): show_text shows and hides it, not show and hide
 enum Part : std::uint8_t
 {
   PART_TIMER = 0,
@@ -537,7 +539,8 @@ enum Part : std::uint8_t
   PART_FINISH = 22,
   PART_CHECK = 23,
   PART_SCORE = 24,
-  PART_COUNT = 25,
+  PART_TEXT = 25,
+  PART_COUNT = 26,
 };
 
 // the choice `banner`: a banner of the game's own race HUD, shown once, as the game shows it; TICK the timed mode's countdown beep, heard by that seat's player
@@ -550,6 +553,18 @@ enum Banner : std::uint8_t
   BANNER_WRONG_WAY = 4,
   BANNER_TICK = 5,
   BANNER_COUNT = 6,
+};
+
+// the choice `font`: a text font of the game's own, among those its common picture sheet (bmp_com.tpl, loaded all game) holds, so every one is there in a race; all draw a small letter as a capital (the runner's fonts list, mode_hud.h FONT_IDS, gives the game's font number): BLOCK (5) the squared bold capitals 18 units tall the name tags and the Time Attack ghost names use, with digits, the space, `.` and `-`; CAPS (4) small bold capitals 14 tall, letters only (a digit, `.` or `-` is a blank); PLAIN (3) a small plain font 12 tall with digits; NARROW (2) a narrow font 16 tall and 8 wide with digits; SERIF (7) a typewriter serif 16 tall with digits; BIG_SERIF (8) the same serif 24 tall. The other fonts the game has are digits alone (the race HUD's) or on sheets not loaded in a race (the menus' and the results')
+enum Font : std::uint8_t
+{
+  FONT_BLOCK = 0,
+  FONT_CAPS = 1,
+  FONT_PLAIN = 2,
+  FONT_NARROW = 3,
+  FONT_SERIF = 4,
+  FONT_BIG_SERIF = 5,
+  FONT_COUNT = 6,
 };
 
 // the choice `look`: how a machine is drawn: as the game draws it; as Time Attack draws its ghost (additive, with a depth pass, alpha by the camera's distance, 60 frames' fade from GO, no shadow, yellow unless seat.ghost_tint says otherwise; no machine sound unless seat.ghost_sound says otherwise); not at all
@@ -648,6 +663,8 @@ constexpr int ActionSince(std::uint8_t action)
     case ACTION_HUDMOVEOFF: return 2;
     case ACTION_SHOWSCORE: return 2;
     case ACTION_SHOWSCOREOFF: return 2;
+    case ACTION_SHOWTEXT: return 2;
+    case ACTION_SHOWTEXTOFF: return 2;
     default: return 1;
   }
 }
@@ -741,8 +758,10 @@ constexpr int ActionArguments(std::uint8_t action)
     case ACTION_SAY: return 1;
     case ACTION_SAYOFF: return 0;
     case ACTION_HUDMOVEOFF: return 2;
-    case ACTION_SHOWSCORE: return 3;
+    case ACTION_SHOWSCORE: return 4;
     case ACTION_SHOWSCOREOFF: return 1;
+    case ACTION_SHOWTEXT: return 3;
+    case ACTION_SHOWTEXTOFF: return 1;
     default: return -1;
   }
 }

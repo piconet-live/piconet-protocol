@@ -75,25 +75,61 @@ public sealed class ModeHudPlaceTests
     }
 
     [Fact]
-    public void ShowScoreTakesANumberAndAnOptionalLabel()
+    public void ShowScoreTakesANumberAnOptionalLabelAndAnOptionalFont()
     {
-        // SCORE (0.6.1): show_score's number and label, the label a tag text (0: the default); show and hide leave it to show_score
+        // SCORE (0.6.1): show_score's number, label and font, the label a tag text (0: the default), the font a `font` (0, BLOCK,
+        // when left out); show and hide leave it to show_score
         var code = Code(Rule("show_score seat, seat.points;"));
         var at = code.IndexOf("Action show_score");
-        Assert.Equal("Push 0", Word(code[at - 1]));
+        Assert.Equal(["Push 0", "Push 0"], code[(at - 2)..at].Select(Word));
         code = Code(Rule("show_score seat, 7, \"KOS\";") + Rule("tag seat, \"KOS\";"));
-        Assert.Equal(["Push 7", "Push 1"], code[(code.IndexOf("Action show_score") - 2)..code.IndexOf("Action show_score")].Select(Word));
+        Assert.Equal(["Push 7", "Push 1", "Push 0"], code[(code.IndexOf("Action show_score") - 3)..code.IndexOf("Action show_score")].Select(Word));
         Assert.Equal("Push 1", Word(code[code.IndexOf("Action tag") - 1]));  // the same text, one entry of tag_texts
+        code = Code(Rule("show_score seat, 7, \"KOS\", BIG_SERIF;"));
+        Assert.Equal(["Push 7", "Push 1", "Push 5"], code[(code.IndexOf("Action show_score") - 3)..code.IndexOf("Action show_score")].Select(Word));
         Assert.Contains("Action show_score off", Code(Rule("show_score seat off;")));
         code = Code(Rule("hud_move seat, SCORE, 552, 86, 0;"));
         Assert.Equal("Push 24", Word(code[code.IndexOf("Action hud_move") - 7]));
         Assert.Contains("hud_move places it", Assert.Single(Compile(Rule("show seat, SCORE;")).Errors));
         Assert.Single(Compile(Rule("hide seat, SCORE;")).Errors);
-        foreach (var bad in new[] { "show_score seat, 7, kos;", "show_score seat, 7, \"k,s\";", "show_score seat, 7, \"TOO LONG A LABEL\";", "show_score seat;", "show_score seat, 1, \"A\", 2;" })
+        foreach (var bad in new[] { "show_score seat, 7, kos;", "show_score seat, 7, \"k,s\";", "show_score seat, 7, \"TOO LONG A LABEL\";", "show_score seat;",
+                                    "show_score seat, 1, \"A\", 2;", "show_score seat, 1, \"A\", GOTHIC;", "show_score seat, 1, \"A\", BLOCK, 1;" })
         {
             Assert.Single(Compile(Rule(bad)).Errors);
         }
+        Assert.Contains("one of BLOCK, CAPS, PLAIN, NARROW, SERIF, BIG_SERIF", Assert.Single(Compile(Rule("show_score seat, 1, \"A\", GOTHIC;")).Errors));
         var old = ModeCompiler.Compile("mode \"T\" { api 0.6.0; }\n" + Rule("show_score seat, 1;"));
+        Assert.Contains(old.Errors, e => e.Contains("needs api 0.6.1", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void ShowTextTakesATextAndAnOptionalFont()
+    {
+        // TEXT (0.6.1): show_text's text a tag text (the same table as tag's and show_score's), the font a `font` (0, BLOCK, when
+        // left out); show and hide leave it to show_text
+        var code = Code(Rule("show_text seat, \"GO\";") + Rule("tag seat, \"GO\";") + Rule("show_score seat, 1, \"KOS\", NARROW;"));
+        Assert.Equal(["Push 1", "Push 0"], code[(code.IndexOf("Action show_text") - 2)..code.IndexOf("Action show_text")].Select(Word));
+        Assert.Equal("Push 1", Word(code[code.IndexOf("Action tag") - 1]));  // the same text, one entry of tag_texts
+        Assert.Equal(["Push 1", "Push 2", "Push 3"], code[(code.IndexOf("Action show_score") - 3)..code.IndexOf("Action show_score")].Select(Word));
+        code = Code(Rule("show_text seat, \"GO\", SERIF;"));
+        Assert.Equal(["Push 1", "Push 4"], code[(code.IndexOf("Action show_text") - 2)..code.IndexOf("Action show_text")].Select(Word));
+        Assert.Contains("Action show_text off", Code(Rule("show_text seat off;")));
+        code = Code(Rule("hud_move seat, TEXT, 320, 116, 0;"));
+        Assert.Equal("Push 25", Word(code[code.IndexOf("Action hud_move") - 7]));
+        Assert.Contains("hud_move places it", Assert.Single(Compile(Rule("show seat, TEXT;")).Errors));
+        Assert.Single(Compile(Rule("hide seat, TEXT;")).Errors);
+        foreach (var bad in new[] { "show_text seat, go;", "show_text seat, \"g,o\";", "show_text seat, \"TOO LONG A TEXT\";", "show_text seat;",
+                                    "show_text seat, \"GO\", 2;", "show_text seat, \"GO\", GOTHIC;", "show_text seat, \"GO\", BLOCK, 1;", "show_text seat, 7;" })
+        {
+            Assert.Single(Compile(Rule(bad)).Errors);
+        }
+        Assert.Contains("show_text takes its text in quotes", Assert.Single(Compile(Rule("show_text seat, go;")).Errors));
+        Assert.Contains("show_text: ", Assert.Single(Compile(Rule("show_text seat, \"g,o\";")).Errors));
+        // the eight texts a mode may use are tag's, show_score's and show_text's together
+        var texts = string.Concat(Enumerable.Range(0, 8).Select(i => Rule($"show_text seat, \"T{i}\";")));
+        Assert.True(Compile(texts).Succeeded);
+        Assert.Contains("at most 8 different texts", Assert.Single(Compile(texts + Rule("tag seat, \"ONE MORE\";")).Errors));
+        var old = ModeCompiler.Compile("mode \"T\" { api 0.6.0; }\n" + Rule("show_text seat, \"GO\";"));
         Assert.Contains(old.Errors, e => e.Contains("needs api 0.6.1", StringComparison.Ordinal));
     }
 

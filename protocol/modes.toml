@@ -84,7 +84,7 @@ wait_locals = 8        # locals a waiting rule keeps, its event's binding includ
 fsqrt_cost = 8         # what one FSqrt takes of the budget (the compiler's count and the interpreter's, in both its loops)
 results_title = 23     # a results title's characters: the window's 24 bytes with the NUL (runner mode_hud.h)
 tag_text = 10          # a `tag` text's characters: at the tags' largest, 22 of the screen's 640 pixels a character, 220 in all
-tag_texts = 8          # the different texts of `tag` and `show_score` a mode may use (the window holds them, runner mode_hud.h)
+tag_texts = 8          # the different texts of `tag`, `show_score` and `show_text` a mode may use (the window holds them, runner mode_hud.h)
 say_text = 160         # a `say` text's UTF-8 bytes: two lines of the panel at most
 say_texts = 32         # the different texts of `say` a mode may use
 board = 8              # `board` lines a scope (global, seat, team): what the status board holds (board.toml)
@@ -1853,8 +1853,8 @@ doc = "every seat's full energy, and every seat begins full. Left out: the game'
 
 [[choice]]
 name = "part"
-values = ["TIMER", "DISTANCE", "DIGIT", "WARNING", "SUCCESS", "FAILED", "TIME_OVER", "SPEED_GAUGE", "OBJECTS", "LEADER_GAP", "GHOST_GAP", "RANK", "LAPS", "SPEED", "ENERGY", "LAP_TIMES", "RACE_TIME", "FACES", "SPARE", "SKULLS", "WRONG_WAY", "BANNERS", "FINISH", "CHECK", "SCORE"]
-values_since = { SPARE = 2, SKULLS = 2, WRONG_WAY = 2, BANNERS = 2, FINISH = 2, CHECK = 2, SCORE = 2 }
+values = ["TIMER", "DISTANCE", "DIGIT", "WARNING", "SUCCESS", "FAILED", "TIME_OVER", "SPEED_GAUGE", "OBJECTS", "LEADER_GAP", "GHOST_GAP", "RANK", "LAPS", "SPEED", "ENERGY", "LAP_TIMES", "RACE_TIME", "FACES", "SPARE", "SKULLS", "WRONG_WAY", "BANNERS", "FINISH", "CHECK", "SCORE", "TEXT"]
+values_since = { SPARE = 2, SKULLS = 2, WRONG_WAY = 2, BANNERS = 2, FINISH = 2, CHECK = 2, SCORE = 2, TEXT = 2 }
 doc = """a part of the game's own race HUD: TIMER the timed mode's clock (clock_limit's time, R+0xA4: seconds, 0 to \
 999); DISTANCE the metres to the finish (the seat's own; show_distance gives a mode's); DIGIT the story's big digit (danger_zone's seconds, 3 2 1); \
 WARNING, SUCCESS, FAILED, TIME_OVER, SPEED_GAUGE, OBJECTS the story's pictures, off until shown (SUCCESS MISSION CLEAR!, FAILED MISSION FAILED, TIME_OVER "Time is up...": fixed pictures with no value; OBJECTS the course objects' count n/of, show_objects gives a mode's); LEADER_GAP the game's own time gap to the leader, off until shown: at each lap line, for a second, the seat's time behind the leader, and the leader's own lead when second place crosses; GHOST_GAP Time Attack's live gap, off until shown: signed minutes, seconds and thousandths at the right edge (617, 270), all race, against the seat furthest ahead, red while it is ahead, blue while you are; RANK, LAPS, SPEED, ENERGY, \
@@ -1864,12 +1864,24 @@ the rest (0.6.1) are for hud_move alone, drawn as the game draws them (show and 
 WRONG_WAY the wrong-way sign (the banner WRONG_WAY's picture 0x9435, fn_1_CD51C's sprite); BANNERS the banners FINAL LAP, BOOST POWER, TIME BONUS and the gap popup \
 (fn_1_15EFEC; LEADER_GAP's place takes them too, a BANNERS place of its own wins); FINISH the FINISH and RETIRED pictures (fn_1_15DFD4); CHECK the CHECK sign at the \
 screen's foot that points at the rival close behind (fn_1_12907C, image 0x944F): its row moves, and it still slides sideways after that rival; hud clean takes it off; \
-SCORE (0.6.1) a mode's counter, show_score's whole number in the race time's digit pictures under a label in the game's text font, at the race time's place (the top right, under the energy meter): show_score shows and hides it, not show and hide"""
+SCORE (0.6.1) a mode's counter, show_score's whole number in the race time's digit pictures under a label in the game's text font, at the race time's place (the top right, under the energy meter): show_score shows and hides it, not show and hide; \
+TEXT (0.6.1) a mode's short text in one of the game's fonts (`font`), centred at the top of the screen under the position (320, 116): show_text shows and hides it, not show and hide"""
 
 [[choice]]
 name = "banner"
 values = ["FINAL_LAP", "BOOST_POWER", "TIME_BONUS", "GAP", "WRONG_WAY", "TICK"]
 doc = "a banner of the game's own race HUD, shown once, as the game shows it; TICK the timed mode's countdown beep, heard by that seat's player"
+
+[[choice]]
+name = "font"
+values = ["BLOCK", "CAPS", "PLAIN", "NARROW", "SERIF", "BIG_SERIF"]
+values_since = { BLOCK = 2, CAPS = 2, PLAIN = 2, NARROW = 2, SERIF = 2, BIG_SERIF = 2 }   # (the whole choice is 0.6.1's)
+doc = """a text font of the game's own, among those its common picture sheet (bmp_com.tpl, loaded all game) holds, so every one is there \
+in a race; all draw a small letter as a capital (the runner's fonts list, mode_hud.h FONT_IDS, gives the game's font number): \
+BLOCK (5) the squared bold capitals 18 units tall the name tags and the Time Attack ghost names use, with digits, the space, `.` and `-`; \
+CAPS (4) small bold capitals 14 tall, letters only (a digit, `.` or `-` is a blank); PLAIN (3) a small plain font 12 tall with digits; \
+NARROW (2) a narrow font 16 tall and 8 wide with digits; SERIF (7) a typewriter serif 16 tall with digits; BIG_SERIF (8) the same serif 24 tall. \
+The other fonts the game has are digits alone (the race HUD's) or on sheets not loaded in a race (the menus' and the results')"""
 
 [[choice]]
 name = "look"
@@ -2580,22 +2592,23 @@ doc = "the part is drawn where the game draws it again"
 # in the race time's call (sites_hudmove.py race_time_score, in the RACE_TIME wraps of both one-viewport layouts), from
 # the window's two words the HUD pass writes for the racer the picture follows (runner mode_hud.h WINDOW_SCORE), so a
 # spectator sees the watched racer's. Tagged SCORE for hud_move (its centre (552, 86): the box of the label and six
-# digits), like every other part. Drawing only: nothing a step reads.
+# digits), like every other part. Drawing only: nothing a step reads. The label's font is a `font` (BLOCK unless given).
 
 [[action]]
 name = "show_score"
 id = 90
 since = 2
-args = ["seat", "int", "int"]
+args = ["seat", "int", "int", "font"]
 where = """the block's score records (page 7's head, after map_char's: runner mode_hud.h SCORES, a word a seat: the number + 1, \
-0 none; then a byte, the label's number in tag_texts, 0 the default SCORE); drawn by the image's race_time_score in the race \
-time's call (sites_hudmove.py) from the window's words (mode_hud.h WINDOW_SCORE). The file writes `show_score s, n;` or \
-`show_score s, n, "TEXT";`: the compiler pushes the text's number in tag_texts, from 1 (0: no text given), as `tag` does"""
-doc = """`show_score s, n;` or `show_score s, n, "TEXT";`: the seat's player sees SCORE, the whole number n in the race time's digits \
-(0 to 999999: six digits at most, a negative number reads 0) under the label TEXT (A to Z, 0 to 9, the space, `.` and `-`, \
-api.tag_text long at most; tag and show_score share the api.tag_texts texts a mode may use) or, with no text, SCORE; at the race \
-time's place, the top right under the energy meter, until `show_score s off`. A spectator sees the watched racer's. The part is \
-movable with hud_move SCORE"""
+0 none; then a word, the label's number in tag_texts in its low byte, 0 the default SCORE, and the font's number in the next); drawn \
+by the image's race_time_score in the race time's call (sites_hudmove.py) from the window's words (mode_hud.h WINDOW_SCORE). The \
+file writes `show_score s, n;`, `show_score s, n, "TEXT";` or `show_score s, n, "TEXT", FONT;`: the compiler pushes the text's \
+number in tag_texts, from 1 (0: no text given), as `tag` does, then the font (0, BLOCK, when none is given)"""
+doc = """`show_score s, n;`, `show_score s, n, "TEXT";` or `show_score s, n, "TEXT", FONT;`: the seat's player sees SCORE, the whole \
+number n in the race time's digits (0 to 999999: six digits at most, a negative number reads 0) under the label TEXT (A to Z, 0 to 9, \
+the space, `.` and `-`, api.tag_text long at most; tag, show_score and show_text share the api.tag_texts texts a mode may use) or, with \
+no text, SCORE, in the font FONT (a `font`; BLOCK unless given); at the race time's place, the top right under the energy meter, until \
+`show_score s off`. A spectator sees the watched racer's. The part is movable with hud_move SCORE"""
 
 [[action]]
 name = "show_score off"
@@ -2604,3 +2617,35 @@ since = 2
 args = ["seat"]
 where = "the block's score records"
 doc = "SCORE is no longer shown"
+
+# --- a mode's text (0.6.1; the owner, 2026-11-12: a free text part, "a mode shows a short string anywhere on the HUD, with no
+# number", in "whatever fonts the game has"). The part TEXT: a short text of the mode's, `show_text s, "TEXT", FONT;`, in one
+# of the game's own fonts (the `font` choice: those of the common sheet, which every race has loaded), drawn by the game's
+# text routine (fn_1_4A0D8) as the name tags and SCORE's label are, upper case, white, the font's own size, centred at the
+# text's home (320, 116): the top of the screen under the position. The text is a tag text (the package's tag_texts: tag,
+# show_score and show_text share the api.tag_texts texts and api.tag_text length). Drawn by the image's race_time_score after
+# SCORE (in the race time's call, inside the centre Wide Screen group, so it stays centred in every screen shape), from the
+# window's words the HUD pass writes for the racer the picture follows (runner mode_hud.h WINDOW_TEXT), so a spectator sees the
+# watched racer's. Tagged TEXT for hud_move (its centre the home point), like every other part. Drawing only: nothing a step reads.
+
+[[action]]
+name = "show_text"
+id = 92
+since = 2
+args = ["seat", "int", "font"]
+where = """the block's text records (page 7's head, after show_score's: runner mode_hud.h TEXTS, a word a seat: the text's number in \
+tag_texts in its low byte, 0 none, the font's number in the next); drawn by the image's race_time_score in the race time's call \
+(sites_hudmove.py) from the window's words (mode_hud.h WINDOW_TEXT). The file writes `show_text s, "TEXT";` or `show_text s, "TEXT", FONT;`: \
+the compiler pushes the text's number in tag_texts, from 1, as `tag` does, then the font (0, BLOCK, when none is given)"""
+doc = """`show_text s, "TEXT";` or `show_text s, "TEXT", FONT;`: the seat's player sees TEXT, the text (A to Z, 0 to 9, the space, `.` and \
+`-`, api.tag_text long at most; tag, show_score and show_text share the api.tag_texts texts a mode may use) in the font FONT (a `font`; \
+BLOCK unless given), centred at the top of the screen under the position, until `show_text s off` or the next show_text. A spectator \
+sees the watched racer's. The part is movable with hud_move TEXT"""
+
+[[action]]
+name = "show_text off"
+id = 93
+since = 2
+args = ["seat"]
+where = "the block's text records"
+doc = "TEXT is no longer shown"

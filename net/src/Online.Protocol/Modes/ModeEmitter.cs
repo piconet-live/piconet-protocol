@@ -31,6 +31,7 @@ internal sealed partial class ModeEmitter(ModeNames names, List<string> warnings
         ["FINISH"] = "FINISH and RETIRED are the race's own",
         ["CHECK"] = "the CHECK sign is the game's own; hud clean takes it off",
         ["SCORE"] = "the score counter is shown and hidden by show_score",
+        ["TEXT"] = "the text is shown and hidden by show_text",
     };
 
     /// <summary>The file's rule set (its <c>api</c>): a choice's value of a later one is refused.</summary>

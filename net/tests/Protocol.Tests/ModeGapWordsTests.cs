@@ -17,13 +17,20 @@ public sealed class ModeGapWordsTests
     [InlineData("hud_texts \"A\";\n")]
     [InlineData("show_bar seat, strip, seat.energy, seat.max_energy, under_speed;")]
     [InlineData("show_figure seat, 4, under_top6, RED;")]
-    [InlineData("show_text seat, \"ROUND 1\", under_place;")]
     [InlineData("show_gap seat, you, top6;")]
     [InlineData("hud_clear seat, top6;")]
     public void TheRetiredWordsAreNoWordsOfTheApi(string text)
     {
         var source = text.EndsWith('\n') ? Head + text : Head + Rule(text);
         Assert.Contains("of api 0.6.1", Assert.Single(ModeCompiler.Compile(source).Errors), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void TheModernHudsShowTextFormIsNotTheNewWords()
+    {
+        // show_text is a word again since 0.6.1 (the TEXT part, in a font of the game's): the modern HUD's form, with a place, is refused
+        var error = Assert.Single(ModeCompiler.Compile(Head + Rule("show_text seat, \"ROUND 1\", under_place;")).Errors);
+        Assert.Contains("show_text takes one of BLOCK", error, StringComparison.Ordinal);
     }
 
     [Fact]

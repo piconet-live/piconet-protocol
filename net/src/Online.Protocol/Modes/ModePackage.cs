@@ -100,11 +100,11 @@ public static class ModeStatsPage
         action is (>= ModeAction.SeatStatDriftRotationResistance and <= ModeAction.SeatStatGripWindow) or ModeAction.SeatStatBoostEnergy;
 }
 
-/// <summary>The texts the <c>tag</c> word draws, which the package carries in the setup word <c>tag_texts</c>: a value a
-/// character, a 0 between texts; a <c>tag</c> names one by its place, from 1. They are drawn by the game's font 5 as the
-/// name tags are (the characters tested in piconet-docs archive/research/spike-names.md): A to Z, 0 to 9, the space,
-/// <c>.</c> and <c>-</c>; it draws a small letter as a capital, a comma as an ampersand, the rest as blanks, so those are
-/// refused. At the tags' largest a character takes about 22 of the screen's 640: the longest text is about 220 wide.</summary>
+/// <summary>The texts the <c>tag</c> word draws (and <c>show_score</c>'s labels and <c>show_text</c>'s texts), which the
+/// package carries in the setup word <c>tag_texts</c>: a value a character, a 0 between texts; a word names one by its place,
+/// from 1. They are drawn by the game's font 5 as the name tags are (the characters tested in piconet-docs
+/// archive/research/spike-names.md), or another <c>font</c> of the common sheet: A to Z, 0 to 9, the space, <c>.</c> and
+/// <c>-</c>; a small letter is drawn as a capital, a comma as an ampersand, the rest as blanks, so those are refused. At the tags' largest a character takes about 22 of the screen's 640: the longest text is about 220 wide.</summary>
 public static class ModeTagTexts
 {
     /// <summary>Why a text cannot be drawn; null: it can.</summary>
