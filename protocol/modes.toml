@@ -2487,6 +2487,22 @@ restores (`restore on`, `respawns s`) and breaks down is not restored yet: it sl
 may cross the line and finish, and its restore starts at the step the game without restore would have taken it out \
 (destroyed, fallen, or the wreck at rest). Off: the restore starts at the step of the breakdown, as before 0.6.1"""
 
+# --- how far a mode's tags are seen (0.6.1, owner 2026-11-12: "Let's do it" to a small word, `tag_range 300 m;`; on its
+# limits "nothing that can break the game")
+
+[[setup]]
+name = "tag_range"
+id = 73
+since = 2
+args = [{ type = "real", least = 1.0, most = 10000.0 }]
+where = """the window's three words at WINDOW_TAG_RANGE (runner mode_hud.h, written at the boot: the range squared, 1 over the \
+difference of the squares of the range and three quarters of it, and twice the range squared), which the name tags \
+(port/image/routines/nametags.py) read in place of their constants for a mode's `tag`: full to three quarters of the range, \
+fading to nothing at it, nearest first in the limit of tags shown. Left out: 200 m, the same as before the word (150 m full). \
+The bounds are the drawing's: below 1 m the fade's divisor nears 0; above 10 km the squared distances of the tagged seats' \
+order (d^2 less twice the range squared, binary32) lose their last metres. Player name tags unchanged. Drawing only"""
+doc = "a mode's tags are fully visible to three quarters of this distance and fade to nothing at it; left out, 200 m (the player name tags' 15 to 40 m is not changed). A 0.6.0 game cannot race a mode with it"
+
 [[action]]
 name = "hud_move"
 id = 81

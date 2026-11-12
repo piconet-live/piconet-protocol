@@ -228,6 +228,7 @@ game counts it, 100 a full machine.
 | `results_times off;` | The results show no page of race times and open on the points page, for a mode that is not scored by time. Needs a points page (`award`, `points_table` or `results_title`). A 0.6.0 game cannot race a mode with it | on or off |
 | `live_places;` | The places the mode gives show during the race: the place at the top of the screen and the faces at the side follow `seat.place`, from the step it is written. Seats with no place follow in race order. Left out: `seat.place` counts only when the race ends. A 0.6.0 game cannot race a mode with it | |
 | `hud clean;` | Nothing over the race but the HUD's own parts: no CHECK sign and no name tags, a player's or a `tag`. For footage | |
+| `tag_range 300 m;` | How far a mode's `tag` texts are seen: fully to three quarters of this distance, fading to nothing at it. Left out: 200 m (full to 150 m), as before. The player name tags keep their 15 to 40 m. A 0.6.0 game cannot race a mode with it | 1 to 10,000 m |
 | `distance_label off;` | DISTANCE shows its number and m without the game's REST label, for metres that are not the metres left; the number then has six digits (to 999999) in place of five. A 0.6.0 game cannot race a mode with it | on or off |
 | `hud_layout ax;` | The race HUD in F-Zero AX's layout: the position at the bottom left, the faces board smaller to leave it room, TIMER at the top. The rest stays where GX puts it; the spare-machine counter (`SPARE`) keeps its place at the bottom left under the position, so a mode that shows both places one of them with `hud_move` | |
 
@@ -550,7 +551,7 @@ text where it likes. They never change the race.
 | `map_mark s, 0xRRGGBB;` | s's dot's colour on every course map; -1 gives it its machine's colour | colour |
 | `map_char s, "K";` `map_char s, CROWN;` | The seat's dot on every course map carries this character, or the shape CROWN, as large as the big dots, in the dot's colour; a character the game's fonts lack shows the plain dot | one character, or CROWN |
 | `map_char s off;` | The dot shows no character again | |
-| `tag s, "TEXT";` | TEXT floats over the seat's machine in place of its name, for everyone else, CPUs too. Written in quotes, never a variable | A to Z, 0 to 9, space, `.` and `-`; 1 to 10 characters, no space at either end; at most 8 texts a mode |
+| `tag s, "TEXT";` | TEXT floats over the seat's machine in place of its name, for everyone else, CPUs too, seen to 200 m unless the setup word `tag_range` says how far. Written in quotes, never a variable | A to Z, 0 to 9, space, `.` and `-`; 1 to 10 characters, no space at either end; at most 8 texts a mode |
 | `tag s off;` | The tag goes; the seat's own name tag, if it has one, comes back | |
 
 ## Display values

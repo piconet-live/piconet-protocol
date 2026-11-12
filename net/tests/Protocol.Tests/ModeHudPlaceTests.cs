@@ -35,6 +35,25 @@ public sealed class ModeHudPlaceTests
         Assert.True(Compile("hud_layout ax;\nhud clean;\n").Succeeded);
     }
 
+    /// <summary><c>tag_range</c>: how far a mode's tags are seen, a setup word of 0.6.1 with no rule line (it changes no
+    /// rule of the race), in metres from 1 to 10,000; left out, the tags are seen to 200 m as before.</summary>
+    [Fact]
+    public void TagRangeIsASetupWordInMetres()
+    {
+        var result = Compile("tag_range 300 m;\n");
+        Assert.True(result.Succeeded, string.Join(" ", result.Errors));
+        var word = Assert.Single(result.Mode!.Setups);
+        Assert.Equal(ModeSetup.TagRange, word.Id);
+        Assert.Equal(300.0f, BitConverter.Int32BitsToSingle(Assert.Single(word.Arguments).Value));
+        Assert.Empty(ModeRuleLines.Of(result.Mode!));
+        Assert.True(Compile("tag_range 1 m;\n").Succeeded);
+        Assert.True(Compile("tag_range 10000;\n").Succeeded);   // (the m is a way of writing it)
+        static string Errors(ModeCompilation c) => string.Join(" ", c.Errors.Select(e => e.ToString()));
+        Assert.Contains("tag_range is 1..10000", Errors(Compile("tag_range 0.5 m;\n")));
+        Assert.Contains("tag_range is 1..10000", Errors(Compile("tag_range 20000 m;\n")));
+        Assert.Contains("tag_range needs api 0.6.1", Errors(ModeCompiler.Compile("mode \"T\" { api 1; }\ntag_range 300 m;\n")));
+    }
+
     [Fact]
     public void HudMoveTakesAPartAPlaceAndAnAngle()
     {
