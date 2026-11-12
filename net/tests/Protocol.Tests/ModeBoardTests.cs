@@ -149,10 +149,10 @@ public sealed class ModeBoardTests
         var overdrive = ModeCompiler.Compile(File.ReadAllText(Path.Combine(folder, "overdrive.fzmode")));
         Assert.True(overdrive.Succeeded, string.Join(" ", overdrive.Errors));
         Assert.Empty(overdrive.Warnings);
-        Assert.Equal(["rise"], overdrive.Mode!.Params.Select(p => p.Name));
+        Assert.Equal(["rise", "cpu_racers", "cpu_skill"], overdrive.Mode!.Params.Select(p => p.Name));
         Assert.Equal((5, 50, 25), (overdrive.Mode!.Params[0].Least, overdrive.Mode!.Params[0].Most, overdrive.Mode!.Params[0].Default));
-        Assert.Equal(["Mines respawn 200 ms", "Pedals locked", "No boost", "Rolling start at 1000 km/h", "Waits for every racer", "Stats", "Machine setting 100"],
-            ModeRuleLines.Of(overdrive.Mode!));
+        Assert.Equal(["CPU level Master", "Mines respawn 200 ms", "Pedals locked", "No boost", "Rolling start at 1000 km/h", "Waits for every racer", "Stats",
+            "Machine setting 100"], ModeRuleLines.Of(overdrive.Mode!));
         Assert.Contains(overdrive.Mode!.Setups, s => s.Id == ModeSetup.ResultsHeading);
         Assert.Null(ModeTerms.Of(overdrive.Mode!).Courses);   // any course of the pool
         Assert.Equal(0, ModeTerms.Of(overdrive.Mode!).Laps(1));

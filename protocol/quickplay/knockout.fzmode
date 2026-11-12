@@ -14,8 +14,11 @@ param length    "Race length" delay 4min..10min step 30s default 7min;
 param first_cut "First cut"   delay 20s..45s step 5s default 45s;    // a 30-machine grid is 374 m long
 param keep      "Racers left" number 1..29 default 1;
 param warn_from "Warn from"   number 3..9 default 5;                  // seconds before the cut
+param cpu_racers "CPU racers" choice ["Off", "Vote", "Always"] default "Vote";   // Vote: players may vote CPUs in; Always: CPUs take the empty seats with no vote
+param cpu_skill  "CPU level"  choice ["Novice", "Standard", "Expert", "Master"] default "Master";   // (Master: the game's own, as before the setting)
 
-cpus on;
+cpus cpu_racers;
+cpu_level cpu_skill;
 stats "GX Unleashed";   // Quick Play's pack, mines and machine setting (a word left out is the game's own)
 mine_regen on;
 machine_setting 100;

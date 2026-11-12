@@ -4,16 +4,23 @@
 //
 // The speed (vocabulary 4.3): 1000 km/h at GO, 1150 at 1:00, 1450 at 3:00, 1900 at 6:00, 2500 at 10:00; the word
 // caps at 9000. No clock: the race goes on until one machine is left (design 9.2).
+//
+// No lap times (owner 2026-11-12: "there's no point, just distance readout"): the race time, the lap times and the lap count are
+// hidden, and DISTANCE reads the metres driven since GO (seat.distance from the rolling start's GO; six digits, no
+// REST label: distance_label off). A racer that is out keeps its last number.
 
 mode "Overdrive" {
-  api 1;
+  api 0.6.1;
   badge "OVERDRIVE";
   about "Speed locked and rising. Last one alive wins.";
 }
 
 param rise "Speed added every 10 s" number 5..50 step 5 default 25;
+param cpu_racers "CPU racers" choice ["Off", "Vote", "Always"] default "Vote";   // Vote: players may vote CPUs in; Always: CPUs take the empty seats with no vote
+param cpu_skill  "CPU level"  choice ["Novice", "Standard", "Expert", "Master"] default "Master";   // (Master: the game's own, as before the setting)
 
-cpus on;
+cpus cpu_racers;
+cpu_level cpu_skill;
 stats "GX Unleashed";          // Quick Play's pack, mines and machine setting (a word left out is the game's own)
 mine_regen on;
 machine_setting 100;
@@ -23,15 +30,29 @@ boost off;
 rolling_start 1000 km/h;       // as Knockout: speed at the gate, CPU steers through the countdown, control at GO
 race_waits everyone;           // the race goes on until the mode ends it, not until the last player is out
 results_heading "OVERDRIVE";   // the times list: the winner first, then the racers out, last out first, each at its time
+distance_label off;            // DISTANCE shows the metres driven, not the metres left: no REST over them (0.6.1)
 
 global int outs;
 global int hold_until;         // a player's win: the race ends when the game's FINISH! and place have had their 8 s
 seat   int out_order;          // 0: still in; 1: first out
+seat   real from;              // the seat's distance at GO: the readout counts from there
 
 rule "Lock the speed" {
   event each seat;
   while race.started and seat.racing;
   do { seat.speed = min(9000.0, 1000.0 + rise * race.steps / 600.0); }   // smooth: a little more every step
+}
+
+rule "Distance in place of the race time" {
+  event each seat;
+  when race.started;
+  do { seat.from = seat.distance; hide seat, RACE_TIME; hide seat, LAP_TIMES; hide seat, LAPS; show seat, DISTANCE; }
+}
+
+rule "Distance" {
+  event each seat;
+  while race.started and seat.racing;
+  do { show_distance seat, seat.distance - seat.from; }   // the metres driven since GO (six digits with the label off)
 }
 
 rule "Out" {

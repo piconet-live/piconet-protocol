@@ -87,12 +87,12 @@ public sealed class ModeLevelsTests
             Assert.Throws<InvalidDataException>(() => ModePackage.Read(older)).Message);
     }
 
-    /// <summary>Quick Play's own files: the ones that use a word of 0.6.1 (cpus always; the AX HUD and live_places) name it,
-    /// the rest keep 0.6.0's.</summary>
+    /// <summary>Quick Play's own files: the ones that use a word of 0.6.1 (cpus always, the CPU racers row; the AX HUD and
+    /// live_places; distance_label) name it, the rest keep 0.6.0's.</summary>
     [Theory]
     [InlineData("competitive", 2)]
     [InlineData("knockout", 2)]
-    [InlineData("overdrive", 1)]
+    [InlineData("overdrive", 2)]
     [InlineData("death_race", 2)]
     [InlineData("ghost_race", 1)]
     public void TheOfficialFilesKeepTheirLevels(string name, int ruleSet)
