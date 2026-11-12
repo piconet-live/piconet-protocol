@@ -126,7 +126,7 @@ public static class ModeCompiler
             {
                 throw new ModeCompileException(header.ApiLine, refusal);
             }
-            _emitter = new ModeEmitter(_names, warnings);
+            _emitter = new ModeEmitter(_names, warnings) { Api = api };
             Subs(items.OfType<ModeSubItem>().ToList());
             foreach (var item in items.Skip(1))
             {

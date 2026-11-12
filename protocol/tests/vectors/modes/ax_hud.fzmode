@@ -1,5 +1,5 @@
-// hud_layout ax and hud_move: the race HUD in F-Zero AX's layout, with the spare-machine icon's number and the
-// distance moved out of the way. Presentation only.
+// hud_layout ax and hud_move: the race HUD in F-Zero AX's layout, the distance placed under the clock, the faces board
+// turned, the spare-machine counter at the bottom centre. Presentation only.
 mode "AX HUD" { api 0.6.1; }
 hud_layout ax;
 rule "Places" {
@@ -7,8 +7,9 @@ rule "Places" {
   do {
     for each seat {
       show seat, DISTANCE;
-      hud_move seat, DISTANCE, 0, 60;
-      hud_move seat, FACES, -4.5, 0;
+      hud_move seat, DISTANCE, 320, 108, 0;
+      hud_move seat, FACES, 51, 214, -4.5;
+      hud_move seat, SPARE, 320, 444, 0;
     }
   }
 }

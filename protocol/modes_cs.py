@@ -126,5 +126,10 @@ def emit(t):
             "        new Dictionary<(ModeSetup Word, int Argument, int Value), int>", "        {"]
     out += [f"            [(ModeSetup.{s['pascal']}, {i}, {a['always']})] = {a['always_since']},"
             for s in t["setups"] for i, a in enumerate(s.get("args", [])) if a.get("always_since", s["since"]) > s["since"]]
+    out += ["        };", "",
+            "    /// <summary>The values of a choice that arrived after rule set 1: (choice, value's place) to the rule set.</summary>",
+            "    public static readonly IReadOnlyDictionary<(string Choice, int Value), int> ChoiceValuesSince =",
+            "        new Dictionary<(string Choice, int Value), int>", "        {"]
+    out += [f"            [({text(c['name'])}, {c['values'].index(v)})] = {r}," for c in t["choices"] for v, r in c["values_since"].items()]
     out += ["        };", "}", ""]
     return "\n".join(out)

@@ -22,7 +22,7 @@ SETUP_KEYS = {"name", "id", "args", "where", "doc", "table", "lobby", "form", "s
 ARG_KEYS = {"type", "name", "least", "most", "most_was", "most_since", "default", "on", "always", "always_since"}
 READ_KEYS = {"name", "id", "type", "doc", "since"}
 ACTION_KEYS = {"name", "spelled", "id", "args", "where", "doc", "join", "needs_step", "since"}
-CHOICE_KEYS = {"name", "values", "doc"}
+CHOICE_KEYS = {"name", "values", "doc", "values_since"}
 OPERANDS = {"u8": 1, "u16": 2, "u32": 4, "i32": 4}
 TYPES = {"int", "real", "bool", "seat", "seats", "vec"}
 PASCAL = re.compile(r"[A-Z][A-Za-z0-9]*\Z")
@@ -128,7 +128,9 @@ def fingerprint(t, rule_set):
 
     what = {"limits": {k: v for k, v in t["api"].items() if k != "number" and t["levels"]["limits"].get(k, 1) <= rule_set}, "ops": of("ops"), "events": of("events"),
             "setups": of("setups", setup), "seat_reads": of("seat_reads"), "race_reads": of("race_reads"),
-            "actions": of("actions"), "choices": [kept(c) for c in t["choices"]]}
+            "actions": of("actions"),
+            "choices": [{k: v for k, v in kept(c).items() if k != "values_since"} | {"values": [v for v in c["values"] if c["values_since"].get(v, 1) <= rule_set]}
+                        for c in t["choices"]]}
     return hashlib.sha256(json.dumps(what, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
 
 
@@ -221,7 +223,13 @@ def load(path=SCHEMA, frozen=True):
         if (not isinstance(values, list) or not values or len(values) > 255
                 or any(not isinstance(v, str) or not re.fullmatch(r"[A-Za-z][A-Za-z0-9_]*", v) for v in values)):
             raise SchemaError(f"choice {name}: values are names")
-        choices[name] = {"name": name, "pascal": pascal(name, "choice"), "values": values, "doc": entry.get("doc", "")}
+        # (a value added to a shipped choice: `values_since = { NAME = rule set }`, the open one or a later shipped one)
+        added = entry.get("values_since", {})
+        if (not isinstance(added, dict) or any(v not in values for v in added)
+                or any(type(r) is not int or not 1 < r <= newest for r in added.values())):
+            raise SchemaError(f"choice {name}: `values_since` names values of the choice and the rule set 2 .. {newest} each arrived in")
+        choices[name] = {"name": name, "pascal": pascal(name, "choice"), "values": values, "doc": entry.get("doc", ""),
+                         "values_since": added}
     named = [v for c in choices.values() for v in c["values"]]
     if len(set(named)) != len(named):
         raise SchemaError("choice: a value's name twice")

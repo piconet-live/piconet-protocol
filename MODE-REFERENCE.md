@@ -229,7 +229,7 @@ game counts it, 100 a full machine.
 | `live_places;` | The places the mode gives show during the race: the place at the top of the screen and the faces at the side follow `seat.place`, from the step it is written. Seats with no place follow in race order. Left out: `seat.place` counts only when the race ends. A 0.6.0 game cannot race a mode with it | |
 | `hud clean;` | Nothing over the race but the HUD's own parts: no CHECK sign and no name tags, a player's or a `tag`. For footage | |
 | `distance_label off;` | DISTANCE shows its number and m without the game's REST label, for metres that are not the metres left; the number then has six digits (to 999999) in place of five. A 0.6.0 game cannot race a mode with it | on or off |
-| `hud_layout ax;` | The race HUD in F-Zero AX's layout: the position at the bottom left, the faces board smaller to leave it room, TIMER at the top. The rest stays where GX puts it; the spare-machine number shares the bottom left, so move it or the position with `hud_move` | |
+| `hud_layout ax;` | The race HUD in F-Zero AX's layout: the position at the bottom left, the faces board smaller to leave it room, TIMER at the top. The rest stays where GX puts it; the spare-machine counter (`SPARE`) keeps its place at the bottom left under the position, so a mode that shows both places one of them with `hud_move` | |
 
 A race ends by laps and `finish_limit`, at `clock_limit`, at `end_race`, or when the last player is finished or out
 (unless `race_waits everyone`). The results are the times list, then the points page when the mode awards points or
@@ -528,7 +528,8 @@ text where it likes. They never change the race.
 | `show_distance s off;` | DISTANCE reads the metres to the finish again | |
 | `show_objects s, n, of;` | The OBJECTS part reads n/of | 0 to 99 each |
 | `show_objects s off;` | OBJECTS reads the course's own count again | |
-| `hud_move s, PART, dx, dy;` | The seat's player sees the part moved dx right and dy down, in the 640 x 480 screen's units (0, 0: back in place). LEADER_GAP moves the banners with it | -640 to 640 each |
+| `hud_move s, PART, x, y, angle;` | The seat's player sees the part with its centre at (x, y) of the 640 x 480 screen, turned angle degrees clockwise: the same point of the screen in 4:3, Wide Screen and true wide screen. The parts' own centres: RANK (320.5, 62), or (86, 435) under `hud_layout ax`; LAPS (439, 43); SPEED (550, 440); ENERGY (548.5, 43); LAP_TIMES (556.8, 126.6); RACE_TIME (532, 86); FACES (51, 214); SPARE (56, 444). LEADER_GAP moves the banners with it | x and y -1280 to 1280, the angle 0 to 359 |
+| `hud_move s, PART off;` | The part is drawn where the game draws it again | |
 | `say "Hold A to accelerate.";` | A message for every player on a dark panel: in the middle of the picture while the race is paused, as a line at its foot while it runs, until the next `say` or `say off`. Written in quotes, never a variable | any text, up to 160 bytes of UTF-8; at most 32 texts a mode |
 | `say off;` | The message goes | |
 
@@ -561,6 +562,7 @@ text where it likes. They never change the race.
 | `LAP_TIMES` | The lap times | until hidden |
 | `RACE_TIME` | The race time | until hidden |
 | `FACES` | The racers' faces | until hidden |
+| `SPARE` | The Grand Prix spare-machine counter: the star icon and `show_number`'s number. For `hud_move` only: `show_number` shows and hides it (0.6.1) | with `show_number` |
 | `TIMER` | The timed race's clock, with `clock_limit` or `show_clock` | when shown |
 | `LEADER_GAP` | The gap to the leader at each lap line, for a second; the leader sees its lead when second place crosses | when shown |
 | `GHOST_GAP` | Time Attack's live gap at the right edge, all race, against the seat furthest ahead; red while it is ahead | when shown |

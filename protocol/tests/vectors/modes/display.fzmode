@@ -75,8 +75,8 @@ rule "The story parts' values" {
 rule "A part moved" {
   event lap(s);
   do {
-    hud_move s, RANK, -296, 350;
-    hud_move s, RANK, 0, 0;
+    hud_move s, RANK, 24.5, 412, 90;
+    hud_move s, RANK off;
   }
 }
 

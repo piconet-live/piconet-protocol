@@ -350,6 +350,10 @@ internal sealed partial class ModeEmitter
             }
             if (ModeWords.ActionChoices.TryGetValue((action.Id, i), out var choice))
             {
+                if (action.Id is ModeAction.Show or ModeAction.Hide && statement.Arguments[i] is ModeName { Name: "SPARE" })
+                {
+                    throw new ModeCompileException(statement.Line, $"{action.Name} SPARE: the spare-machine counter is shown and hidden by show_number (hud_move places it)");
+                }
                 Choice(statement.Arguments[i], choice, action.Name);
                 continue;
             }
@@ -455,6 +459,10 @@ internal sealed partial class ModeEmitter
         if (index < 0)
         {
             throw new ModeCompileException(expr.Line, $"{what} takes one of {string.Join(", ", values)}");
+        }
+        if (ModeWords.ChoiceValuesSince.TryGetValue((choice, index), out var since) && since > Api)
+        {
+            throw new ModeCompileException(expr.Line, $"{what} {values[index]} needs api {ModeLevels.Version(since)}: this file says api {ModeLevels.Version(Api)}");
         }
         Push(index);
     }

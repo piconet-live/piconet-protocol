@@ -25,8 +25,8 @@
 //
 // The HUD is F-Zero AX's (owner 2026-11-12): the position at the bottom left, the clock at the top where AX's timer is,
 // the six faces on AX's rows. The position and the faces follow the points order above during the race (live_places),
-// not the road order. The lives counter shares the bottom left with AX's position, so the position is moved 72 units
-// right (hud_move RANK: the lives at 24-88, the position from 96).
+// not the road order. The lives counter (the Grand Prix spare-machine icon, bottom left in the game) is placed at the
+// bottom centre (hud_move SPARE), clear of the position at the bottom left and the speed at the bottom right.
 //
 // Damage is 400% and the game's cap of 20 a hit for a player is off (a CPU never had it), so a hard hit can end a
 // machine from full; a hit still takes at most 1.01 x max energy. Walls, mines and the pit are the game's own: the pit's
@@ -102,7 +102,7 @@ rule "Lives" {
       seat.lives_shown = lives - 1;
       show_number seat, seat.lives_shown;
       if (lives > 1) { respawns seat; }
-      hud_move seat, RANK, 72, 0;   // AX's position clear of the lives counter (both at the bottom left)
+      hud_move seat, SPARE, 320, 444, 0;   // the lives counter at the bottom centre (its own place is the bottom left, under AX's position)
     }
   }
 }

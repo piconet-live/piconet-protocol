@@ -20,6 +20,9 @@ internal sealed partial class ModeEmitter(ModeNames names, List<string> warnings
 {
     private const long MostMultiplier = 1L << 28;
 
+    /// <summary>The file's rule set (its <c>api</c>): a choice's value of a later one is refused.</summary>
+    public int Api { get; init; } = int.MaxValue;
+
     private sealed record Local(string Name, ModeType Type, int Slot, bool Fixed);
 
     private readonly ModeBytes _code = new();

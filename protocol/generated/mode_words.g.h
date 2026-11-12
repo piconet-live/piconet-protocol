@@ -503,10 +503,11 @@ enum Action : std::uint8_t
   ACTION_RESUMEAFTER = 86,  // resume after
   ACTION_SAY = 87,  // say
   ACTION_SAYOFF = 88,  // say off
-  ACTION_COUNT = 89,
+  ACTION_HUDMOVEOFF = 89,  // hud_move off
+  ACTION_COUNT = 90,
 };
 
-// the choice `part`: a part of the game's own race HUD: TIMER the timed mode's clock (clock_limit's time, R+0xA4: seconds, 0 to 999); DISTANCE the metres to the finish (the seat's own; show_distance gives a mode's); DIGIT the story's big digit (danger_zone's seconds, 3 2 1); WARNING, SUCCESS, FAILED, TIME_OVER, SPEED_GAUGE, OBJECTS the story's pictures, off until shown (SUCCESS MISSION CLEAR!, FAILED MISSION FAILED, TIME_OVER "Time is up...": fixed pictures with no value; OBJECTS the course objects' count n/of, show_objects gives a mode's); LEADER_GAP the game's own time gap to the leader, off until shown: at each lap line, for a second, the seat's time behind the leader, and the leader's own lead when second place crosses; GHOST_GAP Time Attack's live gap, off until shown: signed minutes, seconds and thousandths at the right edge (617, 270), all race, against the seat furthest ahead, red while it is ahead, blue while you are; RANK, LAPS, SPEED, ENERGY, LAP_TIMES, RACE_TIME, FACES the standard HUD (the mask .data 0x3D544; FACES the board fn_1_D27B8), on until hidden
+// the choice `part`: a part of the game's own race HUD: TIMER the timed mode's clock (clock_limit's time, R+0xA4: seconds, 0 to 999); DISTANCE the metres to the finish (the seat's own; show_distance gives a mode's); DIGIT the story's big digit (danger_zone's seconds, 3 2 1); WARNING, SUCCESS, FAILED, TIME_OVER, SPEED_GAUGE, OBJECTS the story's pictures, off until shown (SUCCESS MISSION CLEAR!, FAILED MISSION FAILED, TIME_OVER "Time is up...": fixed pictures with no value; OBJECTS the course objects' count n/of, show_objects gives a mode's); LEADER_GAP the game's own time gap to the leader, off until shown: at each lap line, for a second, the seat's time behind the leader, and the leader's own lead when second place crosses; GHOST_GAP Time Attack's live gap, off until shown: signed minutes, seconds and thousandths at the right edge (617, 270), all race, against the seat furthest ahead, red while it is ahead, blue while you are; RANK, LAPS, SPEED, ENERGY, LAP_TIMES, RACE_TIME, FACES the standard HUD (the mask .data 0x3D544; FACES the board fn_1_D27B8), on until hidden; SPARE (0.6.1) the Grand Prix spare-machine counter (the star icon and show_number's number, fn_1_CA8FC), for hud_move: show_number shows and hides it, not show and hide
 enum Part : std::uint8_t
 {
   PART_TIMER = 0,
@@ -527,7 +528,8 @@ enum Part : std::uint8_t
   PART_LAP_TIMES = 15,
   PART_RACE_TIME = 16,
   PART_FACES = 17,
-  PART_COUNT = 18,
+  PART_SPARE = 18,
+  PART_COUNT = 19,
 };
 
 // the choice `banner`: a banner of the game's own race HUD, shown once, as the game shows it; TICK the timed mode's countdown beep, heard by that seat's player
@@ -635,6 +637,7 @@ constexpr int ActionSince(std::uint8_t action)
     case ACTION_RESUMEAFTER: return 2;
     case ACTION_SAY: return 2;
     case ACTION_SAYOFF: return 2;
+    case ACTION_HUDMOVEOFF: return 2;
     default: return 1;
   }
 }
@@ -719,7 +722,7 @@ constexpr int ActionArguments(std::uint8_t action)
     case ACTION_SHOWOBJECTSOFF: return 1;
     case ACTION_SEATSTATBOOSTENERGY: return 2;
     case ACTION_SEATBASESPEED: return 2;
-    case ACTION_HUDMOVE: return 4;
+    case ACTION_HUDMOVE: return 5;
     case ACTION_MAPCHAR: return 2;
     case ACTION_MAPCHAROFF: return 1;
     case ACTION_PAUSE: return 0;
@@ -727,6 +730,7 @@ constexpr int ActionArguments(std::uint8_t action)
     case ACTION_RESUMEAFTER: return 1;
     case ACTION_SAY: return 1;
     case ACTION_SAYOFF: return 0;
+    case ACTION_HUDMOVEOFF: return 2;
     default: return -1;
   }
 }

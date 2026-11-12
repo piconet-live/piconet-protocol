@@ -36,14 +36,24 @@ public sealed class ModeHudPlaceTests
     }
 
     [Fact]
-    public void HudMoveTakesAPartAndTwoReals()
+    public void HudMoveTakesAPartAPlaceAndAnAngle()
     {
-        var code = Code(Rule("hud_move seat, DISTANCE, 0, 60;"));
+        var code = Code(Rule("hud_move seat, DISTANCE, 320, 60, 90;"));
         var at = code.IndexOf("Action hud_move");
-        // the seat, DISTANCE (the part's place in its choice), 0 and 60 as reals
-        Assert.Equal(["Push 1", "Push 0", "IToF", "Push 60", "IToF"], code[(at - 5)..at].Select(Word));
-        Assert.Single(Compile(Rule("hud_move seat, 1, 0, 60;")).Errors);  // a number is no part
-        Assert.Single(Compile(Rule("hud_move seat, RANK, 0;")).Errors);
+        // the seat, DISTANCE (the part's place in its choice), the centre's x and y and the angle as reals
+        Assert.Equal(["Push 1", "Push 320", "IToF", "Push 60", "IToF", "Push 90", "IToF"], code[(at - 7)..at].Select(Word));
+        Assert.Single(Compile(Rule("hud_move seat, 1, 320, 60, 0;")).Errors);  // a number is no part
+        Assert.Single(Compile(Rule("hud_move seat, RANK, 0, 0;")).Errors);     // the old form: dx, dy
+        // SPARE (the spare-machine counter) is a part hud_move places, of 0.6.1; show and hide leave it to show_number
+        code = Code(Rule("hud_move seat, SPARE, 320, 444, 0;"));
+        Assert.Equal("Push 18", Word(code[code.IndexOf("Action hud_move") - 7]));
+        Assert.Contains("Action hud_move off", Code(Rule("hud_move seat, SPARE off;")));
+        Assert.Single(Compile(Rule("show seat, SPARE;")).Errors);
+        Assert.Single(Compile(Rule("hide seat, SPARE;")).Errors);
+        var old = ModeCompiler.Compile("mode \"T\" { api 0.6.0; }\n" + Rule("show_number seat, 2;"));
+        Assert.True(old.Succeeded, string.Join("; ", old.Errors));
+        old = ModeCompiler.Compile("mode \"T\" { api 0.6.0; }\n" + Rule("hud_move seat, SPARE, 320, 444, 0;"));
+        Assert.Contains(old.Errors, e => e.Contains("needs api 0.6.1", StringComparison.Ordinal));
     }
 
     [Fact]
