@@ -66,7 +66,8 @@ public static class ModeLevels
         foreach (var word in package.Setups.Select(s => (s.Id, s.Arguments))
                      .Concat(package.LobbyWords.Select(w => (w.Id, Arguments: w.Values))))
         {
-            var name = ModeWords.Setups.First(s => s.Id == word.Id).Name;
+            // (tag_looks is the compiler's, from a tag word's settings: the file's words are named)
+            var name = word.Id == ModeSetup.TagLooks ? "tag's size and range" : ModeWords.Setups.First(s => s.Id == word.Id).Name;
             // (a word the compiler writes for `say` or `pause` is no word of the file's: the action below is named)
             if (ModeWords.SetupsSince.GetValueOrDefault(word.Id, 1) > package.Api && word.Id is not (ModeSetup.SayTexts or ModeSetup.Pauses))
             {

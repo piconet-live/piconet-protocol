@@ -953,9 +953,57 @@ internal sealed class ModeParser
             arguments.Add(name is "tag" or "map_char" or "say" or "show_score" or "show_text" && Current.Kind == ModeTokenKind.Text
                 ? new ModeTagText(Current.Line, Take().Text)
                 : Expression());
+            if (name == "tag" && arguments is [_, ModeTagText text])
+            {
+                arguments[1] = text with { Look = TagLook() };
+            }
         }
         Expect(";");
         return new ModeActionStatement(token.Line, name, arguments);
+    }
+
+    /// <summary><c>tag</c>'s settings after its text, each once, in either order, left out for the default:
+    /// <c>tag s, "TEXT", size 0.5 1.2, range 300 m;</c>. A clause is a comma, its name and its numbers.</summary>
+    private ModeTagLook TagLook()
+    {
+        var look = ModeTagLook.None;
+        while (Current.Is(",") && PeekToken(1) is { Kind: ModeTokenKind.Name, Text: "size" or "range" } setting)
+        {
+            _at += 2;
+            if (setting.Text == "size")
+            {
+                if (look.SizeMin is not null)
+                {
+                    throw Error("tag takes one size: tag s, \"TEXT\", size 0.5 1.2;");
+                }
+                var min = Number("tag's size is its least and its largest, a player's name tag at its largest being 1: size 0.5 1.2");
+                var max = Number("tag's size is its least and its largest, a player's name tag at its largest being 1: size 0.5 1.2");
+                look = look with { SizeMin = min, SizeMax = max };
+            }
+            else
+            {
+                if (look.Range is not null)
+                {
+                    throw Error("tag takes one range: tag s, \"TEXT\", range 300 m;");
+                }
+                look = look with { Range = Number("tag's range is the metres it is seen from: range 300 m") };
+            }
+        }
+        return look;
+    }
+
+    /// <summary>A number written in a setting: a whole, a real or metres (<c>300 m</c>).</summary>
+    private float Number(string expected)
+    {
+        var token = Current;
+        if (token.Kind is not (ModeTokenKind.Whole or ModeTokenKind.Fraction)
+            || token.Kind == ModeTokenKind.Fraction && token.Text.Contains(' ', StringComparison.Ordinal) && !token.Text.EndsWith(" m", StringComparison.Ordinal)
+            || token.Kind == ModeTokenKind.Fraction && token.Text.Contains('%', StringComparison.Ordinal))
+        {
+            throw Error($"{expected}; not {Describe(token)}");
+        }
+        _at++;
+        return token.Kind == ModeTokenKind.Whole ? token.Whole : token.Real;
     }
 
     /// <summary><c>team T no contact;</c>: the action <c>team no contact</c> on team T.</summary>

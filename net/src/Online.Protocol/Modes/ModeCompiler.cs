@@ -104,6 +104,10 @@ public static class ModeCompiler
             {
                 _setups.Add(new ModeSetupWord(ModeSetup.TagTexts, ModeTagTexts.Cells(emitter.TagTexts)));
             }
+            if (emitter.TagLooks.Any(l => l != ModeTagLooks.Default))
+            {
+                _setups.Add(new ModeSetupWord(ModeSetup.TagLooks, ModeTagLooks.Cells(emitter.TagLooks)));
+            }
             if (emitter.Used.Keys.Any(ModeStatsPage.Uses))
             {
                 _setups.Add(new ModeSetupWord(ModeSetup.StatsPage, []));
@@ -302,6 +306,7 @@ public static class ModeCompiler
 private static string? CompilersOwn(ModeSetup id, string name) => id switch
 {
     ModeSetup.TagTexts => "tag_texts is the compiler's own: a rule writes tag s, \"TEXT\"; and the text is kept",
+    ModeSetup.TagLooks => "tag_looks is the compiler's own: a rule writes tag s, \"TEXT\", size 0.5 1.2, range 300 m; and the settings are kept",
     ModeSetup.StatsPage => "stats_page is the compiler's own: a rule writes the stat, and the page is kept",
     ModeSetup.TimeGaps => "time_gaps is the compiler's own: the gap reads set it",
     ModeSetup.SayTexts => "say_texts is the compiler's own: a rule writes say \"TEXT\"; and the text is kept",

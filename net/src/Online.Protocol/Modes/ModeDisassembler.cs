@@ -111,6 +111,10 @@ public static class ModeDisassembler
         {
             return table.Name + " " + string.Join(' ', ModeTagTexts.Texts(word.Arguments).Select(Quote));
         }
+        if (word.Id == ModeSetup.TagLooks)
+        {
+            return table.Name + " " + string.Join(' ', ModeTagLooks.Values(word.Arguments).Select(l => Invariant($"[range {l.Range} m size {l.SizeMin} {l.SizeMax}]")));
+        }
         var parts = new List<string> { table.Name };
         for (var i = table.Args.Count; i + 1 < word.Arguments.Count; i += 2)  // a table's rows (laps by course)
         {

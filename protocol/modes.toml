@@ -1975,9 +1975,12 @@ doc = "the seat runs out of energy, as a last hit does: it tumbles, and is out b
 name = "tag"
 id = 36
 args = ["seat", "int"]
-where = """the display page's tag bytes (mode_hud.h); drawn by the name tags (port/image/routines/nametags.py). The file writes `tag s, "TEXT";`: \
-the compiler pushes the text's number in tag_texts, from 1. Font 5: A to Z, 0 to 9, the space, `.` and `-`, api.tag_text long at most, api.tag_texts texts a mode (show_score's labels among them)"""
-doc = "TEXT floats over the seat's machine in place of its name, for everyone else, on any seat, until `tag s off`"
+where = """the display page's tag bytes (mode_hud.h); drawn by the name tags (port/image/routines/nametags.py). The file writes `tag s, "TEXT";`, \
+with its settings after the text, each once, in either order, left out for the defaults (0.6.1): `tag s, "TEXT", size MIN MAX, range D m;` \
+(size 0.1 to 5, a player's name tag at its largest being 1, MIN <= MAX, left out 0.5 and 1.2; range 1 to 10,000 m, left out 200): \
+the compiler pushes the text's number in tag_texts, from 1, a text with other settings being another text, and writes the settings \
+as tag_looks. Font 5: A to Z, 0 to 9, the space, `.` and `-`, api.tag_text long at most, api.tag_texts texts a mode (show_score's labels among them)"""
+doc = "TEXT floats over the seat's machine in place of its name, for everyone else, on any seat, until `tag s off`; its size follows its distance from the camera between MIN and MAX (left out 0.5 and 1.2), seen to D (left out 200 m)"
 
 [[action]]
 name = "tag off"
@@ -2487,21 +2490,25 @@ restores (`restore on`, `respawns s`) and breaks down is not restored yet: it sl
 may cross the line and finish, and its restore starts at the step the game without restore would have taken it out \
 (destroyed, fallen, or the wreck at rest). Off: the restore starts at the step of the breakdown, as before 0.6.1"""
 
-# --- how far a mode's tags are seen (0.6.1, owner 2026-11-12: "Let's do it" to a small word, `tag_range 300 m;`; on its
-# limits "nothing that can break the game")
+# --- a tag's own settings (0.6.1, owner 2026-11-12: the size "needs to scale based on distance, far enough away to a certain
+# minimum size ... adjustable ... we need to be able to limit to a certain max size as well", and "It should be settings on
+# the tag word itself"; of limits, "nothing that can break the game")
 
 [[setup]]
-name = "tag_range"
+name = "tag_looks"
 id = 73
 since = 2
-args = [{ type = "real", least = 1.0, most = 10000.0 }]
-where = """the window's three words at WINDOW_TAG_RANGE (runner mode_hud.h, written at the boot: the range squared, 1 over the \
-difference of the squares of the range and three quarters of it, and twice the range squared), which the name tags \
-(port/image/routines/nametags.py) read in place of their constants for a mode's `tag`: full to three quarters of the range, \
-fading to nothing at it, nearest first in the limit of tags shown. Left out: 200 m, the same as before the word (150 m full). \
-The bounds are the drawing's: below 1 m the fade's divisor nears 0; above 10 km the squared distances of the tagged seats' \
-order (d^2 less twice the range squared, binary32) lose their last metres. Player name tags unchanged. Drawing only"""
-doc = "a mode's tags are fully visible to three quarters of this distance and fade to nothing at it; left out, 200 m (the player name tags' 15 to 40 m is not changed). A 0.6.0 game cannot race a mode with it"
+form = "text"
+where = """the compiler's own, written when a `tag` word carries a setting (size MIN MAX, range D m; a file never writes it): three \
+values a text of tag_texts, in its order, for every text, each a binary32's bits: the range in metres (1 to 10,000; left out \
+200), the least size and the largest (0.1 to 5, least <= largest, a player's name tag at its largest being 1; left out 0.5 and \
+1.2: today's largest). Two `tag` words with one text and different settings are two texts of tag_texts. The core writes five \
+words a text into the window at WINDOW_TAG_LOOKS (runner mode_hud.h, at the boot: the range squared, 1 over the difference of \
+the squares of the range and three quarters of it, the largest size times the reference depth, the least size, the largest), \
+which the name tags (port/image/routines/nametags.py) read by the seat's text: alpha full to three quarters of the range and \
+nothing at it; size the largest at the reference depth (40 m from the camera) and over the depth beyond, held between the \
+two. Without the word every text has the defaults. Player name tags unchanged. Drawing only"""
+doc = "the `tag` words' settings, three values a text of tag_texts: the range in metres, the least size and the largest; written by the compiler. A 0.6.0 game cannot race a mode with it"
 
 [[action]]
 name = "hud_move"
