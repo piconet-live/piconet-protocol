@@ -316,7 +316,7 @@ public sealed class ModeLimitsTests
     /// own change writes its new hash here (<c>ModeCompilerTests</c> holds the vectors' bytes).</summary>
     [Theory]
     [InlineData("competitive", "4e162ffc587d940201e526c0e4a78d6a7aeadbcd19fa9f503c43f4f1cc0e2512", 1807)]
-    [InlineData("crown", "eabbb1848c1edf5ef595011ec6e2af3ece20cb80b85091c6d3796d2c095b548c", 51805)]
+    [InlineData("crown", "a75d3a2ca9ace0ab124155f7369585e8197265edf53ffcc92acaec45108ca2b2", 51805)]
     [InlineData("death_race", "150fe1f9b5853d50d70ee42a44775b605999a50e06229c780e86488b34fc453c", 21791)]
     [InlineData("ghost_race", "a654c6fe97f6a6a68f3e338cf63e619dd2c7640f6d41f0ea0dbc333046398119", 2204)]
     [InlineData("knockout", "23fe76538eabd12bc8683a26182d32e86640e21a3a0ebcb0f101467523dccaa2", 45835)]

@@ -225,7 +225,7 @@ rule "The look of the crown" {
   while race.started;
   do {
     if (seat.crown == 1 and seat.racing) {
-      tag seat, "CROWN";
+      tag seat, "CROWN", range 10000 m;   // seen from anywhere on the course (the owner, 12 November); shrinks with distance
       map_mark seat, 0xFFD000;
       map_hide seat from seats - seats;   // on every map
       // a rainbow, round the colour wheel every 2 s (three times as fast while safe)
