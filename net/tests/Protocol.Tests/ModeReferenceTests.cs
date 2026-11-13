@@ -16,7 +16,7 @@ public sealed class ModeReferenceTests
 
     /// <summary>The setup words only the compiler writes: a file that writes one is refused ("… is the compiler's
     /// own", ModeCompiler), so the reference leaves them out.</summary>
-    private static readonly HashSet<string> CompilersOwn = ["tag_texts", "stats_page", "time_gaps"];
+    private static readonly HashSet<string> CompilersOwn = ["tag_texts", "tag_looks", "stats_page", "time_gaps", "say_texts", "pauses"];
 
     /// <summary>The kinds of word a section of the reference names, by its heading.</summary>
     private static readonly Dictionary<string, string[]> Sections = new()
@@ -143,8 +143,9 @@ public sealed class ModeReferenceTests
         }
     }
 
-    /// <summary>An action's form: its seat (or team) goes after the first part of a name of more than one, as
-    /// <c>respawns s off</c> and <c>team t no contact</c> write it; a name of one part is followed by its values.</summary>
+    /// <summary>An action's form: its seat (or team), and a part it names, go after the first part of a name of more than
+    /// one, as <c>respawns s off</c>, <c>hud_move s, PART off</c> and <c>team t no contact</c> write it; a name of one
+    /// part is followed by its values.</summary>
     private static Func<string, bool> ActionForm(string name)
     {
         var parts = name.Split(' ');
@@ -152,7 +153,7 @@ public sealed class ModeReferenceTests
         {
             return f => f == name || f.StartsWith(name + " ", StringComparison.Ordinal);
         }
-        var pattern = new Regex($@"^{Regex.Escape(parts[0])}( [^ ]+)? {string.Join(" ", parts.Skip(1).Select(Regex.Escape))}( .*)?$");
+        var pattern = new Regex($@"^{Regex.Escape(parts[0])}( [^ ]+){{0,2}} {string.Join(" ", parts.Skip(1).Select(Regex.Escape))}( .*)?$");
         return pattern.IsMatch;
     }
 

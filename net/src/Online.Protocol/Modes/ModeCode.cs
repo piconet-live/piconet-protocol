@@ -101,7 +101,8 @@ internal static class ModeCode
             {
                 throw new InvalidDataException($"{i.Op} at {i.Offset} names {i.Operands[0]}, past its table's {most}");
             }
-            if (i.Op == ModeOp.Action && ModeWords.Actions.All(a => (long)a.Id != i.Operands[0]))
+            if ((i.Op == ModeOp.Action && ModeWords.Actions.All(a => (long)a.Id != i.Operands[0]))
+                || (i.Op == ModeOp.SeatRead && ModeWords.SeatReads.All(r => (long)r.Id != i.Operands[0])))
             {
                 throw new InvalidDataException($"{i.Op} at {i.Offset} names {i.Operands[0]}, a word no longer of the table");
             }
@@ -125,8 +126,8 @@ internal static class ModeCode
         ModeOp.LoadTeamVar or ModeOp.StoreTeamVar => package.TeamWords.Count,
         ModeOp.Wait => Math.Min(locals, ModeWords.WaitLocals) + 1,
         ModeOp.Param => package.Params.Count,
-        ModeOp.SeatRead => ModeWords.SeatReads.Count,
-        ModeOp.RaceRead => ModeWords.RaceReads.Count,
+        ModeOp.SeatRead => (long)ModeWords.SeatReads[^1].Id + 1,
+        ModeOp.RaceRead => (long)ModeWords.RaceReads[^1].Id + 1,
         ModeOp.Action => (long)ModeWords.Actions[^1].Id + 1,
         ModeOp.SortBegin or ModeOp.SortAdd or ModeOp.SortRun or ModeOp.SortNext => ModeWords.Sorts,
         _ => null,

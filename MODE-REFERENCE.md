@@ -1,13 +1,37 @@
 # Mode reference
 
-A `.fzmode` file is a UTF-8 text file that sets the rules of a custom lobby's race. This is the vocabulary of `api 1`
-(Piconet 0.6.0). A file is at most 64 KB, and a word it leaves out is the game's own way.
+A `.fzmode` file is a UTF-8 text file that sets the rules of a custom lobby's race. This is the vocabulary of `api 0.6.5`.
+A file is at most 64 KB, and a word it leaves out is the game's own way.
+
+## The api line
+
+A file names the game version it was written for: `api 0.6.5;`. That version's rules are frozen once it is released,
+so the file means the same in every later version of the game. Players on an older version than the file names are
+asked to update before they can race it.
+
+| Written | Means |
+|---|---|
+| `api 0.6.5;` | The rules of Piconet 0.6.5 |
+| `api 0.6.0;` or `api 1;` | The rules of Piconet 0.6.0 (its files wrote `api 1`, which stays valid) |
+
+- A word or value that arrived later than the file's version is refused, with the version it needs: `cpus always
+  needs api 0.6.5: this file says api 1 (0.6.0)`. Raise the api line to use it.
+- A release that changed no rule has the rules of the one before it. A version between two releases that never shipped
+  is refused: `api 0.6.1 is not a release this build knows: name api 0.6.5, or api 0.6.0 (api 1)` (0.6.1 became 0.6.5
+  before its release).
+- A file that names a version newer than the game is refused: `api 0.7.0 is newer than this build, which knows up to
+  api 0.6.5: update to use this file`.
+
+| Arrived in | Words and values |
+|---|---|
+| 0.6.5 | `cpus always` |
+| 0.6.0 | Everything else on this page |
 
 ## What goes in a file
 
 | Part | What it does | Looks like |
 |---|---|---|
-| Header | First in the file: the mode's name, the api (required), a short badge and a one-line about (both optional) | `mode "Knockout" { api 1; badge "KNOCKOUT"; about "…"; }` |
+| Header | First in the file: the mode's name, the api (required), a short badge and a one-line about (both optional) | `mode "Knockout" { api 0.6.5; badge "KNOCKOUT"; about "…"; }` |
 | Parameter | A setting the host changes in the lobby; a constant in the rules | `param keep "Racers left" number 1..29 default 1;` |
 | Setup word | Fixes a rule of the race before it starts; each written once | `laps 5;` |
 | Constant | Fixed when the file compiles | `const int keep = 8;` |
@@ -37,7 +61,8 @@ anywhere.
   first name. A whole-number or delay default lies on a step from the least.
 - A setup word checks a parameter's whole range against its own. A word that takes a real (`damage`, `rolling_start`,
   `start_gap`, `pedals locked`) needs a real parameter: `500.0..2000.0`, not `500..2000`. A whole-number word takes a
-  `number`, a `delay` or a `choice`; an on-or-off word takes a `switch`.
+  `number`, a `delay` or a `choice`; an on-or-off word takes a `switch` (`cpus`, which has a third value, also a
+  `choice` of three).
 
 ### Types and values
 
@@ -117,7 +142,8 @@ game counts it, 100 a full machine.
 
 - A word is written once. A word with two forms takes one, except beside a parameter with a named value:
   `laps by course { … }` with `laps lap_count;` races the table at "By course" and the number otherwise.
-- An on-or-off word takes `on`, `off` or a switch parameter: `boost;` and `boost 1;` are refused.
+- An on-or-off word takes `on`, `off` or a switch parameter: `boost;` and `boost 1;` are refused. `cpus` also takes
+  `always`.
 - A range word takes `least..most`, or one value for both; either end may be a parameter.
 - `finish_limit` counts seconds and `mine_regen` milliseconds, written plain: a time with a unit is steps.
 
@@ -137,11 +163,17 @@ game counts it, 100 a full machine.
 |---|---|---|
 | `racers least..most;` `racers n;` | The lobby has `most` seats; a race with fewer racers than `least` is refused. Left out: the lobby's seats | 1 to 30 |
 | `teams least..most;` | The race has teams; the lobby offers `most`, and a race with players on fewer teams than `least` is refused. The host picks the count only when it is a parameter. Left out: no teams | 2 to 30 |
-| `cpus on;` `cpus off;` | `on`: players may vote CPUs into the race; it never forces them in. Left out: no CPUs | on or off |
+| `cpus on;` `cpus off;` `cpus always;` | `on`: players may vote CPUs into the race; it does not force them in. `always` (api 0.6.5): CPUs take the empty seats of every race, with no vote. Left out: no CPUs. A parameter that gives it is a switch (off, on) or a choice of three, read in that order as off, on, always: `param cpu_racers "CPU racers" choice ["Off", "Vote", "Always"] default "Vote";` | on, off or always |
 | `cpu_level n;` | The CPUs' level: 0 Novice, 1 Standard, 2 Expert, 3 Master. Left out: Master | 0 to 3 |
 | `machines all;` | Every machine, as leaving it out | |
 | `machines ["Blue Falcon", "Golden Fox"];` | The machines racers may choose and CPUs drive | machine names |
 | `customs on;` `customs off;` | `off`: no custom machines; a racer who chose one races their stock machine. Left out: allowed | on or off |
+| `machine "Blue Falcon";` | Every racer, CPUs too, races this machine. A machine a mode sets is the stock one (a racer's custom machine is not raced), and the machine choice offers it alone; the server refuses another. Not with another `machine` form | a machine name |
+| `machine random;` | One machine drawn for the race from the machines `machines` allows (left out: all 41); every racer, CPUs too, races it | |
+| `machine random each;` | Every racer, CPUs too, races a machine of their own drawn from the machines `machines` allows | |
+| `machine by seat ["Blue Falcon", own, random];` | Seat 0 races the list's first entry, seat 1 the next, and so on. `own` is the racer's own choice (a custom machine too, unless `customs off`; a CPU's usual machine), `random` a draw from what `machines` allows. A seat past the list's end is `own` | at most 30 entries |
+| `machine by team ["Blue Falcon", "Fire Stingray"];` | Team 1 races the first entry, Team 2 the next, and so on; entries as `machine by seat`. Needs `teams` | at most `teams`' most entries |
+| `machine by place ["Black Bull", random, own];` | By the lobby's last race: its winner races the first entry, second place the next, and so on; entries as `machine by seat`. A racer it did not rank (the lobby's first race, a racer who joined since, a CPU) is `own` | at most 30 entries |
 | `machine_setting least..most;` `machine_setting n;` | Each racer's machine setting is brought into this range. Left out: each racer's own | 0 to 100 |
 | `stats "GX Unleashed";` | The race's stat pack, by its name; a server without it refuses the mode. With a choice parameter, each choice is a pack's name, `stock`, or `file` (the host's own `.fzstats` file, which the launcher then asks for) | a pack name, at most 64 characters |
 | `stats stock;` | The disc's own stats, as leaving it out | |
@@ -152,7 +184,9 @@ game counts it, 100 a full machine.
 
 | Written | What it does | Range |
 |---|---|---|
-| `rolling_start 1000 km/h;` `rolling_start;` | Every machine moves at this speed from the first picture, with full energy, a CPU steering it through the countdown at 60% accelerator with no boost or attacks; every pad takes over at GO | 0 to 9000 km/h; 1000 if left out |
+| `rolling_start 1000 km/h;` `rolling_start;` | Every machine moves at this speed from the first picture, with full energy, a CPU steering it through the countdown at 60% accelerator with no boost or attacks; every pad takes over at GO | 0 to 9000 km/h (above with `seat_speed_open;`); 1000 if left out |
+| `seat_speed_open;` | `seat.speed` and `rolling_start` may go past 9000 km/h. A 0.6.0 game cannot race a mode with it | |
+| `max_speed_open;` | `seat.stat.max_speed` may go past a stat pack's 4, to 10,000. A 0.6.0 game cannot race a mode with it | |
 | `start_gap 200 m;` | Machines start this many metres apart, going back from the line in grid order across three lanes; at most the lap over the racers, so the field fits one lap. Every machine starts behind the line, and its first crossing counts no lap. `0` puts everyone on one spot with contact off from the first step, and refuses `contact on`. Above 0 and below 12.9 m (the game's grid step) needs `contact off` | 0 to 10,000 m |
 | `start_gap even;` | The machines spread evenly round the whole lap behind the line. Not with `start_gap` in metres | |
 | `boost_start on;` | Boosting is allowed on the first lap. Left out: not | on or off |
@@ -165,6 +199,7 @@ game counts it, 100 a full machine.
 | `boost off;` `boost on;` | `off`: no machine can start an energy boost; a dash plate still boosts | on or off |
 | `contact off;` `contact on;` | `off`: every machine passes through every other | on or off |
 | `restore on;` | Every machine is restored after a wreck (a fall, an explosion, running out of energy; never time over) instead of going out. Left out: no restores | on or off |
+| `wreck_slide off;` | A machine that gets restores and breaks down is restored at once, as before 0.6.5. Left out or `on`: it slides on as a wreck, can cross the line and finish, and its restore starts when a race without restores would have taken it out. A 0.6.0 game cannot race a mode with it | on or off |
 | `mine_regen 200;` `mine_regen on;` `mine_regen off;` | A mine comes back this many milliseconds after it goes off; `on` is 200. Left out or `off`: it stays gone | 50 to 5000 ms |
 
 ### Combat
@@ -192,7 +227,11 @@ game counts it, 100 a full machine.
 | `results points;` | The times page passes by itself, and the results are the points page. Needs `award` or `points_table` | |
 | `results_title "KNOCKOUT";` | The points page's title in place of VS TOTAL RANKING. A mode with a title ends on the points page, every row 0 without `award` | A to Z and the space, 1 to 23 characters, no space at either end |
 | `results_heading "OVERDRIVE";` | Heads the times list of a mode with no points page. Refused beside `award`, `results_title` or `points_table`. Left out: RESULTS | as `results_title` |
+| `results_times off;` | The results show no page of race times and open on the points page, for a mode that is not scored by time. Needs a points page (`award`, `points_table` or `results_title`). A 0.6.0 game cannot race a mode with it | on or off |
+| `live_places;` | The places the mode gives show during the race: the place at the top of the screen and the faces at the side follow `seat.place`, from the step it is written. Seats with no place follow in race order. The launcher's standings (the race page, the lobby's watchers, the next race's start grid) stand in the same order and show the mode's score (`show_score`'s points, or `show_distance`'s metres) in place of the race times. Left out: `seat.place` counts only when the race ends. A 0.6.0 game cannot race a mode with it | |
 | `hud clean;` | Nothing over the race but the HUD's own parts: no CHECK sign and no name tags, a player's or a `tag`. For footage | |
+| `distance_label off;` | DISTANCE shows its number and m without the game's REST label, for metres that are not the metres left; the number then has six digits (to 999999) in place of five. A 0.6.0 game cannot race a mode with it | on or off |
+| `hud_layout ax;` | The race HUD in F-Zero AX's layout: the position at the bottom left, the faces board smaller to leave it room, TIMER at the top. The rest stays where GX puts it; the spare-machine counter (`SPARE`) keeps its place at the bottom left under the position, so a mode that shows both places one of them with `hud_move` | |
 
 A race ends by laps and `finish_limit`, at `clock_limit`, at `end_race`, or when the last player is finished or out
 (unless `race_waits everyone`). The results are the times list, then the points page when the mode awards points or
@@ -260,7 +299,7 @@ Written on a seat: `seat.speed`, `s.energy`, `first(seats).lap`. The value as it
 
 | Read | What it gives | Type |
 |---|---|---|
-| `seat.standing` | Its place in the race order now, 1 first | int |
+| `seat.standing` | Its place in the race order now, 1 first: the game's own order, also when the mode shows other places with `live_places;` | int |
 | `seat.lap` | Laps completed | int |
 | `seat.distance` | Metres along the course over all laps | real |
 | `seat.lap_distance` | Metres into this lap | real |
@@ -285,6 +324,8 @@ Written on a seat: `seat.speed`, `s.energy`, `first(seats).lap`. The value as it
 | `seat.airborne` | All four hover points are in the air | bool |
 | `seat.boosting` | A boost is running: an energy boost or a dash plate | bool |
 | `seat.boost_left` | Steps left on the running boost: while `boosting`, `boost_left + 1` remain, this one counted | int |
+| `seat.base_speed` | The speed its engine runs at, in the game's units (a metre a step): the speed shown follows it through the game's drive, grip and air drag. Cruising it is about f + f × f / 125, with f the speed shown / 216: 4.8 at 1000 km/h, 27 at 5000 | real |
+| `seat.boost_value` | The game's boost value: each boost adds to it and it falls away after; the thrust reaches higher with it | real |
 
 ### Energy and contact
 
@@ -324,12 +365,17 @@ Written on a seat: `seat.speed`, `s.energy`, `first(seats).lap`. The value as it
 | `seat.input.steer` | Its steering this step | real, -1 to 1 |
 | `seat.input.strafe` | Its strafe this step | real |
 | `seat.input.pitch` | Its pitch this step | real |
+| `seat.pad.steer` | The stick as the player holds it this step, read while the race is paused too (`seat.input.*` stand still then); 0 for a CPU | real, -1 left to 1 right |
+| `seat.pad.accel` | The accelerator (A) as the player holds it this step, paused or not; 0 for a CPU | real, 0 to 1 |
+| `seat.pad.brake` | The brake as the player holds it this step, paused or not; 0 for a CPU | real, 0 to 1 |
+| `seat.pad.boost` | The boost button is held this step, paused or not; false for a CPU | bool |
 
 ## Machine stats
 
 `seat.stat.NAME` is the stat the machine drives with this step; `seat.stat.base.NAME` its own, before the mode changed
 it; `seat.stat.NAME = v;` (and `+=`, `-=`, `*=`, `/=`) changes it from the next step, held to the range a stat pack may
-use, until written again or the race ends, a restore included. `seat.stat.NAME = seat.stat.base.NAME;` gives the
+use (`seat.stat.max_speed` to 10,000 with `max_speed_open;`: at that the game no longer pulls the engine's speed down), until written again
+or the race ends, a restore included. `seat.stat.NAME = seat.stat.base.NAME;` gives the
 machine its own back. The base cannot be written. All are reals.
 
 | Written | What it is | Takes effect |
@@ -372,6 +418,8 @@ machine its own back. The base cannot be written. All are reals.
 | `race.spin_attacks` | Spin attacks are on | bool |
 | `race.side_attacks` | Side attacks are on | bool |
 | `race.spin_immunity` | Spin immunity is on | bool |
+| `race.paused` | The race stands: `pause` held it and no `resume` has let it go yet (a resume's countdown counts as paused) | bool |
+| `race.paused_steps` | Steps the race has stood in this pause; 0 while it runs | int, 60 a second |
 
 ## Actions
 
@@ -382,7 +430,8 @@ An action is a statement, its seat first; the commas between its values are opti
 
 | Written | What it does | Range |
 |---|---|---|
-| `seat.speed = v;` | Holds the seat's speed for the next step's travel; write it every step to keep it. A seat frozen, broken down, destroyed, finished, retired or restoring is not held. Long falls get steeper and jumps lower at a held speed; boosting still costs energy | 0 to 9000 km/h |
+| `seat.speed = v;` | Holds the seat's speed for the next step's travel; write it every step to keep it. A seat frozen, broken down, destroyed, finished, retired or restoring is not held. Long falls get steeper and jumps lower at a held speed; boosting still costs energy. Above the stat pack's speed cap (stock 9990 km/h; GX Unleashed has none) the game cuts the speed to a near stop once the hold ends | 0 to 9000 km/h; above with `seat_speed_open;` |
+| `seat.base_speed = v;` | Sets the speed the seat's engine runs at (see `seat.base_speed`); the next step's thrust, drag and walls move on from it, and the machine's grip, slides and slopes act as ever. Nothing is held. A seat frozen, broken down, destroyed, finished, retired or restoring is left as it is | 0 and up, the game's units |
 | `seat.velocity = v;` | Sets the seat's motion for one step's travel; from the next step the game's forces act again | vec, km/h |
 | `push s, v;` | Adds v to the seat's motion in the next step | vec, km/h |
 | `freeze s;` | The seat stands still until released; it can still turn | |
@@ -446,8 +495,21 @@ An action is a statement, its seat first; the commas between its values are opti
 
 | Written | What it does | Range |
 |---|---|---|
-| `seat.place = n;` | The seat's place in the results when the race ends, 1 first (0: none). When the mode ends the race, the seats it placed keep their places, every other racing seat follows in race order, and a placed seat that went out shows the time it went out | 1 first; 0 none |
+| `seat.place = n;` | The seat's place in the results when the race ends, 1 first (0: none). When the mode ends the race, the seats it placed keep their places, every other racing seat follows in race order, and a placed seat that went out shows the time it went out. With `live_places;` the place shows during the race too | 1 first; 0 none |
 | `award s, n;` | Adds n points to the seat. The results show a negative total as 0 | any whole number |
+
+### Pause
+
+A paused race stands: no machine, CPU, clock or timer moves and the picture stays, while the mode's rules go on running
+every step, reading the pads (`seat.pad.*`) and counting (`wait`, `race.paused_steps`). Words that act in the race's
+step (`seat.speed`, `boost`, `push`, `damage`, `explode`) do nothing while it stands; a seat's field (`seat.energy`)
+changes at once. In 0.6.5 a mode that pauses is raced by one player (CPUs allowed): a match with two players is refused.
+
+| Written | What it does | Range |
+|---|---|---|
+| `pause;` | The race stands from the next step on | |
+| `resume;` | The race runs on from the next step | |
+| `resume after 1s;` | The race stands that long more, with a 3, 2, 1 over the picture, then runs on | steps; 0 at once |
 
 ## Display words
 
@@ -462,12 +524,20 @@ text where it likes. They never change the race.
 | `hide s, PART;` | The seat's player no longer sees the part | a part |
 | `show_number s, n;` | A number in two digits (07) beside the spare-machine icon; above 99 shows 99, a negative number hides it. A spectator sees the watched racer's | whole number |
 | `show_number s off;` | Hides the number | |
+| `show_score s, n;` `show_score s, n, "KOS";` `show_score s, n, "KOS", CAPS;` | A counter where the race time is (top right, under the energy meter): n in the race time's own digits under a short label, SCORE unless the text says otherwise, in one of the game's fonts (BLOCK unless given). A spectator sees the watched racer's; `hud_move s, SCORE, ...` moves it | 0 to 999,999 (a negative number reads 0); the label as `tag`'s text: A to Z, 0 to 9, space, `.` and `-`, 1 to 10 characters, at most 8 texts a mode with `tag`'s and `show_text`'s; a font |
+| `show_score s off;` | The counter goes | |
+| `show_text s, "GO";` `show_text s, "GO", SERIF;` | A short text at the top of the screen under the position, centred, in one of the game's fonts (BLOCK unless given), until the next `show_text` or `show_text s off`. A spectator sees the watched racer's; `hud_move s, TEXT, ...` moves it | the text as `tag`'s: A to Z, 0 to 9, space, `.` and `-`, 1 to 10 characters, at most 8 texts a mode with `tag`'s and `show_score`'s; a font |
+| `show_text s off;` | The text goes | |
 | `stock_banner s, BANNER;` | The seat's player sees one of the game's banners once, as the game raises it | a banner |
 | `show_clock n;` | The timed race's clock reads n steps, shown as seconds rounded up, red below 10. It ends nothing and must be written every step it should follow; players see it with `show s, TIMER`. Not with `clock_limit` | steps |
-| `show_distance s, metres;` | The DISTANCE part reads these metres instead of the metres to the finish; under 1000 drawn large in the middle | 0 to 99,999 |
+| `show_distance s, metres;` | The DISTANCE part reads these metres instead of the metres to the finish; under 1000 drawn large in the middle | 0 to 99,999; 0 to 999,999 under `distance_label off;` |
 | `show_distance s off;` | DISTANCE reads the metres to the finish again | |
 | `show_objects s, n, of;` | The OBJECTS part reads n/of | 0 to 99 each |
 | `show_objects s off;` | OBJECTS reads the course's own count again | |
+| `hud_move s, PART, x, y, angle;` | The seat's player sees the part with its centre at (x, y) of the 640 x 480 screen, turned angle degrees clockwise: the same point of the screen in 4:3, Wide Screen and true wide screen. The parts' own centres: RANK (320.5, 62), or (86, 435) under `hud_layout ax`; LAPS (439, 43); SPEED (550, 440); ENERGY (548.5, 43); LAP_TIMES (556.8, 126.6); RACE_TIME (532, 86); FACES (51, 214); SPARE (56, 444); SKULLS (608, 120), its first skull; BANNERS (320, 150); WRONG_WAY and FINISH (320, 240); CHECK (320, 445); SCORE (552, 86); TEXT (320, 116). LEADER_GAP moves the banners with it | x and y -1000 to 1000, the angle 0 to 359 |
+| `hud_move s, PART off;` | The part is drawn where the game draws it again | |
+| `say "Hold A to accelerate.";` | A message for every player on a dark panel: in the middle of the picture while the race is paused, as a line at its foot while it runs, until the next `say` or `say off`. Written in quotes, never a variable | any text, up to 160 bytes of UTF-8; at most 32 texts a mode |
+| `say off;` | The message goes | |
 
 ### Machine and map
 
@@ -480,7 +550,10 @@ text where it likes. They never change the race.
 | `seat.ghost_sound = on;` | A ghost keeps its engine sound; off by default, as in Time Attack | bool |
 | `map_hide s from SET;` | s's dot is left off the course maps of the seats in SET; an empty set shows it to everyone | seats |
 | `map_mark s, 0xRRGGBB;` | s's dot's colour on every course map; -1 gives it its machine's colour | colour |
-| `tag s, "TEXT";` | TEXT floats over the seat's machine in place of its name, for everyone else, CPUs too. Written in quotes, never a variable | A to Z, 0 to 9, space, `.` and `-`; 1 to 10 characters, no space at either end; at most 8 texts a mode |
+| `map_char s, "K";` `map_char s, CROWN;` | The seat's dot on every course map carries this character, or the shape CROWN, as large as the big dots, in the dot's colour; a character the game's fonts lack shows the plain dot | one character, or CROWN |
+| `map_char s off;` | The dot shows no character again | |
+| `tag s, "TEXT";` | TEXT floats over the seat's machine in place of its name, for everyone else, CPUs too, seen to 200 m: fully to 150 m, fading to nothing at 200. Its size follows its distance from the camera as a thing of the world would: 1.2 times a player's name tag out to 40 m from the camera (a rival about 30 m ahead, the camera riding behind you), smaller beyond, and never under 0.5 (half a name tag: 9 of the screen's 480 pixel rows a letter, reached about 100 m from the camera). Written in quotes, never a variable | A to Z, 0 to 9, space, `.` and `-`; 1 to 10 characters, no space at either end; at most 8 texts a mode |
+| `tag s, "TEXT", size 0.4 1, range 10000 m;` | The same tag with its own settings after the text, each once, in either order, left out for the defaults above: `size MIN MAX`, its least and its largest size, a player's name tag at its largest being 1 (18 pixel rows a letter), and `range D m` (the `m` may be left off), how far it is seen, fully to three quarters of D. A text written with two different settings counts as two texts. A 0.6.0 game cannot race a mode with a setting | size 0.1 to 5, MIN at most MAX; range 1 to 10,000 m |
 | `tag s off;` | The tag goes; the seat's own name tag, if it has one, comes back | |
 
 ## Display values
@@ -496,10 +569,18 @@ text where it likes. They never change the race.
 | `LAP_TIMES` | The lap times | until hidden |
 | `RACE_TIME` | The race time | until hidden |
 | `FACES` | The racers' faces | until hidden |
+| `SPARE` | The Grand Prix spare-machine counter: the star icon and `show_number`'s number. For `hud_move` only: `show_number` shows and hides it (0.6.5) | with `show_number` |
+| `SKULLS` | The KO skulls at the right edge. For `hud_move` only (0.6.5) | as the game shows them |
+| `WRONG_WAY` | The WRONG WAY sign (the banner of the same name). For `hud_move` only (0.6.5) | as the game shows it |
+| `BANNERS` | FINAL LAP, BOOST POWER, TIME BONUS and the gap popup together; a `LEADER_GAP` place takes them too, a `BANNERS` place of its own wins. For `hud_move` only (0.6.5) | as the game shows them |
+| `FINISH` | FINISH and RETIRED. For `hud_move` only (0.6.5) | as the game shows them |
+| `CHECK` | The CHECK sign at the foot of the screen that points at the rival close behind: `hud_move` moves its row, and it still slides sideways after that rival. For `hud_move` only (0.6.5); `hud clean` takes it off | as the game shows it |
+| `SCORE` | A mode's counter at the race time's place: `show_score`'s number in the race time's digits under its label. For `hud_move` only: `show_score` shows and hides it (0.6.5) | with `show_score` |
+| `TEXT` | A mode's short text, centred at the top of the screen under the position. For `hud_move` only: `show_text` shows and hides it (0.6.5) | with `show_text` |
 | `TIMER` | The timed race's clock, with `clock_limit` or `show_clock` | when shown |
 | `LEADER_GAP` | The gap to the leader at each lap line, for a second; the leader sees its lead when second place crosses | when shown |
 | `GHOST_GAP` | Time Attack's live gap at the right edge, all race, against the seat furthest ahead; red while it is ahead | when shown |
-| `DISTANCE` | REST and the metres to the finish, or `show_distance`'s | when shown |
+| `DISTANCE` | REST and the metres to the finish, or `show_distance`'s; without REST under `distance_label off;` | when shown |
 | `OBJECTS` | The objects count, or `show_objects`'s | when shown |
 | `DIGIT` | The story mode's big 3-2-1 digit; it shows a `danger_zone`'s count | when shown |
 | `WARNING` | The story mode's warning sign | when shown |
@@ -519,6 +600,19 @@ text where it likes. They never change the race.
 | `WRONG_WAY` | WRONG WAY |
 | `TICK` | The timed race's countdown beep |
 
+### Fonts
+
+The game's own text fonts a mode may write `show_text` and `show_score`'s label in (0.6.5): those of its common picture sheet, loaded in every race. Each draws a small letter as a capital.
+
+| Font | What it looks like |
+|---|---|
+| `BLOCK` | Squared bold capitals, 18 tall: the font of the name tags and the Time Attack ghost names. Digits, the space, `.` and `-` too. The default |
+| `CAPS` | Small bold capitals, 14 tall. Letters only: a digit, `.` or `-` leaves a blank |
+| `PLAIN` | A small plain font, 12 tall, with digits |
+| `NARROW` | A narrow font, 16 tall and 8 wide, with digits |
+| `SERIF` | A typewriter serif, 16 tall, with digits |
+| `BIG_SERIF` | The same serif, 24 tall |
+
 ### Looks
 
 | Look | What it is |
@@ -537,11 +631,12 @@ Written in the mode language and part of every file. A macro is used at the top 
 | `at(t) { … }` | The block runs once, when the race clock reaches t | a time |
 | `lives n;` | Every wreck the game restores costs a life: a hit, running out of energy, a fall, a breakdown. While a seat has more than one life the game restores it; the wreck that leaves it one turns its restores off, so its next wreck is final. The lives remaining after the current one show beside the spare-machine icon (2, 1, 0 with `lives 3`; 0 with `lives 1`), hidden once out. Declares the seat variable `lives_left`, which counts the current life too (3, 2, 1; 0 once out). `lives 1` is the game's own rule | a whole number or parameter |
 | `pits_off;` | The pit strips give no energy. A seat in a pit keeps the energy it came in with (less if it is hit there). Declares `pits_off_energy` | |
+| `drive target, brake_cost, surge, plates, gate;` | Twilight's drive (their survival mod) for every racing seat while `gate` holds (it may name `seat`; `true` for always; `plates` true or false), on the engine's speed so grip, slides, slopes and walls still move the machine: the top speed stat goes to 10,000 and drag to 0; the engine's speed is pulled towards the target (km/h), lowered by the brake (full brake: 0), firmer with the accelerator; braking costs energy (`brake_cost` % of Twilight's), more as the target rises and the longer it is held, never below 0.1; a boost raises the wanted speed by `surge` % plus 1 % a point of `seat.boost_value`, by how far the accelerator is down, a dash plate's too when `plates` is on. Needs `max_speed_open;`. Declares `drive_heat`, `drive_tuned`, `drive_was_boosting`, `drive_plate` | a real (km/h), two reals (%), a bool, a bool |
 | `gap_to(a, b)` | The distance along the course between two seats, wrapped at the finish line, the shorter way round | two seats; gives a real, metres |
 | `dist(a, b)` | The straight-line distance between two seats. It holds a `sqrt` | two seats; gives a real, metres |
 
-Write `lives 3;` and `pits_off;`: `lives(3);` and `pits_off();` are refused. A file cannot declare `lives_left`,
-`pits_off_energy`, `gap_to` or `dist` again.
+Write `lives 3;`, `pits_off;` and `drive t, c, s, p, g;`: `lives(3);` and `pits_off();` are refused. A file cannot
+declare `lives_left`, `pits_off_energy`, the four `drive_` words, `gap_to` or `dist` again.
 
 ## Operators and functions
 
@@ -637,19 +732,26 @@ Quick Play's Knockout, as it ships.
 
 ```fzmode
 // A spicy Quick Play option: a rolling start, then the last racer is out at every cut.
+//
+// The HUD is F-Zero AX's (owner 2026-11-12): the position at the bottom left, the clock to the next cut at the top where
+// AX's timer is, the six faces on AX's rows. The position and the faces follow the mode's own places during the race
+// (live_places): the racers still in by the race order, then the racers out, so a cut leaves no gap in the top six.
 
 mode "Knockout" {
-  api 1;
+  api 0.6.5;
   badge "KNOCKOUT";
   about "The racer in last place is out at every cut. A point for every cut you survive.";
 }
 
 param length    "Race length" delay 4min..10min step 30s default 7min;
-param first_cut "First cut"   delay 20s..120s step 5s default 45s;   // a 30-machine grid is 374 m long
+param first_cut "First cut"   delay 20s..45s step 5s default 45s;    // a 30-machine grid is 374 m long
 param keep      "Racers left" number 1..29 default 1;
 param warn_from "Warn from"   number 3..9 default 5;                  // seconds before the cut
+param cpu_racers "CPU racers" choice ["Off", "Vote", "Always"] default "Vote";   // Vote: players may vote CPUs in; Always: CPUs take the empty seats with no vote
+param cpu_skill  "CPU level"  choice ["Novice", "Standard", "Expert", "Master"] default "Master";   // (Master: the game's own, as before the setting)
 
-cpus on;
+cpus cpu_racers;
+cpu_level cpu_skill;
 stats "GX Unleashed";   // Quick Play's pack, mines and machine setting (a word left out is the game's own)
 mine_regen on;
 machine_setting 100;
@@ -657,6 +759,8 @@ laps unlimited;
 rolling_start 1000 km/h;       // speed at the gate, CPU steers through the countdown at 60% accelerator, control at GO
 race_waits everyone;           // the race goes on until the mode ends it, not until the last player is out
 results_title "KNOCKOUT";       // the points page: a point for every cut survived, ties in the order below
+hud_layout ax;                 // AX's HUD: the position bottom left, the faces on AX's rows, the clock at AX's timer place
+live_places;                   // the position and the faces show the places the rule "Places" gives, every step
 
 global int interval;           // steps between cuts, worked out once at the race start
 global int next_cut;
@@ -669,7 +773,8 @@ rule "Arm" {
   event race_start;
   do {
     next_cut = first_cut;
-    interval = max(10s, (length - first_cut) / max(1, count(seats where racing) - keep - 1));
+    // the cuts share the race's length, never more than 30 s apart (owner 2026-11-11): a small grid ends early
+    interval = min(30s, max(10s, (length - first_cut) / max(1, count(seats where racing) - keep - 1)));
   }
 }
 
@@ -725,6 +830,18 @@ rule "Warn the last racer" {
   }
 }
 
+rule "Places" {
+  // the places shown during the race, the results' order: the racers still in (not cut) by the race order, then the
+  // racers cut or out, the last out first (the first out is last). A cut racer still tumbling is already below the rest
+  event every step;
+  while race.started;
+  do {
+    int n = 1;
+    for each seat where seat.cut_order == 0 by standing { seat.place = n; n += 1; }
+    for each seat where seat.cut_order > 0 by seat.cut_order desc { seat.place = n; n += 1; }
+  }
+}
+
 rule "Winner" {
   event every step;
   when race.started and count(seats where racing) <= keep;
@@ -751,7 +868,7 @@ board global cut_in "Next cut";
 
 | Limit | Value |
 |---|---|
-| Api | 1; a build refuses a newer api, and a later api changes no word of an older one |
+| Api | The game version the file names; a released version's rules never change, and a game refuses a file of a newer version than its own |
 | A file | 65,536 characters |
 | The compiled mode, its text included | 65,536 bytes |
 | Parameters | 256 |

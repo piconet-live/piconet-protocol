@@ -48,14 +48,14 @@ public static class ModeCompiler
             // (each char is at least a byte of the package's source)
             if (source.Length > ModeWords.PackageBytes)
             {
-                throw new ModeCompileException(1, $"the file is {source.Length} characters, past api {ModeWords.Api}'s {ModeWords.PackageBytes} bytes for a whole package");
+                throw new ModeCompileException(1, $"the file is {source.Length} characters, past api {ModeWords.ApiVersion}'s {ModeWords.PackageBytes} bytes for a whole package");
             }
             var items = ModeParser.Parse(ModeLexer.Tokens(source, warnings), macros);
             var (mode, budget) = new Build(warnings, subs).File(items, source);
             var package = mode.Write();
             if (package.Length > ModeWords.PackageBytes)
             {
-                throw new ModeCompileException(1, $"the package is {package.Length} bytes, past api {ModeWords.Api}'s {ModeWords.PackageBytes} (the source included)");
+                throw new ModeCompileException(1, $"the package is {package.Length} bytes, past api {ModeWords.ApiVersion}'s {ModeWords.PackageBytes} (the source included)");
             }
             var hash = ModePackage.Hash(package);
             return new ModeCompilation(package, mode, hash, ModePackage.ShareCode(hash), budget, [], warnings);
@@ -97,15 +97,40 @@ public static class ModeCompiler
             }
         }
 
+        // the setup words the compiler writes itself, from what the rules use
+        private void OwnWords(ModeEmitter emitter)
+        {
+            if (emitter.TagTexts.Count > 0)
+            {
+                _setups.Add(new ModeSetupWord(ModeSetup.TagTexts, ModeTagTexts.Cells(emitter.TagTexts)));
+            }
+            if (emitter.TagLooks.Any(l => l != ModeTagLooks.Default))
+            {
+                _setups.Add(new ModeSetupWord(ModeSetup.TagLooks, ModeTagLooks.Cells(emitter.TagLooks)));
+            }
+            if (emitter.Used.Keys.Any(ModeStatsPage.Uses))
+            {
+                _setups.Add(new ModeSetupWord(ModeSetup.StatsPage, []));
+            }
+            if (emitter.SayTexts.Count > 0)
+            {
+                _setups.AddRange(ModeSayTexts.Words(emitter.SayTexts));
+            }
+            if (emitter.Used.ContainsKey(ModeAction.Pause))
+            {
+                _setups.Add(new ModeSetupWord(ModeSetup.Pauses, []));
+            }
+        }
+
         public (ModePackage Mode, long Budget) File(List<ModeItem> items, string source)
         {
             var header = (ModeHeaderItem)items[0];
-            var api = header.Api ?? throw new ModeCompileException(header.Line, "the header names no api: api 1;");
-            if (api > ModeWords.Api || api < 1)
+            var named = header.Api ?? throw new ModeCompileException(header.Line, $"the header names no api: api {ModeWords.ApiVersion};");
+            if (!ModeLevels.TryRuleSet(named, out var api, out var refusal))
             {
-                throw new ModeCompileException(header.ApiLine, $"api {api} is not one this build knows: its newest is api {ModeWords.Api}");
+                throw new ModeCompileException(header.ApiLine, refusal);
             }
-            _emitter = new ModeEmitter(_names, warnings);
+            _emitter = new ModeEmitter(_names, warnings) { Api = api };
             Subs(items.OfType<ModeSubItem>().ToList());
             foreach (var item in items.Skip(1))
             {
@@ -140,16 +165,11 @@ public static class ModeCompiler
                 throw new ModeCompileException(clockLine, "show_clock and clock_limit both write the game's clock: a mode has one or the other");
             }
             SoloWords(items);
+            MachineWords(items);
             StartGapWords(items);
-            if (_emitter.TagTexts.Count > 0)
-            {
-                _setups.Add(new ModeSetupWord(ModeSetup.TagTexts, ModeTagTexts.Cells(_emitter.TagTexts)));
-            }
-            if (_emitter.Used.Keys.Any(ModeStatsPage.Uses))
-            {
-                _setups.Add(new ModeSetupWord(ModeSetup.StatsPage, []));
-            }
+            OwnWords(_emitter);
             GapWords();
+            OpenWords();
             CarriedForms();
             var mode = new ModePackage
             {
@@ -168,6 +188,13 @@ public static class ModeCompiler
                 Code = _emitter.Code,
                 Source = source,
             };
+            // a word or a value of a later rule set than the file's own level: the file says which version it needs
+            if (ModeLevels.Newer(mode) is ({ } what, var since))
+            {
+                var line = items.OfType<ModeSetupItem>().FirstOrDefault(s => what == s.Word || what.StartsWith(s.Word + " ", StringComparison.Ordinal))?.Line;
+                throw new ModeCompileException(line ?? header.ApiLine,
+                    $"{what} needs api {ModeLevels.Version(since)}: this file says api {named}{(named.Contains('.', StringComparison.Ordinal) ? "" : $" ({ModeLevels.Version(api)})")}");
+            }
             return (mode, _emitter.Cost);
         }
 
@@ -279,8 +306,11 @@ public static class ModeCompiler
 private static string? CompilersOwn(ModeSetup id, string name) => id switch
 {
     ModeSetup.TagTexts => "tag_texts is the compiler's own: a rule writes tag s, \"TEXT\"; and the text is kept",
+    ModeSetup.TagLooks => "tag_looks is the compiler's own: a rule writes tag s, \"TEXT\", size 0.5 1.2, range 300 m; and the settings are kept",
     ModeSetup.StatsPage => "stats_page is the compiler's own: a rule writes the stat, and the page is kept",
     ModeSetup.TimeGaps => "time_gaps is the compiler's own: the gap reads set it",
+    ModeSetup.SayTexts => "say_texts is the compiler's own: a rule writes say \"TEXT\"; and the text is kept",
+    ModeSetup.Pauses => "pauses is the compiler's own: a rule writes pause; and the word is kept",
     _ => null,
 };
 
@@ -292,6 +322,34 @@ private static string? CompilersOwn(ModeSetup id, string name) => id switch
             _setups.Add(new ModeSetupWord(ModeSetup.TimeGaps, []));
         }
     }
+
+    /// <summary>The 0.6.5 tops are the file's own words, so a mode that keeps to the old ones compiles to the package
+    /// of before (and a 0.6.0 game takes it): a constant above 9000 into seat.speed, or a rolling start above it, needs
+    /// seat_speed_open; a constant above the stat pack's 4 into seat.stat.max_speed needs max_speed_open. A value the
+    /// race gives is held to the old top without the word, as before.</summary>
+    private void OpenWords()
+    {
+        bool Has(ModeSetup id) => _setups.Any(s => s.Id == id);
+        if (!Has(ModeSetup.SeatSpeedOpen))
+        {
+            if (_emitter!.MostSpeedWritten is { } speed && speed.Value > MostSpeed)
+            {
+                throw new ModeCompileException(speed.Line, $"seat.speed above {MostSpeed} km/h needs the setup word seat_speed_open; (0.6.5: a 0.6.0 game refuses the mode)");
+            }
+            var rolling = _setups.FirstOrDefault(s => s.Id == ModeSetup.RollingStart);
+            if (rolling is not null && rolling.Arguments.Count == 1 && !rolling.Arguments[0].FromParam &&
+                BitConverter.Int32BitsToSingle(rolling.Arguments[0].Value) > MostSpeed)
+            {
+                throw new ModeCompileException(1, $"rolling_start above {MostSpeed} km/h needs the setup word seat_speed_open; (0.6.5: a 0.6.0 game refuses the mode)");
+            }
+        }
+        if (!Has(ModeSetup.MaxSpeedOpen) && _emitter!.MostMaxSpeedWritten is { } max && max.Value > MostMaxSpeed)
+        {
+            throw new ModeCompileException(max.Line, $"seat.stat.max_speed above {MostMaxSpeed} needs the setup word max_speed_open; (0.6.5: a 0.6.0 game refuses the mode)");
+        }
+    }
+
+    private const float MostSpeed = 9000.0f, MostMaxSpeed = 4.0f;   // the tops of before 0.6.5 (the core's mode.h)
 
     private void SoloWords(List<ModeItem> items)
         {
@@ -317,6 +375,34 @@ private static string? CompilersOwn(ModeSetup id, string name) => id switch
                         throw new ModeCompileException(line, $"{name}: a solo mode is one seat");
                     }
                 }
+            }
+        }
+
+        /// <summary>The words that set racers' machines: a lobby's race's (a solo mode races the player's own), and
+        /// <c>machine by team</c> on a race with teams, one entry a team at most.</summary>
+        private void MachineWords(List<ModeItem> items)
+        {
+            var set = items.OfType<ModeSetupItem>().FirstOrDefault(s => s.Word.Split(' ')[0] == "machine");
+            if (set is null)
+            {
+                return;
+            }
+            if (_setups.FirstOrDefault(s => s.Id == ModeSetup.Solo) is { } solo && solo.Arguments[0] is not { FromParam: false, Value: 0 })
+            {
+                throw new ModeCompileException(set.Line, $"{set.Word} sets the machines of a lobby's race: a solo mode races the player's own");
+            }
+            if (set.Word != "machine by team")
+            {
+                return;
+            }
+            if (_lobbyWords.FirstOrDefault(w => w.Id == ModeSetup.Teams) is not { } teams)
+            {
+                throw new ModeCompileException(set.Line, "machine by team gives each team its machine: a mode with it says teams");
+            }
+            var entries = _lobbyWords.First(w => w.Id == ModeSetup.MachineByTeam).Values.Count;
+            if (!teams.Values[1].FromParam && entries > teams.Values[1].Value)
+            {
+                throw new ModeCompileException(set.Line, $"machine by team lists {entries} machines, and the race has at most {teams.Values[1].Value} teams");
             }
         }
 
@@ -588,6 +674,14 @@ private static string? CompilersOwn(ModeSetup id, string name) => id switch
                 : throw new ModeCompileException(row.Line, $"\"{row.Key}\" is no course of the pool (\"Venue: Track\", as courses.toml names them)");
         }
 
+        /// <summary>A stock machine by its name, as <c>machine</c> and its lists write one.</summary>
+        private static int StockMachine(ModeSetupRow row)
+        {
+            var machine = GameMachines.Names.ToList().IndexOf(row.Key);
+            return machine >= 0 ? machine
+                : throw new ModeCompileException(row.Line, $"\"{row.Key}\" is no machine of the game's (its name as the machine select shows it, such as \"Blue Falcon\")");
+        }
+
         /// <summary>A word of the coordinator's: a range's ends in order, a course or machines by their numbers, a pack by
         /// its name.</summary>
         private static ModeLobbyWord LobbyWord(ModeSetupItem item, ModeSetup id, string name, List<ModeSetupValue> values)
@@ -625,6 +719,25 @@ private static string? CompilersOwn(ModeSetup id, string name) => id switch
                     values.Add(new ModeSetupValue(false, machine));
                 }
             }
+            if (id == ModeSetup.Machine)
+            {
+                values.Add(new ModeSetupValue(false, StockMachine(rows[0])));
+            }
+            if (id is ModeSetup.MachineBySeat or ModeSetup.MachineByTeam or ModeSetup.MachineByPlace)
+            {
+                if (rows.Count > ModeWords.Seats)
+                {
+                    throw new ModeCompileException(rows[ModeWords.Seats].Line, $"{name} lists at most {ModeWords.Seats} machines, one a {name.Split(' ')[^1]}");
+                }
+                values.AddRange(rows.Select(row => new ModeSetupValue(false, row.Value is ModeName { Name: var bare }
+                    ? bare switch
+                    {
+                        "own" => ModeMachines.Own,
+                        "random" => ModeMachines.Random,
+                        _ => throw new ModeCompileException(row.Line, $"{name} takes a machine's name in quotes, own or random, not {bare}"),
+                    }
+                    : StockMachine(row))));
+            }
             if (values.Count == 2 && !values[0].FromParam && !values[1].FromParam && values[0].Value > values[1].Value &&
                 id is ModeSetup.Racers or ModeSetup.MachineSetting or ModeSetup.Teams)
             {
@@ -645,7 +758,7 @@ private static string? CompilersOwn(ModeSetup id, string name) => id switch
             if (given is null)
             {
                 var value = argument.Default ?? throw new ModeCompileException(item.Line, argument.Type == ModeType.Bool
-                    ? $"{what} takes on, off or a switch parameter" : $"{what} needs its value");
+                    ? Switch(what, argument) : $"{what} needs its value");
                 return new ModeSetupValue(false, argument.Type == ModeType.Real ? ModeOperators.Cell((float)value) : (int)value);
             }
             if (argument.Type == ModeType.Bool || argument.On is not null)
@@ -658,9 +771,13 @@ private static string? CompilersOwn(ModeSetup id, string name) => id switch
                 {
                     return new ModeSetupValue(true, flag.Index);
                 }
+                if (Third(argument, given) is { } third)
+                {
+                    return third;
+                }
                 if (argument.Type == ModeType.Bool)
                 {
-                    throw new ModeCompileException(given.Line, $"{what} takes on, off or a switch parameter");
+                    throw new ModeCompileException(given.Line, Switch(what, argument));
                 }
             }
             if (given.Value is ModeName name && _names.Find(name.Name) is { Kind: ModeNameKind.Param } param)
@@ -682,6 +799,25 @@ private static string? CompilersOwn(ModeSetup id, string name) => id switch
             }
             return new ModeSetupValue(false, cell);
         }
+
+        /// <summary>A switch's third value where it has one (cpus): the word <c>always</c>, unless the file gave the name
+        /// to something of its own, or a choice parameter of three, off, on and always in that order. Null: neither.</summary>
+        private ModeSetupValue? Third(ModeArgument argument, ModeSetupArgument given)
+        {
+            if (argument.Always is not { } always || given.Value is not ModeName { Name: var name })
+            {
+                return null;
+            }
+            var found = _names.Find(name);
+            return found is null ? name == "always" ? new ModeSetupValue(false, always) : null
+                : found is { Kind: ModeNameKind.Param, Param: { Kind: ModeParamKind.Choice, Or: null, Least: 0 } choice } && choice.Most == always
+                    ? new ModeSetupValue(true, found.Index) : null;
+        }
+
+        /// <summary>What a switch takes, said to a file that gave it something else.</summary>
+        private static string Switch(string what, ModeArgument argument) => argument.Always is null
+            ? $"{what} takes on, off or a switch parameter"
+            : $"{what} takes on, off, always, a switch parameter or a choice parameter of three (off, on, always)";
 
         private static bool Within(ModeArgument argument, int cell)
         {
@@ -727,7 +863,7 @@ private static string? CompilersOwn(ModeSetup id, string name) => id switch
             }
             if (e.Name is null)
             {
-                throw new ModeCompileException(item.Line, $"'{item.Event}' is not an event of api {ModeWords.Api}: {string.Join(", ", ModeWords.Events.Select(x => x.Name))}");
+                throw new ModeCompileException(item.Line, $"'{item.Event}' is not an event of api {ModeWords.ApiVersion}: {string.Join(", ", ModeWords.Events.Select(x => x.Name))}");
             }
             if (item.Bound is not null && (!e.BindsSeat || e.Continuous))
             {
@@ -757,7 +893,7 @@ private static string? CompilersOwn(ModeSetup id, string name) => id switch
             if (_emitter.Cost > ModeWords.Budget)
             {
                 throw new ModeCompileException(item.Line, string.Create(CultureInfo.InvariantCulture,
-                    $"the mode takes {_emitter.Cost} operations a step at worst, past api {ModeWords.Api}'s {ModeWords.Budget} (this rule takes {_emitter.Cost - before})"));
+                    $"the mode takes {_emitter.Cost} operations a step at worst, past api {ModeWords.ApiVersion}'s {ModeWords.Budget} (this rule takes {_emitter.Cost - before})"));
             }
         }
 

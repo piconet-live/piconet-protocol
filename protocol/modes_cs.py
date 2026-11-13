@@ -37,7 +37,13 @@ def emit(t):
         out += ["}", ""]
     out += ["/// <summary>The vocabulary of one api, by the names a mode file writes (protocol/modes.toml).</summary>",
             "public static partial class ModeWords", "{",
-            f"    /// <summary>The api this build compiles.</summary>\n    public const int Api = {api['number']};"]
+            f"    /// <summary>The newest rule set this build compiles and runs: what a package carries as its api.</summary>\n    public const int Api = {api['number']};",
+            f"    /// <summary>The newest game version this build knows: a mode file names one (<c>api {t['levels']['newest']};</c>).</summary>\n"
+            f"    public const string ApiVersion = {text(t['levels']['newest'])};",
+            "    /// <summary>The rule sets, oldest first: its number and the game version it arrived in. A version between two\n"
+            "    /// has the earlier one's.</summary>",
+            "    public static readonly IReadOnlyList<(int Number, string Version)> RuleSets =",
+            "        [" + ", ".join(f"({r['number']}, {text(r['version'])})" for r in t["levels"]["rule_sets"]) + "];"]
     out += [f"    /// <summary>The api's limit <c>{k}</c>.</summary>\n    public const int "
             + "".join(p.title() for p in k.split("_")) + f" = {v};" for k, v in api.items() if k != "number"]
     out += ["", "    /// <summary>An operation's size in bytes, operands included.</summary>",
@@ -52,15 +58,15 @@ def emit(t):
     out += [f"        ({text(e['name'])}, ModeEvent.{e['pascal']}, {'true' if e['kind'] == 'continuous' else 'false'}, "
             f"{'true' if 'binds' in e else 'false'}, {second.get(e.get('binds', ''), 'null')})," for e in t["events"]]
     out += ["    ];", "",
-            "    /// <summary>The setup words: name, id, arguments (name, type, least, most, default, what on is); Lobby: the coordinator's "
+            "    /// <summary>The setup words: name, id, arguments (name, type, least, most, default, what on is, what always is); Lobby: the coordinator's "
             "alone, not in the package; Form: how the file writes it (range, text, list; empty: its arguments).</summary>",
             "    public static readonly IReadOnlyList<(string Name, ModeSetup Id, IReadOnlyList<ModeArgument> Args, bool Lobby, string Form)> Setups =",
             "    ["]
     for s in t["setups"]:
         args = ", ".join(
             f"new ModeArgument({text(a.get('name', ''))}, {cs_type(a['type'])}, {number(a.get('least', 0), a['type'])}, "
-            f"{1 if a['type'] == 'switch' else number(a.get('most', 0), a['type'])}, {number(a['default'], a['type']) if 'default' in a else 'null'}"
-            + (f", {a['on']})" if "on" in a else ")")
+            f"{a.get('always', 1) if a['type'] == 'switch' else number(a.get('most', 0), a['type'])}, {number(a['default'], a['type']) if 'default' in a else 'null'}"
+            + (f", {a['on']})" if "on" in a else f", Always: {a['always']})" if "always" in a else ")")
             for a in s.get("args", []))
         out.append(f"        ({text(s['name'])}, ModeSetup.{s['pascal']}, [{args}], {'true' if s.get('lobby') else 'false'}, {text(s.get('form', ''))}),")
     out += ["    ];", "",
@@ -102,5 +108,28 @@ def emit(t):
             "    public static readonly IReadOnlyDictionary<ModeAction, string> ActionJoins =",
             "        new Dictionary<ModeAction, string>", "        {"]
     out += [f"            [ModeAction.{a['pascal']}] = {text(a['join'])}," for a in t["actions"] if "join" in a]
+    out += ["        };"]
+    # the rule set each word arrived in, where after the first
+    for kind, enum, name, what in (("ops", "ModeOp", "Ops", "operations"), ("events", "ModeEvent", "Events", "events"),
+                                   ("setups", "ModeSetup", "Setups", "setup words"),
+                                   ("seat_reads", "ModeSeatRead", "SeatReads", "reads of a seat"),
+                                   ("race_reads", "ModeRaceRead", "RaceReads", "reads of the race"),
+                                   ("actions", "ModeAction", "Actions", "actions")):
+        out += ["", f"    /// <summary>The {what} that arrived after rule set 1, and the rule set each arrived in.</summary>",
+                f"    public static readonly IReadOnlyDictionary<{enum}, int> {name}Since =",
+                f"        new Dictionary<{enum}, int>", "        {"]
+        out += [f"            [{enum}.{e['name'] if kind == 'ops' else e['pascal']}] = {e['since']}," for e in t[kind] if e["since"] > 1]
+        out += ["        };"]
+    out += ["", "    /// <summary>The values a setup word's argument took after the word itself arrived: (word, argument, value) to",
+            "    /// the rule set.</summary>",
+            "    public static readonly IReadOnlyDictionary<(ModeSetup Word, int Argument, int Value), int> SetupValuesSince =",
+            "        new Dictionary<(ModeSetup Word, int Argument, int Value), int>", "        {"]
+    out += [f"            [(ModeSetup.{s['pascal']}, {i}, {a['always']})] = {a['always_since']},"
+            for s in t["setups"] for i, a in enumerate(s.get("args", [])) if a.get("always_since", s["since"]) > s["since"]]
+    out += ["        };", "",
+            "    /// <summary>The values of a choice that arrived after rule set 1: (choice, value's place) to the rule set.</summary>",
+            "    public static readonly IReadOnlyDictionary<(string Choice, int Value), int> ChoiceValuesSince =",
+            "        new Dictionary<(string Choice, int Value), int>", "        {"]
+    out += [f"            [({text(c['name'])}, {c['values'].index(v)})] = {r}," for c in t["choices"] for v, r in c["values_since"].items()]
     out += ["        };", "}", ""]
     return "\n".join(out)

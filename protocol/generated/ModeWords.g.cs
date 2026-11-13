@@ -275,6 +275,38 @@ public enum ModeSetup : byte
     StartGap = 56,
     /// <summary><c>start_gap even</c></summary>
     StartGapEven = 57,
+    /// <summary><c>machine</c></summary>
+    Machine = 58,
+    /// <summary><c>machine random</c></summary>
+    MachineRandom = 59,
+    /// <summary><c>machine random each</c></summary>
+    MachineRandomEach = 60,
+    /// <summary><c>machine by seat</c></summary>
+    MachineBySeat = 61,
+    /// <summary><c>machine by team</c></summary>
+    MachineByTeam = 62,
+    /// <summary><c>machine by place</c></summary>
+    MachineByPlace = 63,
+    /// <summary><c>seat_speed_open</c></summary>
+    SeatSpeedOpen = 64,
+    /// <summary><c>max_speed_open</c></summary>
+    MaxSpeedOpen = 65,
+    /// <summary><c>live_places</c></summary>
+    LivePlaces = 66,
+    /// <summary><c>distance_label</c></summary>
+    DistanceLabel = 67,
+    /// <summary><c>results_times</c></summary>
+    ResultsTimes = 68,
+    /// <summary><c>hud_layout ax</c></summary>
+    HudLayoutAx = 69,
+    /// <summary><c>say_texts</c></summary>
+    SayTexts = 70,
+    /// <summary><c>pauses</c></summary>
+    Pauses = 71,
+    /// <summary><c>wreck_slide</c></summary>
+    WreckSlide = 72,
+    /// <summary><c>tag_looks</c></summary>
+    TagLooks = 73,
 }
 
 /// <summary>A read of a seat (protocol/modes.toml).</summary>
@@ -468,6 +500,18 @@ public enum ModeSeatRead : byte
     StatBoostEnergy = 92,
     /// <summary><c>stat.base.boost_energy</c></summary>
     StatBaseBoostEnergy = 93,
+    /// <summary><c>base_speed</c></summary>
+    BaseSpeed = 94,
+    /// <summary><c>boost_value</c></summary>
+    BoostValue = 95,
+    /// <summary><c>pad.steer</c></summary>
+    PadSteer = 96,
+    /// <summary><c>pad.accel</c></summary>
+    PadAccel = 97,
+    /// <summary><c>pad.brake</c></summary>
+    PadBrake = 98,
+    /// <summary><c>pad.boost</c></summary>
+    PadBoost = 99,
 }
 
 /// <summary>A read of the race (protocol/modes.toml).</summary>
@@ -501,6 +545,10 @@ public enum ModeRaceRead : byte
     HumansLeft = 12,
     /// <summary><c>human_finished</c></summary>
     HumanFinished = 13,
+    /// <summary><c>paused</c></summary>
+    Paused = 14,
+    /// <summary><c>paused_steps</c></summary>
+    PausedSteps = 15,
 }
 
 /// <summary>An action (protocol/modes.toml).</summary>
@@ -654,13 +702,47 @@ public enum ModeAction : byte
     ShowObjectsOff = 78,
     /// <summary><c>seat.stat.boost_energy</c></summary>
     SeatStatBoostEnergy = 79,
+    /// <summary><c>seat.base_speed</c></summary>
+    SeatBaseSpeed = 80,
+    /// <summary><c>hud_move</c></summary>
+    HudMove = 81,
+    /// <summary><c>map_char</c></summary>
+    MapChar = 82,
+    /// <summary><c>map_char off</c></summary>
+    MapCharOff = 83,
+    /// <summary><c>pause</c></summary>
+    Pause = 84,
+    /// <summary><c>resume</c></summary>
+    Resume = 85,
+    /// <summary><c>resume after</c></summary>
+    ResumeAfter = 86,
+    /// <summary><c>say</c></summary>
+    Say = 87,
+    /// <summary><c>say off</c></summary>
+    SayOff = 88,
+    /// <summary><c>hud_move off</c></summary>
+    HudMoveOff = 89,
+    /// <summary><c>show_score</c></summary>
+    ShowScore = 90,
+    /// <summary><c>show_score off</c></summary>
+    ShowScoreOff = 91,
+    /// <summary><c>show_text</c></summary>
+    ShowText = 92,
+    /// <summary><c>show_text off</c></summary>
+    ShowTextOff = 93,
 }
 
 /// <summary>The vocabulary of one api, by the names a mode file writes (protocol/modes.toml).</summary>
 public static partial class ModeWords
 {
-    /// <summary>The api this build compiles.</summary>
-    public const int Api = 1;
+    /// <summary>The newest rule set this build compiles and runs: what a package carries as its api.</summary>
+    public const int Api = 2;
+    /// <summary>The newest game version this build knows: a mode file names one (<c>api 0.6.5;</c>).</summary>
+    public const string ApiVersion = "0.6.5";
+    /// <summary>The rule sets, oldest first: its number and the game version it arrived in. A version between two
+    /// has the earlier one's.</summary>
+    public static readonly IReadOnlyList<(int Number, string Version)> RuleSets =
+        [(1, "0.6.0"), (2, "0.6.5")];
     /// <summary>The api's limit <c>budget</c>.</summary>
     public const int Budget = 65536;
     /// <summary>The api's limit <c>queue</c>.</summary>
@@ -693,6 +775,10 @@ public static partial class ModeWords
     public const int TagText = 10;
     /// <summary>The api's limit <c>tag_texts</c>.</summary>
     public const int TagTexts = 8;
+    /// <summary>The api's limit <c>say_text</c>.</summary>
+    public const int SayText = 160;
+    /// <summary>The api's limit <c>say_texts</c>.</summary>
+    public const int SayTexts = 32;
     /// <summary>The api's limit <c>board</c>.</summary>
     public const int Board = 8;
     /// <summary>The api's limit <c>board_label</c>.</summary>
@@ -808,11 +894,11 @@ public static partial class ModeWords
         ("game_start", ModeEvent.GameStart, false, false, null),
     ];
 
-    /// <summary>The setup words: name, id, arguments (name, type, least, most, default, what on is); Lobby: the coordinator's alone, not in the package; Form: how the file writes it (range, text, list; empty: its arguments).</summary>
+    /// <summary>The setup words: name, id, arguments (name, type, least, most, default, what on is, what always is); Lobby: the coordinator's alone, not in the package; Form: how the file writes it (range, text, list; empty: its arguments).</summary>
     public static readonly IReadOnlyList<(string Name, ModeSetup Id, IReadOnlyList<ModeArgument> Args, bool Lobby, string Form)> Setups =
     [
         ("laps", ModeSetup.Laps, [new ModeArgument("", ModeType.Int, 0, 99, null)], false, ""),
-        ("cpus", ModeSetup.Cpus, [new ModeArgument("", ModeType.Bool, 0, 1, null)], false, ""),
+        ("cpus", ModeSetup.Cpus, [new ModeArgument("", ModeType.Bool, 0, 2, null, Always: 2)], false, ""),
         ("pedals locked", ModeSetup.PedalsLocked, [new ModeArgument("accel", ModeType.Real, 0.0f, 1.0f, 1.0f), new ModeArgument("brake", ModeType.Real, 0.0f, 1.0f, 0.0f)], false, ""),
         ("boost", ModeSetup.Boost, [new ModeArgument("", ModeType.Bool, 0, 1, null)], false, ""),
         ("laps by course", ModeSetup.LapsByCourse, [new ModeArgument("else", ModeType.Int, 0, 99, 3)], false, ""),
@@ -822,7 +908,7 @@ public static partial class ModeWords
         ("restore", ModeSetup.Restore, [new ModeArgument("", ModeType.Bool, 0, 1, null)], false, ""),
         ("contact", ModeSetup.Contact, [new ModeArgument("", ModeType.Bool, 0, 1, null)], false, ""),
         ("clock_limit", ModeSetup.ClockLimit, [new ModeArgument("", ModeType.Int, 60, 65535, null)], false, ""),
-        ("rolling_start", ModeSetup.RollingStart, [new ModeArgument("", ModeType.Real, 0.0f, 9000.0f, 1000.0f)], false, ""),
+        ("rolling_start", ModeSetup.RollingStart, [new ModeArgument("", ModeType.Real, 0.0f, 1e+17f, 1000.0f)], false, ""),
         ("course", ModeSetup.Course, [], true, "text"),
         ("racers", ModeSetup.Racers, [new ModeArgument("least", ModeType.Int, 1, 30, null), new ModeArgument("most", ModeType.Int, 1, 30, null)], true, "range"),
         ("machines all", ModeSetup.MachinesAll, [], true, ""),
@@ -862,6 +948,22 @@ public static partial class ModeWords
         ("damage_cap", ModeSetup.DamageCap, [new ModeArgument("", ModeType.Bool, 0, 1, null)], false, ""),
         ("start_gap", ModeSetup.StartGap, [new ModeArgument("", ModeType.Real, 0.0f, 10000.0f, null)], false, ""),
         ("start_gap even", ModeSetup.StartGapEven, [], false, ""),
+        ("machine", ModeSetup.Machine, [], true, "text"),
+        ("machine random", ModeSetup.MachineRandom, [], true, ""),
+        ("machine random each", ModeSetup.MachineRandomEach, [], true, ""),
+        ("machine by seat", ModeSetup.MachineBySeat, [], true, "list"),
+        ("machine by team", ModeSetup.MachineByTeam, [], true, "list"),
+        ("machine by place", ModeSetup.MachineByPlace, [], true, "list"),
+        ("seat_speed_open", ModeSetup.SeatSpeedOpen, [], false, ""),
+        ("max_speed_open", ModeSetup.MaxSpeedOpen, [], false, ""),
+        ("live_places", ModeSetup.LivePlaces, [], false, ""),
+        ("distance_label", ModeSetup.DistanceLabel, [new ModeArgument("", ModeType.Bool, 0, 1, null)], false, ""),
+        ("results_times", ModeSetup.ResultsTimes, [new ModeArgument("", ModeType.Bool, 0, 1, null)], false, ""),
+        ("hud_layout ax", ModeSetup.HudLayoutAx, [], false, ""),
+        ("say_texts", ModeSetup.SayTexts, [], false, "text"),
+        ("pauses", ModeSetup.Pauses, [], false, ""),
+        ("wreck_slide", ModeSetup.WreckSlide, [new ModeArgument("", ModeType.Bool, 0, 1, null)], false, ""),
+        ("tag_looks", ModeSetup.TagLooks, [], false, "text"),
     ];
 
     /// <summary>The reads of a seat (<c>seat.NAME</c>): name, id, type.</summary>
@@ -961,6 +1063,12 @@ public static partial class ModeWords
         ("gap_leader", ModeSeatRead.GapLeader, ModeType.Int),
         ("stat.boost_energy", ModeSeatRead.StatBoostEnergy, ModeType.Real),
         ("stat.base.boost_energy", ModeSeatRead.StatBaseBoostEnergy, ModeType.Real),
+        ("base_speed", ModeSeatRead.BaseSpeed, ModeType.Real),
+        ("boost_value", ModeSeatRead.BoostValue, ModeType.Real),
+        ("pad.steer", ModeSeatRead.PadSteer, ModeType.Real),
+        ("pad.accel", ModeSeatRead.PadAccel, ModeType.Real),
+        ("pad.brake", ModeSeatRead.PadBrake, ModeType.Real),
+        ("pad.boost", ModeSeatRead.PadBoost, ModeType.Bool),
     ];
 
     /// <summary>The reads of the race (<c>race.NAME</c>): name, id, type.</summary>
@@ -980,6 +1088,8 @@ public static partial class ModeWords
         ("course", ModeRaceRead.Course, ModeType.Int),
         ("humans_left", ModeRaceRead.HumansLeft, ModeType.Int),
         ("human_finished", ModeRaceRead.HumanFinished, ModeType.Int),
+        ("paused", ModeRaceRead.Paused, ModeType.Bool),
+        ("paused_steps", ModeRaceRead.PausedSteps, ModeType.Int),
     ];
 
     /// <summary>The actions: name, id, the types of their arguments in order.</summary>
@@ -1059,6 +1169,20 @@ public static partial class ModeWords
         ("show_objects", ModeAction.ShowObjects, [ModeType.Seat, ModeType.Int, ModeType.Int]),
         ("show_objects off", ModeAction.ShowObjectsOff, [ModeType.Seat]),
         ("seat.stat.boost_energy", ModeAction.SeatStatBoostEnergy, [ModeType.Seat, ModeType.Real]),
+        ("seat.base_speed", ModeAction.SeatBaseSpeed, [ModeType.Seat, ModeType.Real]),
+        ("hud_move", ModeAction.HudMove, [ModeType.Seat, ModeType.Int, ModeType.Real, ModeType.Real, ModeType.Real]),
+        ("map_char", ModeAction.MapChar, [ModeType.Seat, ModeType.Int]),
+        ("map_char off", ModeAction.MapCharOff, [ModeType.Seat]),
+        ("pause", ModeAction.Pause, []),
+        ("resume", ModeAction.Resume, []),
+        ("resume after", ModeAction.ResumeAfter, [ModeType.Int]),
+        ("say", ModeAction.Say, [ModeType.Int]),
+        ("say off", ModeAction.SayOff, []),
+        ("hud_move off", ModeAction.HudMoveOff, [ModeType.Seat, ModeType.Int]),
+        ("show_score", ModeAction.ShowScore, [ModeType.Seat, ModeType.Int, ModeType.Int, ModeType.Int]),
+        ("show_score off", ModeAction.ShowScoreOff, [ModeType.Seat]),
+        ("show_text", ModeAction.ShowText, [ModeType.Seat, ModeType.Int, ModeType.Int]),
+        ("show_text off", ModeAction.ShowTextOff, [ModeType.Seat]),
     ];
 
     /// <summary>The actions that need a running step, which game_start refuses.</summary>
@@ -1084,8 +1208,9 @@ public static partial class ModeWords
     public static readonly IReadOnlyDictionary<string, IReadOnlyList<string>> Choices =
         new Dictionary<string, IReadOnlyList<string>>
         {
-            ["part"] = ["TIMER", "DISTANCE", "DIGIT", "WARNING", "SUCCESS", "FAILED", "TIME_OVER", "SPEED_GAUGE", "OBJECTS", "LEADER_GAP", "GHOST_GAP", "RANK", "LAPS", "SPEED", "ENERGY", "LAP_TIMES", "RACE_TIME", "FACES"],
+            ["part"] = ["TIMER", "DISTANCE", "DIGIT", "WARNING", "SUCCESS", "FAILED", "TIME_OVER", "SPEED_GAUGE", "OBJECTS", "LEADER_GAP", "GHOST_GAP", "RANK", "LAPS", "SPEED", "ENERGY", "LAP_TIMES", "RACE_TIME", "FACES", "SPARE", "SKULLS", "WRONG_WAY", "BANNERS", "FINISH", "CHECK", "SCORE", "TEXT"],
             ["banner"] = ["FINAL_LAP", "BOOST_POWER", "TIME_BONUS", "GAP", "WRONG_WAY", "TICK"],
+            ["font"] = ["BLOCK", "CAPS", "PLAIN", "NARROW", "SERIF", "BIG_SERIF"],
             ["look"] = ["normal", "ghost", "invisible"],
         };
 
@@ -1098,6 +1223,10 @@ public static partial class ModeWords
             [(ModeAction.StockBanner, 1)] = "banner",
             [(ModeAction.SeatLook, 1)] = "look",
             [(ModeAction.SeatOwnLook, 1)] = "look",
+            [(ModeAction.HudMove, 1)] = "part",
+            [(ModeAction.HudMoveOff, 1)] = "part",
+            [(ModeAction.ShowScore, 3)] = "font",
+            [(ModeAction.ShowText, 2)] = "font",
         };
 
     /// <summary>The actions written with a word between their first two arguments in place of a comma.</summary>
@@ -1105,5 +1234,107 @@ public static partial class ModeWords
         new Dictionary<ModeAction, string>
         {
             [ModeAction.MapHide] = "from",
+        };
+
+    /// <summary>The operations that arrived after rule set 1, and the rule set each arrived in.</summary>
+    public static readonly IReadOnlyDictionary<ModeOp, int> OpsSince =
+        new Dictionary<ModeOp, int>
+        {
+        };
+
+    /// <summary>The events that arrived after rule set 1, and the rule set each arrived in.</summary>
+    public static readonly IReadOnlyDictionary<ModeEvent, int> EventsSince =
+        new Dictionary<ModeEvent, int>
+        {
+        };
+
+    /// <summary>The setup words that arrived after rule set 1, and the rule set each arrived in.</summary>
+    public static readonly IReadOnlyDictionary<ModeSetup, int> SetupsSince =
+        new Dictionary<ModeSetup, int>
+        {
+            [ModeSetup.Machine] = 2,
+            [ModeSetup.MachineRandom] = 2,
+            [ModeSetup.MachineRandomEach] = 2,
+            [ModeSetup.MachineBySeat] = 2,
+            [ModeSetup.MachineByTeam] = 2,
+            [ModeSetup.MachineByPlace] = 2,
+            [ModeSetup.SeatSpeedOpen] = 2,
+            [ModeSetup.MaxSpeedOpen] = 2,
+            [ModeSetup.LivePlaces] = 2,
+            [ModeSetup.DistanceLabel] = 2,
+            [ModeSetup.ResultsTimes] = 2,
+            [ModeSetup.HudLayoutAx] = 2,
+            [ModeSetup.SayTexts] = 2,
+            [ModeSetup.Pauses] = 2,
+            [ModeSetup.WreckSlide] = 2,
+            [ModeSetup.TagLooks] = 2,
+        };
+
+    /// <summary>The reads of a seat that arrived after rule set 1, and the rule set each arrived in.</summary>
+    public static readonly IReadOnlyDictionary<ModeSeatRead, int> SeatReadsSince =
+        new Dictionary<ModeSeatRead, int>
+        {
+            [ModeSeatRead.BaseSpeed] = 2,
+            [ModeSeatRead.BoostValue] = 2,
+            [ModeSeatRead.PadSteer] = 2,
+            [ModeSeatRead.PadAccel] = 2,
+            [ModeSeatRead.PadBrake] = 2,
+            [ModeSeatRead.PadBoost] = 2,
+        };
+
+    /// <summary>The reads of the race that arrived after rule set 1, and the rule set each arrived in.</summary>
+    public static readonly IReadOnlyDictionary<ModeRaceRead, int> RaceReadsSince =
+        new Dictionary<ModeRaceRead, int>
+        {
+            [ModeRaceRead.Paused] = 2,
+            [ModeRaceRead.PausedSteps] = 2,
+        };
+
+    /// <summary>The actions that arrived after rule set 1, and the rule set each arrived in.</summary>
+    public static readonly IReadOnlyDictionary<ModeAction, int> ActionsSince =
+        new Dictionary<ModeAction, int>
+        {
+            [ModeAction.SeatBaseSpeed] = 2,
+            [ModeAction.HudMove] = 2,
+            [ModeAction.MapChar] = 2,
+            [ModeAction.MapCharOff] = 2,
+            [ModeAction.Pause] = 2,
+            [ModeAction.Resume] = 2,
+            [ModeAction.ResumeAfter] = 2,
+            [ModeAction.Say] = 2,
+            [ModeAction.SayOff] = 2,
+            [ModeAction.HudMoveOff] = 2,
+            [ModeAction.ShowScore] = 2,
+            [ModeAction.ShowScoreOff] = 2,
+            [ModeAction.ShowText] = 2,
+            [ModeAction.ShowTextOff] = 2,
+        };
+
+    /// <summary>The values a setup word's argument took after the word itself arrived: (word, argument, value) to
+    /// the rule set.</summary>
+    public static readonly IReadOnlyDictionary<(ModeSetup Word, int Argument, int Value), int> SetupValuesSince =
+        new Dictionary<(ModeSetup Word, int Argument, int Value), int>
+        {
+            [(ModeSetup.Cpus, 0, 2)] = 2,
+        };
+
+    /// <summary>The values of a choice that arrived after rule set 1: (choice, value's place) to the rule set.</summary>
+    public static readonly IReadOnlyDictionary<(string Choice, int Value), int> ChoiceValuesSince =
+        new Dictionary<(string Choice, int Value), int>
+        {
+            [("part", 18)] = 2,
+            [("part", 19)] = 2,
+            [("part", 20)] = 2,
+            [("part", 21)] = 2,
+            [("part", 22)] = 2,
+            [("part", 23)] = 2,
+            [("part", 24)] = 2,
+            [("part", 25)] = 2,
+            [("font", 0)] = 2,
+            [("font", 1)] = 2,
+            [("font", 2)] = 2,
+            [("font", 3)] = 2,
+            [("font", 4)] = 2,
+            [("font", 5)] = 2,
         };
 }

@@ -54,7 +54,17 @@ public sealed class ModeCompilerTests
     [InlineData("gap_same")]
     [InlineData("gap_spread")]
     [InlineData("clean")]
+    [InlineData("ax_hud")]
+    [InlineData("pause")]
+    [InlineData("pause_vote")]
     [InlineData("death_race")]
+    [InlineData("same_machine")]
+    [InlineData("speed_open")]
+    [InlineData("engine_speed")]
+    [InlineData("live_places")]
+    [InlineData("distance_label")]
+    [InlineData("results_times")]
+    [InlineData("cpu_fill")]
     public void AVectorCompilesToItsPackage(string name)
     {
         var result = CompileVector(name);
@@ -79,6 +89,19 @@ public sealed class ModeCompilerTests
         Assert.DoesNotContain(result.Warnings, w => !w.Contains("did you mean while"));
         Assert.InRange(package.Length, 1, ModeWords.PackageBytes);
         Assert.InRange(result.Budget, 0, ModeWords.Budget);   // (0: a mode of setup words only, as Quick Play)
+    }
+
+    /// <summary>The modes live on the service in 0.6.0 (copies of the files as uploaded, named by their hash) compile to
+    /// the same package with this compiler: the 0.6.5 tops (seat_speed_open, max_speed_open) are the file's own words,
+    /// never inferred, so a 0.6.0 game still takes them.</summary>
+    [Theory]
+    [InlineData("crown-c9b28846")]
+    [InlineData("overdrive-2062f4fa")]
+    public void ALiveModeCompilesAsItDidIn060(string name)
+    {
+        var result = CompileVector(Path.Combine("live", name));
+        Assert.StartsWith(name[(name.IndexOf('-') + 1)..], result.Hash, StringComparison.Ordinal);
+        Assert.DoesNotContain(result.Mode!.Setups, s => s.Id is ModeSetup.SeatSpeedOpen or ModeSetup.MaxSpeedOpen);
     }
 
     [Theory]
@@ -138,15 +161,16 @@ public sealed class ModeCompilerTests
         var cuts = CompileVector("cuts").Mode!;
         // every word, and with the language vector every operation (the words vector's are the first slice's, the
         // race vector's the race side's of wave 2A)
-        var code = Code("words").Concat(Code("gap_reads")).Concat(Code("race")).Concat(Code("cuts")).Concat(Code("stats")).Concat(Code("stats_page")).Concat(Code("energy_words")).Concat(Code("combat")).Concat(Code("held_words")).ToList();
+        var code = Code("words").Concat(Code("gap_reads")).Concat(Code("race")).Concat(Code("cuts")).Concat(Code("stats")).Concat(Code("stats_page")).Concat(Code("energy_words")).Concat(Code("combat")).Concat(Code("held_words")).Concat(Code("engine_speed")).Concat(Code("pause")).ToList();
         var ops = code.Concat(Code("language")).Select(l => l.Split(' ')[0]).ToHashSet();
         Assert.Equal(Enum.GetNames<ModeOp>().Order(), ops.Order());
         Assert.All(ModeWords.SeatReads, r => Assert.Contains(code.Concat(Code("language")), l => l.EndsWith("SeatRead " + r.Name, StringComparison.Ordinal)));
         Assert.All(ModeWords.RaceReads, r => Assert.Contains(code, l => l.EndsWith("RaceRead " + r.Name, StringComparison.Ordinal)));
         Assert.All(ModeWords.Actions, a => Assert.Contains(code.Concat(Code("display")), l => l.EndsWith("Action " + a.Name, StringComparison.Ordinal)));
-        // every setup word but laps by course (the competitive vector's); the practice vector's are a solo mode's
+        // every setup word but laps by course (the competitive vector's); the practice vector's are a solo mode's (the
+        // pause vector's say_texts once: a word a text)
         var solo = CompileVector("practice").Mode!.Setups.Where(s => s.Id is not (ModeSetup.Laps or ModeSetup.ResultsHeading));
-        var setups = mode.Setups.Concat(CompileVector("gap_reads").Mode!.Setups).Concat(cuts.Setups).Concat(race.Setups).Concat(solo).Concat(CompileVector("combat").Mode!.Setups.Where(s => s.Id != ModeSetup.ClockLimit)).Concat(CompileVector("gap_same").Mode!.Setups).Concat(CompileVector("gap_spread").Mode!.Setups).Concat(CompileVector("clean").Mode!.Setups).Concat(CompileVector("stats_page").Mode!.Setups).Concat(CompileVector("energy_words").Mode!.Setups).Select(s => s.Id).ToList();
+        var setups = mode.Setups.Concat(CompileVector("gap_reads").Mode!.Setups).Concat(cuts.Setups).Concat(race.Setups).Concat(solo).Concat(CompileVector("combat").Mode!.Setups.Where(s => s.Id != ModeSetup.ClockLimit)).Concat(CompileVector("gap_same").Mode!.Setups).Concat(CompileVector("gap_spread").Mode!.Setups).Concat(CompileVector("clean").Mode!.Setups).Concat(CompileVector("ax_hud").Mode!.Setups).Concat(CompileVector("pause").Mode!.Setups.DistinctBy(s => s.Id)).Concat(CompileVector("stats_page").Mode!.Setups).Concat(CompileVector("energy_words").Mode!.Setups).Concat(CompileVector("engine_speed").Mode!.Setups.Concat(CompileVector("speed_open").Mode!.Setups).Concat(CompileVector("live_places").Mode!.Setups).Concat(CompileVector("distance_label").Mode!.Setups).Where(s => s.Id is ModeSetup.SeatSpeedOpen or ModeSetup.MaxSpeedOpen or ModeSetup.LivePlaces or ModeSetup.DistanceLabel)).Concat(CompileVector("results_times").Mode!.Setups.Where(s => s.Id is ModeSetup.ResultsTimes or ModeSetup.WreckSlide)).Concat(CompileVector("display").Mode!.Setups.Where(s => s.Id == ModeSetup.TagLooks)).Select(s => s.Id).ToList();
         Assert.Equal(ModeWords.Setups.Where(s => !s.Lobby).Select(s => s.Id).Where(id => id is not ModeSetup.LapsByCourse).Order(),
             setups.Order());
         Assert.Equal(ModeWords.Events.Select(e => e.Id).Order(), mode.Rules.Concat(race.Rules).Select(r => r.Event).Distinct().Order());
@@ -317,8 +341,8 @@ public sealed class ModeCompilerTests
     {
         var package = CompileVector("overdrive").Package!;
         var newer = (byte[])package.Clone();
-        newer[7] = 2;
-        Assert.Contains("api 2", Assert.Throws<InvalidDataException>(() => ModePackage.Read(newer)).Message, StringComparison.Ordinal);
+        newer[7] = (byte)(ModeWords.Api + 1);
+        Assert.Contains($"rule set {ModeWords.Api + 1}, newer than this build's", Assert.Throws<InvalidDataException>(() => ModePackage.Read(newer)).Message, StringComparison.Ordinal);
         Assert.Throws<InvalidDataException>(() => ModePackage.Read(package[..^1]));
         Assert.Throws<InvalidDataException>(() => ModePackage.Read([.. package, 0]));
         Assert.Throws<InvalidDataException>(() => ModePackage.Read([.. "FZMQ"u8, .. package[4..]]));
@@ -327,12 +351,11 @@ public sealed class ModeCompilerTests
     private const string Head = "mode \"Test\" { api 1; }\n";
 
     [Theory]
-    [InlineData(Head + "laps 3;\nflying_start 1000 km/h;\n", "line 3: 'flying_start' is not a word of api 1")]
+    [InlineData(Head + "laps 3;\nflying_start 1000 km/h;\n", "line 3: 'flying_start' is not a word of api 0.6.5")]
     [InlineData(Head + "global int n;\nrule \"R\" {\n  event every step;\n  do { n = 1.5; }\n}\n",
         "line 5: the int n takes an int, not a real: floor, ceil, round or trunc make an int of a real")]
     [InlineData(Head + "rule \"R\" {\n  event out(s);\n  while race.started;\n  do { retire s; }\n}\n",
         "line 4: while is for the events that go on (every step, each seat): out happens once, so its rule takes when")]
-    [InlineData("mode \"Test\" {\n  api 2;\n}\n", "line 2: api 2 is not one this build knows: its newest is api 1")]
     [InlineData(Head + "param rise \"Rise\" number 5..50 step 5 default 60;\n", "line 2: rise's default 60 is outside 5..50")]
     [InlineData(Head + "param rise \"Rise\" number 50..5;\n", "line 2: rise's range 50..5 is empty: the least comes first")]
     [InlineData(Head + "laps 100;\n", "line 2: laps is 0..99")]
@@ -368,8 +391,8 @@ public sealed class ModeCompilerTests
     [InlineData("rule \"R\" { event every step; do { int x = 3 % 1.5; } }\n", "line 2: '%' takes whole numbers: use floor, ceil, round or trunc first")]
     [InlineData("param p \"P\" number 1..3;\nevery(p) { }\n", "line 3: every takes a time of at least one step (every(10s)) or a delay parameter")]
     [InlineData("pedals locked accel 1.5;\n", "line 2: pedals locked's accel is 0..1")]
-    [InlineData("rule \"R\" { event each seat; do { show seat, 3; } }\n", "line 2: show takes one of TIMER, DISTANCE, DIGIT, WARNING, SUCCESS, FAILED, TIME_OVER, SPEED_GAUGE, OBJECTS, LEADER_GAP, GHOST_GAP, RANK, LAPS, SPEED, ENERGY, LAP_TIMES, RACE_TIME, FACES")]
-    [InlineData("rule \"R\" { event each seat; do { show seat, ghost; } }\n", "line 2: show takes one of TIMER, DISTANCE, DIGIT, WARNING, SUCCESS, FAILED, TIME_OVER, SPEED_GAUGE, OBJECTS, LEADER_GAP, GHOST_GAP, RANK, LAPS, SPEED, ENERGY, LAP_TIMES, RACE_TIME, FACES")]
+    [InlineData("rule \"R\" { event each seat; do { show seat, 3; } }\n", "line 2: show takes one of TIMER, DISTANCE, DIGIT, WARNING, SUCCESS, FAILED, TIME_OVER, SPEED_GAUGE, OBJECTS, LEADER_GAP, GHOST_GAP, RANK, LAPS, SPEED, ENERGY, LAP_TIMES, RACE_TIME, FACES, SPARE, SKULLS, WRONG_WAY, BANNERS, FINISH, CHECK, SCORE, TEXT")]
+    [InlineData("rule \"R\" { event each seat; do { show seat, ghost; } }\n", "line 2: show takes one of TIMER, DISTANCE, DIGIT, WARNING, SUCCESS, FAILED, TIME_OVER, SPEED_GAUGE, OBJECTS, LEADER_GAP, GHOST_GAP, RANK, LAPS, SPEED, ENERGY, LAP_TIMES, RACE_TIME, FACES, SPARE, SKULLS, WRONG_WAY, BANNERS, FINISH, CHECK, SCORE, TEXT")]
     [InlineData("rule \"R\" { event each seat; do { seat.look = TIMER; } }\n", "line 2: seat.look takes one of normal, ghost, invisible")]
     [InlineData("rule \"R\" { event each seat; do { seat.look += ghost; } }\n", "line 2: seat.look takes a name: write seat.look = normal;")]
     [InlineData("rule \"R\" { event each seat; do { map_hide seat, seats; } }\n", "line 2: map_hide writes 'from' before its second argument: map_hide s from seats;")]
@@ -386,7 +409,7 @@ public sealed class ModeCompilerTests
         var result = ModeCompiler.Compile(source);
         var error = Assert.Single(result.Errors);
         Assert.StartsWith("line 3: the mode takes ", error, StringComparison.Ordinal);
-        Assert.Contains("past api 1's 65536", error, StringComparison.Ordinal);
+        Assert.Contains("past api 0.6.5's 65536", error, StringComparison.Ordinal);
     }
 
     [Fact]

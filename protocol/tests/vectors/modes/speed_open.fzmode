@@ -1,0 +1,17 @@
+// seat.speed past the 9000 of before 0.6.5: seat 0 held at 12000, seat 1 at 1e30 (the core holds it to 1e17), seat 2
+// at -5 (0); a rolling start at 12000. Both need the file's setup word seat_speed_open.
+mode "Speed open" {
+  api 0.6.5;
+}
+
+seat_speed_open;
+rolling_start 12000 km/h;
+
+rule "Fast" {
+  event each seat;
+  do {
+    if (seat.index == 0) { seat.speed = 12000.0; }
+    if (seat.index == 1) { seat.speed = 1000000000000000000000000000000.0; }
+    if (seat.index == 2) { seat.speed = -5.0; }
+  }
+}

@@ -1,4 +1,4 @@
-// Death Race, after F-Zero X's: Big Blue: Drift Highway, no finish line. Three lives each; the last wreck is final. The
+// Death Race, after F-Zero X's: eleven courses, no finish line. Three lives each; the last wreck is final. The
 // clock ends it, or the last machine standing. Points for every KO and for staying in, so leading alone does not win and
 // neither does killing alone.
 //
@@ -21,7 +21,14 @@
 //   | the leader, no wreck, 0 KOs           | 12       | 6     | 5        | 0   | 23    |
 //   | mid-pack, one wreck, 3 KOs            | 12       | 4     | 0        | 9   | 25    |
 //   | out at 3:00 with 6 KOs                | 6        | 0     | 0        | 18  | 24    |
-// Results by points; ties by time survived, then KOs, then standing.
+// Results by points; ties by time survived (a seat still in before one out), then KOs, then standing.
+//
+// The HUD is F-Zero AX's (owner 2026-11-12): the position at the bottom left, the clock at the top where AX's timer is,
+// the six faces on AX's rows. The position and the faces follow the points order above during the race (live_places),
+// not the road order. The lives counter (the Grand Prix spare-machine icon, bottom left in the game) is placed at the
+// bottom centre (hud_move SPARE), clear of the position at the bottom left and the speed at the bottom right. No lap
+// timer (the owner, 2026-11-12: "Death race doesn't need a lap timer. It needs a points counter"): the race time and the
+// lap times at the top right are hidden, and the points so far stand where the race time was (SCORE, show_score).
 //
 // Damage is 400% and the game's cap of 20 a hit for a player is off (a CPU never had it), so a hard hit can end a
 // machine from full; a hit still takes at most 1.01 x max energy. Walls, mines and the pit are the game's own: the pit's
@@ -31,9 +38,9 @@
 // here; the game's 1/6 would be 1/12), from the start to the end, a restore included.
 
 mode "Death Race" {
-  api 1;
+  api 0.6.5;
   badge "DEATH RACE";
-  about "Drift Highway, no finish line. Three lives each. Boosts take half the energy. Points for every machine you take out and for staying in.";
+  about "No finish line. Three lives each. Boosts take half the energy. Points for every machine you take out and for staying in.";
 }
 
 param length      "Race length"         delay 3min..10min step 30s default 6min;
@@ -46,9 +53,14 @@ param life_points "Points a life left"  number 0..10 default 2;     // at the en
 param first_bonus  "1st alive"          number 0..20 default 5;    // the standing among the survivors at the end
 param second_bonus "2nd alive"          number 0..20 default 3;
 param third_bonus  "3rd alive"          number 0..20 default 1;
+param cpu_racers "CPU racers" choice ["Off", "Vote", "Always"] default "Vote";   // Vote: players may vote CPUs in; Always: CPUs take the empty seats with no vote
+param cpu_skill  "CPU level"  choice ["Novice", "Standard", "Expert", "Master"] default "Master";   // (Master: the game's own, as before the setting)
 
-course "Big Blue: Drift Highway";
-cpus on;                       // players may vote CPUs in as targets, as in F-Zero X
+courses ["Mute City: Twist Road", "Casino Palace: Split Oval", "Sand Ocean: Surface Slide", "Lightning: Loop Cross",
+         "Big Blue: Drift Highway", "Green Plant: Mobius Ring", "Fire Field: Undulation", "Aeropolis: Screw Drive",
+         "Outer Space: Meteor Stream", "Mute City: Sonic Oval", "Story: Emperor's Trial"];
+cpus cpu_racers;               // CPUs as targets, as in F-Zero X: by the players' vote, or always
+cpu_level cpu_skill;
 stats "GX Unleashed";          // Quick Play's pack, mines and machine setting (a word left out is the game's own)
 mine_regen on;
 machine_setting 100;
@@ -60,6 +72,8 @@ race_waits everyone;           // the race goes on until the mode ends it, not u
 damage dmg;
 damage_cap off;
 results_title "DEATH RACE";    // the points page, ties in the order below
+hud_layout ax;                 // AX's HUD: the position bottom left, the faces on AX's rows, the clock at AX's timer place
+live_places;                   // the position and the faces show the places the rule "Places" gives, every step
 
 global bool over;              // the race has ended: nothing scores from then on
 global int hold_until;         // a player's last moment: FINISH! and its place have their 8 s
@@ -95,6 +109,7 @@ rule "Lives" {
       seat.lives_shown = lives - 1;
       show_number seat, seat.lives_shown;
       if (lives > 1) { respawns seat; }
+      hud_move seat, SPARE, 320, 444, 0;   // the lives counter at the bottom centre (its own place is the bottom left, under AX's position)
     }
   }
 }
@@ -156,6 +171,28 @@ rule "Everyone sees the clock" {
   do { show seat, TIMER; }
 }
 
+rule "Points, not the lap timer" {
+  // the points awarded so far (the number the results add up) where the race time was; the lap timer's two parts off
+  event each seat;
+  do {
+    hide seat, RACE_TIME;
+    hide seat, LAP_TIMES;
+    show_score seat, seat.score;
+  }
+}
+
+rule "Places" {
+  // the places shown during the race: the points order the end gives, with the points paid so far (the end's bonuses
+  // for the lives left and the standing come at the end); ties as there: a seat still in before one out, longer in,
+  // more KOs, the race order
+  event every step;
+  while race.started and not over;
+  do {
+    int n = 1;
+    for each seat by seat.score desc, seat.racing desc, seat.lived desc, seat.kos_paid desc, standing { seat.place = n; n += 1; }
+  }
+}
+
 rule "End" {
   event every step;
   when race.started and (race.steps >= length or (race.seats > 1 and count(seats where racing) <= 1));
@@ -175,7 +212,7 @@ rule "End" {
       else if (k == 3) { call pay(seat, third_bonus); }
     }
     int n = 1;
-    for each seat by seat.score desc, seat.lived desc, seat.kos_paid desc, standing {
+    for each seat by seat.score desc, seat.racing desc, seat.lived desc, seat.kos_paid desc, standing {
       seat.rank = n;
       seat.place = n;
       n += 1;

@@ -1,0 +1,37 @@
+FZMP format 1 api 2, 703 bytes, hash e040f8764fb5a6e7a60f63e58733593414468b8f7ac140da0dc53c8b9ecd47eb
+HEAD name "Speed open" badge "" about ""
+PARM 0
+SETP 2
+  seat_speed_open
+  rolling_start 12000 (0x463b8000)
+VARS globals 0, seat words 0
+RULE 1
+  0 "Fast" event each seat, locals 1, when none, while none, body 0000
+CODE 73 bytes
+  ; rule 0 body
+  0000  LoadLocal 0
+  0002  SeatRead index
+  0004  Push 0
+  0009  IEq
+  000a  JumpIfZero 0018
+  000f  LoadLocal 0
+  0011  Push 1178304512 (0x463b8000, real 12000)
+  0016  Action seat.speed
+  0018  LoadLocal 0
+  001a  SeatRead index
+  001c  Push 1
+  0021  IEq
+  0022  JumpIfZero 0030
+  0027  LoadLocal 0
+  0029  Push 1900671690 (0x7149f2ca, real 1E+30)
+  002e  Action seat.speed
+  0030  LoadLocal 0
+  0032  SeatRead index
+  0034  Push 2
+  0039  IEq
+  003a  JumpIfZero 0048
+  003f  LoadLocal 0
+  0041  Push -1063256064 (0xc0a00000, real -5)
+  0046  Action seat.speed
+  0048  End
+SRC  509 bytes

@@ -100,11 +100,11 @@ public static class ModeStatsPage
         action is (>= ModeAction.SeatStatDriftRotationResistance and <= ModeAction.SeatStatGripWindow) or ModeAction.SeatStatBoostEnergy;
 }
 
-/// <summary>The texts the <c>tag</c> word draws, which the package carries in the setup word <c>tag_texts</c>: a value a
-/// character, a 0 between texts; a <c>tag</c> names one by its place, from 1. They are drawn by the game's font 5 as the
-/// name tags are (the characters tested in piconet-docs archive/research/spike-names.md): A to Z, 0 to 9, the space,
-/// <c>.</c> and <c>-</c>; it draws a small letter as a capital, a comma as an ampersand, the rest as blanks, so those are
-/// refused. At the tags' largest a character takes about 22 of the screen's 640: the longest text is about 220 wide.</summary>
+/// <summary>The texts the <c>tag</c> word draws (and <c>show_score</c>'s labels and <c>show_text</c>'s texts), which the
+/// package carries in the setup word <c>tag_texts</c>: a value a character, a 0 between texts; a word names one by its place,
+/// from 1. They are drawn by the game's font 5 as the name tags are (the characters tested in piconet-docs
+/// archive/research/spike-names.md), or another <c>font</c> of the common sheet: A to Z, 0 to 9, the space, <c>.</c> and
+/// <c>-</c>; a small letter is drawn as a capital, a comma as an ampersand, the rest as blanks, so those are refused. At the tags' largest a character takes about 22 of the screen's 640: the longest text is about 220 wide.</summary>
 public static class ModeTagTexts
 {
     /// <summary>Why a text cannot be drawn; null: it can.</summary>
@@ -131,6 +131,107 @@ public static class ModeTagTexts
     /// <summary>The word's arguments as its texts.</summary>
     public static string[] Texts(IEnumerable<ModeSetupValue> cells) =>
         new string([.. cells.Select(c => (char)c.Value)]).Split('\0');
+}
+
+/// <summary>A <c>tag</c> text's settings: how far it is seen (metres; full alpha to three quarters of it, none at it) and its
+/// size's least and largest, a player's name tag at its largest being 1 (18 pixels a letter on the 640 x 480 screen). The
+/// text is drawn at the largest from the camera to the reference depth (40 m from it, a rival about 30 m ahead with the
+/// camera riding behind) and smaller over the depth beyond, as a thing of the world would, never below the least: a
+/// name tags' matter (runner port/image/routines/nametags.py).</summary>
+public sealed record ModeTagLookValues(float Range, float SizeMin, float SizeMax);
+
+/// <summary>The <c>tag</c> words' settings, which the package carries in the compiler's setup word <c>tag_looks</c>: three
+/// values a text of <c>tag_texts</c>, in its order, for every text (the range, the least size, the largest, each a
+/// binary32's bits); left out of the package, every text has the defaults. A text used with two settings is two texts.
+/// The bounds are the owner's "nothing that can break the game": a range under 1 m puts the fade's divisor near 0 and
+/// over 10 km the tags' order loses its metres; a size of 5 draws letters 90 pixels tall, as large as reads as a tag.</summary>
+public static class ModeTagLooks
+{
+    public const float DefaultRange = 200.0f, LeastRange = 1.0f, MostRange = 10000.0f;
+    public const float DefaultSizeMin = 0.5f, DefaultSizeMax = 1.2f, LeastSize = 0.1f, MostSize = 5.0f;
+    public static readonly ModeTagLookValues Default = new(DefaultRange, DefaultSizeMin, DefaultSizeMax);
+
+    /// <summary>Why a tag cannot be drawn with these settings; null: it can.</summary>
+    public static string? Refusal(ModeTagLookValues look)
+    {
+        ArgumentNullException.ThrowIfNull(look);
+        if (!(look.Range >= LeastRange && look.Range <= MostRange))
+        {
+            return Invariant($"tag's range is {LeastRange} to {MostRange} m: {look.Range} m is not");
+        }
+        if (!(look.SizeMin >= LeastSize && look.SizeMin <= MostSize && look.SizeMax >= LeastSize && look.SizeMax <= MostSize))
+        {
+            return Invariant($"tag's size is {LeastSize} to {MostSize}, a player's name tag at its largest being 1: size {look.SizeMin} {look.SizeMax} is not");
+        }
+        return look.SizeMin > look.SizeMax ? Invariant($"tag's least size is above its largest: size {look.SizeMin} {look.SizeMax}") : null;
+    }
+
+    /// <summary>The settings as the word's arguments.</summary>
+    public static List<ModeSetupValue> Cells(IEnumerable<ModeTagLookValues> looks) =>
+        [.. looks.SelectMany(l => new[] { l.Range, l.SizeMin, l.SizeMax }).Select(v => new ModeSetupValue(false, ModeOperators.Cell(v)))];
+
+    /// <summary>The word's arguments as the settings, a text's each.</summary>
+    public static ModeTagLookValues[] Values(IReadOnlyList<ModeSetupValue> cells)
+    {
+        ArgumentNullException.ThrowIfNull(cells);
+        return [.. Enumerable.Range(0, cells.Count / 3).Select(i => new ModeTagLookValues(
+            ModeOperators.Real(cells[3 * i].Value), ModeOperators.Real(cells[3 * i + 1].Value), ModeOperators.Real(cells[3 * i + 2].Value)))];
+    }
+
+    /// <summary>The settings of each of the package's texts, the defaults where the package has no word.</summary>
+    public static ModeTagLookValues[] Of(ModePackage package)
+    {
+        ArgumentNullException.ThrowIfNull(package);
+        return Of(package.Setups);
+    }
+
+    /// <summary>The same, from the setup words.</summary>
+    public static ModeTagLookValues[] Of(IReadOnlyList<ModeSetupWord> setups)
+    {
+        ArgumentNullException.ThrowIfNull(setups);
+        var texts = setups.FirstOrDefault(s => s.Id == ModeSetup.TagTexts) is { } t ? ModeTagTexts.Texts(t.Arguments).Length : 0;
+        var looks = setups.FirstOrDefault(s => s.Id == ModeSetup.TagLooks) is { } l ? Values(l.Arguments) : [];
+        return [.. Enumerable.Range(0, texts).Select(i => i < looks.Length ? looks[i] : Default)];
+    }
+
+    private static string Invariant(FormattableString s) => FormattableString.Invariant(s);
+}
+
+/// <summary>The texts the <c>say</c> word shows, which the package carries in the setup words <c>say_texts</c>: one word
+/// a text, in order, its UTF-8 bytes a value each (a word holds at most 255 values; a text is at most 160 bytes); a
+/// <c>say</c> names one by its place, from 1. The runner draws them in the overlay's fonts (the launcher's Saira, and
+/// the system's Segoe UI and Yu Gothic for what it lacks), so any text of letters goes; a control character (a line
+/// break included: the panel breaks its lines itself) is refused.</summary>
+public static class ModeSayTexts
+{
+    /// <summary>Why a text cannot be shown; null: it can.</summary>
+    public static string? Refusal(string text)
+    {
+        ArgumentNullException.ThrowIfNull(text);
+        if (Encoding.UTF8.GetByteCount(text) > ModeWords.SayText)
+        {
+            return $"say: a text is at most {ModeWords.SayText} bytes of UTF-8: \"{text}\" has {Encoding.UTF8.GetByteCount(text)}";
+        }
+        if (text.EnumerateRunes().Any(r => Rune.IsControl(r)))
+        {
+            return "say: a text has no control characters (the panel breaks its own lines)";
+        }
+        return text.Trim().Length != text.Length || text.Length == 0
+            ? "say needs a text, with no space at either end"
+            : null;
+    }
+
+    /// <summary>The texts as their words, one a text.</summary>
+    public static List<ModeSetupWord> Words(IEnumerable<string> texts) =>
+        [.. texts.Select(t => new ModeSetupWord(ModeSetup.SayTexts, [.. Encoding.UTF8.GetBytes(t).Select(b => new ModeSetupValue(false, b))]))];
+
+    /// <summary>One word's arguments as its text.</summary>
+    public static string Text(IEnumerable<ModeSetupValue> cells) =>
+        Encoding.UTF8.GetString([.. cells.Select(c => (byte)c.Value)]);
+
+    /// <summary>A package's texts, in order: its say_texts words'.</summary>
+    public static string[] Texts(IEnumerable<ModeSetupWord> setups) =>
+        [.. setups.Where(s => s.Id == ModeSetup.SayTexts).Select(s => Text(s.Arguments))];
 }
 
 /// <summary>A setup word as the package keeps it: every argument of the word, in the table's order, the ones the file
@@ -420,7 +521,7 @@ public sealed class ModePackage
         }
         if (api > ModeWords.Api)
         {
-            throw new InvalidDataException($"the package is of api {api}, newer than this build's {ModeWords.Api}");
+            throw new InvalidDataException($"the package is of rule set {api}, newer than this build's {ModeWords.Api} (api {ModeWords.ApiVersion}): update to use it");
         }
         var sections = Sections.Select(tag => r.Section(tag)).ToArray();
         var board = r.Left > 0 ? ReadBoard(r.Section("BORD")) : [];
@@ -447,6 +548,11 @@ public sealed class ModePackage
             Source = sections[6].Utf8(sections[6].Left),
         };
         ModeCode.Check(result);
+        // (a frozen rule set holds nothing that arrived after it: such a package is no compiler's)
+        if (ModeLevels.Newer(result) is ({ } what, var since))
+        {
+            throw new InvalidDataException($"the package is of rule set {api} and holds {what}, which is of rule set {since} (api {ModeLevels.Version(since)})");
+        }
         return result;
     }
 
@@ -468,11 +574,11 @@ public sealed class ModePackage
             }
             if (words.Count > ModeWords.BoardWords || type == (int)ModeType.Real && words.Count > 0 || words.Any(w => Encoding.UTF8.GetByteCount(w) > ModeWords.BoardWord))
             {
-                throw new InvalidDataException($"the board's line \"{label}\" names words not of api {ModeWords.Api}");
+                throw new InvalidDataException($"the board's line \"{label}\" names words not of api {ModeWords.ApiVersion}");
             }
             if (scope > (int)ModeScope.Team || type >= (int)ModeType.Vec || Encoding.UTF8.GetByteCount(label) is 0 or > ModeWords.BoardLabel)
             {
-                throw new InvalidDataException($"the board's line \"{label}\" is not one of api {ModeWords.Api}");
+                throw new InvalidDataException($"the board's line \"{label}\" is not one of api {ModeWords.ApiVersion}");
             }
             list.Add(new ModeBoardLine((ModeScope)scope, (ModeType)type, word, label) { Words = words });
         }
@@ -522,7 +628,7 @@ public sealed class ModePackage
             var word = ModeWords.Setups.FirstOrDefault(w => (int)w.Id == id);
             if (word.Name is null)
             {
-                throw new InvalidDataException($"setup word {id} is not of api {ModeWords.Api}");
+                throw new InvalidDataException($"setup word {id} is not of api {ModeWords.ApiVersion}");
             }
             var arguments = Enumerable.Range(0, s.U8()).Select(_ => new ModeSetupValue(s.U8() switch
             {
@@ -530,7 +636,7 @@ public sealed class ModePackage
                 1 => true,
                 _ => throw new InvalidDataException($"the setup word {word.Name}'s argument has an unknown source"),
             }, s.I32())).ToList();
-            if (word.Id is ModeSetup.ResultsTitle or ModeSetup.ResultsHeading or ModeSetup.TagTexts or ModeSetup.PointsTable)
+            if (word.Id is ModeSetup.ResultsTitle or ModeSetup.ResultsHeading or ModeSetup.TagTexts or ModeSetup.TagLooks or ModeSetup.SayTexts or ModeSetup.PointsTable)
             {
                 if (!OwnValues(word.Id, arguments))
                 {
@@ -550,15 +656,50 @@ public sealed class ModePackage
             list.Add(new ModeSetupWord(word.Id, arguments));
         }
         s.End();
+        var says = ModeSayTexts.Texts(list);
+        if (says.Length > ModeWords.SayTexts || says.Distinct().Count() != says.Length)
+        {
+            throw new InvalidDataException($"the say texts are not the compiler's: at most {ModeWords.SayTexts}, each once");
+        }
+        // the tag texts, each with its settings, once; a settings word is three values a text
+        var tags = list.FirstOrDefault(w => w.Id == ModeSetup.TagTexts) is { } t ? ModeTagTexts.Texts(t.Arguments) : [];
+        if (list.FirstOrDefault(w => w.Id == ModeSetup.TagLooks) is { } looks && looks.Arguments.Count != 3 * tags.Length)
+        {
+            throw new InvalidDataException("the tag settings are not the compiler's: three values a tag text");
+        }
+        if (tags.Zip(ModeTagLooks.Of(list)).Distinct().Count() != tags.Length)
+        {
+            throw new InvalidDataException("the tag texts are not the compiler's: each text with its settings once");
+        }
         return list;
     }
 
     /// <summary>Whether a word of many values holds what the compiler would write for it.</summary>
     private static bool OwnValues(ModeSetup id, List<ModeSetupValue> arguments)
     {
+        if (id == ModeSetup.SayTexts)
+        {
+            if (arguments.Any(a => a.FromParam || a.Value is < 0 or > 255))
+            {
+                return false;
+            }
+            try
+            {
+                return ModeSayTexts.Refusal(new UTF8Encoding(false, true).GetString([.. arguments.Select(a => (byte)a.Value)])) is null;
+            }
+            catch (DecoderFallbackException)
+            {
+                return false;
+            }
+        }
         if (id == ModeSetup.PointsTable)
         {
             return arguments.Count is > 0 and <= ModeWords.Seats && !arguments.Any(a => a.FromParam || a.Value is < 0 or > 999);
+        }
+        if (id == ModeSetup.TagLooks)
+        {
+            return arguments.Count % 3 == 0 && arguments.Count is > 0 and <= 3 * ModeWords.TagTexts && !arguments.Any(a => a.FromParam)
+                   && !ModeTagLooks.Values(arguments).Any(l => ModeTagLooks.Refusal(l) is not null);
         }
         if (arguments.Any(a => a.FromParam || a.Value is < 0 or > 127))
         {
@@ -569,7 +710,7 @@ public sealed class ModePackage
             return ModeResultsTitle.Refusal(ModeResultsTitle.Text(arguments)) is null;
         }
         var texts = ModeTagTexts.Texts(arguments);
-        return texts.Length <= ModeWords.TagTexts && texts.Distinct().Count() == texts.Length && !texts.Any(t => ModeTagTexts.Refusal(t) is not null);
+        return texts.Length <= ModeWords.TagTexts && !texts.Any(t => ModeTagTexts.Refusal(t) is not null);  // (each with its settings once: ReadSetups)
     }
 
     private static List<int> ReadVars(ModeReader s, out List<int> seatWordValues, out List<int> teamWordValues)
@@ -611,7 +752,7 @@ public sealed class ModePackage
                 || (rule.When != ModeRule.None && rule.When >= code) || (rule.While != ModeRule.None && rule.While >= code)
                 || rule.Body >= code)
             {
-                throw new InvalidDataException($"the rule \"{label}\" is not a rule of api {ModeWords.Api}");
+                throw new InvalidDataException($"the rule \"{label}\" is not a rule of api {ModeWords.ApiVersion}");
             }
             list.Add(rule);
         }

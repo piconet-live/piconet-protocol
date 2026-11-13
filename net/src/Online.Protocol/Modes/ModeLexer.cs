@@ -17,6 +17,8 @@ internal enum ModeTokenKind
     /// <c>90 steps</c>.</summary>
     Time,
     Text,
+    /// <summary>A game version, three numbers: <c>0.6.5</c> (the header's <c>api</c>).</summary>
+    Version,
     Symbol,
     End,
 }
@@ -211,6 +213,16 @@ internal sealed class ModeLexer
             {
                 _at++;
             }
+        }
+        // "0.6.5": a game version, which no number reads as
+        if (fraction && Peek() == '.' && char.IsAsciiDigit(Peek(1)))
+        {
+            _at++;
+            while (char.IsAsciiDigit(Peek()))
+            {
+                _at++;
+            }
+            return new ModeToken(ModeTokenKind.Version, _text[start.._at], _line);
         }
         var digits = _text[start.._at];
         return Unit(digits, fraction) ?? Plain(digits, fraction);

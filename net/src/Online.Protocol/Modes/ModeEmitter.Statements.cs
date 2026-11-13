@@ -189,6 +189,7 @@ internal sealed partial class ModeEmitter
                 Op(ModeOp.SeatRead, (long)current.Id);
             });
             Used.TryAdd(word.Id, assign.Line);
+            Written("stat." + field.Field, assign);
             Op(ModeOp.Action, (long)word.Id);
             return;
         }
@@ -207,6 +208,7 @@ internal sealed partial class ModeEmitter
         }
         if (action.Name is not null)
         {
+            Written(field.Field, assign);
             Work(assign, action.Args[1], $"seat.{field.Field}", () =>
             {
                 Emit(field.Target);
@@ -227,7 +229,7 @@ internal sealed partial class ModeEmitter
         }
         throw new ModeCompileException(assign.Line, read.Name is not null
             ? $"seat.{field.Field} is the game's to say: it cannot be assigned"
-            : $"a seat has no '{field.Field}' (neither a word of api {ModeWords.Api} nor a seat variable)");
+            : $"a seat has no '{field.Field}' (neither a word of api {ModeWords.ApiVersion} nor a seat variable)");
     }
 
     private void If(ModeIf branch)
@@ -336,6 +338,16 @@ internal sealed partial class ModeEmitter
     private void Act(ModeActionStatement statement)
     {
         var action = ModeWords.Actions.First(a => a.Name == statement.Action);
+        // show_score's label and font are optional, as show_text's font is: `show_score s, n;` is `show_score s, n, "", BLOCK` (0: the
+        // default label; 0: the first font), `show_text s, "T";` is `show_text s, "T", BLOCK`. A trailing argument left out is a blank
+        // literal, which the loop below pushes as 0
+        if (action.Id is ModeAction.ShowScore or ModeAction.ShowText)
+        {
+            while (statement.Arguments.Count >= 2 && statement.Arguments.Count < action.Args.Count)
+            {
+                statement = statement with { Arguments = [.. statement.Arguments, new ModeLiteral(statement.Line, ModeType.Int, 0, "")] };
+            }
+        }
         if (statement.Arguments.Count != action.Args.Count)
         {
             throw new ModeCompileException(statement.Line, $"{action.Name} takes {action.Args.Count} argument{(action.Args.Count == 1 ? "" : "s")}, not {statement.Arguments.Count}");
@@ -346,14 +358,33 @@ internal sealed partial class ModeEmitter
             {
                 warnings.Add(ModeCompiler.Message(statement.Line, $"{action.Name} on none does nothing"));
             }
+            if (action.Id is ModeAction.ShowScore or ModeAction.ShowText && statement.Arguments[i] is ModeLiteral { Text: "", Type: ModeType.Int } && i >= 2)
+            {
+                Push(0);  // (the font left out: the first, BLOCK)
+                continue;
+            }
             if (ModeWords.ActionChoices.TryGetValue((action.Id, i), out var choice))
             {
+                if (action.Id is ModeAction.Show or ModeAction.Hide && statement.Arguments[i] is ModeName { Name: var part } && PlacedOnly.TryGetValue(part, out var why))
+                {
+                    throw new ModeCompileException(statement.Line, $"{action.Name} {part}: {why} (hud_move places it)");
+                }
                 Choice(statement.Arguments[i], choice, action.Name);
                 continue;
             }
-            if (action.Id == ModeAction.Tag && i == 1)
+            if (action.Id == ModeAction.Tag && i == 1 || action.Id == ModeAction.ShowScore && i == 2 || action.Id == ModeAction.ShowText && i == 1)
             {
-                Push(TagText(statement.Arguments[i]));
+                Push(statement.Arguments[i] is ModeLiteral { Text: "" } ? 0 : TagText(statement.Arguments[i], action.Name));
+                continue;
+            }
+            if (action.Id == ModeAction.MapChar && i == 1)
+            {
+                Push(MapChar(statement.Arguments[i]));
+                continue;
+            }
+            if (action.Id == ModeAction.Say)
+            {
+                Push(SayText(statement.Arguments[i]));
                 continue;
             }
             Value(statement.Arguments[i], action.Args[i], action.Name);
@@ -362,29 +393,103 @@ internal sealed partial class ModeEmitter
         Used.TryAdd(action.Id, statement.Line);
     }
 
-    /// <summary>The number <c>tag</c> names its text by, from 1: its place among the mode's texts, which a text joins the
-    /// first time it is used. Always a constant: the package holds every text a race can draw.</summary>
-    private int TagText(ModeExpr expr)
+    /// <summary>The number <c>tag</c> (or <c>show_score</c>, whose label, and <c>show_text</c>, whose text, are of the same table) names its text by, from 1: its
+    /// place among the mode's texts, which a text joins the first time it is used. Always a constant: the package holds every text a
+    /// race can draw.</summary>
+    private int TagText(ModeExpr expr, string word)
     {
         if (expr is not ModeTagText text)
         {
-            throw new ModeCompileException(expr.Line, "tag takes its text in quotes: tag s, \"BOMB\";");
+            throw new ModeCompileException(expr.Line, word switch
+            {
+                "tag" => "tag takes its text in quotes: tag s, \"BOMB\";",
+                "show_text" => "show_text takes its text in quotes: show_text s, \"GO\";",
+                _ => "show_score takes its label in quotes: show_score s, n, \"KOS\";",
+            });
         }
         if (ModeTagTexts.Refusal(text.Text) is { } refused)
         {
-            throw new ModeCompileException(text.Line, refused);
+            throw new ModeCompileException(text.Line, word == "tag" ? refused : refused.Replace("tag", word, StringComparison.Ordinal));
         }
-        var known = TagTexts.IndexOf(text.Text);
+        // tag's settings (0.6.5): a text with other settings is another text; show_score and show_text, which draw no tag,
+        // take the text whatever its settings
+        var look = word == "tag" ? TagLook(text) : ModeTagLooks.Default;
+        var known = word == "tag" ? TagTexts.Zip(TagLooks).ToList().FindIndex(p => p.First == text.Text && p.Second == look) : TagTexts.IndexOf(text.Text);
         if (known >= 0)
         {
             return known + 1;
         }
         if (TagTexts.Count == ModeWords.TagTexts)
         {
-            throw new ModeCompileException(text.Line, $"tag: a mode uses at most {ModeWords.TagTexts} different texts: \"{text.Text}\" is one more");
+            throw new ModeCompileException(text.Line, $"{word}: a mode uses at most {ModeWords.TagTexts} different texts (tag's, show_score's and show_text's together{(TagLooks.Any(l => l != ModeTagLooks.Default) ? ", a text with other settings another" : "")}): \"{text.Text}\" is one more");
         }
         TagTexts.Add(text.Text);
+        TagLooks.Add(look);
         return TagTexts.Count;
+    }
+
+    /// <summary>A <c>tag</c> word's settings with the defaults filled in, within the drawing's bounds; written at all, they
+    /// need api 0.6.5 (the package's <c>tag_looks</c>).</summary>
+    private ModeTagLookValues TagLook(ModeTagText text)
+    {
+        var written = text.Look ?? ModeTagLook.None;
+        if (written != ModeTagLook.None && Api < ModeWords.SetupsSince[ModeSetup.TagLooks])
+        {
+            throw new ModeCompileException(text.Line, $"tag's size and range need api {ModeLevels.Version(ModeWords.SetupsSince[ModeSetup.TagLooks])}: this file says api {ModeLevels.Version(Api)}");
+        }
+        var look = new ModeTagLookValues(written.Range ?? ModeTagLooks.DefaultRange, written.SizeMin ?? ModeTagLooks.DefaultSizeMin, written.SizeMax ?? ModeTagLooks.DefaultSizeMax);
+        if (ModeTagLooks.Refusal(look) is { } refused)
+        {
+            throw new ModeCompileException(text.Line, refused);
+        }
+        return look;
+    }
+
+    /// <summary>The shapes <c>map_char</c> draws by name, with no font: their codes from <see cref="MapShapes"/>, past
+    /// Unicode's last code point. A new one takes the next code; a code never changes.</summary>
+    internal static readonly string[] MapSymbols = ["CROWN"];
+
+    internal const int MapShapes = 0x110000;
+
+    /// <summary>What <c>map_char</c> draws: one Unicode character in quotes (one code point, not a control or a space),
+    /// its code point; or a shape's name (MapSymbols), MapShapes + its place. Always a constant.</summary>
+    private int MapChar(ModeExpr expr)
+    {
+        if (expr is ModeName name && FindLocal(name.Name) is null && Array.IndexOf(MapSymbols, name.Name) is var shape and >= 0)
+        {
+            return MapShapes + shape;
+        }
+        var runes = expr is ModeTagText text ? text.Text.EnumerateRunes().ToList() : [];
+        if (runes is not [var c] || System.Text.Rune.IsControl(c) || System.Text.Rune.IsWhiteSpace(c))
+        {
+            throw new ModeCompileException(expr.Line, $"map_char takes one character in quotes, as map_char s, \"K\"; or map_char s, \"\u265B\";, or a shape: {string.Join(", ", MapSymbols)}");
+        }
+        return c.Value;
+    }
+
+    /// <summary>The number <c>say</c> names its text by, from 1: its place among the mode's texts, as <c>tag</c>'s. Always
+    /// a constant: the package holds every text a race can show.</summary>
+    private int SayText(ModeExpr expr)
+    {
+        if (expr is not ModeTagText text)
+        {
+            throw new ModeCompileException(expr.Line, "say takes its text in quotes: say \"Hold A to accelerate.\";");
+        }
+        if (ModeSayTexts.Refusal(text.Text) is { } refused)
+        {
+            throw new ModeCompileException(text.Line, refused);
+        }
+        var known = SayTexts.IndexOf(text.Text);
+        if (known >= 0)
+        {
+            return known + 1;
+        }
+        if (SayTexts.Count == ModeWords.SayTexts)
+        {
+            throw new ModeCompileException(text.Line, $"say: a mode uses at most {ModeWords.SayTexts} different texts: \"{text.Text}\" is one more");
+        }
+        SayTexts.Add(text.Text);
+        return SayTexts.Count;
     }
 
     /// <summary>An argument of a choice (protocol/modes.toml's <c>[[choice]]</c>): one of its names, pushed as its
@@ -396,6 +501,10 @@ internal sealed partial class ModeEmitter
         if (index < 0)
         {
             throw new ModeCompileException(expr.Line, $"{what} takes one of {string.Join(", ", values)}");
+        }
+        if (ModeWords.ChoiceValuesSince.TryGetValue((choice, index), out var since) && since > Api)
+        {
+            throw new ModeCompileException(expr.Line, $"{what} {values[index]} needs api {ModeLevels.Version(since)}: this file says api {ModeLevels.Version(Api)}");
         }
         Push(index);
     }

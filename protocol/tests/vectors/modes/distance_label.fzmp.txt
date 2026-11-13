@@ -1,0 +1,19 @@
+FZMP format 1 api 2, 459 bytes, hash 3bc647ab008fb0d010e0877dbc9a1afdc3e92aeabb2f76b8e9491bb09ebc0163
+HEAD name "Distance label" badge "" about ""
+PARM 0
+SETP 1
+  distance_label off
+VARS globals 0, seat words 0
+RULE 1
+  0 "Metres" event each seat, locals 1, when none, while none, body 0000
+CODE 18 bytes
+  ; rule 0 body
+  0000  LoadLocal 0
+  0002  Push 1
+  0007  Action show
+  0009  LoadLocal 0
+  000b  LoadLocal 0
+  000d  SeatRead distance
+  000f  Action show_distance
+  0011  End
+SRC  316 bytes

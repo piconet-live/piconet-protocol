@@ -2,7 +2,7 @@
 // interpreter tests (protocol/README.md), not a mode to race. Presentation only: none of these changes the race.
 
 mode "Displays" {
-  api 1;
+  api 0.6.5;
   about "Every display word of api 1.";
 }
 
@@ -42,7 +42,7 @@ rule "Out of sight" {
     s.colour = 0xFF2020FF;
     map_mark s, 0xFF0000;
     tag s off;
-    tag s, "OUT";
+    tag s, "OUT", size 0.4 1, range 300 m;   // (0.6.5: its settings on the word: 0.4 to 1 of a name tag, full to 225 m, gone at 300)
     stock_banner s, FINAL_LAP;
     show_number s, -1;
   }
@@ -69,5 +69,32 @@ rule "The story parts' values" {
     show s, OBJECTS;
     show_distance s off;
     show_objects s off;
+  }
+}
+
+rule "A part moved" {
+  event lap(s);
+  do {
+    hud_move s, RANK, 24.5, 412, 90;
+    hud_move s, RANK off;
+    show_score s, 1234567;
+    show_score s, -5, "KOS";
+    hud_move s, SCORE, 320, 100, 0;
+    show_score s off;
+    show_score s, 3, "KOS", CAPS;
+    show_text s, "GO";
+    show_text s, "WAVE 2", BIG_SERIF;
+    hud_move s, TEXT, 320, 400, 180;
+    show_text s off;
+  }
+}
+
+rule "Map characters" {
+  event lap(s);
+  do {
+    map_char s, "K";
+    map_char s, "♛";
+    map_char s, CROWN;
+    map_char s off;
   }
 }

@@ -1,0 +1,28 @@
+FZMP format 1 api 2, 531 bytes, hash f0256f33f024f2f18f4ae5357d9d73b87942862fcffa7f94b7607619b9427f49
+HEAD name "Live places" badge "" about ""
+PARM 0
+SETP 1
+  live_places
+VARS globals 0, seat words 0
+RULE 1
+  0 "Order" event each seat, locals 1, when none, while none, body 0000
+CODE 49 bytes
+  ; rule 0 body
+  0000  LoadLocal 0
+  0002  SeatRead index
+  0004  Push 2
+  0009  IEq
+  000a  JumpIfZero 0018
+  000f  LoadLocal 0
+  0011  Push 1
+  0016  Action seat.place
+  0018  LoadLocal 0
+  001a  SeatRead index
+  001c  Push 0
+  0021  IEq
+  0022  JumpIfZero 0030
+  0027  LoadLocal 0
+  0029  Push 2
+  002e  Action seat.place
+  0030  End
+SRC  366 bytes

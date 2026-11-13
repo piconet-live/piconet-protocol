@@ -103,9 +103,17 @@ public static class ModeDisassembler
         {
             return table.Name + " " + Quote(ModeResultsTitle.Text(word.Arguments));
         }
+        if (word.Id == ModeSetup.SayTexts)
+        {
+            return table.Name + " " + Quote(ModeSayTexts.Text(word.Arguments));
+        }
         if (word.Id == ModeSetup.TagTexts)
         {
             return table.Name + " " + string.Join(' ', ModeTagTexts.Texts(word.Arguments).Select(Quote));
+        }
+        if (word.Id == ModeSetup.TagLooks)
+        {
+            return table.Name + " " + string.Join(' ', ModeTagLooks.Values(word.Arguments).Select(l => Invariant($"[range {l.Range} m size {l.SizeMin} {l.SizeMax}]")));
         }
         var parts = new List<string> { table.Name };
         for (var i = table.Args.Count; i + 1 < word.Arguments.Count; i += 2)  // a table's rows (laps by course)
@@ -117,7 +125,7 @@ public static class ModeDisassembler
         {
             var a = word.Arguments[i];
             var name = table.Args[i].Name.Length > 0 ? table.Args[i].Name + " " : "";
-            parts.Add(name + (a.FromParam ? Invariant($"param {a.Value} ({mode.Params[a.Value].Name})") : table.Args[i].Type == ModeType.Bool ? (a.Value == 0 ? "off" : "on") : Typed(table.Args[i].Type, a.Value)));
+            parts.Add(name + (a.FromParam ? Invariant($"param {a.Value} ({mode.Params[a.Value].Name})") : table.Args[i].Type == ModeType.Bool ? (a.Value == 0 ? "off" : a.Value == table.Args[i].Always ? "always" : "on") : Typed(table.Args[i].Type, a.Value)));
         }
         return string.Join(' ', parts);
     }
@@ -128,8 +136,8 @@ public static class ModeDisassembler
         var detail = i.Op switch
         {
             ModeOp.Push => Cell((int)operand),
-            ModeOp.SeatRead => ModeWords.SeatReads[(int)operand].Name,
-            ModeOp.RaceRead => ModeWords.RaceReads[(int)operand].Name,
+            ModeOp.SeatRead => ModeWords.SeatReads.First(r => (long)r.Id == operand).Name,
+            ModeOp.RaceRead => ModeWords.RaceReads.First(r => (long)r.Id == operand).Name,
             ModeOp.Action => ModeWords.Actions.First(a => (long)a.Id == operand).Name,
             ModeOp.Param => Invariant($"{operand} ({mode.Params[(int)operand].Name})"),
             ModeOp.Jump or ModeOp.JumpIfZero or ModeOp.JumpIfNotZero => Invariant($"{operand:x4}"),

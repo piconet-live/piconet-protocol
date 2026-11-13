@@ -72,8 +72,16 @@ internal sealed record ModeForEach(int Line, string Bound, ModeExpr? Where, IRea
 internal sealed record ModeRepeat(int Line, ModeExpr Count, IReadOnlyList<ModeStatement> Body) : ModeStatement(Line);
 
 /// <summary>An action word with its arguments: <c>retire s;</c>.</summary>
-/// <summary>The quoted text of <c>tag s, "TEXT"</c>: the one place a rule's code holds a string.</summary>
-internal sealed record ModeTagText(int Line, string Text) : ModeExpr(Line);
+/// <summary>A <c>tag</c> word's settings as the file wrote them, <c>size MIN MAX</c> and <c>range D m</c>: null is left
+/// out (the default, <see cref="ModeTagLooks"/>).</summary>
+internal sealed record ModeTagLook(float? SizeMin, float? SizeMax, float? Range)
+{
+    public static readonly ModeTagLook None = new(null, null, null);
+}
+
+/// <summary>The quoted text of <c>tag s, "TEXT"</c>: the one place a rule's code holds a string; with <c>tag</c>'s settings
+/// after it, when it has them.</summary>
+internal sealed record ModeTagText(int Line, string Text, ModeTagLook? Look = null) : ModeExpr(Line);
 
 internal sealed record ModeActionStatement(int Line, string Action, IReadOnlyList<ModeExpr> Arguments) : ModeStatement(Line);
 
@@ -90,7 +98,7 @@ internal sealed record ModeReturn(int Line, ModeExpr? Value) : ModeStatement(Lin
 internal abstract record ModeItem(int Line);
 
 /// <summary>The header; <see cref="ApiLine"/> is the line of its api.</summary>
-internal sealed record ModeHeaderItem(int Line, string Name, int? Api, int ApiLine, string Badge, string About) : ModeItem(Line);
+internal sealed record ModeHeaderItem(int Line, string Name, string? Api, int ApiLine, string Badge, string About) : ModeItem(Line);
 
 /// <summary>A parameter. <see cref="Least"/>, <see cref="Most"/>, <see cref="Step"/>, <see cref="Default"/> are
 /// literals (null when left out); a choice's default is the name it names, in <see cref="DefaultChoice"/>.</summary>

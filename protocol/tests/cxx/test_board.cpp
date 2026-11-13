@@ -48,6 +48,10 @@ b::Snapshot SnapshotOf(std::uint32_t k)
   s.frame = k * 3;
   s.local_seat = k % 30;
   s.count = 30;
+  s.score_kind = static_cast<b::ScoreKind>(k % 3);
+  s.score_label_length = k % 17;
+  for (std::uint32_t i = 0; i < 16; ++i)
+    s.score_label[i] = static_cast<std::uint8_t>(k + i);
   for (std::uint32_t i = 0; i < 30; ++i)
   {
     b::Racer& r = s.racers[i];
@@ -68,13 +72,16 @@ b::Snapshot SnapshotOf(std::uint32_t k)
     r.y = static_cast<float>(i);
     r.z = -static_cast<float>(k);
     r.distance = static_cast<float>(k) * 10;
+    r.place = static_cast<std::uint8_t>((k + i) % 31);
+    r.score = static_cast<float>(k) * 4 + static_cast<float>(i);
   }
   return s;
 }
 
 bool Same(const b::Snapshot& a, const b::Snapshot& c)
 {
-  if (a.serial != c.serial || a.frame != c.frame || a.local_seat != c.local_seat || a.count != c.count)
+  if (a.serial != c.serial || a.frame != c.frame || a.local_seat != c.local_seat || a.count != c.count ||
+      a.score_kind != c.score_kind || a.score_label_length != c.score_label_length || a.score_label != c.score_label)
     return false;
   for (int i = 0; i < 30; ++i)
   {
@@ -82,7 +89,7 @@ bool Same(const b::Snapshot& a, const b::Snapshot& c)
     if (x.seat != y.seat || x.state != y.state || x.rank != y.rank || x.flags != y.flags || x.lap != y.lap ||
         x.kos != y.kos || x.max_energy != y.max_energy || x.lap_ms != y.lap_ms || x.total_ms != y.total_ms ||
         x.best_lap_ms != y.best_lap_ms || x.speed != y.speed || x.energy != y.energy || x.top_speed != y.top_speed ||
-        x.x != y.x || x.y != y.y || x.z != y.z || x.distance != y.distance)
+        x.x != y.x || x.y != y.y || x.z != y.z || x.distance != y.distance || x.place != y.place || x.score != y.score)
       return false;
   }
   return true;

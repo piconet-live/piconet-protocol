@@ -40,6 +40,7 @@ public sealed class QuickPlayRotationTests : IDisposable
         Assert.Equal([8], spicy.Mode.Terms.Courses!);
         Assert.Equal(1, rotation.Api);
         Assert.True(rotation.CpusAllowed);
+        Assert.True(rotation.CpuVote);
     }
 
     [Fact]
@@ -241,6 +242,87 @@ public sealed class QuickPlayRotationTests : IDisposable
         Assert.Equal(["s0.fzmode", "s1.fzmode", "s2.fzmode"], draws.Select(d => d.Mode.File).Distinct().Order());
     }
 
+    /// <summary>A lobby's bags, kept from vote to vote: every course of the pool is on a normal card once before any is
+    /// on one again, and no vote shows a course twice.</summary>
+    [Fact]
+    public void ALobbysVotesShowEveryCourseBeforeAnyAgain()
+    {
+        var rotation = WithSpicy(0);
+        var (bags, random, shown) = (new RotationBags(), new Random(31), new List<int>());
+        while (shown.Count < CoursePool.Default.Count * 6)
+        {
+            var cards = rotation.Vote(CoursePool.Default, random.Next, bags).Where(o => o.Course != CourseVote.RandomCourse).ToList();
+            Assert.Equal(5, cards.Select(o => o.Course).Distinct().Count());
+            shown.AddRange(cards.Select(o => o.Course));
+        }
+        foreach (var pass in shown.Chunk(CoursePool.Default.Count).Where(c => c.Length == CoursePool.Default.Count))
+        {
+            Assert.Equal(CoursePool.Default.Order(), pass.Order());
+        }
+    }
+
+    /// <summary>The spicy options take turns by the spicy bag: of three weighing 1, 2 and 3, six votes' spicy cards are
+    /// the first once, the second twice and the third three times, each on its own bag of courses.</summary>
+    [Fact]
+    public void ALobbysSpicyCardsGoThroughTheOptionsByWeight()
+    {
+        var rotation = WithSpicy(1, "", "", "");
+        var (bags, random) = (new RotationBags(), new Random(32));
+        var courses = new Dictionary<string, List<int>>();
+        for (var pass = 0; pass < 40; pass++)
+        {
+            var spicy = Enumerable.Range(0, 6).Select(_ => Assert.Single(rotation.Vote(CoursePool.Default, random.Next, bags), o => o.Spicy)).ToList();
+            Assert.Equal(["s0.fzmode", "s1.fzmode", "s1.fzmode", "s2.fzmode", "s2.fzmode", "s2.fzmode"], spicy.Select(o => o.Mode.File).Order());
+            foreach (var o in spicy)
+            {
+                courses.TryAdd(o.Mode.File, []);
+                courses[o.Mode.File].Add(o.Course);
+            }
+        }
+        foreach (var pass in courses.Values.SelectMany(c => c.Chunk(CoursePool.Default.Count)).Where(c => c.Length == CoursePool.Default.Count))
+        {
+            Assert.Equal(CoursePool.Default.Order(), pass.Order());
+        }
+    }
+
+    /// <summary>"Random course" takes from the lobby's bags too: with no spicy chance, its draws go through the pool,
+    /// every course once a pass.</summary>
+    [Fact]
+    public void RandomTakesFromTheLobbysBags()
+    {
+        var rotation = WithSpicy(0);
+        var (bags, random) = (new RotationBags(), new Random(33));
+        for (var pass = 0; pass < 20; pass++)
+        {
+            var draws = Enumerable.Range(0, CoursePool.Default.Count).Select(_ => rotation.Random(CoursePool.Default, random.Next, bags)).ToList();
+            Assert.Equal(CoursePool.Default.Order(), draws.Select(d => d.Course).Order());
+        }
+    }
+
+    /// <summary>What the vote's holder refuses (the lobby's last race) is on no card and no draw while anything else is
+    /// left, in its mode alone; a pool of that one course still has its card.</summary>
+    [Fact]
+    public void ARefusedCourseIsOnNoCardWhileAnotherIsLeft()
+    {
+        var rotation = WithSpicy(1, "");
+        var (bags, random) = (new RotationBags(), new Random(34));
+        bool Allowed(int course, RotationMode mode) => course != 8 || mode.File != "n.fzmode";
+        var spicyOnIt = 0;
+        for (var round = 0; round < 400; round++)
+        {
+            var vote = rotation.Vote(CoursePool.Default, random.Next, bags, Allowed);
+            Assert.Equal(6, vote.Count);
+            Assert.DoesNotContain(vote, o => o.Course == 8 && !o.Spicy);
+            spicyOnIt += vote.Count(o => o.Course == 8 && o.Spicy);
+            var drawn = rotation.Random(CoursePool.Default, random.Next, bags, Allowed);
+            Assert.False(drawn.Course == 8 && !drawn.Spicy);
+        }
+        Assert.True(spicyOnIt > 0);
+        var only = WithSpicy(0).Vote([8], random.Next, new RotationBags(), (_, _) => false);
+        Assert.Equal([8, CourseVote.RandomCourse], only.Select(o => o.Course));
+        Assert.Equal(8, WithSpicy(0).Random([8], random.Next, new RotationBags(), (_, _) => false).Course);
+    }
+
     /// <summary>Two spicy cards of one option are that option twice, on two courses. Two options on one course, the
     /// same one, are one spicy card: the other has no course left, and its place is a normal card's.</summary>
     [Fact]
@@ -295,7 +377,9 @@ public sealed class QuickPlayRotationTests : IDisposable
     public void TheOfficialListsAreInTheModeFiles()
     {
         var rotation = Official();
-        Assert.All(rotation.Spicy, s => Assert.Null(s.Mode.Terms.Courses));
+        // every option races the pool but Death Race, whose own `courses` word (live's eleven) is in its file
+        Assert.All(rotation.Spicy.Where(s => s.Mode.File != "death_race.fzmode"), s => Assert.Null(s.Mode.Terms.Courses));
+        Assert.Equal(DeathRaceCourses, rotation.Spicy.Single(s => s.Mode.File == "death_race.fzmode").Mode.Terms.Courses);
         Assert.Null(rotation.Normal.Terms.Courses);
     }
 
@@ -310,13 +394,17 @@ public sealed class QuickPlayRotationTests : IDisposable
 
     private static QuickPlayRotation Official() => QuickPlayRotation.Read(RepositoryFolder.Protocol("protocol", "quickplay"));
 
+    /// <summary>Death Race's `courses`: live's eleven (Twist Road, Split Oval, Surface Slide, Loop Cross, Drift Highway,
+    /// Mobius Ring, Undulation, Screw Drive, Meteor Stream, Sonic Oval, Emperor's Trial), every one of the pool.</summary>
+    private static readonly int[] DeathRaceCourses = [1, 8, 11, 14, 16, 17, 26, 31, 32, 36, 44];
+
     [Fact]
     public void TheOfficialRotationLoads()
     {
         var rotation = Official();
         Assert.Equal((5, 2, 0.15, true), (rotation.Cards, rotation.SpicyCards, rotation.RandomSpicyChance, rotation.ShowLaps));
         Assert.Equal("Quick Play", rotation.Normal.Package.Name);
-        Assert.Equal([("Knockout", "KNOCKOUT", 1), ("Ghost race", "GHOST RACE", 1), ("Overdrive", "OVERDRIVE", 1)],
+        Assert.Equal([("Knockout", "KNOCKOUT", 1), ("Ghost race", "GHOST RACE", 1), ("Overdrive", "OVERDRIVE", 1), ("Death Race", "DEATH RACE", 1), ("Crown", "CROWN", 1)],
             rotation.Spicy.Select(s => (s.Mode.Package.Name, s.Mode.Package.Badge, s.Weight)));
         Assert.True(rotation.CpusAllowed);
     }
@@ -336,7 +424,8 @@ public sealed class QuickPlayRotationTests : IDisposable
                 seen.Add((option.Course, option.Mode.File));
             }
         }
-        Assert.Equal(4 * CoursePool.Default.Count + 1, seen.Count);   // every course of the pool in all four modes, Random
+        // every course of the pool in the five modes that race it, Death Race's eleven, Random
+        Assert.Equal(5 * CoursePool.Default.Count + DeathRaceCourses.Length + 1, seen.Count);
         foreach (var mode in rotation.Modes)
         {
             var again = ModeCompiler.Compile(File.ReadAllText(RepositoryFolder.Protocol("protocol", "quickplay", mode.File)));
@@ -396,8 +485,9 @@ public sealed class QuickPlayRotationTests : IDisposable
         Assert.All(CourseTable.Courses, c => Assert.Equal(5, hosted.Laps(c.Course)));
     }
 
-    /// <summary>Two spicy cards a vote, two different options of the three (Knockout, Ghost race, Overdrive), each on a
-    /// course of the pool: over 300 votes every pair comes, every option on every course, at every place.</summary>
+    /// <summary>Two spicy cards a vote, two different options of the five (Knockout, Ghost race, Overdrive, Death Race,
+    /// Crown), each on a course of the pool (Death Race on one of its eleven): over 600 votes every pair comes, every
+    /// option on every course it races, at every place.</summary>
     [Fact]
     public void TheOfficialVoteHasTwoDifferentSpicyCardsOnCoursesOfThePool()
     {
@@ -406,7 +496,7 @@ public sealed class QuickPlayRotationTests : IDisposable
         var places = new HashSet<int>();
         var pairs = new HashSet<string>();
         var courses = new Dictionary<string, HashSet<int>>();
-        for (var round = 0; round < 300; round++)
+        for (var round = 0; round < 600; round++)
         {
             var vote = rotation.Vote(CoursePool.Default, random.Next);
             Assert.Equal(6, vote.Count);
@@ -424,6 +514,8 @@ public sealed class QuickPlayRotationTests : IDisposable
                     "knockout.fzmode" => ("Knockout", "KNOCKOUT"),
                     "ghost_race.fzmode" => ("Ghost race", "GHOST RACE"),
                     "overdrive.fzmode" => ("Overdrive", "OVERDRIVE"),
+                    "death_race.fzmode" => ("Death Race", "DEATH RACE"),
+                    "crown.fzmode" => ("Crown", "CROWN"),
                     _ => throw new InvalidDataException(card.Mode.File),
                 };
                 Assert.Equal((expected.Item1, expected.Item2, laps), (card.Mode.Package.Name, card.Card.Badge, card.Card.Laps!.Value));
@@ -440,10 +532,14 @@ public sealed class QuickPlayRotationTests : IDisposable
             Assert.All(vote.Take(5).Where(o => !o.Spicy), o => Assert.Equal(rotation.Normal.Laps(o.Course), o.Card.Laps));
         }
         Assert.Equal([0, 1, 2, 3, 4], places.Order());
-        Assert.Equal(["ghost_race.fzmode+knockout.fzmode", "ghost_race.fzmode+overdrive.fzmode", "knockout.fzmode+overdrive.fzmode"],
-            pairs.Order(StringComparer.Ordinal));
-        Assert.Equal(["ghost_race.fzmode", "knockout.fzmode", "overdrive.fzmode"], courses.Keys.Order(StringComparer.Ordinal));
-        Assert.All(courses.Values, c => Assert.Equal(CoursePool.Default.Order(), c.Order()));   // every course of the pool
+        string[] files = ["crown.fzmode", "death_race.fzmode", "ghost_race.fzmode", "knockout.fzmode", "overdrive.fzmode"];
+        Assert.Equal(files.SelectMany((a, i) => files.Skip(i + 1).Select(b => a + "+" + b)), pairs.Order(StringComparer.Ordinal));   // all ten pairs
+        Assert.Equal(files, courses.Keys.Order(StringComparer.Ordinal));
+        foreach (var (file, seen) in courses)
+        {
+            // every course of the pool; Death Race: every one of its eleven
+            Assert.Equal(file == "death_race.fzmode" ? DeathRaceCourses : CoursePool.Default.Order(), seen.Order());
+        }
     }
 
     [Fact]
@@ -453,13 +549,14 @@ public sealed class QuickPlayRotationTests : IDisposable
         var random = new Random(17);
         var draws = Enumerable.Range(0, 20_000).Select(_ => rotation.Random(CoursePool.Default, random.Next)).ToList();
         Assert.InRange(draws.Count(d => d.Spicy) / (double)draws.Count, 0.13, 0.17);
-        foreach (var name in new[] { "Knockout", "Ghost race", "Overdrive" })
+        foreach (var name in new[] { "Knockout", "Ghost race", "Overdrive", "Death Race", "Crown" })
         {
             var share = draws.Count(d => d.Spicy && d.Mode.Package.Name == name) / (double)draws.Count(d => d.Spicy);
-            Assert.InRange(share, 0.28, 0.39);   // the three at weight 1
+            Assert.InRange(share, 0.16, 0.24);   // the five at weight 1
         }
-        Assert.All(draws.Where(d => d.Spicy), d => Assert.True(d.Mode.Package.Name is "Knockout" or "Ghost race" or "Overdrive"));
+        Assert.All(draws.Where(d => d.Spicy), d => Assert.True(d.Mode.Package.Name is "Knockout" or "Ghost race" or "Overdrive" or "Death Race" or "Crown"));
         Assert.All(draws.Where(d => d.Spicy), d => Assert.Contains(d.Course, CoursePool.Default));
+        Assert.All(draws.Where(d => d.Spicy && d.Mode.Package.Name == "Death Race"), d => Assert.Contains(d.Course, DeathRaceCourses));
     }
 
     /// <summary>Its terms: no lap count, a race the mode ends, CPUs only by the vote.</summary>
@@ -481,6 +578,7 @@ public sealed class QuickPlayRotationTests : IDisposable
         var terms = ModeTerms.Of(compiled.Mode!);
         Assert.Equal(90, terms.FinishLimit);
         Assert.True(terms.CpusAllowed);
+        Assert.Equal(CpuFillMode.Vote, terms.CpuFill);
         Assert.Equal(8, terms.Laps(CourseTable.Courses.First(c => c.Track == "Sonic Oval").Course));
     }
 
@@ -512,7 +610,7 @@ public sealed class QuickPlayRotationTests : IDisposable
     public void TheOfficialLobbyModesComeInTheHostsOrder()
     {
         var modes = Official().LobbyModes;
-        Assert.Equal(["Quick Play", "Knockout", "Ghost race", "Overdrive", "Death Race"], modes.Select(m => m.Package.Name));
+        Assert.Equal(["Quick Play", "Knockout", "Ghost race", "Overdrive", "Death Race", "Crown"], modes.Select(m => m.Package.Name));
         Assert.All(modes, m => Assert.Equal("GX Unleashed", m.Terms.Pack));
         Assert.Equal(Official().Normal.Hash, modes[0].Hash);   // (the rotation's own file)
         Assert.All(modes, m => Assert.False(m.Terms.Solo));
@@ -520,7 +618,8 @@ public sealed class QuickPlayRotationTests : IDisposable
         Assert.Equal(modes[2].Hash, ghost.Hash);
         Assert.Equal(ghost.Params!.Select(p => p.Default), ghost.Values!);
         Assert.Null(modes[3].Terms.Courses);                  // Overdrive: any course of the pool
-        Assert.Equal(14, modes[4].Terms.Course);              // Death Race pins Big Blue: Drift Highway
+        Assert.Equal(DeathRaceCourses, modes[4].Terms.Courses);   // Death Race: live's eleven courses
+        Assert.Null(modes[5].Terms.Courses);                  // Crown: any course of the pool
     }
 
     /// <summary>Quick Play's normal mode declares what a host may change, and on its defaults it is Quick Play's race of
@@ -554,6 +653,28 @@ public sealed class QuickPlayRotationTests : IDisposable
         values[7] = normal.Package.Params[7].Choices.ToList().IndexOf(ModeTerms.FileChoice);
         Assert.Equal((null, true), (new RotationMode(normal.File, normal.Package, normal.Hash, values).Terms.Pack,
             new RotationMode(normal.File, normal.Package, normal.Hash, values).Terms.PackFromFile));
+    }
+
+    /// <summary>The "CPU racers" row is a choice of three, Off, Vote, Always, at the values the switch before it kept
+    /// (off 0, on 1): Quick Play's own race is the vote, and a host's Always fills the seats with no vote.</summary>
+    [Fact]
+    public void QuickPlaysCpuRacersAreOffVoteOrAlways()
+    {
+        var normal = Official().Normal;
+        var row = normal.Package.Params[8];
+        Assert.Equal(("CPU racers", ModeParamKind.Choice, 1), (row.Label, row.Kind, row.Default));
+        Assert.Equal(["Off", "Vote", "Always"], row.Choices);
+        Assert.True(normal.CpuVote);
+        var values = normal.Package.Params.Select(p => p.Default).ToArray();
+        (CpuFillMode Fill, bool Vote, bool Allowed) With(int value)
+        {
+            values[8] = value;
+            var hosted = new RotationMode(normal.File, normal.Package, normal.Hash, [.. values]);
+            return ((CpuFillMode)hosted.Terms.Rules()["cpu-fill"], hosted.CpuVote, hosted.CpusAllowed);
+        }
+        Assert.Equal((CpuFillMode.Never, false, false), With(0));
+        Assert.Equal((CpuFillMode.Vote, true, true), With(1));
+        Assert.Equal((CpuFillMode.Always, false, true), With(2));
     }
 
     [Theory]

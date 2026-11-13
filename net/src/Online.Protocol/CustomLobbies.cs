@@ -157,8 +157,8 @@ public static class CustomLobby
     /// <summary>The lobby has as many members as its racers rule.</summary>
     public const string LobbyFull = "lobby_full";
 
-    /// <summary>The lobby takes nobody now (its match is starting or choosing machines), or not this player (the
-    /// host removed them from it).</summary>
+    /// <summary>The lobby does not take this player (the host removed them from it); from a server before 0.6.5 also
+    /// a lobby that takes nobody while its match is starting or choosing machines.</summary>
     public const string LobbyClosed = "lobby_closed";
 
     /// <summary>An unknown rule name, a choice's value it does not have, a stat pack the server does not have, or a
@@ -200,9 +200,14 @@ public sealed record CreateLobby(string Name, LobbyRules Rules, string? Password
     int? StockColor = null, CustomMachine? Custom = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] BoostTrail? Trail = null) : ClientMessage;
 
-/// <summary>Join a custom lobby of the browser, leaving the lobby one is in, with the racer as
-/// <see cref="EnterQuickPlay"/> names one. A locked lobby needs its password: another is refused with
-/// <see cref="CustomLobby.BadPassword"/>.</summary>
+/// <summary>Join a custom lobby of the browser, or a Quick Play lobby by its id as the server's status lists it
+/// (<see cref="LobbyView.Id"/>; <see cref="EnterQuickPlay"/> lets the server pick one), leaving the lobby one is in,
+/// with the racer as <see cref="EnterQuickPlay"/> names one. A locked lobby needs its password: another is refused
+/// with <see cref="CustomLobby.BadPassword"/>. A lobby that is full refuses with
+/// <see cref="CustomLobby.LobbyFull"/>; one whose match is starting, choosing machines or racing takes the player as
+/// a member outside that match, who races its next one (the owner, 2026-11-11). A server from before 0.6.5 knows only
+/// its custom lobbies (<see cref="CustomLobby.NoSuchLobby"/> for a Quick Play lobby) and refuses while a match is
+/// starting (<see cref="CustomLobby.LobbyClosed"/>).</summary>
 public sealed record JoinLobby(string LobbyId, string? Password, int Machine, Rgb Color, int? Setting = null,
     int? StockColor = null, CustomMachine? Custom = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] BoostTrail? Trail = null) : ClientMessage;
@@ -241,8 +246,8 @@ public sealed record LobbyList(IReadOnlyList<LobbySummary> Lobbies,
 /// (the header's; "" when it has none), and the api it needs (<see cref="Hello.Modes"/>). Terms: the rules the mode
 /// races, every rule of the race by its key as <see cref="LobbyRules.Values"/> holds them (<see cref="ModeTerms.Rules"/>:
 /// a word left out is the game's own way); Pack: the stat pack it races on its values now ("" the disc's own stats; null:
-/// its stats choice is the host's own file, <see cref="LobbyRules.PackFile"/>). CpusAllowed is in Terms (cpu-fill: the
-/// vote, or never). Null Terms: a server from before them. Params: the mode's parameters as its package declares them, and
+/// its stats choice is the host's own file, <see cref="LobbyRules.PackFile"/>). The CPUs are in Terms (cpu-fill: the
+/// vote, always or never, <see cref="CpuFillMode"/>). Null Terms: a server from before them. Params: the mode's parameters as its package declares them, and
 /// Values their values now, in the same order: the lobby's rule controls and what its panel shows. Null: it has none,
 /// or a server from before them. Machines: the machine ids it allows when it states a list, so a Garage shows them
 /// before the machine choice opens; null: it states none (the lobby's machines stand). CustomsOff: it races no custom

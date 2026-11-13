@@ -244,6 +244,12 @@ optional = true
 doc = "true: the simulation's draws came from its own generator (race block +104); absent (or false) in recordings before, which race with the one the executable shares with the effects and cameras"
 
 [[header]]
+key = "wreckSlide"
+type = "bool"
+optional = true
+doc = "true: a seat that gets restores slides as a wreck until the game without restore would take it out, then restores (race block +108); absent (or false) in recordings before, whose seats restore at once"
+
+[[header]]
 key = "mod_sha1"
 type = "text"
 optional = true

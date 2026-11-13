@@ -1,0 +1,15 @@
+// The places a mode gives shown during the race (0.6.5, the file's live_places): seat 2 first and seat 0 second from
+// the first step, the other seats in the race's own order.
+mode "Live places" {
+  api 0.6.5;
+}
+
+live_places;
+
+rule "Order" {
+  event each seat;
+  do {
+    if (seat.index == 2) { seat.place = 1; }
+    if (seat.index == 0) { seat.place = 2; }
+  }
+}

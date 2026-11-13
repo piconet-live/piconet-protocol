@@ -8,8 +8,12 @@
 
 namespace fzgx::modes
 {
-// the api this build runs, and its limits (language 11.1)
-inline constexpr int API = 1;
+// the newest rule set this build runs (a package carries its rule set as its api), the newest game version
+// this table knows, and the limits (language 11.1)
+inline constexpr int API = 2;
+inline constexpr char API_VERSION[] = "0.6.5";
+inline constexpr char RULE_SET_1_VERSION[] = "0.6.0";
+inline constexpr char RULE_SET_2_VERSION[] = "0.6.5";
 inline constexpr int BUDGET = 65536;
 inline constexpr int QUEUE = 256;
 inline constexpr int GLOBALS = 256;
@@ -26,6 +30,8 @@ inline constexpr int FSQRT_COST = 8;
 inline constexpr int RESULTS_TITLE = 23;
 inline constexpr int TAG_TEXT = 10;
 inline constexpr int TAG_TEXTS = 8;
+inline constexpr int SAY_TEXT = 160;
+inline constexpr int SAY_TEXTS = 32;
 inline constexpr int BOARD = 8;
 inline constexpr int BOARD_LABEL = 32;
 inline constexpr int BOARD_WORDS = 16;
@@ -265,7 +271,23 @@ enum Setup : std::uint8_t
   SETUP_DAMAGECAP = 55,  // damage_cap
   SETUP_STARTGAP = 56,  // start_gap
   SETUP_STARTGAPEVEN = 57,  // start_gap even
-  SETUP_COUNT = 58,
+  SETUP_MACHINE = 58,  // machine
+  SETUP_MACHINERANDOM = 59,  // machine random
+  SETUP_MACHINERANDOMEACH = 60,  // machine random each
+  SETUP_MACHINEBYSEAT = 61,  // machine by seat
+  SETUP_MACHINEBYTEAM = 62,  // machine by team
+  SETUP_MACHINEBYPLACE = 63,  // machine by place
+  SETUP_SEATSPEEDOPEN = 64,  // seat_speed_open
+  SETUP_MAXSPEEDOPEN = 65,  // max_speed_open
+  SETUP_LIVEPLACES = 66,  // live_places
+  SETUP_DISTANCELABEL = 67,  // distance_label
+  SETUP_RESULTSTIMES = 68,  // results_times
+  SETUP_HUDLAYOUTAX = 69,  // hud_layout ax
+  SETUP_SAYTEXTS = 70,  // say_texts
+  SETUP_PAUSES = 71,  // pauses
+  SETUP_WRECKSLIDE = 72,  // wreck_slide
+  SETUP_TAGLOOKS = 73,  // tag_looks
+  SETUP_COUNT = 74,
 };
 
 // a read of a seat (OP_SEATREAD)
@@ -365,7 +387,13 @@ enum Seat : std::uint8_t
   SEAT_GAPLEADER = 91,  // gap_leader
   SEAT_STATBOOSTENERGY = 92,  // stat.boost_energy
   SEAT_STATBASEBOOSTENERGY = 93,  // stat.base.boost_energy
-  SEAT_COUNT = 94,
+  SEAT_BASESPEED = 94,  // base_speed
+  SEAT_BOOSTVALUE = 95,  // boost_value
+  SEAT_PADSTEER = 96,  // pad.steer
+  SEAT_PADACCEL = 97,  // pad.accel
+  SEAT_PADBRAKE = 98,  // pad.brake
+  SEAT_PADBOOST = 99,  // pad.boost
+  SEAT_COUNT = 100,
 };
 
 // a read of the race (OP_RACEREAD)
@@ -385,7 +413,9 @@ enum Race : std::uint8_t
   RACE_COURSE = 11,  // course
   RACE_HUMANSLEFT = 12,  // humans_left
   RACE_HUMANFINISHED = 13,  // human_finished
-  RACE_COUNT = 14,
+  RACE_PAUSED = 14,  // paused
+  RACE_PAUSEDSTEPS = 15,  // paused_steps
+  RACE_COUNT = 16,
 };
 
 // an action (OP_ACTION)
@@ -465,10 +495,24 @@ enum Action : std::uint8_t
   ACTION_SHOWOBJECTS = 77,  // show_objects
   ACTION_SHOWOBJECTSOFF = 78,  // show_objects off
   ACTION_SEATSTATBOOSTENERGY = 79,  // seat.stat.boost_energy
-  ACTION_COUNT = 80,
+  ACTION_SEATBASESPEED = 80,  // seat.base_speed
+  ACTION_HUDMOVE = 81,  // hud_move
+  ACTION_MAPCHAR = 82,  // map_char
+  ACTION_MAPCHAROFF = 83,  // map_char off
+  ACTION_PAUSE = 84,  // pause
+  ACTION_RESUME = 85,  // resume
+  ACTION_RESUMEAFTER = 86,  // resume after
+  ACTION_SAY = 87,  // say
+  ACTION_SAYOFF = 88,  // say off
+  ACTION_HUDMOVEOFF = 89,  // hud_move off
+  ACTION_SHOWSCORE = 90,  // show_score
+  ACTION_SHOWSCOREOFF = 91,  // show_score off
+  ACTION_SHOWTEXT = 92,  // show_text
+  ACTION_SHOWTEXTOFF = 93,  // show_text off
+  ACTION_COUNT = 94,
 };
 
-// the choice `part`: a part of the game's own race HUD: TIMER the timed mode's clock (clock_limit's time, R+0xA4: seconds, 0 to 999); DISTANCE the metres to the finish (the seat's own; show_distance gives a mode's); DIGIT the story's big digit (danger_zone's seconds, 3 2 1); WARNING, SUCCESS, FAILED, TIME_OVER, SPEED_GAUGE, OBJECTS the story's pictures, off until shown (SUCCESS MISSION CLEAR!, FAILED MISSION FAILED, TIME_OVER "Time is up...": fixed pictures with no value; OBJECTS the course objects' count n/of, show_objects gives a mode's); LEADER_GAP the game's own time gap to the leader, off until shown: at each lap line, for a second, the seat's time behind the leader, and the leader's own lead when second place crosses; GHOST_GAP Time Attack's live gap, off until shown: signed minutes, seconds and thousandths at the right edge (617, 270), all race, against the seat furthest ahead, red while it is ahead, blue while you are; RANK, LAPS, SPEED, ENERGY, LAP_TIMES, RACE_TIME, FACES the standard HUD (the mask .data 0x3D544; FACES the board fn_1_D27B8), on until hidden
+// the choice `part`: a part of the game's own race HUD: TIMER the timed mode's clock (clock_limit's time, R+0xA4: seconds, 0 to 999); DISTANCE the metres to the finish (the seat's own; show_distance gives a mode's); DIGIT the story's big digit (danger_zone's seconds, 3 2 1); WARNING, SUCCESS, FAILED, TIME_OVER, SPEED_GAUGE, OBJECTS the story's pictures, off until shown (SUCCESS MISSION CLEAR!, FAILED MISSION FAILED, TIME_OVER "Time is up...": fixed pictures with no value; OBJECTS the course objects' count n/of, show_objects gives a mode's); LEADER_GAP the game's own time gap to the leader, off until shown: at each lap line, for a second, the seat's time behind the leader, and the leader's own lead when second place crosses; GHOST_GAP Time Attack's live gap, off until shown: signed minutes, seconds and thousandths at the right edge (617, 270), all race, against the seat furthest ahead, red while it is ahead, blue while you are; RANK, LAPS, SPEED, ENERGY, LAP_TIMES, RACE_TIME, FACES the standard HUD (the mask .data 0x3D544; FACES the board fn_1_D27B8), on until hidden; SPARE (0.6.5) the Grand Prix spare-machine counter (the star icon and show_number's number, fn_1_CA8FC), for hud_move: show_number shows and hides it, not show and hide; the rest (0.6.5) are for hud_move alone, drawn as the game draws them (show and hide refuse them): SKULLS the KO skulls at the right edge (fn_1_CAB38); WRONG_WAY the wrong-way sign (the banner WRONG_WAY's picture 0x9435, fn_1_CD51C's sprite); BANNERS the banners FINAL LAP, BOOST POWER, TIME BONUS and the gap popup (fn_1_15EFEC; LEADER_GAP's place takes them too, a BANNERS place of its own wins); FINISH the FINISH and RETIRED pictures (fn_1_15DFD4); CHECK the CHECK sign at the screen's foot that points at the rival close behind (fn_1_12907C, image 0x944F): its row moves, and it still slides sideways after that rival; hud clean takes it off; SCORE (0.6.5) a mode's counter, show_score's whole number in the race time's digit pictures under a label in the letters of the game's own HUD labels (a label with a letter they have not got, in the game's text font), at the race time's place (the top right, under the energy meter): show_score shows and hides it, not show and hide; TEXT (0.6.5) a mode's short text in one of the game's fonts (`font`), centred at the top of the screen under the position (320, 116): show_text shows and hides it, not show and hide
 enum Part : std::uint8_t
 {
   PART_TIMER = 0,
@@ -489,7 +533,15 @@ enum Part : std::uint8_t
   PART_LAP_TIMES = 15,
   PART_RACE_TIME = 16,
   PART_FACES = 17,
-  PART_COUNT = 18,
+  PART_SPARE = 18,
+  PART_SKULLS = 19,
+  PART_WRONG_WAY = 20,
+  PART_BANNERS = 21,
+  PART_FINISH = 22,
+  PART_CHECK = 23,
+  PART_SCORE = 24,
+  PART_TEXT = 25,
+  PART_COUNT = 26,
 };
 
 // the choice `banner`: a banner of the game's own race HUD, shown once, as the game shows it; TICK the timed mode's countdown beep, heard by that seat's player
@@ -504,6 +556,18 @@ enum Banner : std::uint8_t
   BANNER_COUNT = 6,
 };
 
+// the choice `font`: a text font of the game's own, among those its common picture sheet (bmp_com.tpl, loaded all game) holds, so every one is there in a race; all draw a small letter as a capital (the runner's fonts list, mode_hud.h FONT_IDS, gives the game's font number): BLOCK (5) the squared bold capitals 18 units tall the name tags and the Time Attack ghost names use, with digits, the space, `.` and `-`; CAPS (4) small bold capitals 14 tall, letters only (a digit, `.` or `-` is a blank); PLAIN (3) a small plain font 12 tall with digits; NARROW (2) a narrow font 16 tall and 8 wide with digits; SERIF (7) a typewriter serif 16 tall with digits; BIG_SERIF (8) the same serif 24 tall. The other fonts the game has are digits alone (the race HUD's) or on sheets not loaded in a race (the menus' and the results')
+enum Font : std::uint8_t
+{
+  FONT_BLOCK = 0,
+  FONT_CAPS = 1,
+  FONT_PLAIN = 2,
+  FONT_NARROW = 3,
+  FONT_SERIF = 4,
+  FONT_BIG_SERIF = 5,
+  FONT_COUNT = 6,
+};
+
 // the choice `look`: how a machine is drawn: as the game draws it; as Time Attack draws its ghost (additive, with a depth pass, alpha by the camera's distance, 60 frames' fade from GO, no shadow, yellow unless seat.ghost_tint says otherwise; no machine sound unless seat.ghost_sound says otherwise); not at all
 enum Look : std::uint8_t
 {
@@ -516,6 +580,96 @@ enum Look : std::uint8_t
 // what `on` is for a setup word that also takes a value
 inline constexpr int SETUP_MINEREGEN_ON = 200;
 inline constexpr int SETUP_TIMEBONUS_ON = 5;
+// what `always` is for a switch that takes it (off 0, on 1)
+inline constexpr int SETUP_CPUS_ALWAYS = 2;
+// the rule set that value arrived in, where after its word's
+inline constexpr int SETUP_CPUS_ALWAYS_SINCE = 2;
+
+// the rule set an operation arrived in (a package of an earlier rule set does not hold it)
+constexpr int OpSince(std::uint8_t /*op*/)
+{
+  return 1;
+}
+
+// the rule set an event arrived in (a package of an earlier rule set does not hold it)
+constexpr int EventSince(std::uint8_t /*event*/)
+{
+  return 1;
+}
+
+// the rule set a setup word arrived in (a package of an earlier rule set does not hold it)
+constexpr int SetupSince(std::uint8_t setup)
+{
+  switch (setup)
+  {
+    case SETUP_MACHINE: return 2;
+    case SETUP_MACHINERANDOM: return 2;
+    case SETUP_MACHINERANDOMEACH: return 2;
+    case SETUP_MACHINEBYSEAT: return 2;
+    case SETUP_MACHINEBYTEAM: return 2;
+    case SETUP_MACHINEBYPLACE: return 2;
+    case SETUP_SEATSPEEDOPEN: return 2;
+    case SETUP_MAXSPEEDOPEN: return 2;
+    case SETUP_LIVEPLACES: return 2;
+    case SETUP_DISTANCELABEL: return 2;
+    case SETUP_RESULTSTIMES: return 2;
+    case SETUP_HUDLAYOUTAX: return 2;
+    case SETUP_SAYTEXTS: return 2;
+    case SETUP_PAUSES: return 2;
+    case SETUP_WRECKSLIDE: return 2;
+    case SETUP_TAGLOOKS: return 2;
+    default: return 1;
+  }
+}
+
+// the rule set a read of a seat arrived in (a package of an earlier rule set does not hold it)
+constexpr int SeatSince(std::uint8_t seat)
+{
+  switch (seat)
+  {
+    case SEAT_BASESPEED: return 2;
+    case SEAT_BOOSTVALUE: return 2;
+    case SEAT_PADSTEER: return 2;
+    case SEAT_PADACCEL: return 2;
+    case SEAT_PADBRAKE: return 2;
+    case SEAT_PADBOOST: return 2;
+    default: return 1;
+  }
+}
+
+// the rule set a read of the race arrived in (a package of an earlier rule set does not hold it)
+constexpr int RaceSince(std::uint8_t race)
+{
+  switch (race)
+  {
+    case RACE_PAUSED: return 2;
+    case RACE_PAUSEDSTEPS: return 2;
+    default: return 1;
+  }
+}
+
+// the rule set an action arrived in (a package of an earlier rule set does not hold it)
+constexpr int ActionSince(std::uint8_t action)
+{
+  switch (action)
+  {
+    case ACTION_SEATBASESPEED: return 2;
+    case ACTION_HUDMOVE: return 2;
+    case ACTION_MAPCHAR: return 2;
+    case ACTION_MAPCHAROFF: return 2;
+    case ACTION_PAUSE: return 2;
+    case ACTION_RESUME: return 2;
+    case ACTION_RESUMEAFTER: return 2;
+    case ACTION_SAY: return 2;
+    case ACTION_SAYOFF: return 2;
+    case ACTION_HUDMOVEOFF: return 2;
+    case ACTION_SHOWSCORE: return 2;
+    case ACTION_SHOWSCOREOFF: return 2;
+    case ACTION_SHOWTEXT: return 2;
+    case ACTION_SHOWTEXTOFF: return 2;
+    default: return 1;
+  }
+}
 
 // the arguments an action pops
 constexpr int ActionArguments(std::uint8_t action)
@@ -596,6 +750,20 @@ constexpr int ActionArguments(std::uint8_t action)
     case ACTION_SHOWOBJECTS: return 3;
     case ACTION_SHOWOBJECTSOFF: return 1;
     case ACTION_SEATSTATBOOSTENERGY: return 2;
+    case ACTION_SEATBASESPEED: return 2;
+    case ACTION_HUDMOVE: return 5;
+    case ACTION_MAPCHAR: return 2;
+    case ACTION_MAPCHAROFF: return 1;
+    case ACTION_PAUSE: return 0;
+    case ACTION_RESUME: return 0;
+    case ACTION_RESUMEAFTER: return 1;
+    case ACTION_SAY: return 1;
+    case ACTION_SAYOFF: return 0;
+    case ACTION_HUDMOVEOFF: return 2;
+    case ACTION_SHOWSCORE: return 4;
+    case ACTION_SHOWSCOREOFF: return 1;
+    case ACTION_SHOWTEXT: return 3;
+    case ACTION_SHOWTEXTOFF: return 1;
     default: return -1;
   }
 }

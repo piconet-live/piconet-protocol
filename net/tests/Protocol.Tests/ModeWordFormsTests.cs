@@ -9,6 +9,9 @@ public sealed class ModeWordFormsTests
 {
     private static ModeCompilation Compile(string body) => ModeCompiler.Compile($"mode \"X\" {{ api 1; }}\n{body}\n");
 
+    // (a file of the newest level: the words that came after 0.6.0)
+    private static ModeCompilation Newest(string body) => ModeCompiler.Compile($"mode \"X\" {{ api {ModeWords.ApiVersion}; }}\n{body}\n");
+
     private static string Rule(string body) => $"rule \"R\" {{ event each seat; while race.started; do {{ {body} }} }}";
 
     [Theory]
@@ -355,6 +358,46 @@ public sealed class ModeWordFormsTests
         Assert.Contains(Compile("stats_page;\nrule \"R\" { event each seat; do { } }").Errors, e => e.Contains("the compiler's own", StringComparison.Ordinal));
     }
 
+    [Fact]
+    public void TheSpeedsTopsAreTheFilesOwnWords()
+    {
+        static ModeCompilation Ok(string body, bool newest = false)
+        {
+            var result = newest ? Newest(body) : Compile(body);
+            Assert.Empty(result.Errors);
+            return result;
+        }
+        static bool Has(ModeCompilation result, ModeSetup id) => result.Mode!.Setups.Any(s => s.Id == id);
+        // a write within the old tops, or one the race gives, carries no word: the package of before
+        var within = Ok("rule \"R\" { event each seat; do { seat.speed = 9000.0; seat.speed += 10.0; seat.stat.max_speed = 4.0; seat.stat.max_speed *= 3.0; seat.speed = seat.lap * 20000.0; } }");
+        Assert.False(Has(within, ModeSetup.SeatSpeedOpen) || Has(within, ModeSetup.MaxSpeedOpen));
+        // a constant above them is refused without the word, and taken with it
+        Assert.Contains(Compile("rule \"R\" { event each seat; do { seat.speed = 12000.0; } }").Errors, e => e.Contains("seat_speed_open", StringComparison.Ordinal));
+        Assert.Contains(Compile("rolling_start 12000 km/h;\nrule \"R\" { event each seat; do { } }").Errors, e => e.Contains("seat_speed_open", StringComparison.Ordinal));
+        Assert.Contains(Compile("rule \"R\" { event each seat; do { seat.stat.max_speed = 10000.0; } }").Errors, e => e.Contains("max_speed_open", StringComparison.Ordinal));
+        Assert.True(Has(Ok("seat_speed_open;\nrolling_start 12000 km/h;\nrule \"R\" { event each seat; do { seat.speed = 12000.0; } }", newest: true), ModeSetup.SeatSpeedOpen));
+        Assert.True(Has(Ok("max_speed_open;\nrule \"R\" { event each seat; do { seat.stat.max_speed = 10000.0; } }", newest: true), ModeSetup.MaxSpeedOpen));
+        Assert.NotEmpty(Newest("seat_speed_open;\nrolling_start 200000000000000000 km/h;\nrule \"R\" { event each seat; do { } }").Errors);
+        // a velocity is no speed's write
+        Assert.False(Has(Ok("rule \"R\" { event each seat; do { seat.velocity = vec(0.0, 0.0, 12000.0); } }"), ModeSetup.SeatSpeedOpen));
+    }
+
+    [Fact]
+    public void TheDriveMacroIsTwilightsDriveInOneLine()
+    {
+        // real and bool macro parameters, the gate naming the seat; the macro writes the base speed and both stats
+        var result = Newest("max_speed_open;\nseat int overload;\ndrive min(9000.0, 1000.0 + 50.0 * race.steps / 600.0), 100.0, 20.0, false, seat.overload == 0;\n");
+        Assert.Empty(result.Errors);
+        Assert.Contains(result.Mode!.Setups, s => s.Id == ModeSetup.MaxSpeedOpen);
+        Assert.DoesNotContain(result.Mode.Setups, s => s.Id == ModeSetup.SeatSpeedOpen);
+        Assert.Single(result.Mode.Rules);
+        Assert.Empty(Newest("max_speed_open;\ndrive 1000.0, 0.0, 0.0, true, true;\n").Errors);
+        // the macro's top speed needs the file's word
+        Assert.Contains(Newest("drive 1000.0, 0.0, 0.0, true, true;\n").Errors, e => e.Contains("max_speed_open", StringComparison.Ordinal));
+        Assert.NotEmpty(Newest("max_speed_open;\ndrive 1000.0, 0.0, 0.0, true;\n").Errors);
+        Assert.NotEmpty(Newest("max_speed_open;\nseat real drive_heat;\ndrive 1000.0, 0.0, 0.0, true, true;\n").Errors);
+    }
+
     [Theory]
     [InlineData("rule \"R\" { event each seat; do { seat.stat.base.body = 1.0; } }", "the machine's own")]
     [InlineData("rule \"R\" { event each seat; do { seat.stat.colour = 1.0; } }", "no stat")]
@@ -451,6 +494,6 @@ public sealed class ModeWordFormsTests
             param radius "Blast radius" number 10..200 default 60;
             rule "Blast" { event destroyed(s); do { for each seat where racing and seat != s and dist(seat, s) <= radius { explode seat; } } }
             """);
-        Assert.Contains(result.Errors, e => e.Contains("past api 1's 65536", StringComparison.Ordinal));
+        Assert.Contains(result.Errors, e => e.Contains("past api 0.6.5's 65536", StringComparison.Ordinal));
     }
 }

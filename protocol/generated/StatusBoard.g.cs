@@ -11,8 +11,8 @@ public static class BoardLayout
 {
     /// <summary>"FZSB": the board's first four bytes.</summary>
     public const uint Magic = 0x42535A46;
-    public const uint Version = 5;
-    public const int Size = 14976;
+    public const uint Version = 6;
+    public const int Size = 15104;
     public const int Header = 0;
     public const int HeaderMagic = 0;
     public const int HeaderVersion = 4;
@@ -28,14 +28,14 @@ public static class BoardLayout
     public const int PulseStopReason = 76;
     public const int Status = 128;
     public const int Snapshot = 192;
-    public const int ModeHead = 1792;
-    public const int ModeValues = 10624;
-    public const int Events = 12608;
+    public const int ModeHead = 1920;
+    public const int ModeValues = 10752;
+    public const int Events = 12736;
     public const int EventsSlots = 64;
     public const int EventsSlot = 32;
-    public const int EventsFirst = 12616;
-    public const int Mailbox = 14720;
-    public const int LocalPad = 14912;
+    public const int EventsFirst = 12744;
+    public const int Mailbox = 14848;
+    public const int LocalPad = 15040;
 }
 
 /// <summary> Where the game is. Set by the game; the launcher reads it to judge a heartbeat that stands.</summary>
@@ -122,6 +122,19 @@ public enum BoardRacerState : byte
     Out = 2,
 }
 
+/// <summary> What the racers' Score is: what the race's mode shows on the HUD where the race time was (show_score) or
+/// as the distance (show_distance). The launcher's standings show it in place of the race time where the mode scores by
+/// it.</summary>
+public enum BoardScoreKind : uint
+{
+    /// <summary>no score: the mode shows none, or there is no mode (the standings show times and laps)</summary>
+    None = 0,
+    /// <summary>points: show_score's number, under the snapshot's ScoreLabel (POINTS unless the mode names a label)</summary>
+    Points = 1,
+    /// <summary>metres: show_distance's number (a mode scored by distance)</summary>
+    Metres = 2,
+}
+
 /// <summary> Whose value a `board` line of a mode file names (the language's section 10).</summary>
 public enum BoardModeBoardScope : byte
 {
@@ -166,6 +179,8 @@ public static class BoardRacerFlags
 {
     /// <summary>BestLapMs holds a lap (none before the first lap is done)</summary>
     public const byte HasBestLap = 1;
+    /// <summary>Score holds the mode's number for this racer, of the snapshot's ScoreKind (none: the mode shows this racer no score)</summary>
+    public const byte HasScore = 2;
 }
 
 /// <summary> One racer at the snapshot's moment, as the launcher's race page shows it (Online.Protocol RacerLive): from
@@ -179,7 +194,8 @@ public struct BoardRacer
     public ushort Lap;
     public ushort Kos;
     public ushort MaxEnergy;
-    public ushort Pad;
+    public byte Place;
+    public byte Pad;
     public uint LapMs;
     public uint TotalMs;
     public uint BestLapMs;
@@ -190,6 +206,7 @@ public struct BoardRacer
     public float Y;
     public float Z;
     public float Distance;
+    public float Score;
 }
 
 /// <summary> One `board` line of the mode's file, in the file's order.</summary>
@@ -250,6 +267,9 @@ public sealed class BoardSnapshot
     public uint Frame;
     public uint LocalSeat;
     public uint Count;
+    public BoardScoreKind ScoreKind;
+    public uint ScoreLabelLength;
+    public byte[] ScoreLabel = new byte[16];
     public BoardRacer[] Racers = new BoardRacer[30];
 }
 
@@ -474,9 +494,15 @@ public readonly unsafe struct BoardView
         Volatile.Write(ref *(uint*)(_at + BoardLayout.Snapshot + 8), v.Frame);
         Volatile.Write(ref *(uint*)(_at + BoardLayout.Snapshot + 12), v.LocalSeat);
         Volatile.Write(ref *(uint*)(_at + BoardLayout.Snapshot + 16), v.Count);
+        Volatile.Write(ref *(uint*)(_at + BoardLayout.Snapshot + 20), (uint)v.ScoreKind);
+        Volatile.Write(ref *(uint*)(_at + BoardLayout.Snapshot + 24), v.ScoreLabelLength);
+        for (var i = 0; i < 4; i++)
+        {
+            Volatile.Write(ref *(uint*)(_at + BoardLayout.Snapshot + 28 + i * 4), BinaryPrimitives.ReadUInt32LittleEndian(v.ScoreLabel.AsSpan(i * 4)));
+        }
         for (var i = 0; i < 30; i++)
         {
-            StoreRacer(BoardLayout.Snapshot + 20 + i * 52, in v.Racers[i]);
+            StoreRacer(BoardLayout.Snapshot + 44 + i * 56, in v.Racers[i]);
         }
         Volatile.Write(ref seq, s + 2);
     }
@@ -497,9 +523,15 @@ public readonly unsafe struct BoardView
             into.Frame = Volatile.Read(ref *(uint*)(_at + BoardLayout.Snapshot + 8));
             into.LocalSeat = Volatile.Read(ref *(uint*)(_at + BoardLayout.Snapshot + 12));
             into.Count = Volatile.Read(ref *(uint*)(_at + BoardLayout.Snapshot + 16));
+            into.ScoreKind = (BoardScoreKind)Volatile.Read(ref *(uint*)(_at + BoardLayout.Snapshot + 20));
+            into.ScoreLabelLength = Volatile.Read(ref *(uint*)(_at + BoardLayout.Snapshot + 24));
+            for (var i = 0; i < 4; i++)
+            {
+                BinaryPrimitives.WriteUInt32LittleEndian(into.ScoreLabel.AsSpan(i * 4), Volatile.Read(ref *(uint*)(_at + BoardLayout.Snapshot + 28 + i * 4)));
+            }
             for (var i = 0; i < 30; i++)
             {
-                LoadRacer(BoardLayout.Snapshot + 20 + i * 52, ref into.Racers[i]);
+                LoadRacer(BoardLayout.Snapshot + 44 + i * 56, ref into.Racers[i]);
             }
             Interlocked.MemoryBarrier();
             if (Volatile.Read(ref seq) == s)
@@ -816,7 +848,8 @@ public readonly unsafe struct BoardView
         v.Lap = Volatile.Read(ref *(ushort*)(_at + at + 4));
         v.Kos = Volatile.Read(ref *(ushort*)(_at + at + 6));
         v.MaxEnergy = Volatile.Read(ref *(ushort*)(_at + at + 8));
-        v.Pad = Volatile.Read(ref *(ushort*)(_at + at + 10));
+        v.Place = Volatile.Read(ref *(byte*)(_at + at + 10));
+        v.Pad = Volatile.Read(ref *(byte*)(_at + at + 11));
         v.LapMs = Volatile.Read(ref *(uint*)(_at + at + 12));
         v.TotalMs = Volatile.Read(ref *(uint*)(_at + at + 16));
         v.BestLapMs = Volatile.Read(ref *(uint*)(_at + at + 20));
@@ -827,6 +860,7 @@ public readonly unsafe struct BoardView
         v.Y = Volatile.Read(ref *(float*)(_at + at + 40));
         v.Z = Volatile.Read(ref *(float*)(_at + at + 44));
         v.Distance = Volatile.Read(ref *(float*)(_at + at + 48));
+        v.Score = Volatile.Read(ref *(float*)(_at + at + 52));
     }
 
     private void StoreRacer(int at, in BoardRacer v)
@@ -838,7 +872,8 @@ public readonly unsafe struct BoardView
         Volatile.Write(ref *(ushort*)(_at + at + 4), v.Lap);
         Volatile.Write(ref *(ushort*)(_at + at + 6), v.Kos);
         Volatile.Write(ref *(ushort*)(_at + at + 8), v.MaxEnergy);
-        Volatile.Write(ref *(ushort*)(_at + at + 10), v.Pad);
+        Volatile.Write(ref *(byte*)(_at + at + 10), v.Place);
+        Volatile.Write(ref *(byte*)(_at + at + 11), v.Pad);
         Volatile.Write(ref *(uint*)(_at + at + 12), v.LapMs);
         Volatile.Write(ref *(uint*)(_at + at + 16), v.TotalMs);
         Volatile.Write(ref *(uint*)(_at + at + 20), v.BestLapMs);
@@ -849,6 +884,7 @@ public readonly unsafe struct BoardView
         Volatile.Write(ref *(float*)(_at + at + 40), v.Y);
         Volatile.Write(ref *(float*)(_at + at + 44), v.Z);
         Volatile.Write(ref *(float*)(_at + at + 48), v.Distance);
+        Volatile.Write(ref *(float*)(_at + at + 52), v.Score);
     }
 
     private void LoadModeLine(int at, ref BoardModeLine v)

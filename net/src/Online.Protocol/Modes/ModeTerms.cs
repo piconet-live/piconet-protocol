@@ -6,7 +6,7 @@ namespace Online.Protocol;
 /// word meets a lobby rule (the overhaul of piconet-docs research/game-modes/ design 5). The race's rules are the
 /// mode's alone: a word left out is the game's own way (3 laps, CPU level Master, no boost on the first lap, mines stay
 /// gone, each racer's own machine setting, the disc's own stats, one pack for all), the finish limit is off unless the
-/// mode states it, and CPUs come only when it says <c>cpus on</c> (then by the vote). The service and the launcher's
+/// mode states it, and CPUs come only when it says <c>cpus on</c> (then by the vote) or <c>cpus always</c>. The service and the launcher's
 /// stand-in both lay these over a lobby. Lobby settings (the seats, the ping limit, the vote's and choice's times, the
 /// voting minimum, how the course is found among the mode's) are not a mode's.</summary>
 public sealed record ModeTerms
@@ -14,12 +14,22 @@ public sealed record ModeTerms
     // what `mine_regen on` is, as a switch parameter gives it (1 in the package)
     private static readonly int MineRegenOn = ModeWords.Setups.First(s => s.Id == ModeSetup.MineRegen).Args[0].On!.Value;
 
+    // what `cpus always` is in the package (a switch parameter gives 0 or 1, a choice of three this too)
+    private static readonly int CpusAlwaysValue = ModeWords.Setups.First(s => s.Id == ModeSetup.Cpus).Args[0].Always!.Value;
+
     /// <summary>The mode says <c>solo on</c>: a race raced alone, which the launcher starts itself (Play's Practice). No
     /// lobby and no rotation races it.</summary>
     public bool Solo { get; init; }
 
-    /// <summary>The mode says <c>cpus on</c>: players may vote CPUs into its race (it never forces them).</summary>
+    /// <summary>The mode says <c>cpus on</c> or <c>cpus always</c>: its race may hold CPUs (by the players' vote, or
+    /// always: <see cref="CpusAlways"/>).</summary>
     public bool CpusAllowed { get; init; }
+
+    /// <summary>The mode says <c>cpus always</c>: CPUs take the empty seats of every race, and there is no vote.</summary>
+    public bool CpusAlways { get; init; }
+
+    /// <summary>The CPUs as the lobby rule says them: never (off, or left out), by the vote (on), always.</summary>
+    public CpuFillMode CpuFill => CpusAlways ? CpuFillMode.Always : CpusAllowed ? CpuFillMode.Vote : CpuFillMode.Never;
 
     /// <summary>The value of <see cref="LobbyRules.Values"/>' "laps" for a mode with a table of laps by course: no one
     /// number. No lobby's value takes it.</summary>
@@ -59,6 +69,10 @@ public sealed record ModeTerms
     /// <summary>No custom machines in its races (<c>customs off</c>). Left out, they are allowed, under a list of
     /// machines too: the list holds the stock machines.</summary>
     public bool CustomsOff { get; init; }
+
+    /// <summary>How the mode sets each racer's machine (<c>machine</c>, <c>machine random</c>, <c>machine by
+    /// seat</c>, ...: <see cref="ModeMachines.Of"/>); null: each racer's own choice.</summary>
+    public ModeMachineRule? MachineRule { get; init; }
 
     /// <summary>The range a racer's own setting is brought into.</summary>
     public SettingRange? Setting { get; init; }
@@ -115,7 +129,7 @@ public sealed record ModeTerms
         {
             terms = id switch
             {
-                ModeSetup.Cpus => terms with { CpusAllowed = Cell(a[0]) != 0 },
+                ModeSetup.Cpus => terms with { CpusAllowed = Cell(a[0]) != 0, CpusAlways = Cell(a[0]) == CpusAlwaysValue },
                 ModeSetup.Solo => terms with { Solo = Cell(a[0]) != 0 },
                 ModeSetup.Laps => terms with { LapsAll = Cell(a[0]) },
                 ModeSetup.LapsByCourse => terms with
@@ -134,6 +148,12 @@ public sealed record ModeTerms
                 ModeSetup.MachinesAll => terms with { Machines = [] },
                 ModeSetup.Machines => terms with { Machines = [.. a.Select(Cell).Order()] },
                 ModeSetup.Customs => terms with { CustomsOff = Cell(a[0]) == 0 },
+                ModeSetup.Machine => terms with { MachineRule = new(ModeMachineWay.Fixed, [Cell(a[0])]) },
+                ModeSetup.MachineRandom => terms with { MachineRule = new(ModeMachineWay.Random, []) },
+                ModeSetup.MachineRandomEach => terms with { MachineRule = new(ModeMachineWay.RandomEach, []) },
+                ModeSetup.MachineBySeat => terms with { MachineRule = new(ModeMachineWay.BySeat, [.. a.Select(Cell)]) },
+                ModeSetup.MachineByTeam => terms with { MachineRule = new(ModeMachineWay.ByTeam, [.. a.Select(Cell)]) },
+                ModeSetup.MachineByPlace => terms with { MachineRule = new(ModeMachineWay.ByPlace, [.. a.Select(Cell)]) },
                 ModeSetup.MachineSetting => terms with { Setting = new SettingRange(Cell(a[0]), Cell(a[1])) },
                 ModeSetup.Stats when text is null && a is [{ FromParam: true } chosen] =>
                     Chosen(terms, mode.Params[chosen.Value].Choices[Cell(chosen)]) with { PackParam = chosen.Value },
@@ -173,7 +193,7 @@ public sealed record ModeTerms
                 rules[key] = v;
             }
         }
-        rules[HostRules.CpuFill.Name] = (int)(CpusAllowed ? CpuFillMode.Vote : CpuFillMode.Never);
+        rules[HostRules.CpuFill.Name] = (int)CpuFill;
         rules[HostRules.Laps.Name] = LapsAll ?? (LapsElse is null ? GameLaps : LapsByCourse);
         rules[HostRules.CpuLevel.Name] = CpuLevel ?? GameCpuLevel;
         rules[HostRules.BoostStart.Name] = BoostStart == true ? 1 : 0;

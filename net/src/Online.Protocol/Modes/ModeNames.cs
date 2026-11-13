@@ -146,7 +146,7 @@ internal sealed class ModeNames
             var result = ModeTypes.FunctionResult(c, type, f);
             return (result, ModeOperators.FoldFunction(c.Function, type, cell));
         }
-        throw new ModeCompileException(c.Line, $"'{c.Function}' is not a function of api {ModeWords.Api}, or not with {arguments.Count} arguments");
+        throw new ModeCompileException(c.Line, $"'{c.Function}' is not a function of api {ModeWords.ApiVersion}, or not with {arguments.Count} arguments");
     }
 }
 

@@ -58,6 +58,7 @@ others = [
     { at = 0, end = 100, what = "the mark, the set-up's words, the seats' machines, the start grid" },
     { at = 100, end = 104, what = "the rubber band (RACE_RUBBER_BAND_ON)" },
     { at = 104, end = 108, what = "the simulation's own generator (RACE_SIM_GENERATOR)" },
+    { at = 108, end = 112, what = "wrecks slide before a restore (RACE_WRECK_SLIDE)" },
     { at = 268, end = 298, what = "every seat's machine setting (RACE_SETTINGS)" },
     { at = 304, end = 308, what = "the race's flow (RACE_FLOW)" },
     { at = 320, end = 1280, what = "the seats' custom machines (RACE_CUSTOM)" },
@@ -222,14 +223,14 @@ seat"); Quick Play: off, one pack for all (mixed packs only in lobbies)."""
 [[rule]]
 name = "vote-seconds"
 setup = "flow"
-label = "Course vote"
+label = "Vote"
 cs = "VoteSeconds"
 reach = "together"
 kind = "text"
 unit = "s"
 least = 5
 most = 120
-doc = "The course vote's length, in seconds."
+doc = "The vote's length, in seconds (the lobby's step named Vote)."
 
 [[rule]]
 name = "choose-seconds"

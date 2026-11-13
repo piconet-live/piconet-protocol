@@ -213,12 +213,12 @@ internal sealed class ModeParser
         var line = Current.Line;
         if (!Current.Is("mode"))
         {
-            throw Error("a mode file starts with its header: mode \"Name\" { api 1; }");
+            throw Error($"a mode file starts with its header: mode \"Name\" {{ api {ModeWords.ApiVersion}; }}");
         }
         _at++;
         var name = Text();
         Expect("{");
-        int? api = null;
+        string? api = null;
         var apiLine = line;
         string badge = "", about = "";
         while (!Accept("}"))
@@ -226,7 +226,12 @@ internal sealed class ModeParser
             if (Accept("api"))
             {
                 apiLine = Current.Line;
-                api = (int)WholeLiteral("the api");
+                // the game version the file was written for (0.6.5), or 0.6.0's bare 1: ModeLevels reads it
+                if (Current.Kind is not (ModeTokenKind.Version or ModeTokenKind.Whole))
+                {
+                    throw Error($"the api is the game version the file was written for (api {ModeWords.ApiVersion};), not {Describe(Current)}");
+                }
+                api = Take().Text;
             }
             else if (Accept("badge"))
             {
@@ -454,9 +459,9 @@ internal sealed class ModeParser
             do
             {
                 var kind = Take().Text;
-                if (kind is not ("time" or "int" or "block"))
+                if (kind is not ("time" or "int" or "real" or "bool" or "block"))
                 {
-                    throw Error($"a macro's parameter is a time, an int or a block, not '{kind}'");
+                    throw Error($"a macro's parameter is a time, an int, a real, a bool or a block, not '{kind}'");
                 }
                 parameters.Add((kind, Take().Text));
             }
@@ -569,7 +574,7 @@ internal sealed class ModeParser
         var (word, parts) = SetupWords.FirstOrDefault(w => StartsHere(w.Parts));
         if (word is null)
         {
-            throw Error($"'{Current.Text}' is not a word of api {ModeWords.Api}");
+            throw Error($"'{Current.Text}' is not a word of api {ModeWords.ApiVersion}");
         }
         _at += parts.Length;
         if (ModeWords.Setups.Single(s => s.Name == word).Id == ModeSetup.LapsByCourse)
@@ -661,11 +666,20 @@ internal sealed class ModeParser
     {
         Expect("[");
         var rows = new List<ModeSetupRow>();
+        // (the machine by seat, team or place lists take own and random too, as bare names the compiler reads)
+        var entries = word.StartsWith("machine by ", StringComparison.Ordinal);
         do
         {
+            if (entries && Current.Kind == ModeTokenKind.Name)
+            {
+                var name = Take();
+                rows.Add(new ModeSetupRow(name.Line, name.Text, new ModeName(name.Line, name.Text)));
+                continue;
+            }
             if (Current.Kind != ModeTokenKind.Text)
             {
-                throw Error($"{word} takes names in quotes, not {Describe(Current)}");
+                throw Error(entries ? $"{word} takes machines' names in quotes, own or random, not {Describe(Current)}"
+                    : $"{word} takes names in quotes, not {Describe(Current)}");
             }
             rows.Add(new ModeSetupRow(Current.Line, Take().Text, null));
         }
@@ -884,7 +898,7 @@ internal sealed class ModeParser
         var target = Postfix();
         var op = Assignments.FirstOrDefault(Current.Is)
             ?? throw (target is ModeName word
-                ? new ModeCompileException(line, $"'{word.Name}' is not a word of api {ModeWords.Api}")
+                ? new ModeCompileException(line, $"'{word.Name}' is not a word of api {ModeWords.ApiVersion}")
                 : Error($"a statement is expected here: {Describe(Current)} does not start one"));
         _at++;
         var value = Expression();
@@ -906,7 +920,13 @@ internal sealed class ModeParser
         }
         if (!ModeWords.Actions.Any(a => a.Name == name))
         {
-            throw Error($"'{name}' is not an action of api {ModeWords.Api}");
+            throw Error($"'{name}' is not an action of api {ModeWords.ApiVersion}");
+        }
+        // an action's longer form whose words start with it (resume after t), but an off form (below)
+        while (Current.Kind == ModeTokenKind.Name && !Current.Is("off")
+               && ModeWords.Actions.Any(a => a.Name == name + " " + Current.Text))
+        {
+            name += " " + Take().Text;
         }
         // a word between the first two arguments in place of the comma (map_hide s from seats)
         var join = ModeWords.ActionJoins.GetValueOrDefault(ModeWords.Actions.First(a => a.Name == name).Id);
@@ -930,12 +950,60 @@ internal sealed class ModeParser
             {
                 Accept(",");
             }
-            arguments.Add(name == "tag" && Current.Kind == ModeTokenKind.Text
+            arguments.Add(name is "tag" or "map_char" or "say" or "show_score" or "show_text" && Current.Kind == ModeTokenKind.Text
                 ? new ModeTagText(Current.Line, Take().Text)
                 : Expression());
+            if (name == "tag" && arguments is [_, ModeTagText text])
+            {
+                arguments[1] = text with { Look = TagLook() };
+            }
         }
         Expect(";");
         return new ModeActionStatement(token.Line, name, arguments);
+    }
+
+    /// <summary><c>tag</c>'s settings after its text, each once, in either order, left out for the default:
+    /// <c>tag s, "TEXT", size 0.5 1.2, range 300 m;</c>. A clause is a comma, its name and its numbers.</summary>
+    private ModeTagLook TagLook()
+    {
+        var look = ModeTagLook.None;
+        while (Current.Is(",") && PeekToken(1) is { Kind: ModeTokenKind.Name, Text: "size" or "range" } setting)
+        {
+            _at += 2;
+            if (setting.Text == "size")
+            {
+                if (look.SizeMin is not null)
+                {
+                    throw Error("tag takes one size: tag s, \"TEXT\", size 0.5 1.2;");
+                }
+                var min = Number("tag's size is its least and its largest, a player's name tag at its largest being 1: size 0.5 1.2");
+                var max = Number("tag's size is its least and its largest, a player's name tag at its largest being 1: size 0.5 1.2");
+                look = look with { SizeMin = min, SizeMax = max };
+            }
+            else
+            {
+                if (look.Range is not null)
+                {
+                    throw Error("tag takes one range: tag s, \"TEXT\", range 300 m;");
+                }
+                look = look with { Range = Number("tag's range is the metres it is seen from: range 300 m") };
+            }
+        }
+        return look;
+    }
+
+    /// <summary>A number written in a setting: a whole, a real or metres (<c>300 m</c>).</summary>
+    private float Number(string expected)
+    {
+        var token = Current;
+        if (token.Kind is not (ModeTokenKind.Whole or ModeTokenKind.Fraction)
+            || token.Kind == ModeTokenKind.Fraction && token.Text.Contains(' ', StringComparison.Ordinal) && !token.Text.EndsWith(" m", StringComparison.Ordinal)
+            || token.Kind == ModeTokenKind.Fraction && token.Text.Contains('%', StringComparison.Ordinal))
+        {
+            throw Error($"{expected}; not {Describe(token)}");
+        }
+        _at++;
+        return token.Kind == ModeTokenKind.Whole ? token.Whole : token.Real;
     }
 
     /// <summary><c>team T no contact;</c>: the action <c>team no contact</c> on team T.</summary>

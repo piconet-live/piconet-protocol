@@ -1,0 +1,13 @@
+// Same machine: everyone, the CPUs too, races one machine drawn at random for each race from the list below. The
+// draw is the server's, once, when the machine choice opens: every racer is offered that machine alone, and every
+// game, replay and results page names it.
+
+mode "Same machine" {
+  api 0.6.5;
+  badge "SAME MACHINE";
+  about "Everyone races one machine, drawn at random each race.";
+}
+
+machines ["Blue Falcon", "Golden Fox", "Wild Goose", "Fire Stingray", "White Cat", "Black Bull"];
+machine random;
+cpus on;

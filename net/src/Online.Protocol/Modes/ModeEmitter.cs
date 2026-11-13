@@ -20,6 +20,23 @@ internal sealed partial class ModeEmitter(ModeNames names, List<string> warnings
 {
     private const long MostMultiplier = 1L << 28;
 
+    /// <summary>The parts <c>hud_move</c> places that <c>show</c> and <c>hide</c> refuse, with why: the game draws each as
+    /// it does (0.6.5).</summary>
+    private static readonly Dictionary<string, string> PlacedOnly = new()
+    {
+        ["SPARE"] = "the spare-machine counter is shown and hidden by show_number",
+        ["SKULLS"] = "the KO skulls are shown as the game shows them",
+        ["WRONG_WAY"] = "the wrong-way sign is raised by the race and stock_banner",
+        ["BANNERS"] = "the banners are raised by the race and stock_banner",
+        ["FINISH"] = "FINISH and RETIRED are the race's own",
+        ["CHECK"] = "the CHECK sign is the game's own; hud clean takes it off",
+        ["SCORE"] = "the score counter is shown and hidden by show_score",
+        ["TEXT"] = "the text is shown and hidden by show_text",
+    };
+
+    /// <summary>The file's rule set (its <c>api</c>): a choice's value of a later one is refused.</summary>
+    public int Api { get; init; } = int.MaxValue;
+
     private sealed record Local(string Name, ModeType Type, int Slot, bool Fixed);
 
     private readonly ModeBytes _code = new();
@@ -47,11 +64,43 @@ internal sealed partial class ModeEmitter(ModeNames names, List<string> warnings
     /// <summary>The actions the rules written so far use, each with the line of its first use.</summary>
     public Dictionary<ModeAction, int> Used { get; } = [];
 
-    /// <summary>The different texts the file's <c>tag</c> words use, in the order they came: the package's <c>tag_texts</c>.</summary>
+    /// <summary>The different texts the file's <c>tag</c> words use (<c>show_score</c>'s labels and <c>show_text</c>'s texts
+    /// among them), in the order they came: the package's <c>tag_texts</c>. A text with other settings is another text.</summary>
     public List<string> TagTexts { get; } = [];
+
+    /// <summary>Each text's settings (<c>tag s, "TEXT", size MIN MAX, range D m</c>; the defaults where none were written): the
+    /// package's <c>tag_looks</c>, written when one differs from the defaults.</summary>
+    public List<ModeTagLookValues> TagLooks { get; } = [];
+
+    /// <summary>The different texts the file's <c>say</c> words use, in the order they came: the package's <c>say_texts</c>.</summary>
+    public List<string> SayTexts { get; } = [];
 
     /// <summary>A rule reads a time gap: the package says so (<c>time_gaps</c>) and the game keeps the arrivals.</summary>
     public bool UsesGaps { get; private set; }
+    /// <summary>The highest constant a rule writes into seat.speed with <c>=</c>, and its line: above 9000 the file must
+    /// write seat_speed_open (ModeCompiler.OpenWords).</summary>
+    public (float Value, int Line)? MostSpeedWritten { get; private set; }
+    /// <summary>The same for seat.stat.max_speed: above the stat pack's 4 the file must write max_speed_open.</summary>
+    public (float Value, int Line)? MostMaxSpeedWritten { get; private set; }
+
+    /// <summary>A constant written with <c>=</c> into one of the two, kept when it is the highest so far.</summary>
+    internal void Written(string word, ModeAssign assign)
+    {
+        if (assign.Operator != "=" || names.Fold(assign.Value) is not { } folded)
+        {
+            return;
+        }
+        var (type, cell) = folded;
+        var value = type == ModeType.Int ? cell : BitConverter.Int32BitsToSingle(cell);
+        if (word == "speed" && !(MostSpeedWritten?.Value >= value))
+        {
+            MostSpeedWritten = (value, assign.Line);
+        }
+        if (word == "stat.max_speed" && !(MostMaxSpeedWritten?.Value >= value))
+        {
+            MostMaxSpeedWritten = (value, assign.Line);
+        }
+    }
 
     /// <summary>The operations a step at worst of the rules written so far.</summary>
     public long Cost { get; private set; }

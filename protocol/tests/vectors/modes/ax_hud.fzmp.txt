@@ -1,0 +1,52 @@
+FZMP format 1 api 2, 706 bytes, hash 8185fef3408cf358280e6c955800e35a2354393f2aeb753a5649b188cc3927ad
+HEAD name "AX HUD" badge "" about ""
+PARM 0
+SETP 1
+  hud_layout ax
+VARS globals 0, seat words 0
+RULE 1
+  0 "Places" event race_start, locals 1, when none, while none, body 0000
+CODE 122 bytes
+  ; rule 0 body
+  0000  Push 0
+  0005  StoreLocal 0
+  0007  LoadLocal 0
+  0009  RaceRead seats
+  000b  ILt
+  000c  JumpIfZero 0079
+  0011  LoadLocal 0
+  0013  Push 1
+  0018  Action show
+  001a  LoadLocal 0
+  001c  Push 1
+  0021  Push 320
+  0026  IToF
+  0027  Push 108
+  002c  IToF
+  002d  Push 0
+  0032  IToF
+  0033  Action hud_move
+  0035  LoadLocal 0
+  0037  Push 17
+  003c  Push 51
+  0041  IToF
+  0042  Push 214
+  0047  IToF
+  0048  Push -1064304640 (0xc0900000, real -4.5)
+  004d  Action hud_move
+  004f  LoadLocal 0
+  0051  Push 18
+  0056  Push 320
+  005b  IToF
+  005c  Push 444
+  0061  IToF
+  0062  Push 0
+  0067  IToF
+  0068  Action hud_move
+  006a  LoadLocal 0
+  006c  Push 1
+  0071  IAdd
+  0072  StoreLocal 0
+  0074  Jump 0007
+  0079  End
+SRC  472 bytes

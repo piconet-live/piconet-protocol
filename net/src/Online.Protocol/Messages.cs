@@ -71,13 +71,17 @@ public sealed record Rgb(byte R, byte G, byte B)
 /// Custom: the garage-built machine the player races in place of Machine (<see cref="CustomMachine"/>, as their
 /// <see cref="SeatSetup.Custom"/> will carry it), so the other members see it; null: Machine. A launcher from before
 /// it passes over it. Team: the team the player chose or the host gave them (0 to 29; shown as "Team 1" on); null:
-/// none yet, or a lobby without teams (<see cref="LobbyRules.TeamsKey"/>): the race gives them one.</summary>
+/// none yet, or a lobby without teams (<see cref="LobbyRules.TeamsKey"/>): the race gives them one. NextRace: while
+/// the lobby's match is starting or choosing machines, this member is not of it (they joined meanwhile, measured too
+/// slow for its relay, or their launcher does not run its rules): they have no vote and no machine to choose and race
+/// the lobby's next race. A launcher from before it passes over it.</summary>
 public sealed record PlayerInfo(string Id, string Name, int Machine, Rgb Color, int? StockColor = null, bool Racing = false,
     bool Chosen = false, string? Tag = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool Watching = false,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Pack = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] CustomMachine? Custom = null,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] int? Team = null);
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] int? Team = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool NextRace = false);
 
 /// <summary>A relay the players measure. An empty host means the coordinator's own host.</summary>
 public sealed record RelayEndpoint(string Id, string Host, int Port);
@@ -129,9 +133,13 @@ public sealed record RaceSetup(
 [JsonConverter(typeof(JsonStringEnumConverter<CpuFillMode>))]
 public enum CpuFillMode
 {
-    /// <summary>The lobby votes (more than half: CPUs fill the empty seats).</summary>
+    /// <summary>The lobby votes (more than half: CPUs fill the empty seats). A mode's <c>cpus on</c>.</summary>
     Vote,
+
+    /// <summary>CPUs fill the empty seats of every race, with no vote. A mode's <c>cpus always</c>.</summary>
     Always,
+
+    /// <summary>No CPUs and no vote. A mode's <c>cpus off</c>, or the word left out.</summary>
     Never,
 }
 
@@ -222,9 +230,11 @@ public abstract record ClientMessage;
 /// released build that named none). A claim, as the build is. Written only when set: a launcher with no version
 /// (built with none, or a pre-release) names none, and a launcher from before the field says nothing; a server from
 /// before it passes over it, which is why the version stays. A text that is no line is refused (bad_line).
-/// Modes: the newest game-mode api this launcher and its game run (<see cref="ModeWords.Api"/>; 0: none). A server
-/// matches a player into a race of a mode only when their launcher said that mode's api or a newer one: a launcher
-/// from before modes says nothing, reads as 0, and is never sent a mode it would drop. Written only when set.</summary>
+/// Modes: the newest game-mode rule set this launcher and its game run (<see cref="ModeWords.Api"/>: the number
+/// alone, 1 for 0.6.0, 2 for 0.6.5; 0: none). A server matches a player into a race of a mode only when their
+/// launcher said that mode's rule set or a newer one, and tells one that said less to update (the mode's own
+/// version, <see cref="ModeLevels.Version"/>) before any match file is sent: a launcher from before modes says
+/// nothing, reads as 0, and is never sent a mode it would drop. Written only when set.</summary>
 public sealed record Hello(string Name, int Version, string? Build = null, bool VoteCounts = false,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool Debug = false,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool StatPacks = false,
@@ -360,7 +370,7 @@ public sealed record RulesChanged(ServerRules Rules) : ServerMessage;
 /// <summary>A refused request, with a short text a launcher can show as it is. Codes: bad_name, bad_version,
 /// bad_build, not_ready, already_welcomed (a second hello), machine_not_allowed (queueing or choosing),
 /// not_in_lobby, voting_closed, bad_channel, bad_text, rate_limited (the connection, before it is closed),
-/// rename_too_soon, bad_message; a custom lobby's: <see cref="CustomLobby"/>'s codes; a chat line the filter refused: <see cref="Chat.ChatRefusal"/>'s codes. Seconds:
+/// rename_too_soon, bad_message, mode_needs_update (<see cref="ModeLevels.UpdateCode"/>); a custom lobby's: <see cref="CustomLobby"/>'s codes; a chat line the filter refused: <see cref="Chat.ChatRefusal"/>'s codes. Seconds:
 /// how long a chat mute lasts still (0: it is over); written only with a value, so a launcher from before it reads
 /// the message as it did.</summary>
 public sealed record ErrorMessage(string Code, string Message, int? Seconds = null) : ServerMessage;
@@ -391,7 +401,7 @@ public sealed record ErrorMessage(string Code, string Message, int? Seconds = nu
 /// (<see cref="HostRules.StartCountdown"/>), the milliseconds left when the state was sent; the lobby's match begins
 /// when it runs out, unless its start vote begins it first. Null: no countdown runs (too few players, a custom lobby,
 /// the rule off, or the lobby is past forming); a launcher from before it passes over it. NoCpuVote: the lobby's
-/// modes allow no CPU racers (none says <c>cpus on</c>), so there is no CPU vote; a launcher from before it
+/// modes take no CPU vote (none says <c>cpus on</c>: each has no CPUs, or has them always), so there is none; a launcher from before it
 /// passes over it. CannotRace: the members (player ids) whose launcher cannot run the lobby's mode
 /// (<see cref="Hello.Modes"/>): they stay in the lobby and watch, and are never put in its races; null: none.</summary>
 public sealed record LobbyState(
@@ -505,9 +515,12 @@ public sealed record CourseChosen(string MatchId, IReadOnlyList<int> Options, IR
 /// the machines racers may take, and how long the choice lasts. It ends when every racer has chosen
 /// (<see cref="MachineChoice"/>) or the time is up; a racer who has not chosen races the machine they last raced or
 /// queued with. CustomsOff: the race's mode takes no custom machines (<c>customs off</c>): one sent back is refused, and
-/// the racer races their stock machine; a reader from before passes over it.</summary>
+/// the racer races their stock machine; a reader from before passes over it. ModeSets: the race's mode sets this
+/// racer's machine (<see cref="ModeMachines"/>), the one of Machines: a launcher races it and keeps the racer's own
+/// pick for their next race (the owner, 2026-11-08); a reader from before passes over it.</summary>
 public sealed record ChooseMachine(string MatchId, int Course, IReadOnlyList<int> Machines, int DurationMs,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool CustomsOff = false) : ServerMessage;
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool CustomsOff = false,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool ModeSets = false) : ServerMessage;
 
 /// <summary>The lobby's race as a racer's game sees it, for the players waiting in the lobby.</summary>
 public sealed record LiveRace(string MatchId, RaceSnapshot Snapshot) : ServerMessage;

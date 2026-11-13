@@ -1,0 +1,15 @@
+// DISTANCE without the game's REST label (0.6.5, the file's distance_label off): the metres each seat has gone, shown
+// from the first step.
+mode "Distance label" {
+  api 0.6.5;
+}
+
+distance_label off;
+
+rule "Metres" {
+  event each seat;
+  do {
+    show seat, DISTANCE;
+    show_distance seat, seat.distance;
+  }
+}
