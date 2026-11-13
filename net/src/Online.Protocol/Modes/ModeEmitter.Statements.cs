@@ -411,17 +411,38 @@ internal sealed partial class ModeEmitter
         {
             throw new ModeCompileException(text.Line, word == "tag" ? refused : refused.Replace("tag", word, StringComparison.Ordinal));
         }
-        var known = TagTexts.IndexOf(text.Text);
+        // tag's settings (0.6.1): a text with other settings is another text; show_score and show_text, which draw no tag,
+        // take the text whatever its settings
+        var look = word == "tag" ? TagLook(text) : ModeTagLooks.Default;
+        var known = word == "tag" ? TagTexts.Zip(TagLooks).ToList().FindIndex(p => p.First == text.Text && p.Second == look) : TagTexts.IndexOf(text.Text);
         if (known >= 0)
         {
             return known + 1;
         }
         if (TagTexts.Count == ModeWords.TagTexts)
         {
-            throw new ModeCompileException(text.Line, $"{word}: a mode uses at most {ModeWords.TagTexts} different texts (tag's, show_score's and show_text's together): \"{text.Text}\" is one more");
+            throw new ModeCompileException(text.Line, $"{word}: a mode uses at most {ModeWords.TagTexts} different texts (tag's, show_score's and show_text's together{(TagLooks.Any(l => l != ModeTagLooks.Default) ? ", a text with other settings another" : "")}): \"{text.Text}\" is one more");
         }
         TagTexts.Add(text.Text);
+        TagLooks.Add(look);
         return TagTexts.Count;
+    }
+
+    /// <summary>A <c>tag</c> word's settings with the defaults filled in, within the drawing's bounds; written at all, they
+    /// need api 0.6.1 (the package's <c>tag_looks</c>).</summary>
+    private ModeTagLookValues TagLook(ModeTagText text)
+    {
+        var written = text.Look ?? ModeTagLook.None;
+        if (written != ModeTagLook.None && Api < ModeWords.SetupsSince[ModeSetup.TagLooks])
+        {
+            throw new ModeCompileException(text.Line, $"tag's size and range need api {ModeLevels.Version(ModeWords.SetupsSince[ModeSetup.TagLooks])}: this file says api {ModeLevels.Version(Api)}");
+        }
+        var look = new ModeTagLookValues(written.Range ?? ModeTagLooks.DefaultRange, written.SizeMin ?? ModeTagLooks.DefaultSizeMin, written.SizeMax ?? ModeTagLooks.DefaultSizeMax);
+        if (ModeTagLooks.Refusal(look) is { } refused)
+        {
+            throw new ModeCompileException(text.Line, refused);
+        }
+        return look;
     }
 
     /// <summary>The shapes <c>map_char</c> draws by name, with no font: their codes from <see cref="MapShapes"/>, past

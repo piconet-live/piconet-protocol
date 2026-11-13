@@ -35,23 +35,49 @@ public sealed class ModeHudPlaceTests
         Assert.True(Compile("hud_layout ax;\nhud clean;\n").Succeeded);
     }
 
-    /// <summary><c>tag_range</c>: how far a mode's tags are seen, a setup word of 0.6.1 with no rule line (it changes no
-    /// rule of the race), in metres from 1 to 10,000; left out, the tags are seen to 200 m as before.</summary>
+    /// <summary><c>tag</c>'s settings (0.6.1, on the word itself): <c>size MIN MAX</c>, a player's name tag at its largest
+    /// being 1, and <c>range D m</c>, each once in either order, left out for the defaults (0.5 to 1.2, 200 m). The compiler
+    /// keeps them in its own word <c>tag_looks</c>, three values a text, written when one text differs from the defaults; a
+    /// text with other settings is another text of <c>tag_texts</c>; <c>show_text</c> and <c>show_score</c> take a text whatever
+    /// its settings.</summary>
     [Fact]
-    public void TagRangeIsASetupWordInMetres()
+    public void TagTakesItsSizeAndRangeAfterItsText()
     {
-        var result = Compile("tag_range 300 m;\n");
+        var result = Compile(Rule("tag seat, \"CROWN\", size 0.4 1.0, range 10000 m;"));
         Assert.True(result.Succeeded, string.Join(" ", result.Errors));
-        var word = Assert.Single(result.Mode!.Setups);
-        Assert.Equal(ModeSetup.TagRange, word.Id);
-        Assert.Equal(300.0f, BitConverter.Int32BitsToSingle(Assert.Single(word.Arguments).Value));
+        Assert.Equal([ModeSetup.TagTexts, ModeSetup.TagLooks], result.Mode!.Setups.Select(s => s.Id));
+        Assert.Equal([new ModeTagLookValues(10000.0f, 0.4f, 1.0f)], ModeTagLooks.Of(result.Mode!));
         Assert.Empty(ModeRuleLines.Of(result.Mode!));
-        Assert.True(Compile("tag_range 1 m;\n").Succeeded);
-        Assert.True(Compile("tag_range 10000;\n").Succeeded);   // (the m is a way of writing it)
+        Assert.Contains("tag_looks [range 10000 m size 0.4 1]", ModeDisassembler.List(result.Package!));
+        // the order of the settings is free; a whole number is a size too; a range may be written without the m
+        var other = Compile(Rule("tag seat, \"CROWN\", range 10000, size 1 2;")).Mode!;
+        Assert.Equal([new ModeTagLookValues(10000.0f, 1.0f, 2.0f)], ModeTagLooks.Of(other));
+        // one setting, the other the default; no settings, the defaults and no word
+        Assert.Equal([new ModeTagLookValues(200.0f, 0.4f, 1.0f)], ModeTagLooks.Of(Compile(Rule("tag seat, \"CROWN\", size 0.4 1;")).Mode!));
+        Assert.Equal([new ModeTagLookValues(300.0f, 0.5f, 1.2f)], ModeTagLooks.Of(Compile(Rule("tag seat, \"CROWN\", range 300 m;")).Mode!));
+        var plain = Compile(Rule("tag seat, \"CROWN\";")).Mode!;
+        Assert.Equal([ModeSetup.TagTexts], plain.Setups.Select(s => s.Id));
+        Assert.Equal([ModeTagLooks.Default], ModeTagLooks.Of(plain));
+        // one text with two settings is two texts, and the settings written as the defaults are the one text; show_text
+        // takes the text whatever its settings
+        var two = Compile(Rule("tag seat, \"CROWN\", size 0.4 1; tag seat, \"CROWN\"; tag seat, \"CROWN\", size 0.5 1.2, range 200 m; show_text seat, \"CROWN\";")).Mode!;
+        Assert.Equal(["CROWN", "CROWN"], ModeTagTexts.Texts(two.Setups.Single(s => s.Id == ModeSetup.TagTexts).Arguments));
+        Assert.Equal([new ModeTagLookValues(200.0f, 0.4f, 1.0f), ModeTagLooks.Default], ModeTagLooks.Of(two));
+        Assert.Equal("tag_looks [range 200 m size 0.4 1] [range 200 m size 0.5 1.2]",
+            ModeDisassembler.List(Compile(Rule("tag seat, \"CROWN\", size 0.4 1; tag seat, \"CROWN\";")).Package!).Split('\n').Single(l => l.StartsWith("  tag_looks", StringComparison.Ordinal)).Trim());
+        // the bounds: the drawing's own, and the least size under the largest
         static string Errors(ModeCompilation c) => string.Join(" ", c.Errors.Select(e => e.ToString()));
-        Assert.Contains("tag_range is 1..10000", Errors(Compile("tag_range 0.5 m;\n")));
-        Assert.Contains("tag_range is 1..10000", Errors(Compile("tag_range 20000 m;\n")));
-        Assert.Contains("tag_range needs api 0.6.1", Errors(ModeCompiler.Compile("mode \"T\" { api 1; }\ntag_range 300 m;\n")));
+        Assert.Contains("tag's range is 1 to 10000 m: 0.5 m is not", Errors(Compile(Rule("tag seat, \"CROWN\", range 0.5 m;"))));
+        Assert.Contains("tag's range is 1 to 10000 m: 20000 m is not", Errors(Compile(Rule("tag seat, \"CROWN\", range 20000 m;"))));
+        Assert.Contains("tag's size is 0.1 to 5", Errors(Compile(Rule("tag seat, \"CROWN\", size 0 1;"))));
+        Assert.Contains("tag's size is 0.1 to 5", Errors(Compile(Rule("tag seat, \"CROWN\", size 1 6;"))));
+        Assert.Contains("tag's least size is above its largest: size 1.5 1", Errors(Compile(Rule("tag seat, \"CROWN\", size 1.5 1;"))));
+        Assert.Contains("tag takes one size", Errors(Compile(Rule("tag seat, \"CROWN\", size 1 1, size 1 2;"))));
+        Assert.Contains("tag takes one range", Errors(Compile(Rule("tag seat, \"CROWN\", range 1 m, range 2 m;"))));
+        Assert.Contains("tag's size is its least and its largest", Errors(Compile(Rule("tag seat, \"CROWN\", size 1;"))));
+        Assert.Contains("tag's range is the metres", Errors(Compile(Rule("tag seat, \"CROWN\", range 30s;"))));
+        Assert.Contains("tag_looks is the compiler's own", Errors(Compile("tag_looks \"X\";\n")));
+        Assert.Contains("tag's size and range need api 0.6.1", Errors(ModeCompiler.Compile("mode \"T\" { api 1; }\n" + Rule("tag seat, \"CROWN\", range 300 m;"))));
     }
 
     [Fact]

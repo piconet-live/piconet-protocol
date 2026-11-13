@@ -8,8 +8,6 @@ mode "Displays" {
 
 seat int lives = 3;
 
-tag_range 300 m;   // (0.6.1: the tags full to 225 m, gone at 300)
-
 rule "Parts" {
   event every step;
   when race.started;
@@ -44,7 +42,7 @@ rule "Out of sight" {
     s.colour = 0xFF2020FF;
     map_mark s, 0xFF0000;
     tag s off;
-    tag s, "OUT";
+    tag s, "OUT", size 0.4 1, range 300 m;   // (0.6.1: its settings on the word: 0.4 to 1 of a name tag, full to 225 m, gone at 300)
     stock_banner s, FINAL_LAP;
     show_number s, -1;
   }

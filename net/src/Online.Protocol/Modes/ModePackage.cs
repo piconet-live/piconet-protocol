@@ -133,6 +133,70 @@ public static class ModeTagTexts
         new string([.. cells.Select(c => (char)c.Value)]).Split('\0');
 }
 
+/// <summary>A <c>tag</c> text's settings: how far it is seen (metres; full alpha to three quarters of it, none at it) and its
+/// size's least and largest, a player's name tag at its largest being 1 (18 pixels a letter on the 640 x 480 screen). The
+/// text is drawn at the largest from the camera to the reference depth (40 m from it, a rival about 30 m ahead with the
+/// camera riding behind) and smaller over the depth beyond, as a thing of the world would, never below the least: a
+/// name tags' matter (runner port/image/routines/nametags.py).</summary>
+public sealed record ModeTagLookValues(float Range, float SizeMin, float SizeMax);
+
+/// <summary>The <c>tag</c> words' settings, which the package carries in the compiler's setup word <c>tag_looks</c>: three
+/// values a text of <c>tag_texts</c>, in its order, for every text (the range, the least size, the largest, each a
+/// binary32's bits); left out of the package, every text has the defaults. A text used with two settings is two texts.
+/// The bounds are the owner's "nothing that can break the game": a range under 1 m puts the fade's divisor near 0 and
+/// over 10 km the tags' order loses its metres; a size of 5 draws letters 90 pixels tall, as large as reads as a tag.</summary>
+public static class ModeTagLooks
+{
+    public const float DefaultRange = 200.0f, LeastRange = 1.0f, MostRange = 10000.0f;
+    public const float DefaultSizeMin = 0.5f, DefaultSizeMax = 1.2f, LeastSize = 0.1f, MostSize = 5.0f;
+    public static readonly ModeTagLookValues Default = new(DefaultRange, DefaultSizeMin, DefaultSizeMax);
+
+    /// <summary>Why a tag cannot be drawn with these settings; null: it can.</summary>
+    public static string? Refusal(ModeTagLookValues look)
+    {
+        ArgumentNullException.ThrowIfNull(look);
+        if (!(look.Range >= LeastRange && look.Range <= MostRange))
+        {
+            return Invariant($"tag's range is {LeastRange} to {MostRange} m: {look.Range} m is not");
+        }
+        if (!(look.SizeMin >= LeastSize && look.SizeMin <= MostSize && look.SizeMax >= LeastSize && look.SizeMax <= MostSize))
+        {
+            return Invariant($"tag's size is {LeastSize} to {MostSize}, a player's name tag at its largest being 1: size {look.SizeMin} {look.SizeMax} is not");
+        }
+        return look.SizeMin > look.SizeMax ? Invariant($"tag's least size is above its largest: size {look.SizeMin} {look.SizeMax}") : null;
+    }
+
+    /// <summary>The settings as the word's arguments.</summary>
+    public static List<ModeSetupValue> Cells(IEnumerable<ModeTagLookValues> looks) =>
+        [.. looks.SelectMany(l => new[] { l.Range, l.SizeMin, l.SizeMax }).Select(v => new ModeSetupValue(false, ModeOperators.Cell(v)))];
+
+    /// <summary>The word's arguments as the settings, a text's each.</summary>
+    public static ModeTagLookValues[] Values(IReadOnlyList<ModeSetupValue> cells)
+    {
+        ArgumentNullException.ThrowIfNull(cells);
+        return [.. Enumerable.Range(0, cells.Count / 3).Select(i => new ModeTagLookValues(
+            ModeOperators.Real(cells[3 * i].Value), ModeOperators.Real(cells[3 * i + 1].Value), ModeOperators.Real(cells[3 * i + 2].Value)))];
+    }
+
+    /// <summary>The settings of each of the package's texts, the defaults where the package has no word.</summary>
+    public static ModeTagLookValues[] Of(ModePackage package)
+    {
+        ArgumentNullException.ThrowIfNull(package);
+        return Of(package.Setups);
+    }
+
+    /// <summary>The same, from the setup words.</summary>
+    public static ModeTagLookValues[] Of(IReadOnlyList<ModeSetupWord> setups)
+    {
+        ArgumentNullException.ThrowIfNull(setups);
+        var texts = setups.FirstOrDefault(s => s.Id == ModeSetup.TagTexts) is { } t ? ModeTagTexts.Texts(t.Arguments).Length : 0;
+        var looks = setups.FirstOrDefault(s => s.Id == ModeSetup.TagLooks) is { } l ? Values(l.Arguments) : [];
+        return [.. Enumerable.Range(0, texts).Select(i => i < looks.Length ? looks[i] : Default)];
+    }
+
+    private static string Invariant(FormattableString s) => FormattableString.Invariant(s);
+}
+
 /// <summary>The texts the <c>say</c> word shows, which the package carries in the setup words <c>say_texts</c>: one word
 /// a text, in order, its UTF-8 bytes a value each (a word holds at most 255 values; a text is at most 160 bytes); a
 /// <c>say</c> names one by its place, from 1. The runner draws them in the overlay's fonts (the launcher's Saira, and
@@ -572,7 +636,7 @@ public sealed class ModePackage
                 1 => true,
                 _ => throw new InvalidDataException($"the setup word {word.Name}'s argument has an unknown source"),
             }, s.I32())).ToList();
-            if (word.Id is ModeSetup.ResultsTitle or ModeSetup.ResultsHeading or ModeSetup.TagTexts or ModeSetup.SayTexts or ModeSetup.PointsTable)
+            if (word.Id is ModeSetup.ResultsTitle or ModeSetup.ResultsHeading or ModeSetup.TagTexts or ModeSetup.TagLooks or ModeSetup.SayTexts or ModeSetup.PointsTable)
             {
                 if (!OwnValues(word.Id, arguments))
                 {
@@ -596,6 +660,16 @@ public sealed class ModePackage
         if (says.Length > ModeWords.SayTexts || says.Distinct().Count() != says.Length)
         {
             throw new InvalidDataException($"the say texts are not the compiler's: at most {ModeWords.SayTexts}, each once");
+        }
+        // the tag texts, each with its settings, once; a settings word is three values a text
+        var tags = list.FirstOrDefault(w => w.Id == ModeSetup.TagTexts) is { } t ? ModeTagTexts.Texts(t.Arguments) : [];
+        if (list.FirstOrDefault(w => w.Id == ModeSetup.TagLooks) is { } looks && looks.Arguments.Count != 3 * tags.Length)
+        {
+            throw new InvalidDataException("the tag settings are not the compiler's: three values a tag text");
+        }
+        if (tags.Zip(ModeTagLooks.Of(list)).Distinct().Count() != tags.Length)
+        {
+            throw new InvalidDataException("the tag texts are not the compiler's: each text with its settings once");
         }
         return list;
     }
@@ -622,6 +696,11 @@ public sealed class ModePackage
         {
             return arguments.Count is > 0 and <= ModeWords.Seats && !arguments.Any(a => a.FromParam || a.Value is < 0 or > 999);
         }
+        if (id == ModeSetup.TagLooks)
+        {
+            return arguments.Count % 3 == 0 && arguments.Count is > 0 and <= 3 * ModeWords.TagTexts && !arguments.Any(a => a.FromParam)
+                   && !ModeTagLooks.Values(arguments).Any(l => ModeTagLooks.Refusal(l) is not null);
+        }
         if (arguments.Any(a => a.FromParam || a.Value is < 0 or > 127))
         {
             return false;
@@ -631,7 +710,7 @@ public sealed class ModePackage
             return ModeResultsTitle.Refusal(ModeResultsTitle.Text(arguments)) is null;
         }
         var texts = ModeTagTexts.Texts(arguments);
-        return texts.Length <= ModeWords.TagTexts && texts.Distinct().Count() == texts.Length && !texts.Any(t => ModeTagTexts.Refusal(t) is not null);
+        return texts.Length <= ModeWords.TagTexts && !texts.Any(t => ModeTagTexts.Refusal(t) is not null);  // (each with its settings once: ReadSetups)
     }
 
     private static List<int> ReadVars(ModeReader s, out List<int> seatWordValues, out List<int> teamWordValues)

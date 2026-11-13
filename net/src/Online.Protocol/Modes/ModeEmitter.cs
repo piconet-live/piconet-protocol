@@ -64,8 +64,13 @@ internal sealed partial class ModeEmitter(ModeNames names, List<string> warnings
     /// <summary>The actions the rules written so far use, each with the line of its first use.</summary>
     public Dictionary<ModeAction, int> Used { get; } = [];
 
-    /// <summary>The different texts the file's <c>tag</c> words use, in the order they came: the package's <c>tag_texts</c>.</summary>
+    /// <summary>The different texts the file's <c>tag</c> words use (<c>show_score</c>'s labels and <c>show_text</c>'s texts
+    /// among them), in the order they came: the package's <c>tag_texts</c>. A text with other settings is another text.</summary>
     public List<string> TagTexts { get; } = [];
+
+    /// <summary>Each text's settings (<c>tag s, "TEXT", size MIN MAX, range D m</c>; the defaults where none were written): the
+    /// package's <c>tag_looks</c>, written when one differs from the defaults.</summary>
+    public List<ModeTagLookValues> TagLooks { get; } = [];
 
     /// <summary>The different texts the file's <c>say</c> words use, in the order they came: the package's <c>say_texts</c>.</summary>
     public List<string> SayTexts { get; } = [];
