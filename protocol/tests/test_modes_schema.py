@@ -37,8 +37,8 @@ class ModesLevels(unittest.TestCase):
 
     def test_the_table_loads_and_0_6_0_is_as_shipped(self):
         t = modes.load()
-        self.assertEqual([(r["number"], r["version"]) for r in t["levels"]["rule_sets"]], [(1, "0.6.0"), (2, "0.6.1")])
-        self.assertIsNone(t["levels"]["rule_sets"][-1]["frozen"])   # 0.6.1's is the open one
+        self.assertEqual([(r["number"], r["version"]) for r in t["levels"]["rule_sets"]], [(1, "0.6.0"), (2, "0.6.5")])
+        self.assertIsNone(t["levels"]["rule_sets"][-1]["frozen"])   # 0.6.5's is the open one
 
     def test_a_value_added_inside_a_shipped_rule_set_is_refused(self):
         # `cpus always` without its rule set would be a new value of 0.6.0's
@@ -78,15 +78,15 @@ class ModesLevels(unittest.TestCase):
 
     def test_the_levels_rules_are_named(self):
         self.assertIn("since", self.error(CPUS, 'args = [{ type = "switch", always = 2, always_since = 3 }]'))
-        self.assertIn("newest is the last rule set's version or a later one", self.error('newest = "0.6.1"', 'newest = "0.6.0"'))
+        self.assertIn("newest is the last rule set's version or a later one", self.error('newest = "0.6.5"', 'newest = "0.6.0"'))
         self.assertIn("the last rule set is [api] number", self.error("[api]\nnumber = 2", "[api]\nnumber = 3"))
         self.assertIn("only the last one is open", self.error('frozen = "', '# frozen = "'))
 
     def test_both_sides_get_the_levels(self):
         t = modes.load()
         cs, cxx = modes_cs.emit(t), modes_cxx.emit(t)
-        self.assertIn('public const string ApiVersion = "0.6.1";', cs)
-        self.assertIn('[(1, "0.6.0"), (2, "0.6.1")]', cs)
+        self.assertIn('public const string ApiVersion = "0.6.5";', cs)
+        self.assertIn('[(1, "0.6.0"), (2, "0.6.5")]', cs)
         self.assertIn("[(ModeSetup.Cpus, 0, 2)] = 2,", cs)
         self.assertIn("inline constexpr int API = 2;", cxx)
         self.assertIn("inline constexpr int SETUP_CPUS_ALWAYS_SINCE = 2;", cxx)

@@ -12,7 +12,7 @@ namespace Online.Protocol;
 /// <param name="LocalSeat">The seat of the game that sent it.</param>
 /// <param name="ScoreKind">What the racers' <see cref="RacerLive.Score"/> is, when the race's mode scores: <see cref="Points"/>
 /// (the mode's show_score, under <paramref name="ScoreLabel"/>) or <see cref="Metres"/> (its show_distance, a mode scored by
-/// distance). Null: no score; the standings show times and laps. A game from before 0.6.1 sends none.</param>
+/// distance). Null: no score; the standings show times and laps. A game from before 0.6.5 sends none.</param>
 /// <param name="ScoreLabel">The label the game's HUD gives the points (POINTS unless the mode names its own); null with no
 /// points.</param>
 public sealed record RaceSnapshot(int Frame, int LocalSeat, IReadOnlyList<RacerLive> Racers,
@@ -73,7 +73,7 @@ public sealed record RaceSnapshot(int Frame, int LocalSeat, IReadOnlyList<RacerL
 /// <param name="Distance">Distance covered over all laps (progress record +0xF8).</param>
 /// <param name="Place">The place the race's mode gives the racer, 1 first: the one the game's HUD shows (its
 /// live_places order during the race, its results order once the mode ended the race). 0: none (no mode, a mode that
-/// places no one, or a game from before 0.6.1): the standings order by times and distances.</param>
+/// places no one, or a game from before 0.6.5): the standings order by times and distances.</param>
 /// <param name="Score">The mode's number for the racer, of the snapshot's <see cref="RaceSnapshot.ScoreKind"/>: points,
 /// or metres. Null: the mode shows this racer none.</param>
 public sealed record RacerLive(

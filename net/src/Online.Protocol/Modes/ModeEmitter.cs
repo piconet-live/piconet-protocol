@@ -21,7 +21,7 @@ internal sealed partial class ModeEmitter(ModeNames names, List<string> warnings
     private const long MostMultiplier = 1L << 28;
 
     /// <summary>The parts <c>hud_move</c> places that <c>show</c> and <c>hide</c> refuse, with why: the game draws each as
-    /// it does (0.6.1).</summary>
+    /// it does (0.6.5).</summary>
     private static readonly Dictionary<string, string> PlacedOnly = new()
     {
         ["SPARE"] = "the spare-machine counter is shown and hidden by show_number",

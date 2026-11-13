@@ -226,7 +226,7 @@ internal sealed class ModeParser
             if (Accept("api"))
             {
                 apiLine = Current.Line;
-                // the game version the file was written for (0.6.1), or 0.6.0's bare 1: ModeLevels reads it
+                // the game version the file was written for (0.6.5), or 0.6.0's bare 1: ModeLevels reads it
                 if (Current.Kind is not (ModeTokenKind.Version or ModeTokenKind.Whole))
                 {
                     throw Error($"the api is the game version the file was written for (api {ModeWords.ApiVersion};), not {Describe(Current)}");

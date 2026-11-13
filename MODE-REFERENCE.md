@@ -1,35 +1,37 @@
 # Mode reference
 
-A `.fzmode` file is a UTF-8 text file that sets the rules of a custom lobby's race. This is the vocabulary of `api 0.6.1`.
+A `.fzmode` file is a UTF-8 text file that sets the rules of a custom lobby's race. This is the vocabulary of `api 0.6.5`.
 A file is at most 64 KB, and a word it leaves out is the game's own way.
 
 ## The api line
 
-A file names the game version it was written for: `api 0.6.1;`. That version's rules are frozen once it is released,
+A file names the game version it was written for: `api 0.6.5;`. That version's rules are frozen once it is released,
 so the file means the same in every later version of the game. Players on an older version than the file names are
 asked to update before they can race it.
 
 | Written | Means |
 |---|---|
-| `api 0.6.1;` | The rules of Piconet 0.6.1 |
+| `api 0.6.5;` | The rules of Piconet 0.6.5 |
 | `api 0.6.0;` or `api 1;` | The rules of Piconet 0.6.0 (its files wrote `api 1`, which stays valid) |
 
 - A word or value that arrived later than the file's version is refused, with the version it needs: `cpus always
-  needs api 0.6.1: this file says api 1 (0.6.0)`. Raise the api line to use it.
-- A version that changed no rule has the rules of the one before it.
+  needs api 0.6.5: this file says api 1 (0.6.0)`. Raise the api line to use it.
+- A release that changed no rule has the rules of the one before it. A version between two releases that never shipped
+  is refused: `api 0.6.1 is not a release this build knows: name api 0.6.5, or api 0.6.0 (api 1)` (0.6.1 became 0.6.5
+  before its release).
 - A file that names a version newer than the game is refused: `api 0.7.0 is newer than this build, which knows up to
-  api 0.6.1: update to use this file`.
+  api 0.6.5: update to use this file`.
 
 | Arrived in | Words and values |
 |---|---|
-| 0.6.1 | `cpus always` |
+| 0.6.5 | `cpus always` |
 | 0.6.0 | Everything else on this page |
 
 ## What goes in a file
 
 | Part | What it does | Looks like |
 |---|---|---|
-| Header | First in the file: the mode's name, the api (required), a short badge and a one-line about (both optional) | `mode "Knockout" { api 0.6.1; badge "KNOCKOUT"; about "…"; }` |
+| Header | First in the file: the mode's name, the api (required), a short badge and a one-line about (both optional) | `mode "Knockout" { api 0.6.5; badge "KNOCKOUT"; about "…"; }` |
 | Parameter | A setting the host changes in the lobby; a constant in the rules | `param keep "Racers left" number 1..29 default 1;` |
 | Setup word | Fixes a rule of the race before it starts; each written once | `laps 5;` |
 | Constant | Fixed when the file compiles | `const int keep = 8;` |
@@ -161,7 +163,7 @@ game counts it, 100 a full machine.
 |---|---|---|
 | `racers least..most;` `racers n;` | The lobby has `most` seats; a race with fewer racers than `least` is refused. Left out: the lobby's seats | 1 to 30 |
 | `teams least..most;` | The race has teams; the lobby offers `most`, and a race with players on fewer teams than `least` is refused. The host picks the count only when it is a parameter. Left out: no teams | 2 to 30 |
-| `cpus on;` `cpus off;` `cpus always;` | `on`: players may vote CPUs into the race; it does not force them in. `always` (api 0.6.1): CPUs take the empty seats of every race, with no vote. Left out: no CPUs. A parameter that gives it is a switch (off, on) or a choice of three, read in that order as off, on, always: `param cpu_racers "CPU racers" choice ["Off", "Vote", "Always"] default "Vote";` | on, off or always |
+| `cpus on;` `cpus off;` `cpus always;` | `on`: players may vote CPUs into the race; it does not force them in. `always` (api 0.6.5): CPUs take the empty seats of every race, with no vote. Left out: no CPUs. A parameter that gives it is a switch (off, on) or a choice of three, read in that order as off, on, always: `param cpu_racers "CPU racers" choice ["Off", "Vote", "Always"] default "Vote";` | on, off or always |
 | `cpu_level n;` | The CPUs' level: 0 Novice, 1 Standard, 2 Expert, 3 Master. Left out: Master | 0 to 3 |
 | `machines all;` | Every machine, as leaving it out | |
 | `machines ["Blue Falcon", "Golden Fox"];` | The machines racers may choose and CPUs drive | machine names |
@@ -197,7 +199,7 @@ game counts it, 100 a full machine.
 | `boost off;` `boost on;` | `off`: no machine can start an energy boost; a dash plate still boosts | on or off |
 | `contact off;` `contact on;` | `off`: every machine passes through every other | on or off |
 | `restore on;` | Every machine is restored after a wreck (a fall, an explosion, running out of energy; never time over) instead of going out. Left out: no restores | on or off |
-| `wreck_slide off;` | A machine that gets restores and breaks down is restored at once, as before 0.6.1. Left out or `on`: it slides on as a wreck, can cross the line and finish, and its restore starts when a race without restores would have taken it out. A 0.6.0 game cannot race a mode with it | on or off |
+| `wreck_slide off;` | A machine that gets restores and breaks down is restored at once, as before 0.6.5. Left out or `on`: it slides on as a wreck, can cross the line and finish, and its restore starts when a race without restores would have taken it out. A 0.6.0 game cannot race a mode with it | on or off |
 | `mine_regen 200;` `mine_regen on;` `mine_regen off;` | A mine comes back this many milliseconds after it goes off; `on` is 200. Left out or `off`: it stays gone | 50 to 5000 ms |
 
 ### Combat
@@ -501,7 +503,7 @@ An action is a statement, its seat first; the commas between its values are opti
 A paused race stands: no machine, CPU, clock or timer moves and the picture stays, while the mode's rules go on running
 every step, reading the pads (`seat.pad.*`) and counting (`wait`, `race.paused_steps`). Words that act in the race's
 step (`seat.speed`, `boost`, `push`, `damage`, `explode`) do nothing while it stands; a seat's field (`seat.energy`)
-changes at once. In 0.6.1 a mode that pauses is raced by one player (CPUs allowed): a match with two players is refused.
+changes at once. In 0.6.5 a mode that pauses is raced by one player (CPUs allowed): a match with two players is refused.
 
 | Written | What it does | Range |
 |---|---|---|
@@ -567,14 +569,14 @@ text where it likes. They never change the race.
 | `LAP_TIMES` | The lap times | until hidden |
 | `RACE_TIME` | The race time | until hidden |
 | `FACES` | The racers' faces | until hidden |
-| `SPARE` | The Grand Prix spare-machine counter: the star icon and `show_number`'s number. For `hud_move` only: `show_number` shows and hides it (0.6.1) | with `show_number` |
-| `SKULLS` | The KO skulls at the right edge. For `hud_move` only (0.6.1) | as the game shows them |
-| `WRONG_WAY` | The WRONG WAY sign (the banner of the same name). For `hud_move` only (0.6.1) | as the game shows it |
-| `BANNERS` | FINAL LAP, BOOST POWER, TIME BONUS and the gap popup together; a `LEADER_GAP` place takes them too, a `BANNERS` place of its own wins. For `hud_move` only (0.6.1) | as the game shows them |
-| `FINISH` | FINISH and RETIRED. For `hud_move` only (0.6.1) | as the game shows them |
-| `CHECK` | The CHECK sign at the foot of the screen that points at the rival close behind: `hud_move` moves its row, and it still slides sideways after that rival. For `hud_move` only (0.6.1); `hud clean` takes it off | as the game shows it |
-| `SCORE` | A mode's counter at the race time's place: `show_score`'s number in the race time's digits under its label. For `hud_move` only: `show_score` shows and hides it (0.6.1) | with `show_score` |
-| `TEXT` | A mode's short text, centred at the top of the screen under the position. For `hud_move` only: `show_text` shows and hides it (0.6.1) | with `show_text` |
+| `SPARE` | The Grand Prix spare-machine counter: the star icon and `show_number`'s number. For `hud_move` only: `show_number` shows and hides it (0.6.5) | with `show_number` |
+| `SKULLS` | The KO skulls at the right edge. For `hud_move` only (0.6.5) | as the game shows them |
+| `WRONG_WAY` | The WRONG WAY sign (the banner of the same name). For `hud_move` only (0.6.5) | as the game shows it |
+| `BANNERS` | FINAL LAP, BOOST POWER, TIME BONUS and the gap popup together; a `LEADER_GAP` place takes them too, a `BANNERS` place of its own wins. For `hud_move` only (0.6.5) | as the game shows them |
+| `FINISH` | FINISH and RETIRED. For `hud_move` only (0.6.5) | as the game shows them |
+| `CHECK` | The CHECK sign at the foot of the screen that points at the rival close behind: `hud_move` moves its row, and it still slides sideways after that rival. For `hud_move` only (0.6.5); `hud clean` takes it off | as the game shows it |
+| `SCORE` | A mode's counter at the race time's place: `show_score`'s number in the race time's digits under its label. For `hud_move` only: `show_score` shows and hides it (0.6.5) | with `show_score` |
+| `TEXT` | A mode's short text, centred at the top of the screen under the position. For `hud_move` only: `show_text` shows and hides it (0.6.5) | with `show_text` |
 | `TIMER` | The timed race's clock, with `clock_limit` or `show_clock` | when shown |
 | `LEADER_GAP` | The gap to the leader at each lap line, for a second; the leader sees its lead when second place crosses | when shown |
 | `GHOST_GAP` | Time Attack's live gap at the right edge, all race, against the seat furthest ahead; red while it is ahead | when shown |
@@ -600,7 +602,7 @@ text where it likes. They never change the race.
 
 ### Fonts
 
-The game's own text fonts a mode may write `show_text` and `show_score`'s label in (0.6.1): those of its common picture sheet, loaded in every race. Each draws a small letter as a capital.
+The game's own text fonts a mode may write `show_text` and `show_score`'s label in (0.6.5): those of its common picture sheet, loaded in every race. Each draws a small letter as a capital.
 
 | Font | What it looks like |
 |---|---|
@@ -736,7 +738,7 @@ Quick Play's Knockout, as it ships.
 // (live_places): the racers still in by the race order, then the racers out, so a cut leaves no gap in the top six.
 
 mode "Knockout" {
-  api 0.6.1;
+  api 0.6.5;
   badge "KNOCKOUT";
   about "The racer in last place is out at every cut. A point for every cut you survive.";
 }

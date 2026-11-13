@@ -16,15 +16,16 @@ public sealed class ModeLevelsTests
     [Fact]
     public void TheRuleSetsAreOneAReleaseThatChangedTheWords()
     {
-        Assert.Equal([(1, "0.6.0"), (2, "0.6.1")], ModeWords.RuleSets);
-        Assert.Equal((2, "0.6.1"), (ModeWords.Api, ModeWords.ApiVersion));
+        Assert.Equal([(1, "0.6.0"), (2, "0.6.5")], ModeWords.RuleSets);
+        Assert.Equal((2, "0.6.5"), (ModeWords.Api, ModeWords.ApiVersion));
     }
 
-    /// <summary>A file's version gives the newest rule set of that version or before; the bare 1 is 0.6.0's.</summary>
+    /// <summary>A file's version gives its rule set; the bare 1 is 0.6.0's. (A version between two rule sets that no
+    /// release carried is refused below: 0.6.1 was renamed 0.6.5 before it shipped.)</summary>
     [Theory]
     [InlineData("1", 1)]
     [InlineData("0.6.0", 1)]
-    [InlineData("0.6.1", 2)]
+    [InlineData("0.6.5", 2)]
     public void AFileNamesTheGameVersionItWasWrittenFor(string api, int ruleSet)
     {
         var result = ModeCompiler.Compile(File(api, "laps 3;\n"));
@@ -44,29 +45,31 @@ public sealed class ModeLevelsTests
     }
 
     [Theory]
-    [InlineData("2", "line 2: api 2 is not a level: a mode file names the game version it was written for (api 0.6.1;), and api 1 is 0.6.0")]
-    [InlineData("0", "line 2: api 0 is not a level: a mode file names the game version it was written for (api 0.6.1;), and api 1 is 0.6.0")]
-    [InlineData("0.6.2", "line 2: api 0.6.2 is newer than this build, which knows up to api 0.6.1: update to use this file")]
-    [InlineData("0.7.0", "line 2: api 0.7.0 is newer than this build, which knows up to api 0.6.1: update to use this file")]
-    [InlineData("1.0.0", "line 2: api 1.0.0 is newer than this build, which knows up to api 0.6.1: update to use this file")]
+    [InlineData("2", "line 2: api 2 is not a level: a mode file names the game version it was written for (api 0.6.5;), and api 1 is 0.6.0")]
+    [InlineData("0", "line 2: api 0 is not a level: a mode file names the game version it was written for (api 0.6.5;), and api 1 is 0.6.0")]
+    [InlineData("0.6.6", "line 2: api 0.6.6 is newer than this build, which knows up to api 0.6.5: update to use this file")]
+    [InlineData("0.6.1", "line 2: api 0.6.1 is not a release this build knows: name api 0.6.5, or api 0.6.0 (api 1)")]
+    [InlineData("0.6.2", "line 2: api 0.6.2 is not a release this build knows: name api 0.6.5, or api 0.6.0 (api 1)")]
+    [InlineData("0.7.0", "line 2: api 0.7.0 is newer than this build, which knows up to api 0.6.5: update to use this file")]
+    [InlineData("1.0.0", "line 2: api 1.0.0 is newer than this build, which knows up to api 0.6.5: update to use this file")]
     [InlineData("0.5.4", "line 2: api 0.5.4 is from before game modes: the first is api 0.6.0")]
-    [InlineData("0.6", "line 2: the api is the game version the file was written for (api 0.6.1;), not '0.6'")]
-    [InlineData("\"0.6.1\"", "line 2: the api is the game version the file was written for (api 0.6.1;), not the string \"0.6.1\"")]
+    [InlineData("0.6", "line 2: the api is the game version the file was written for (api 0.6.5;), not '0.6'")]
+    [InlineData("\"0.6.5\"", "line 2: the api is the game version the file was written for (api 0.6.5;), not the string \"0.6.5\"")]
     public void AnApiThisBuildDoesNotKnowIsRefusedInPlainWords(string api, string error) =>
         Assert.Equal(error, Error(File(api)));
 
     [Fact]
     public void AFileWithoutAnApiIsToldToNameOne() =>
-        Assert.Equal("line 1: the header names no api: api 0.6.1;", Error("mode \"Test\" { }\n"));
+        Assert.Equal("line 1: the header names no api: api 0.6.5;", Error("mode \"Test\" { }\n"));
 
     /// <summary>A value of a later rule set: written out, or within what a parameter may give.</summary>
     [Theory]
-    [InlineData("1", "cpus always;\n", "line 4: cpus always needs api 0.6.1: this file says api 1 (0.6.0)")]
-    [InlineData("0.6.0", "cpus always;\n", "line 4: cpus always needs api 0.6.1: this file says api 0.6.0")]
+    [InlineData("1", "cpus always;\n", "line 4: cpus always needs api 0.6.5: this file says api 1 (0.6.0)")]
+    [InlineData("0.6.0", "cpus always;\n", "line 4: cpus always needs api 0.6.5: this file says api 0.6.0")]
     [InlineData("1", "param c \"CPU racers\" choice [\"Off\", \"Vote\", \"Always\"] default \"Vote\";\ncpus c;\n",
-        "line 5: cpus always needs api 0.6.1: this file says api 1 (0.6.0)")]
-    [InlineData("0.6.0", "rule \"R\" { event out(s); do { tag s, \"X\", range 300 m; } }\n", "line 4: tag's size and range need api 0.6.1: this file says api 0.6.0")]
-    [InlineData("1", "rule \"R\" { event out(s); do { tag s, \"X\", size 0.5 1.2; } }\n", "line 4: tag's size and range need api 0.6.1: this file says api 0.6.0")]
+        "line 5: cpus always needs api 0.6.5: this file says api 1 (0.6.0)")]
+    [InlineData("0.6.0", "rule \"R\" { event out(s); do { tag s, \"X\", range 300 m; } }\n", "line 4: tag's size and range need api 0.6.5: this file says api 0.6.0")]
+    [InlineData("1", "rule \"R\" { event out(s); do { tag s, \"X\", size 0.5 1.2; } }\n", "line 4: tag's size and range need api 0.6.5: this file says api 0.6.0")]
     public void AValueOfALaterRuleSetNamesTheVersionItNeeds(string api, string body, string error) =>
         Assert.Equal(error, Error(File(api, body)));
 
@@ -81,15 +84,15 @@ public sealed class ModeLevelsTests
     [Fact]
     public void APackageHoldsNothingNewerThanItsRuleSet()
     {
-        var package = ModeCompiler.Compile(File("0.6.1", "cpus always;\n")).Package!;
+        var package = ModeCompiler.Compile(File("0.6.5", "cpus always;\n")).Package!;
         Assert.Equal(2, ModePackage.Read(package).Api);
         var older = (byte[])package.Clone();
         older[7] = 1;
-        Assert.Equal("the package is of rule set 1 and holds cpus always, which is of rule set 2 (api 0.6.1)",
+        Assert.Equal("the package is of rule set 1 and holds cpus always, which is of rule set 2 (api 0.6.5)",
             Assert.Throws<InvalidDataException>(() => ModePackage.Read(older)).Message);
     }
 
-    /// <summary>Quick Play's own files: the ones that use a word of 0.6.1 (cpus always, the CPU racers row; the AX HUD and
+    /// <summary>Quick Play's own files: the ones that use a word of 0.6.5 (cpus always, the CPU racers row; the AX HUD and
     /// live_places; distance_label) name it, the rest keep 0.6.0's.</summary>
     [Theory]
     [InlineData("competitive", 2)]
@@ -107,5 +110,5 @@ public sealed class ModeLevelsTests
 
     [Fact]
     public void ALowerLauncherIsToldTheVersionItNeeds() =>
-        Assert.Equal("This lobby's game mode needs Piconet 0.6.1. Update the launcher to race it.", ModeLevels.UpdateText(2));
+        Assert.Equal("This lobby's game mode needs Piconet 0.6.5. Update the launcher to race it.", ModeLevels.UpdateText(2));
 }

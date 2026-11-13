@@ -5,7 +5,7 @@
 // (live_places): the racers still in by the race order, then the racers out, so a cut leaves no gap in the top six.
 
 mode "Knockout" {
-  api 0.6.1;
+  api 0.6.5;
   badge "KNOCKOUT";
   about "The racer in last place is out at every cut. A point for every cut you survive.";
 }

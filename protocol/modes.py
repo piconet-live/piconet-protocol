@@ -69,7 +69,7 @@ def numbered(raw, allowed, what, high=255, gaps=False):
 
 
 def version(text, what):
-    """A game version "0.6.1" as (0, 6, 1)."""
+    """A game version "0.6.5" as (0, 6, 1)."""
     if not isinstance(text, str) or not VERSION.match(text):
         raise SchemaError(f"{what}: a game version, three numbers (got {text!r})")
     return tuple(int(n) for n in text.split("."))

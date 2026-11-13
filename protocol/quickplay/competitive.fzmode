@@ -5,7 +5,7 @@
 // lobby's host may change, and their defaults are Quick Play's own race. Quick Play races them at their defaults.
 
 mode "Quick Play" {
-  api 0.6.1;
+  api 0.6.5;
   about "Quick Play's rules: laps by course, GX Unleashed stats, three lives.";
 }
 

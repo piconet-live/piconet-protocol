@@ -1,7 +1,7 @@
-// DISTANCE without the game's REST label (0.6.1, the file's distance_label off): the metres each seat has gone, shown
+// DISTANCE without the game's REST label (0.6.5, the file's distance_label off): the metres each seat has gone, shown
 // from the first step.
 mode "Distance label" {
-  api 0.6.1;
+  api 0.6.5;
 }
 
 distance_label off;

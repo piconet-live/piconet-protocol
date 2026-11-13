@@ -1,4 +1,4 @@
-FZMP format 1 api 2, 2638 bytes, hash 2ea39067f0ce2f655a75ae6cdf8c07cddfc0ecf4c32657ee5f4aba275878f789
+FZMP format 1 api 2, 2638 bytes, hash e6b23d4fbdd6f9bbbcacf8177bbbb1c2ffec3e3e074a0551aa3a88568f27d4cb
 HEAD name "Lap Vote" badge "" about "Between laps, pick more top speed or more boost."
 PARM 0
 SETP 4

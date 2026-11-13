@@ -3,12 +3,13 @@ using System.Globalization;
 namespace Online.Protocol;
 
 /// <summary>The mode api's levels (protocol/modes.toml's [levels]): a mode file names the game version it was written
-/// for (<c>api 0.6.1;</c>), which gives a rule set, the number its package carries; a shipped rule set is frozen, so a
-/// file compiles to the same thing in every later build. A version with no rule change of its own has the rule set
-/// before it. <c>api 1;</c> is 0.6.0, as its files wrote it.</summary>
+/// for (<c>api 0.6.5;</c>), which gives a rule set, the number its package carries; a shipped rule set is frozen, so a
+/// file compiles to the same thing in every later build. A release with no rule change of its own, after the last rule
+/// set, has that rule set; a version between two rule sets that no release carried is refused. <c>api 1;</c> is 0.6.0,
+/// as its files wrote it.</summary>
 public static class ModeLevels
 {
-    /// <summary>The game version a rule set arrived in ("0.6.1"), as a mode file names it.</summary>
+    /// <summary>The game version a rule set arrived in ("0.6.5"), as a mode file names it.</summary>
     public static string Version(int ruleSet) =>
         ModeWords.RuleSets.FirstOrDefault(r => r.Number == ruleSet).Version ?? ruleSet.ToString(CultureInfo.InvariantCulture);
 
@@ -54,7 +55,15 @@ public static class ModeLevels
             refusal = $"api {api} is from before game modes: the first is api {first.Version}";
             return false;
         }
-        ruleSet = ModeWords.RuleSets.Last(r => Compare(Parts(r.Version)!, version) <= 0).Number;
+        var set = ModeWords.RuleSets.Last(r => Compare(Parts(r.Version)!, version) <= 0);
+        var last = ModeWords.RuleSets[^1];
+        if (set != last && Compare(version, Parts(set.Version)!) != 0)
+        {
+            // (a version between two rule sets that no release carried: 0.6.1 was renamed 0.6.5 before it shipped)
+            refusal = $"api {api} is not a release this build knows: name api {ModeWords.ApiVersion}, or api {first.Version} (api 1)";
+            return false;
+        }
+        ruleSet = set.Number;
         return true;
     }
 

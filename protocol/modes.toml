@@ -8,7 +8,7 @@
 # whose rule set is newer than its own.
 #
 # [levels]: the rule sets. One rule set per release that touches the vocabulary; a mode file names the game version it
-# was written for (`api 0.6.1;`) and compiles to the newest rule set of that version or before, whose number the
+# was written for (`api 0.6.5;`) and compiles to the newest rule set of that version or before, whose number the
 # package carries (`api 1;` stays valid and is 0.6.0's: the files and replays of 0.6.0 carry it). A version with no
 # rule change shares the rule set before it; `newest` is the newest game version this table knows, and a file naming
 # a later one is refused (update to use it). A shipped rule set is frozen entirely: no word or value is added inside
@@ -27,7 +27,7 @@
 # a op b. Every operation costs one operation of the step's budget, but SortRun: 1 + 5 x entries x keys, and FSqrt:
 # [api] fsqrt_cost (the owner, 2026-10-30: the game's square root is the dear one; `sqrt`, and `dist`, which calls it).
 #
-# A setup word's, action's or read's id only rises (a read's since 0.6.1, where branches take ids side by side): a word taken out leaves its id unused (`eliminate` 1; `mine_regen off` 7,
+# A setup word's, action's or read's id only rises (a read's since 0.6.5, where branches take ids side by side): a word taken out leaves its id unused (`eliminate` 1; `mine_regen off` 7,
 # `restore off` 10, `mixed_packs off` 22, `boost_start off` 24, the fixed results titles 35 to 39; the modern HUD's words,
 # retired with it on 2026-11-04 and never in an api: the setup words `hud modern` 50 and `hud_texts` 51, the actions
 # show_bar 69, show_figure 70, show_text 71, show_gap 72 and hud_clear 73; and 45, a setup
@@ -52,7 +52,7 @@ namespace = "Online.Protocol"
 namespace = "fzgx::modes"
 
 [levels]
-newest = "0.6.1"
+newest = "0.6.5"
 
 [[levels.rule_set]]
 number = 1
@@ -61,7 +61,7 @@ frozen = "a74511ec7b891f87576f0ae9e0bc1844fd9b8555b2d41a9beb2ddc807073d75f"
 
 [[levels.rule_set]]
 number = 2
-version = "0.6.1"        # open: CPUs without a vote (`cpus always`), a mode's machines, speeds past 9000, live_places, the AX HUD, pause and say
+version = "0.6.5"        # open: CPUs without a vote (`cpus always`), a mode's machines, speeds past 9000, live_places, the AX HUD, pause and say
 
 [levels.limit]           # a limit of [api] that came after rule set 1, and the rule set it arrived in
 say_text = 2
@@ -1376,7 +1376,7 @@ id = 93
 type = "real"
 doc = "the seat's own boost energy: its stat pack's BoostEnergyUse (the game's 1/6 without one), whatever the mode wrote"
 
-# --- the engine's own speed (0.6.1, owner 2026-11-08: "let's build what's needed for Twilight's mod"; Twilight's survival
+# --- the engine's own speed (0.6.5, owner 2026-11-08: "let's build what's needed for Twilight's mod"; Twilight's survival
 # mod drives M+0x224, so the game's grip, slides, slopes and walls still shape the motion: mode-notes twilight-survival.md)
 
 [[seat_read]]
@@ -1400,7 +1400,7 @@ doc = """M+0x228, the game's boost value: a boost adds strength x max(0.2, 1 - v
 twice that), and out of a boost it falls by (2 + value / 2) / 60 a step (3 + ... spinning); the thrust reaches for \
 max speed and 2 x this (fn_1_26F34)"""
 
-# --- the pad as the step's row has it (0.6.1, for a mode's pause): read whether the race runs or stands. The row is the
+# --- the pad as the step's row has it (0.6.5, for a mode's pause): read whether the race runs or stands. The row is the
 # relay's, the same in every game and in the replay; a row that says "the AI drives" (a CPU, a player gone) reads 0 in
 # each
 
@@ -1859,13 +1859,13 @@ doc = """a part of the game's own race HUD: TIMER the timed mode's clock (clock_
 999); DISTANCE the metres to the finish (the seat's own; show_distance gives a mode's); DIGIT the story's big digit (danger_zone's seconds, 3 2 1); \
 WARNING, SUCCESS, FAILED, TIME_OVER, SPEED_GAUGE, OBJECTS the story's pictures, off until shown (SUCCESS MISSION CLEAR!, FAILED MISSION FAILED, TIME_OVER "Time is up...": fixed pictures with no value; OBJECTS the course objects' count n/of, show_objects gives a mode's); LEADER_GAP the game's own time gap to the leader, off until shown: at each lap line, for a second, the seat's time behind the leader, and the leader's own lead when second place crosses; GHOST_GAP Time Attack's live gap, off until shown: signed minutes, seconds and thousandths at the right edge (617, 270), all race, against the seat furthest ahead, red while it is ahead, blue while you are; RANK, LAPS, SPEED, ENERGY, \
 LAP_TIMES, RACE_TIME, FACES the standard HUD (the mask .data 0x3D544; FACES the board fn_1_D27B8), on until hidden; \
-SPARE (0.6.1) the Grand Prix spare-machine counter (the star icon and show_number's number, fn_1_CA8FC), for hud_move: show_number shows and hides it, not show and hide; \
-the rest (0.6.1) are for hud_move alone, drawn as the game draws them (show and hide refuse them): SKULLS the KO skulls at the right edge (fn_1_CAB38); \
+SPARE (0.6.5) the Grand Prix spare-machine counter (the star icon and show_number's number, fn_1_CA8FC), for hud_move: show_number shows and hides it, not show and hide; \
+the rest (0.6.5) are for hud_move alone, drawn as the game draws them (show and hide refuse them): SKULLS the KO skulls at the right edge (fn_1_CAB38); \
 WRONG_WAY the wrong-way sign (the banner WRONG_WAY's picture 0x9435, fn_1_CD51C's sprite); BANNERS the banners FINAL LAP, BOOST POWER, TIME BONUS and the gap popup \
 (fn_1_15EFEC; LEADER_GAP's place takes them too, a BANNERS place of its own wins); FINISH the FINISH and RETIRED pictures (fn_1_15DFD4); CHECK the CHECK sign at the \
 screen's foot that points at the rival close behind (fn_1_12907C, image 0x944F): its row moves, and it still slides sideways after that rival; hud clean takes it off; \
-SCORE (0.6.1) a mode's counter, show_score's whole number in the race time's digit pictures under a label in the letters of the game's own HUD labels (a label with a letter they have not got, in the game's text font), at the race time's place (the top right, under the energy meter): show_score shows and hides it, not show and hide; \
-TEXT (0.6.1) a mode's short text in one of the game's fonts (`font`), centred at the top of the screen under the position (320, 116): show_text shows and hides it, not show and hide"""
+SCORE (0.6.5) a mode's counter, show_score's whole number in the race time's digit pictures under a label in the letters of the game's own HUD labels (a label with a letter they have not got, in the game's text font), at the race time's place (the top right, under the energy meter): show_score shows and hides it, not show and hide; \
+TEXT (0.6.5) a mode's short text in one of the game's fonts (`font`), centred at the top of the screen under the position (320, 116): show_text shows and hides it, not show and hide"""
 
 [[choice]]
 name = "banner"
@@ -1875,7 +1875,7 @@ doc = "a banner of the game's own race HUD, shown once, as the game shows it; TI
 [[choice]]
 name = "font"
 values = ["BLOCK", "CAPS", "PLAIN", "NARROW", "SERIF", "BIG_SERIF"]
-values_since = { BLOCK = 2, CAPS = 2, PLAIN = 2, NARROW = 2, SERIF = 2, BIG_SERIF = 2 }   # (the whole choice is 0.6.1's)
+values_since = { BLOCK = 2, CAPS = 2, PLAIN = 2, NARROW = 2, SERIF = 2, BIG_SERIF = 2 }   # (the whole choice is 0.6.5's)
 doc = """a text font of the game's own, among those its common picture sheet (bmp_com.tpl, loaded all game) holds, so every one is there \
 in a race; all draw a small letter as a capital (the runner's fonts list, mode_hud.h FONT_IDS, gives the game's font number): \
 BLOCK (5) the squared bold capitals 18 units tall the name tags and the Time Attack ghost names use, with digits, the space, `.` and `-`; \
@@ -1976,7 +1976,7 @@ name = "tag"
 id = 36
 args = ["seat", "int"]
 where = """the display page's tag bytes (mode_hud.h); drawn by the name tags (port/image/routines/nametags.py). The file writes `tag s, "TEXT";`, \
-with its settings after the text, each once, in either order, left out for the defaults (0.6.1): `tag s, "TEXT", size MIN MAX, range D m;` \
+with its settings after the text, each once, in either order, left out for the defaults (0.6.5): `tag s, "TEXT", size MIN MAX, range D m;` \
 (size 0.1 to 5, a player's name tag at its largest being 1, MIN <= MAX, left out 0.5 and 1.2; range 1 to 10,000 m, left out 200): \
 the compiler pushes the text's number in tag_texts, from 1, a text with other settings being another text, and writes the settings \
 as tag_looks. Font 5: A to Z, 0 to 9, the space, `.` and `-`, api.tag_text long at most, api.tag_texts texts a mode (show_score's labels among them)"""
@@ -2321,7 +2321,7 @@ lobby = true
 form = "list"
 where = "the coordinator: by the lobby's last race, its winner the list's first entry, second place the next, and so on; a racer it did not rank (its first race, a racer who joined since, a CPU) is own; at most 30"
 
-# --- the speed's top (0.6.1, owner 2026-11-08: "GX Unleashed removed the speed cap"). seat.speed was held to 0 to 9000
+# --- the speed's top (0.6.5, owner 2026-11-08: "GX Unleashed removed the speed cap"). seat.speed was held to 0 to 9000
 # (under the stock pack's SpeedCap, 9990); a package from before keeps that, so its replays play as they were raced
 
 [[setup]]
@@ -2472,12 +2472,12 @@ doc = "the texts `say` shows, the first being text 1"
 name = "pauses"
 id = 71
 since = 2
-where = """the compiler's own, when a rule writes `pause`: the mode stands the race. In 0.6.1 such a mode is raced by one player alone (CPUs \
+where = """the compiler's own, when a rule writes `pause`: the mode stands the race. In 0.6.5 such a mode is raced by one player alone (CPUs \
 allowed): the core refuses a match start that gives it two player seats or more (files_match.cpp). The pause itself needs no seat count: every \
 game stands at the same step"""
 doc = "the mode pauses the race, which a file never writes itself"
 
-# --- a wreck slides before its restore (0.6.1, owner 2026-11-09: "the game's physics take over right up until the point
+# --- a wreck slides before its restore (0.6.5, owner 2026-11-09: "the game's physics take over right up until the point
 # where the machine would have been KO'd or retired anyways, and when that happens, do a restore")
 
 [[setup]]
@@ -2488,9 +2488,9 @@ args = [{ type = "switch" }]
 where = """the race block's RACE_WRECK_SLIDE (files_match.cpp; the image's sites_wreck.py): on or left out, a seat that gets \
 restores (`restore on`, `respawns s`) and breaks down is not restored yet: it slides as the game's wreck without restore does, \
 may cross the line and finish, and its restore starts at the step the game without restore would have taken it out \
-(destroyed, fallen, or the wreck at rest). Off: the restore starts at the step of the breakdown, as before 0.6.1"""
+(destroyed, fallen, or the wreck at rest). Off: the restore starts at the step of the breakdown, as before 0.6.5"""
 
-# --- a tag's own settings (0.6.1, owner 2026-11-12: the size "needs to scale based on distance, far enough away to a certain
+# --- a tag's own settings (0.6.5, owner 2026-11-12: the size "needs to scale based on distance, far enough away to a certain
 # minimum size ... adjustable ... we need to be able to limit to a certain max size as well", and "It should be settings on
 # the tag word itself"; of limits, "nothing that can break the game")
 
@@ -2549,7 +2549,7 @@ args = ["seat"]
 where = "the block's map characters"
 doc = "the seat's dot shows no character again"
 
-# --- a mode's pause (0.6.1). A paused step is a step: its number, every seat's row, the relay and the replay go on as ever; the game's
+# --- a mode's pause (0.6.5). A paused step is a step: its number, every seat's row, the relay and the replay go on as ever; the game's
 # simulation is not run in it (the image's frame routine skips the simulation manager while the block's pause word is set,
 # port/image/routines/frame_replay.py `manager`), so the machines, the CPUs, the race clock and the timers stand, and the picture is the last
 # one, drawn again. The mode runs in every paused step (the image calls the mode point's host call in the simulation's place), reads
@@ -2606,7 +2606,7 @@ args = ["seat", "part"]
 where = "the block's HUD places record for the seat"
 doc = "the part is drawn where the game draws it again"
 
-# --- a mode's counter (0.6.1; the owner, 2026-11-12: "Death race doesn't need a lap timer. It needs a points counter",
+# --- a mode's counter (0.6.5; the owner, 2026-11-12: "Death race doesn't need a lap timer. It needs a points counter",
 # where the lap timer is). The part SCORE: a whole number in the race time's own digit pictures (0x9440 to 0x9449 with
 # their shadows 0x9430, 22 units a digit, right-aligned at the race time's last digit, x 596) under a short label on the
 # TIME label's row (y 67), its right edge at TIME's (618), in the letters of the game's own HUD labels (the cyan italic
@@ -2648,7 +2648,7 @@ args = ["seat"]
 where = "the block's score records"
 doc = "SCORE is no longer shown"
 
-# --- a mode's text (0.6.1; the owner, 2026-11-12: a free text part, "a mode shows a short string anywhere on the HUD, with no
+# --- a mode's text (0.6.5; the owner, 2026-11-12: a free text part, "a mode shows a short string anywhere on the HUD, with no
 # number", in "whatever fonts the game has"). The part TEXT: a short text of the mode's, `show_text s, "TEXT", FONT;`, in one
 # of the game's own fonts (the `font` choice: those of the common sheet, which every race has loaded), drawn by the game's
 # text routine (fn_1_4A0D8) as the name tags and SCORE's label are, upper case, white, the font's own size, centred at the

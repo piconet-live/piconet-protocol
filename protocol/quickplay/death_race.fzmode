@@ -38,7 +38,7 @@
 // here; the game's 1/6 would be 1/12), from the start to the end, a restore included.
 
 mode "Death Race" {
-  api 0.6.1;
+  api 0.6.5;
   badge "DEATH RACE";
   about "No finish line. Three lives each. Boosts take half the energy. Points for every machine you take out and for staying in.";
 }

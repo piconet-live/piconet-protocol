@@ -2,7 +2,7 @@
 // interpreter tests (protocol/README.md), not a mode to race. Presentation only: none of these changes the race.
 
 mode "Displays" {
-  api 0.6.1;
+  api 0.6.5;
   about "Every display word of api 1.";
 }
 
@@ -42,7 +42,7 @@ rule "Out of sight" {
     s.colour = 0xFF2020FF;
     map_mark s, 0xFF0000;
     tag s off;
-    tag s, "OUT", size 0.4 1, range 300 m;   // (0.6.1: its settings on the word: 0.4 to 1 of a name tag, full to 225 m, gone at 300)
+    tag s, "OUT", size 0.4 1, range 300 m;   // (0.6.5: its settings on the word: 0.4 to 1 of a name tag, full to 225 m, gone at 300)
     stock_banner s, FINAL_LAP;
     show_number s, -1;
   }

@@ -92,7 +92,7 @@ public sealed class ModeCompilerTests
     }
 
     /// <summary>The modes live on the service in 0.6.0 (copies of the files as uploaded, named by their hash) compile to
-    /// the same package with this compiler: the 0.6.1 tops (seat_speed_open, max_speed_open) are the file's own words,
+    /// the same package with this compiler: the 0.6.5 tops (seat_speed_open, max_speed_open) are the file's own words,
     /// never inferred, so a 0.6.0 game still takes them.</summary>
     [Theory]
     [InlineData("crown-c9b28846")]
@@ -351,7 +351,7 @@ public sealed class ModeCompilerTests
     private const string Head = "mode \"Test\" { api 1; }\n";
 
     [Theory]
-    [InlineData(Head + "laps 3;\nflying_start 1000 km/h;\n", "line 3: 'flying_start' is not a word of api 0.6.1")]
+    [InlineData(Head + "laps 3;\nflying_start 1000 km/h;\n", "line 3: 'flying_start' is not a word of api 0.6.5")]
     [InlineData(Head + "global int n;\nrule \"R\" {\n  event every step;\n  do { n = 1.5; }\n}\n",
         "line 5: the int n takes an int, not a real: floor, ceil, round or trunc make an int of a real")]
     [InlineData(Head + "rule \"R\" {\n  event out(s);\n  while race.started;\n  do { retire s; }\n}\n",
@@ -409,7 +409,7 @@ public sealed class ModeCompilerTests
         var result = ModeCompiler.Compile(source);
         var error = Assert.Single(result.Errors);
         Assert.StartsWith("line 3: the mode takes ", error, StringComparison.Ordinal);
-        Assert.Contains("past api 0.6.1's 65536", error, StringComparison.Ordinal);
+        Assert.Contains("past api 0.6.5's 65536", error, StringComparison.Ordinal);
     }
 
     [Fact]

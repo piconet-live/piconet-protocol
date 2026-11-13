@@ -2,7 +2,7 @@
 // 1000 km/h, then a target speed that rises every 10 s, a little more every step. Racers are out the normal way
 // (their energy, off the course); the last one in wins.
 //
-// v7 (0.6.1 words): the driving is Twilight's survival mod (with their permission; the owner, 8 November: "as Twilight
+// v7 (0.6.5 words): the driving is Twilight's survival mod (with their permission; the owner, 8 November: "as Twilight
 // does"), the library's `drive`, on the speed the machine's engine runs at (seat.base_speed), so grip, slides, slopes,
 // walls and boosts move the machine as the game does and the speed shown follows:
 // - every machine's top speed stat is 10,000 and its drag 0, so the game no longer pulls the engine's speed down; the
@@ -19,7 +19,7 @@
 // at 1:00, 3160 at 3:00, 5320 at 6:00, 8200 at 10:00, at most 9000 (about 11:07). No clock: the race goes on until one machine is left (design 9.2).
 
 mode "Overdrive" {
-  api 0.6.1;
+  api 0.6.5;
   badge "OVERDRIVE";
   about "Speed always rising. Braking costs energy. The furthest distance wins.";
 }
@@ -30,8 +30,8 @@ param surge "Boost surge (% above the speed)" number 0..50 step 5 default 20;
 param cpu_racers "CPU racers" choice ["Off", "Vote", "Always"] default "Vote";   // Vote: players may vote CPUs in; Always: CPUs take the empty seats with no vote
 param cpu_skill  "CPU level"  choice ["Novice", "Standard", "Expert", "Master"] default "Master";   // (Master: the game's own, as before the setting)
 
-max_speed_open;               // the drive's top speed stat of 10,000 (0.6.1)
-seat_speed_open;              // the overload to 9999 km/h (0.6.1)
+max_speed_open;               // the drive's top speed stat of 10,000 (0.6.5)
+seat_speed_open;              // the overload to 9999 km/h (0.6.5)
 cpus cpu_racers;
 cpu_level cpu_skill;
 stats "GX Unleashed";          // Quick Play's pack, mines and machine setting (a word left out is the game's own)
@@ -43,8 +43,8 @@ race_waits everyone;           // the race goes on until the mode ends it, not u
 results_title "DISTANCE";      // Twilight's scoring by distance; the points are the whole kilometres made from GO
 results points;
 results_times off;            // no page of race times, the results open on the points (not scored by time)
-live_places;                  // the place at the top and the faces follow the mode's places during the race (0.6.1)
-distance_label off;           // the metres shown are the metres made, not the metres left: no REST over them (0.6.1)
+live_places;                  // the place at the top and the faces follow the mode's places during the race (0.6.5)
+distance_label off;           // the metres shown are the metres made, not the metres left: no REST over them (0.6.5)
 
 global int outs;
 global int placed;             // 1: the final places are given (the results go by the metres alone)

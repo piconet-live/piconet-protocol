@@ -1,4 +1,4 @@
-FZMP format 1 api 2, 476 bytes, hash cfb8f5056cccf73686c0d3ecd7c9ed43fedc4e92d3cc45336b37cd1f81591829
+FZMP format 1 api 2, 476 bytes, hash 0fc3b8250062b447854722add483e70e97669a323c3f2cff3089d833449ba9a4
 HEAD name "CPU fill" badge "" about "CPU racers by a choice."
 PARM 1
   0 cpu_racers "CPU racers" choice int 0..2 step 1 default 2 ["Off", "Vote", "Always"]

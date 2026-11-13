@@ -21,7 +21,7 @@
 //
 // 2026-11-12 (the owner: Crown should not show lap times; it should show points): the race time and the lap times at the
 // top right are hidden, and every seat's points so far stand where the race time was, under the label POINTS (SCORE,
-// show_score: api 0.6.1). DISTANCE and WARNING, the keep-moving warning, stay as they were. The version live in 0.6.0
+// show_score: api 0.6.5). DISTANCE and WARNING, the keep-moving warning, stay as they were. The version live in 0.6.0
 // (hash c9b28846, api 1) is tests/vectors/modes/live/crown-c9b28846.fzmode; this file replaces it on the owner's word.
 //
 // The HUD is F-Zero AX's (the owner, 2026-11-12: "Crown needs to be updated with AX hud and proper positions"), as
@@ -32,7 +32,7 @@
 // right, DISTANCE and WARNING where the game draws them (neither is a part hud_move takes).
 
 mode "Crown" {
-  api 0.6.1;
+  api 0.6.5;
   badge "CROWN";
   about "Hold the crown to score. Touch the holder to take it. Keep racing or lose it. Most points wins.";
 }

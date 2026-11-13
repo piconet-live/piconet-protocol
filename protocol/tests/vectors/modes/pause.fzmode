@@ -1,8 +1,8 @@
-// A mode's pause (0.6.1): the race stands at GO with a message, the player's A lets it go after a second's countdown;
+// A mode's pause (0.6.5): the race stands at GO with a message, the player's A lets it go after a second's countdown;
 // later a timed stand that ends by itself, and a choice read from the stick while it stands.
 
 mode "Pause" {
-  api 0.6.1;
+  api 0.6.5;
 }
 
 global int picked;

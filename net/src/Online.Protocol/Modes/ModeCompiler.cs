@@ -323,7 +323,7 @@ private static string? CompilersOwn(ModeSetup id, string name) => id switch
         }
     }
 
-    /// <summary>The 0.6.1 tops are the file's own words, so a mode that keeps to the old ones compiles to the package
+    /// <summary>The 0.6.5 tops are the file's own words, so a mode that keeps to the old ones compiles to the package
     /// of before (and a 0.6.0 game takes it): a constant above 9000 into seat.speed, or a rolling start above it, needs
     /// seat_speed_open; a constant above the stat pack's 4 into seat.stat.max_speed needs max_speed_open. A value the
     /// race gives is held to the old top without the word, as before.</summary>
@@ -334,22 +334,22 @@ private static string? CompilersOwn(ModeSetup id, string name) => id switch
         {
             if (_emitter!.MostSpeedWritten is { } speed && speed.Value > MostSpeed)
             {
-                throw new ModeCompileException(speed.Line, $"seat.speed above {MostSpeed} km/h needs the setup word seat_speed_open; (0.6.1: a 0.6.0 game refuses the mode)");
+                throw new ModeCompileException(speed.Line, $"seat.speed above {MostSpeed} km/h needs the setup word seat_speed_open; (0.6.5: a 0.6.0 game refuses the mode)");
             }
             var rolling = _setups.FirstOrDefault(s => s.Id == ModeSetup.RollingStart);
             if (rolling is not null && rolling.Arguments.Count == 1 && !rolling.Arguments[0].FromParam &&
                 BitConverter.Int32BitsToSingle(rolling.Arguments[0].Value) > MostSpeed)
             {
-                throw new ModeCompileException(1, $"rolling_start above {MostSpeed} km/h needs the setup word seat_speed_open; (0.6.1: a 0.6.0 game refuses the mode)");
+                throw new ModeCompileException(1, $"rolling_start above {MostSpeed} km/h needs the setup word seat_speed_open; (0.6.5: a 0.6.0 game refuses the mode)");
             }
         }
         if (!Has(ModeSetup.MaxSpeedOpen) && _emitter!.MostMaxSpeedWritten is { } max && max.Value > MostMaxSpeed)
         {
-            throw new ModeCompileException(max.Line, $"seat.stat.max_speed above {MostMaxSpeed} needs the setup word max_speed_open; (0.6.1: a 0.6.0 game refuses the mode)");
+            throw new ModeCompileException(max.Line, $"seat.stat.max_speed above {MostMaxSpeed} needs the setup word max_speed_open; (0.6.5: a 0.6.0 game refuses the mode)");
         }
     }
 
-    private const float MostSpeed = 9000.0f, MostMaxSpeed = 4.0f;   // the tops of before 0.6.1 (the core's mode.h)
+    private const float MostSpeed = 9000.0f, MostMaxSpeed = 4.0f;   // the tops of before 0.6.5 (the core's mode.h)
 
     private void SoloWords(List<ModeItem> items)
         {

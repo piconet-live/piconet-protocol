@@ -8,7 +8,7 @@ namespace Protocol.Tests;
 /// <c>map_char</c>.</summary>
 public sealed class ModeHudPlaceTests
 {
-    private const string Header = "mode \"T\" { api 0.6.1; }\n";
+    private const string Header = "mode \"T\" { api 0.6.5; }\n";
 
     private static ModeCompilation Compile(string body) => ModeCompiler.Compile(Header + body);
 
@@ -35,7 +35,7 @@ public sealed class ModeHudPlaceTests
         Assert.True(Compile("hud_layout ax;\nhud clean;\n").Succeeded);
     }
 
-    /// <summary><c>tag</c>'s settings (0.6.1, on the word itself): <c>size MIN MAX</c>, a player's name tag at its largest
+    /// <summary><c>tag</c>'s settings (0.6.5, on the word itself): <c>size MIN MAX</c>, a player's name tag at its largest
     /// being 1, and <c>range D m</c>, each once in either order, left out for the defaults (0.5 to 1.2, 200 m). The compiler
     /// keeps them in its own word <c>tag_looks</c>, three values a text, written when one text differs from the defaults; a
     /// text with other settings is another text of <c>tag_texts</c>; <c>show_text</c> and <c>show_score</c> take a text whatever
@@ -77,7 +77,7 @@ public sealed class ModeHudPlaceTests
         Assert.Contains("tag's size is its least and its largest", Errors(Compile(Rule("tag seat, \"CROWN\", size 1;"))));
         Assert.Contains("tag's range is the metres", Errors(Compile(Rule("tag seat, \"CROWN\", range 30s;"))));
         Assert.Contains("tag_looks is the compiler's own", Errors(Compile("tag_looks \"X\";\n")));
-        Assert.Contains("tag's size and range need api 0.6.1", Errors(ModeCompiler.Compile("mode \"T\" { api 1; }\n" + Rule("tag seat, \"CROWN\", range 300 m;"))));
+        Assert.Contains("tag's size and range need api 0.6.5", Errors(ModeCompiler.Compile("mode \"T\" { api 1; }\n" + Rule("tag seat, \"CROWN\", range 300 m;"))));
     }
 
     [Fact]
@@ -89,7 +89,7 @@ public sealed class ModeHudPlaceTests
         Assert.Equal(["Push 1", "Push 320", "IToF", "Push 60", "IToF", "Push 90", "IToF"], code[(at - 7)..at].Select(Word));
         Assert.Single(Compile(Rule("hud_move seat, 1, 320, 60, 0;")).Errors);  // a number is no part
         Assert.Single(Compile(Rule("hud_move seat, RANK, 0, 0;")).Errors);     // the old form: dx, dy
-        // SPARE (the spare-machine counter) is a part hud_move places, of 0.6.1; show and hide leave it to show_number
+        // SPARE (the spare-machine counter) is a part hud_move places, of 0.6.5; show and hide leave it to show_number
         code = Code(Rule("hud_move seat, SPARE, 320, 444, 0;"));
         Assert.Equal("Push 18", Word(code[code.IndexOf("Action hud_move") - 7]));
         Assert.Contains("Action hud_move off", Code(Rule("hud_move seat, SPARE off;")));
@@ -98,13 +98,13 @@ public sealed class ModeHudPlaceTests
         var old = ModeCompiler.Compile("mode \"T\" { api 0.6.0; }\n" + Rule("show_number seat, 2;"));
         Assert.True(old.Succeeded, string.Join("; ", old.Errors));
         old = ModeCompiler.Compile("mode \"T\" { api 0.6.0; }\n" + Rule("hud_move seat, SPARE, 320, 444, 0;"));
-        Assert.Contains(old.Errors, e => e.Contains("needs api 0.6.1", StringComparison.Ordinal));
+        Assert.Contains(old.Errors, e => e.Contains("needs api 0.6.5", StringComparison.Ordinal));
     }
 
     [Fact]
     public void TheGamesOwnSignsArePartsForHudMoveAlone()
     {
-        // SKULLS, WRONG_WAY, BANNERS, FINISH, CHECK (0.6.1): placed, never shown or hidden; WRONG_WAY is the banner's name too
+        // SKULLS, WRONG_WAY, BANNERS, FINISH, CHECK (0.6.5): placed, never shown or hidden; WRONG_WAY is the banner's name too
         foreach (var (part, index) in new[] { ("SKULLS", 19), ("WRONG_WAY", 20), ("BANNERS", 21), ("FINISH", 22), ("CHECK", 23) })
         {
             var code = Code(Rule($"hud_move seat, {part}, 320, 240, 90;"));
@@ -113,7 +113,7 @@ public sealed class ModeHudPlaceTests
             Assert.Contains("hud_move places it", Assert.Single(Compile(Rule($"show seat, {part};")).Errors));
             Assert.Single(Compile(Rule($"hide seat, {part};")).Errors);
             var old = ModeCompiler.Compile("mode \"T\" { api 0.6.0; }\n" + Rule($"hud_move seat, {part}, 320, 240, 0;"));
-            Assert.Contains(old.Errors, e => e.Contains("needs api 0.6.1", StringComparison.Ordinal));
+            Assert.Contains(old.Errors, e => e.Contains("needs api 0.6.5", StringComparison.Ordinal));
         }
         var banner = Code(Rule("stock_banner seat, WRONG_WAY;"));
         Assert.Equal("Push 4", Word(banner[banner.IndexOf("Action stock_banner") - 1]));
@@ -122,7 +122,7 @@ public sealed class ModeHudPlaceTests
     [Fact]
     public void ShowScoreTakesANumberAnOptionalLabelAndAnOptionalFont()
     {
-        // SCORE (0.6.1): show_score's number, label and font, the label a tag text (0: the default), the font a `font` (0, BLOCK,
+        // SCORE (0.6.5): show_score's number, label and font, the label a tag text (0: the default), the font a `font` (0, BLOCK,
         // when left out); show and hide leave it to show_score
         var code = Code(Rule("show_score seat, seat.points;"));
         var at = code.IndexOf("Action show_score");
@@ -144,13 +144,13 @@ public sealed class ModeHudPlaceTests
         }
         Assert.Contains("one of BLOCK, CAPS, PLAIN, NARROW, SERIF, BIG_SERIF", Assert.Single(Compile(Rule("show_score seat, 1, \"A\", GOTHIC;")).Errors));
         var old = ModeCompiler.Compile("mode \"T\" { api 0.6.0; }\n" + Rule("show_score seat, 1;"));
-        Assert.Contains(old.Errors, e => e.Contains("needs api 0.6.1", StringComparison.Ordinal));
+        Assert.Contains(old.Errors, e => e.Contains("needs api 0.6.5", StringComparison.Ordinal));
     }
 
     [Fact]
     public void ShowTextTakesATextAndAnOptionalFont()
     {
-        // TEXT (0.6.1): show_text's text a tag text (the same table as tag's and show_score's), the font a `font` (0, BLOCK, when
+        // TEXT (0.6.5): show_text's text a tag text (the same table as tag's and show_score's), the font a `font` (0, BLOCK, when
         // left out); show and hide leave it to show_text
         var code = Code(Rule("show_text seat, \"GO\";") + Rule("tag seat, \"GO\";") + Rule("show_score seat, 1, \"KOS\", NARROW;"));
         Assert.Equal(["Push 1", "Push 0"], code[(code.IndexOf("Action show_text") - 2)..code.IndexOf("Action show_text")].Select(Word));
@@ -175,7 +175,7 @@ public sealed class ModeHudPlaceTests
         Assert.True(Compile(texts).Succeeded);
         Assert.Contains("at most 8 different texts", Assert.Single(Compile(texts + Rule("tag seat, \"ONE MORE\";")).Errors));
         var old = ModeCompiler.Compile("mode \"T\" { api 0.6.0; }\n" + Rule("show_text seat, \"GO\";"));
-        Assert.Contains(old.Errors, e => e.Contains("needs api 0.6.1", StringComparison.Ordinal));
+        Assert.Contains(old.Errors, e => e.Contains("needs api 0.6.5", StringComparison.Ordinal));
     }
 
     [Fact]

@@ -411,7 +411,7 @@ internal sealed partial class ModeEmitter
         {
             throw new ModeCompileException(text.Line, word == "tag" ? refused : refused.Replace("tag", word, StringComparison.Ordinal));
         }
-        // tag's settings (0.6.1): a text with other settings is another text; show_score and show_text, which draw no tag,
+        // tag's settings (0.6.5): a text with other settings is another text; show_score and show_text, which draw no tag,
         // take the text whatever its settings
         var look = word == "tag" ? TagLook(text) : ModeTagLooks.Default;
         var known = word == "tag" ? TagTexts.Zip(TagLooks).ToList().FindIndex(p => p.First == text.Text && p.Second == look) : TagTexts.IndexOf(text.Text);
@@ -429,7 +429,7 @@ internal sealed partial class ModeEmitter
     }
 
     /// <summary>A <c>tag</c> word's settings with the defaults filled in, within the drawing's bounds; written at all, they
-    /// need api 0.6.1 (the package's <c>tag_looks</c>).</summary>
+    /// need api 0.6.5 (the package's <c>tag_looks</c>).</summary>
     private ModeTagLookValues TagLook(ModeTagText text)
     {
         var written = text.Look ?? ModeTagLook.None;

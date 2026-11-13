@@ -1,11 +1,11 @@
-// Lap Vote: a demo of a mode's pause (0.6.1). When the first racer finishes lap 1, and again lap 2, the race stands for
+// Lap Vote: a demo of a mode's pause (0.6.5). When the first racer finishes lap 1, and again lap 2, the race stands for
 // 7 seconds and every player picks: stick left for 10% more top speed, stick right for 20% more boost. The pick is
 // applied while the race still stands, and it runs on after a 3, 2, 1. A player who picks nothing keeps their machine.
-// Online it would need nothing new: every game stands at the same step and reads the same rows. In 0.6.1 the runner
+// Online it would need nothing new: every game stands at the same step and reads the same rows. In 0.6.5 the runner
 // races a pausing mode with one player (CPUs allowed).
 
 mode "Lap Vote" {
-  api 0.6.1;
+  api 0.6.5;
   about "Between laps, pick more top speed or more boost.";
 }
 

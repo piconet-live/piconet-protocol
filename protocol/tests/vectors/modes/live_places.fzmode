@@ -1,7 +1,7 @@
-// The places a mode gives shown during the race (0.6.1, the file's live_places): seat 2 first and seat 0 second from
+// The places a mode gives shown during the race (0.6.5, the file's live_places): seat 2 first and seat 0 second from
 // the first step, the other seats in the race's own order.
 mode "Live places" {
-  api 0.6.1;
+  api 0.6.5;
 }
 
 live_places;

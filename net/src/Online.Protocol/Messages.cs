@@ -231,7 +231,7 @@ public abstract record ClientMessage;
 /// (built with none, or a pre-release) names none, and a launcher from before the field says nothing; a server from
 /// before it passes over it, which is why the version stays. A text that is no line is refused (bad_line).
 /// Modes: the newest game-mode rule set this launcher and its game run (<see cref="ModeWords.Api"/>: the number
-/// alone, 1 for 0.6.0, 2 for 0.6.1; 0: none). A server matches a player into a race of a mode only when their
+/// alone, 1 for 0.6.0, 2 for 0.6.5; 0: none). A server matches a player into a race of a mode only when their
 /// launcher said that mode's rule set or a newer one, and tells one that said less to update (the mode's own
 /// version, <see cref="ModeLevels.Version"/>) before any match file is sent: a launcher from before modes says
 /// nothing, reads as 0, and is never sent a mode it would drop. Written only when set.</summary>

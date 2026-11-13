@@ -737,12 +737,12 @@ public static partial class ModeWords
 {
     /// <summary>The newest rule set this build compiles and runs: what a package carries as its api.</summary>
     public const int Api = 2;
-    /// <summary>The newest game version this build knows: a mode file names one (<c>api 0.6.1;</c>).</summary>
-    public const string ApiVersion = "0.6.1";
+    /// <summary>The newest game version this build knows: a mode file names one (<c>api 0.6.5;</c>).</summary>
+    public const string ApiVersion = "0.6.5";
     /// <summary>The rule sets, oldest first: its number and the game version it arrived in. A version between two
     /// has the earlier one's.</summary>
     public static readonly IReadOnlyList<(int Number, string Version)> RuleSets =
-        [(1, "0.6.0"), (2, "0.6.1")];
+        [(1, "0.6.0"), (2, "0.6.5")];
     /// <summary>The api's limit <c>budget</c>.</summary>
     public const int Budget = 65536;
     /// <summary>The api's limit <c>queue</c>.</summary>

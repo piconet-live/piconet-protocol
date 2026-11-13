@@ -494,6 +494,6 @@ public sealed class ModeWordFormsTests
             param radius "Blast radius" number 10..200 default 60;
             rule "Blast" { event destroyed(s); do { for each seat where racing and seat != s and dist(seat, s) <= radius { explode seat; } } }
             """);
-        Assert.Contains(result.Errors, e => e.Contains("past api 0.6.1's 65536", StringComparison.Ordinal));
+        Assert.Contains(result.Errors, e => e.Contains("past api 0.6.5's 65536", StringComparison.Ordinal));
     }
 }

@@ -3,11 +3,11 @@ using Xunit;
 
 namespace Protocol.Tests;
 
-/// <summary>A mode's pause (0.6.1): pause, resume, resume after, say and say off; race.paused, race.paused_steps and the
+/// <summary>A mode's pause (0.6.5): pause, resume, resume after, say and say off; race.paused, race.paused_steps and the
 /// step row's seat.pad.*. The compiler's own words: pauses (a mode that writes pause), say_texts (the texts, UTF-8).</summary>
 public sealed class ModePauseWordsTests
 {
-    private const string Head = "mode \"T\" { api 0.6.1; }\n";
+    private const string Head = "mode \"T\" { api 0.6.5; }\n";
 
     private static string Rule(string body) => $"rule \"R\" {{ event race_start; do {{ {body} }} }}\n";
 
@@ -112,7 +112,7 @@ public sealed class ModePauseWordsTests
     [Fact]
     public void TheIdsAreTheirs()
     {
-        // (the other branches of 0.6.1 hold setup 64 to 69, actions 80 to 83 and seat reads 94 and 95)
+        // (the other branches of 0.6.5 hold setup 64 to 69, actions 80 to 83 and seat reads 94 and 95)
         Assert.Equal((70, 71), ((int)ModeSetup.SayTexts, (int)ModeSetup.Pauses));
         Assert.Equal((84, 85, 86, 87, 88), ((int)ModeAction.Pause, (int)ModeAction.Resume, (int)ModeAction.ResumeAfter, (int)ModeAction.Say, (int)ModeAction.SayOff));
         Assert.Equal((96, 97, 98, 99), ((int)ModeSeatRead.PadSteer, (int)ModeSeatRead.PadAccel, (int)ModeSeatRead.PadBrake, (int)ModeSeatRead.PadBoost));

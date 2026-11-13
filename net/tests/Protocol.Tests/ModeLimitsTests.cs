@@ -263,7 +263,7 @@ public sealed class ModeLimitsTests
         var source = Head + InRule(Times("repeat 2147483647 { ", nested) + "g = 1;" + Times("}", nested));
         var error = Assert.Single(ModeCompiler.Compile(source).Errors);
         Assert.StartsWith("line 4: the mode takes ", error, StringComparison.Ordinal);
-        Assert.Contains("past api 0.6.1's 65536", error, StringComparison.Ordinal);
+        Assert.Contains("past api 0.6.5's 65536", error, StringComparison.Ordinal);
     }
 
     [Theory]
@@ -283,7 +283,7 @@ public sealed class ModeLimitsTests
     public void AFilePastAnyPackageIsRefusedUnread()
     {
         var error = Assert.Single(ModeCompiler.Compile(Times("(", ModeWords.PackageBytes + 1)).Errors);
-        Assert.Equal("line 1: the file is 65537 characters, past api 0.6.1's 65536 bytes for a whole package", error);
+        Assert.Equal("line 1: the file is 65537 characters, past api 0.6.5's 65536 bytes for a whole package", error);
     }
 
     /// <summary>The rest of the way up: a lobby's message, the mode file inside it, is JSON. The reader counts its depth
@@ -315,12 +315,12 @@ public sealed class ModeLimitsTests
     /// <summary>The compiler's limits change no mode: each shipped file to the hash it had before them. A shipped file's
     /// own change writes its new hash here (<c>ModeCompilerTests</c> holds the vectors' bytes).</summary>
     [Theory]
-    [InlineData("competitive", "4e162ffc587d940201e526c0e4a78d6a7aeadbcd19fa9f503c43f4f1cc0e2512", 1807)]
-    [InlineData("crown", "a75d3a2ca9ace0ab124155f7369585e8197265edf53ffcc92acaec45108ca2b2", 51805)]
-    [InlineData("death_race", "150fe1f9b5853d50d70ee42a44775b605999a50e06229c780e86488b34fc453c", 21791)]
+    [InlineData("competitive", "9d4302d0677cac792451536f22eb3959ba3f92b394a6b22a58acb44d5ee7fecc", 1807)]
+    [InlineData("crown", "dd0ba7fe9c0860d0f6de50ae50ee888dc7634bbbdd7728231d6f8007e79cab22", 51805)]
+    [InlineData("death_race", "b8ccdec60db5f37d24212bf8893a6dc7aefa77e0cc59df070dcac0258d368927", 21791)]
     [InlineData("ghost_race", "a654c6fe97f6a6a68f3e338cf63e619dd2c7640f6d41f0ea0dbc333046398119", 2204)]
-    [InlineData("knockout", "23fe76538eabd12bc8683a26182d32e86640e21a3a0ebcb0f101467523dccaa2", 45835)]
-    [InlineData("overdrive", "24025f07ad5dde50d61c25aa8f16c82c3a6beb713ec07790ea80bf47dec87a84", 21421)]
+    [InlineData("knockout", "112b924da81ed5d3bb1fb0309baf63fb387bf83c3db175333f0c8f14c536325f", 45835)]
+    [InlineData("overdrive", "5d10d38708a68331b1800f239683afdf006043c842bfeca593b81d77443f5dab", 21421)]
     [InlineData("practice", "78f3aa18d83f9554daaa8ba1aba30c6a9b907ba3ee28becf817d7261222049a3", 339)]
     [InlineData("time_trial", "501ee749f21e46dd3e72fb871dfcb07c3812ae13020e046b3bb3de7b4582ef92", 0)]
     public void AShippedModeKeepsItsHash(string name, string hash, long budget)

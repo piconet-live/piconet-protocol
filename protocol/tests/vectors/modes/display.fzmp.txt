@@ -1,4 +1,4 @@
-FZMP format 1 api 2, 3090 bytes, hash a1f8f2a6cbac0cef0ea092a64aaf60dcc38b979d507fc5180f7bf03abd9291fe
+FZMP format 1 api 2, 3090 bytes, hash 24a6fcfb13df3e188fc57577f49c09a282d198c8abe7ae5b8a68f0f4a090ff13
 HEAD name "Displays" badge "" about "Every display word of api 1."
 PARM 0
 SETP 2
