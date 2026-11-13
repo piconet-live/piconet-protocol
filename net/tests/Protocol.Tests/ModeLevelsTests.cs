@@ -65,6 +65,7 @@ public sealed class ModeLevelsTests
     [InlineData("0.6.0", "cpus always;\n", "line 4: cpus always needs api 0.6.1: this file says api 0.6.0")]
     [InlineData("1", "param c \"CPU racers\" choice [\"Off\", \"Vote\", \"Always\"] default \"Vote\";\ncpus c;\n",
         "line 5: cpus always needs api 0.6.1: this file says api 1 (0.6.0)")]
+    [InlineData("1", "tag_range 300 m;\n", "line 4: tag_range needs api 0.6.1: this file says api 1 (0.6.0)")]
     public void AValueOfALaterRuleSetNamesTheVersionItNeeds(string api, string body, string error) =>
         Assert.Equal(error, Error(File(api, body)));
 

@@ -1,7 +1,8 @@
-FZMP format 1 api 2, 2912 bytes, hash 95986fdaecae4b81c76f925759fa8fa1402a883b8520be5db3ff05a1c1d0aca1
+FZMP format 1 api 2, 2987 bytes, hash d91d98c41151e2d3e34acc3e571cbab6e7b6f5b11a62edffff7eb1791be63136
 HEAD name "Displays" badge "" about "Every display word of api 1."
 PARM 0
-SETP 1
+SETP 2
+  tag_range 300 (0x43960000)
   tag_texts "OUT" "KOS" "GO" "WAVE 2"
 VARS globals 0, seat words 1
   seat 0 = 3
@@ -206,4 +207,4 @@ CODE 501 bytes
   01f0  LoadLocal 0
   01f2  Action map_char off
   01f4  End
-SRC  1948 bytes
+SRC  2016 bytes

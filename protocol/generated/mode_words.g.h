@@ -286,7 +286,8 @@ enum Setup : std::uint8_t
   SETUP_SAYTEXTS = 70,  // say_texts
   SETUP_PAUSES = 71,  // pauses
   SETUP_WRECKSLIDE = 72,  // wreck_slide
-  SETUP_COUNT = 73,
+  SETUP_TAGRANGE = 73,  // tag_range
+  SETUP_COUNT = 74,
 };
 
 // a read of a seat (OP_SEATREAD)
@@ -616,6 +617,7 @@ constexpr int SetupSince(std::uint8_t setup)
     case SETUP_SAYTEXTS: return 2;
     case SETUP_PAUSES: return 2;
     case SETUP_WRECKSLIDE: return 2;
+    case SETUP_TAGRANGE: return 2;
     default: return 1;
   }
 }

@@ -8,6 +8,8 @@ mode "Displays" {
 
 seat int lives = 3;
 
+tag_range 300 m;   // (0.6.1: the tags full to 225 m, gone at 300)
+
 rule "Parts" {
   event every step;
   when race.started;
