@@ -12,8 +12,8 @@
 namespace fzgx::board
 {
 inline constexpr std::uint32_t MAGIC = 0x42535A46;  // "FZSB" as its first four bytes
-inline constexpr std::uint32_t VERSION = 5;
-inline constexpr std::size_t SIZE = 14976;  // the whole board, in bytes
+inline constexpr std::uint32_t VERSION = 6;
+inline constexpr std::size_t SIZE = 15104;  // the whole board, in bytes
 
 // Where the game is. Set by the game; the launcher reads it to judge a heartbeat that stands.
 enum class Phase : std::uint32_t
@@ -67,6 +67,15 @@ enum class RacerState : std::uint8_t
   Out = 2,  // knocked out or retired, by the game's own test
 };
 
+// What the racers' Score is: what the race's mode shows on the HUD where the race time was (show_score) or as the
+// distance (show_distance). The launcher's standings show it in place of the race time where the mode scores by it.
+enum class ScoreKind : std::uint32_t
+{
+  None = 0,  // no score: the mode shows none, or there is no mode (the standings show times and laps)
+  Points = 1,  // points: show_score's number, under the snapshot's ScoreLabel (POINTS unless the mode names a label)
+  Metres = 2,  // metres: show_distance's number (a mode scored by distance)
+};
+
 // Whose value a `board` line of a mode file names (the language's section 10).
 enum class ModeBoardScope : std::uint8_t
 {
@@ -93,6 +102,7 @@ inline constexpr std::uint32_t STATUS_FLAGS_REJOIN = 8;
 
 // A racer record's Flags.
 inline constexpr std::uint8_t RACER_FLAGS_HAS_BEST_LAP = 1;
+inline constexpr std::uint8_t RACER_FLAGS_HAS_SCORE = 2;
 
 // One racer at the snapshot's moment, as the launcher's race page shows it (Online.Protocol RacerLive): from the
 // racer's block and progress record. Times in milliseconds, speeds km/h, the position in the course's units.
@@ -100,12 +110,13 @@ struct Racer
 {
   std::uint8_t seat = 0;
   RacerState state{};
-  std::uint8_t rank = 0;  // the game's ranking byte (progress +0x115), not the race position
+  std::uint8_t rank = 0;  // the game's ranking byte (progress +0x115); the race position only through Place
   std::uint8_t flags = 0;
   std::uint16_t lap = 0;  // laps completed
   std::uint16_t kos = 0;  // machines this racer knocked out
   std::uint16_t max_energy = 0;
-  std::uint16_t pad = 0;
+  std::uint8_t place = 0;
+  std::uint8_t pad = 0;
   std::uint32_t lap_ms = 0;  // the current lap's time
   std::uint32_t total_ms = 0;  // the race time so far; the finish time once finished
   std::uint32_t best_lap_ms = 0;  // the best lap, when Flags has HasBestLap
@@ -115,7 +126,8 @@ struct Racer
   float x = 0;
   float y = 0;
   float z = 0;
-  float distance = 0;  // distance covered over all laps (progress +0xF8): what orders the racers still racing
+  float distance = 0;
+  float score = 0;
 };
 
 // One `board` line of the mode's file, in the file's order.
@@ -174,6 +186,9 @@ struct Snapshot
   std::uint32_t frame = 0;  // the race's step
   std::uint32_t local_seat = 0;
   std::uint32_t count = 0;  // racers that follow (at most 30)
+  ScoreKind score_kind{};  // what the racers' Score is (None: the standings show times)
+  std::uint32_t score_label_length = 0;
+  std::array<std::uint8_t, 16> score_label{};
   std::array<Racer, 30> racers{};
 };
 
@@ -241,12 +256,12 @@ namespace at
 inline constexpr std::size_t HEADER = 0;  // 32 bytes, plain
 inline constexpr std::size_t PULSE = 64;  // 16 bytes, plain
 inline constexpr std::size_t STATUS = 128;  // 24 bytes, seqlock
-inline constexpr std::size_t SNAPSHOT = 192;  // 1580 bytes, seqlock
-inline constexpr std::size_t MODE_HEAD = 1792;  // 8824 bytes, seqlock
-inline constexpr std::size_t MODE_VALUES = 10624;  // 1968 bytes, seqlock
-inline constexpr std::size_t EVENTS = 12608;  // 2056 bytes, ring
-inline constexpr std::size_t MAILBOX = 14720;  // 144 bytes, seqlock
-inline constexpr std::size_t LOCAL_PAD = 14912;  // 40 bytes, seqlock
+inline constexpr std::size_t SNAPSHOT = 192;  // 1724 bytes, seqlock
+inline constexpr std::size_t MODE_HEAD = 1920;  // 8824 bytes, seqlock
+inline constexpr std::size_t MODE_VALUES = 10752;  // 1968 bytes, seqlock
+inline constexpr std::size_t EVENTS = 12736;  // 2056 bytes, ring
+inline constexpr std::size_t MAILBOX = 14848;  // 144 bytes, seqlock
+inline constexpr std::size_t LOCAL_PAD = 15040;  // 40 bytes, seqlock
 inline constexpr std::size_t HEADER_MAGIC = 0;
 inline constexpr std::size_t HEADER_VERSION = 4;
 inline constexpr std::size_t HEADER_SIZE = 8;
@@ -260,7 +275,7 @@ inline constexpr std::size_t PULSE_WATCH_BEAT = 72;
 inline constexpr std::size_t PULSE_STOP_REASON = 76;
 inline constexpr std::size_t EVENTS_SLOTS = 64;
 inline constexpr std::size_t EVENTS_SLOT = 32;
-inline constexpr std::size_t EVENTS_FIRST = 12616;
+inline constexpr std::size_t EVENTS_FIRST = 12744;
 }  // namespace at
 
 // A ring's event: read, not written yet (or being written), or overwritten by a newer one.
@@ -473,8 +488,12 @@ public:
     Store<std::uint32_t>(at::SNAPSHOT + 8, v.frame, std::memory_order_relaxed);
     Store<std::uint32_t>(at::SNAPSHOT + 12, v.local_seat, std::memory_order_relaxed);
     Store<std::uint32_t>(at::SNAPSHOT + 16, v.count, std::memory_order_relaxed);
+    Store<std::uint32_t>(at::SNAPSHOT + 20, static_cast<std::uint32_t>(v.score_kind), std::memory_order_relaxed);
+    Store<std::uint32_t>(at::SNAPSHOT + 24, v.score_label_length, std::memory_order_relaxed);
+    for (std::size_t i = 0; i < 4; ++i)
+      Store<std::uint32_t>(at::SNAPSHOT + 28 + i * 4, Pack(&v.score_label[i * 4]), std::memory_order_relaxed);
     for (std::size_t i = 0; i < 30; ++i)
-      StoreRacer(at::SNAPSHOT + 20 + i * 52, v.racers[i], std::memory_order_relaxed);
+      StoreRacer(at::SNAPSHOT + 44 + i * 56, v.racers[i], std::memory_order_relaxed);
     seq.store(s + 2, std::memory_order_release);
   }
   // False when every try met the writer at work (or the board was never written: Seq 0 reads as written).
@@ -491,8 +510,12 @@ public:
       v.frame = Load<std::uint32_t>(at::SNAPSHOT + 8, std::memory_order_relaxed);
       v.local_seat = Load<std::uint32_t>(at::SNAPSHOT + 12, std::memory_order_relaxed);
       v.count = Load<std::uint32_t>(at::SNAPSHOT + 16, std::memory_order_relaxed);
+      v.score_kind = static_cast<ScoreKind>(Load<std::uint32_t>(at::SNAPSHOT + 20, std::memory_order_relaxed));
+      v.score_label_length = Load<std::uint32_t>(at::SNAPSHOT + 24, std::memory_order_relaxed);
+      for (std::size_t i = 0; i < 4; ++i)
+        Unpack(Load<std::uint32_t>(at::SNAPSHOT + 28 + i * 4, std::memory_order_relaxed), &v.score_label[i * 4]);
       for (std::size_t i = 0; i < 30; ++i)
-        LoadRacer(at::SNAPSHOT + 20 + i * 52, &v.racers[i], std::memory_order_relaxed);
+        LoadRacer(at::SNAPSHOT + 44 + i * 56, &v.racers[i], std::memory_order_relaxed);
       std::atomic_thread_fence(std::memory_order_acquire);
       if (seq.load(std::memory_order_relaxed) == s)
       {
@@ -782,7 +805,8 @@ private:
     v->lap = Load<std::uint16_t>(base + 4, order);
     v->kos = Load<std::uint16_t>(base + 6, order);
     v->max_energy = Load<std::uint16_t>(base + 8, order);
-    v->pad = Load<std::uint16_t>(base + 10, order);
+    v->place = Load<std::uint8_t>(base + 10, order);
+    v->pad = Load<std::uint8_t>(base + 11, order);
     v->lap_ms = Load<std::uint32_t>(base + 12, order);
     v->total_ms = Load<std::uint32_t>(base + 16, order);
     v->best_lap_ms = Load<std::uint32_t>(base + 20, order);
@@ -793,6 +817,7 @@ private:
     v->y = std::bit_cast<float>(Load<std::uint32_t>(base + 40, order));
     v->z = std::bit_cast<float>(Load<std::uint32_t>(base + 44, order));
     v->distance = std::bit_cast<float>(Load<std::uint32_t>(base + 48, order));
+    v->score = std::bit_cast<float>(Load<std::uint32_t>(base + 52, order));
   }
   void StoreRacer(std::size_t base, const Racer& v, std::memory_order order)
   {
@@ -803,7 +828,8 @@ private:
     Store<std::uint16_t>(base + 4, v.lap, order);
     Store<std::uint16_t>(base + 6, v.kos, order);
     Store<std::uint16_t>(base + 8, v.max_energy, order);
-    Store<std::uint16_t>(base + 10, v.pad, order);
+    Store<std::uint8_t>(base + 10, v.place, order);
+    Store<std::uint8_t>(base + 11, v.pad, order);
     Store<std::uint32_t>(base + 12, v.lap_ms, order);
     Store<std::uint32_t>(base + 16, v.total_ms, order);
     Store<std::uint32_t>(base + 20, v.best_lap_ms, order);
@@ -814,6 +840,7 @@ private:
     Store<std::uint32_t>(base + 40, std::bit_cast<std::uint32_t>(v.y), order);
     Store<std::uint32_t>(base + 44, std::bit_cast<std::uint32_t>(v.z), order);
     Store<std::uint32_t>(base + 48, std::bit_cast<std::uint32_t>(v.distance), order);
+    Store<std::uint32_t>(base + 52, std::bit_cast<std::uint32_t>(v.score), order);
   }
   void LoadModeLine(std::size_t base, ModeLine* v, std::memory_order order) const
   {
