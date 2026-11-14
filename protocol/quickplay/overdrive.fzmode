@@ -16,7 +16,8 @@
 // v5 (2062f4fa, live in 0.6.0) held the speed shown every step instead; v6 (c46795bf) drove the engine through the drag stat.
 //
 // The target (vocabulary 4.3), at the default rise of 120 (Twilight's pace, 12 km/h a second): 1000 km/h at GO, 1720
-// at 1:00, 3160 at 3:00, 5320 at 6:00, 8200 at 10:00, at most 9000 (about 11:07). No clock: the race goes on until one machine is left (design 9.2).
+// at 1:00, 3160 at 3:00, 5320 at 6:00, 8200 at 10:00, at most 9000 (about 11:07). No clock until one machine is left (design 9.2); then the last racer has up to
+// 30 s more to add to their distance (the owner, 13 November: a timer "instead of just ending the race").
 
 mode "Overdrive" {
   api 0.6.5;
@@ -49,6 +50,8 @@ distance_label off;           // the metres shown are the metres made, not the m
 global int outs;
 global int placed;             // 1: the final places are given (the results go by the metres alone)
 global int hold_until;         // a player's win: the race ends when the game's FINISH! and place have had their 8 s
+global int last_from;          // 0: more than one racer in; else the step the last racer's time began
+const int last_time = 30s;     // the last racer's time: the race ends at its end, or sooner if they are out
 seat   int out_order;          // 0: still in; 1: first out
 seat   real from;              // the seat's distance at GO: the score counts from there
 seat   real score;             // the metres made from GO; a seat that is out keeps what it had
@@ -126,11 +129,26 @@ rule "Out" {
   do { outs += 1; s.out_order = outs; award s, floor((s.distance - s.from) / 1000.0); }   // points: whole kilometres driven
 }
 
+// One racer left (of a race of more): a clock of `last_time` at the top, for everyone, and the race goes on.
+rule "Last racer's time" {
+  event every step;
+  while race.started and placed == 0 and race.seats > 1 and count(seats where racing) == 1;
+  do {
+    if (last_from == 0) {
+      last_from = race.steps;
+      for each seat { show seat, TIMER; }
+    }
+    show_clock last_from + last_time - race.steps;
+  }
+}
+
 rule "Last alive" {
   event every step;
-  // a race of one ends when that racer is out
-  when race.started and (count(seats where racing) == 0 or (race.seats > 1 and count(seats where racing) <= 1));
+  // a race of one ends when that racer is out; a race of more when the last racer is out or their time is up
+  when race.started and (count(seats where racing) == 0
+                         or (last_from > 0 and race.steps >= last_from + last_time));
   do {
+    for each seat { hide seat, TIMER; }
     // the kilometres of the racers still in as their points, then the places by the metres made (the points tie inside a kilometre)
     for each seat where seat.racing { award seat, floor((seat.distance - seat.from) / 1000.0); }
     placed = 1;
