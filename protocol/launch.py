@@ -17,7 +17,7 @@ MEMBER_KEYS = {"key", "type", "to", "hand", "low", "high", "values", "least", "m
 TYPES = {"bool", "whole", "number", "text", "one_of", "wholes", "object", "objects"}
 CS_KEYS = {"name", "write", "value"}
 # what each `write` takes: the member types it is for
-WRITES = {"always": {"whole"}, "required": {"whole", "text", "one_of"}, "set": {"bool", "text", "one_of", "object", "objects"},
+WRITES = {"always": {"whole"}, "required": {"whole", "text", "one_of"}, "set": {"bool", "whole", "text", "one_of", "object", "objects"},
           "true": {"bool"}, "false": {"bool"}, "positive": {"whole"}}
 IDENTIFIER = re.compile(r"[A-Z][A-Za-z0-9]*\Z")
 KEY = re.compile(r"[a-z][A-Za-z0-9]*\Z")
