@@ -38,7 +38,7 @@ public static class LaunchFormat
 }
 
 /// <summary>The launch file's part File: the launch file: every setting of one start of the game.
-/// The launcher writes "about", "bundle", "widescreen", "trueWidescreen", "lanes", "controllerSetup", "match", "replay", "windowName", "windowNamePicture", "showFrameRate", "renderer", "auroraSize", "auroraEdges", "auroraTextures", "auroraColourblind", "auroraHighRefresh", "auroraRayTracing", "rumble", "volume", "present", "verticalSync", "fullScreen", "taskbar", "board", "overlay", "debug".</summary>
+/// The launcher writes "about", "bundle", "widescreen", "trueWidescreen", "lanes", "controllerSetup", "match", "replay", "windowName", "windowNamePicture", "showFrameRate", "renderer", "auroraSize", "auroraEdges", "auroraTextures", "auroraColourblind", "auroraHighRefresh", "auroraRayTracing", "rumble", "muteCityGroundFix", "volume", "present", "verticalSync", "fullScreen", "taskbar", "board", "overlay", "debug".</summary>
 public sealed record LaunchFile(
     string About,
     string? Bundle = null,
@@ -58,6 +58,7 @@ public sealed record LaunchFile(
     int AuroraHighRefresh = 0,
     bool AuroraRayTracing = false,
     bool Rumble = true,
+    bool MuteCityGroundFix = true,
     int? Volume = null,
     string? Present = null,
     bool VerticalSync = false,
@@ -140,6 +141,10 @@ public sealed record LaunchFile(
         if (!Rumble)
         {
             o["rumble"] = false;
+        }
+        if (!MuteCityGroundFix)
+        {
+            o["muteCityGroundFix"] = false;
         }
         if (Volume is { } volume)
         {

@@ -331,6 +331,33 @@ public static class GameFacts
         /// <summary>in a course file's checkpoint: the road's width (a float, metres)</summary>
         public const uint ColiCheckpointWidth = 0x48;
 
+        /// <summary>in a course file's header: the placed objects' count (COLI_PLACED_SIZE bytes each, at COLI_PLACED)</summary>
+        public const uint ColiPlacedCount = 0x48;
+
+        /// <summary>in a course file's header: the placed objects' offset (a pointer once the game has loaded the file)</summary>
+        public const uint ColiPlaced = 0x54;
+
+        /// <summary>bytes of one placed object of a course file: flags, draw groups, scene object, position, rotation, scale, then four optional parts</summary>
+        public const uint ColiPlacedSize = 0x40;
+
+        /// <summary>in a placed object: its scene object's offset (loaded: a pointer); the scene object holds its levels of detail and collider</summary>
+        public const uint ColiPlacedScene = 0x08;
+
+        /// <summary>in a placed object's flags (+0): the course object draw (fn_1_9BBE4) draws it with depth compare on and no depth write (fn_1_56000(1, 3, 0), then back to update on)</summary>
+        public const uint ColiPlacedNoZUpdate = 0x800;
+
+        /// <summary>in a placed object's flags (+0): its texture scroll part's entries 0 to 3, a bit each (0x2000 the first)</summary>
+        public const uint ColiPlacedScrolls = 0x1E000;
+
+        /// <summary>in a scene object of a course file: its levels of detail's count</summary>
+        public const uint ColiSceneLodCount = 0x04;
+
+        /// <summary>in a scene object of a course file: its levels of detail's offset (loaded: a pointer), 0x10 bytes each, the nearest first</summary>
+        public const uint ColiSceneLods = 0x08;
+
+        /// <summary>in a level of detail of a course file's scene object: its model's name, a C string's offset (loaded: a pointer), a model of the course's or the venue's .gma</summary>
+        public const uint ColiLodModel = 0x04;
+
         /// <summary>the start mark's yellow on the game's map pictures (stNN.tpl, C??_MAP's colour picture, CMPR; Mute City's 255, 251, 0), as 0xRRGGBB</summary>
         public const uint MapStartColour = 0xFFFB00;
     }
