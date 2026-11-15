@@ -96,11 +96,13 @@ public sealed record RelayRtt(string RelayId, double? RttMs);
 /// Custom: a garage-built machine the seat races in place of Machine (<see cref="CustomMachine"/>); null: Machine.
 /// Pack: a pack of the seat's own (handbook/stat-pack-constants.md, "A pack a seat"): 0 the disc's own stats and
 /// constants, k the race's <see cref="RaceSetup.Packs"/>[k - 1]; null: the race's <see cref="RaceSetup.Stats"/>.
-/// Trail: the seat's boost trail colours (<see cref="BoostTrail"/>); null: the machine's own.</summary>
+/// Trail: the seat's boost trail colours (<see cref="BoostTrail"/>); null: the machine's own.
+/// Emblem: the player's emblem (<see cref="Emblems"/>), the base64 of the game's 64 x 64 RGB5A3 picture; null: none.</summary>
 public sealed record SeatSetup(int Seat, string? PlayerId, string Name, int Machine, Rgb? Color, int Setting = 50,
     int? StockColor = null, CustomMachine? Custom = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] int? Pack = null,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] BoostTrail? Trail = null)
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] BoostTrail? Trail = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Emblem = null)
 {
     public bool Cpu => PlayerId is null;
 }
@@ -265,10 +267,12 @@ public sealed record Hello(string Name, int Version, string? Build = null, bool 
 /// <summary>Quick Play with this machine and colour, and its setting when the server lets players choose (0-100).
 /// StockColor 0-3: one of the machine's four stock colours (0 its default; <paramref name="Color"/> is then that
 /// colour's swatch, for the lists); null: <paramref name="Color"/> painted on the machine. Trail: the racer's boost
-/// trail colours (<see cref="BoostTrail"/>); null: the machine's own.</summary>
+/// trail colours (<see cref="BoostTrail"/>); null: the machine's own. Emblem: the racer's emblem (<see cref="Emblems"/>);
+/// null: none.</summary>
 public sealed record EnterQuickPlay(int Machine, Rgb Color, int? Setting = null, int? StockColor = null,
     CustomMachine? Custom = null,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] BoostTrail? Trail = null) : ClientMessage;
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] BoostTrail? Trail = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Emblem = null) : ClientMessage;
 
 /// <summary>Leave Quick Play: the lobby one is in, as <see cref="LeaveLobby"/>.</summary>
 public sealed record LeaveQuickPlay : ClientMessage;
@@ -301,7 +305,8 @@ public sealed record VoteCourse(string MatchId, int Option) : ClientMessage;
 public sealed record MachineChoice(string MatchId, int Machine, Rgb Color, int? Setting = null, int? StockColor = null,
     CustomMachine? Custom = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Pack = null,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] BoostTrail? Trail = null)
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] BoostTrail? Trail = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Emblem = null)
     : ClientMessage;
 
 /// <summary>The player's game is done with the race (it quit after the results, or the player closed it): the player

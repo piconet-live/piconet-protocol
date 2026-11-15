@@ -560,6 +560,7 @@ struct EnterQuickPlay
   std::optional<std::int32_t> stockColor;
   std::optional<CustomMachine> custom;
   std::optional<BoostTrail> trail;
+  std::optional<std::string> emblem;
 
   // one bit a member, of wire_absent (a member that is no "?" read as null or left out: C# holds null; it
   // is then not written) and of wire_holes (a list that held null items, dropped)
@@ -571,6 +572,7 @@ struct EnterQuickPlay
     static constexpr std::uint32_t stockColor = 1u << 3;
     static constexpr std::uint32_t custom = 1u << 4;
     static constexpr std::uint32_t trail = 1u << 5;
+    static constexpr std::uint32_t emblem = 1u << 6;
   };
   static constexpr std::uint32_t kAbsentAtStart = Bit::color;
   std::uint32_t wire_absent = 0;
@@ -583,7 +585,7 @@ inline bool Get(const json_wire::Value& x, EnterQuickPlay& out, std::size_t from
     return false;
   out = EnterQuickPlay{};
   out.wire_absent = EnterQuickPlay::kAbsentAtStart;
-  static constexpr std::string_view kNames[] = {"machine", "color", "setting", "stockColor", "custom", "trail"};
+  static constexpr std::string_view kNames[] = {"machine", "color", "setting", "stockColor", "custom", "trail", "emblem"};
   for (std::size_t i = from; i < x.members.size(); ++i)
   {
     const json_wire::Value& v = x.members[i].second;
@@ -611,6 +613,10 @@ inline bool Get(const json_wire::Value& x, EnterQuickPlay& out, std::size_t from
       break;
     case 5:
       if (!Get(v, out.trail))
+        return false;
+      break;
+    case 6:
+      if (!Get(v, out.emblem))
         return false;
       break;
     default:
@@ -655,6 +661,11 @@ inline void Put(json_wire::Out& o, const EnterQuickPlay& v, std::string_view typ
   {
     json_wire::Key(o, first, "trail");
     Put(o, *v.trail);
+  }
+  if (v.emblem)
+  {
+    json_wire::Key(o, first, "emblem");
+    Put(o, *v.emblem);
   }
   o.text += '}';
 }
@@ -1078,6 +1089,7 @@ struct MachineChoice
   std::optional<CustomMachine> custom;
   std::optional<std::string> pack;
   std::optional<BoostTrail> trail;
+  std::optional<std::string> emblem;
 
   // one bit a member, of wire_absent (a member that is no "?" read as null or left out: C# holds null; it
   // is then not written) and of wire_holes (a list that held null items, dropped)
@@ -1091,6 +1103,7 @@ struct MachineChoice
     static constexpr std::uint32_t custom = 1u << 5;
     static constexpr std::uint32_t pack = 1u << 6;
     static constexpr std::uint32_t trail = 1u << 7;
+    static constexpr std::uint32_t emblem = 1u << 8;
   };
   static constexpr std::uint32_t kAbsentAtStart = Bit::matchId | Bit::color;
   std::uint32_t wire_absent = 0;
@@ -1103,7 +1116,7 @@ inline bool Get(const json_wire::Value& x, MachineChoice& out, std::size_t from 
     return false;
   out = MachineChoice{};
   out.wire_absent = MachineChoice::kAbsentAtStart;
-  static constexpr std::string_view kNames[] = {"matchId", "machine", "color", "setting", "stockColor", "custom", "pack", "trail"};
+  static constexpr std::string_view kNames[] = {"matchId", "machine", "color", "setting", "stockColor", "custom", "pack", "trail", "emblem"};
   for (std::size_t i = from; i < x.members.size(); ++i)
   {
     const json_wire::Value& v = x.members[i].second;
@@ -1139,6 +1152,10 @@ inline bool Get(const json_wire::Value& x, MachineChoice& out, std::size_t from 
       break;
     case 7:
       if (!Get(v, out.trail))
+        return false;
+      break;
+    case 8:
+      if (!Get(v, out.emblem))
         return false;
       break;
     default:
@@ -1193,6 +1210,11 @@ inline void Put(json_wire::Out& o, const MachineChoice& v, std::string_view type
   {
     json_wire::Key(o, first, "trail");
     Put(o, *v.trail);
+  }
+  if (v.emblem)
+  {
+    json_wire::Key(o, first, "emblem");
+    Put(o, *v.emblem);
   }
   o.text += '}';
 }
@@ -2330,6 +2352,7 @@ struct CreateLobby
   std::optional<std::int32_t> stockColor;
   std::optional<CustomMachine> custom;
   std::optional<BoostTrail> trail;
+  std::optional<std::string> emblem;
 
   // one bit a member, of wire_absent (a member that is no "?" read as null or left out: C# holds null; it
   // is then not written) and of wire_holes (a list that held null items, dropped)
@@ -2344,6 +2367,7 @@ struct CreateLobby
     static constexpr std::uint32_t stockColor = 1u << 6;
     static constexpr std::uint32_t custom = 1u << 7;
     static constexpr std::uint32_t trail = 1u << 8;
+    static constexpr std::uint32_t emblem = 1u << 9;
   };
   static constexpr std::uint32_t kAbsentAtStart = Bit::name | Bit::rules | Bit::color;
   std::uint32_t wire_absent = 0;
@@ -2356,7 +2380,7 @@ inline bool Get(const json_wire::Value& x, CreateLobby& out, std::size_t from = 
     return false;
   out = CreateLobby{};
   out.wire_absent = CreateLobby::kAbsentAtStart;
-  static constexpr std::string_view kNames[] = {"name", "rules", "password", "machine", "color", "setting", "stockColor", "custom", "trail"};
+  static constexpr std::string_view kNames[] = {"name", "rules", "password", "machine", "color", "setting", "stockColor", "custom", "trail", "emblem"};
   for (std::size_t i = from; i < x.members.size(); ++i)
   {
     const json_wire::Value& v = x.members[i].second;
@@ -2396,6 +2420,10 @@ inline bool Get(const json_wire::Value& x, CreateLobby& out, std::size_t from = 
       break;
     case 8:
       if (!Get(v, out.trail))
+        return false;
+      break;
+    case 9:
+      if (!Get(v, out.emblem))
         return false;
       break;
     default:
@@ -2456,6 +2484,11 @@ inline void Put(json_wire::Out& o, const CreateLobby& v, std::string_view type =
     json_wire::Key(o, first, "trail");
     Put(o, *v.trail);
   }
+  if (v.emblem)
+  {
+    json_wire::Key(o, first, "emblem");
+    Put(o, *v.emblem);
+  }
   o.text += '}';
 }
 
@@ -2470,6 +2503,7 @@ struct JoinLobby
   std::optional<std::int32_t> stockColor;
   std::optional<CustomMachine> custom;
   std::optional<BoostTrail> trail;
+  std::optional<std::string> emblem;
 
   // one bit a member, of wire_absent (a member that is no "?" read as null or left out: C# holds null; it
   // is then not written) and of wire_holes (a list that held null items, dropped)
@@ -2483,6 +2517,7 @@ struct JoinLobby
     static constexpr std::uint32_t stockColor = 1u << 5;
     static constexpr std::uint32_t custom = 1u << 6;
     static constexpr std::uint32_t trail = 1u << 7;
+    static constexpr std::uint32_t emblem = 1u << 8;
   };
   static constexpr std::uint32_t kAbsentAtStart = Bit::lobbyId | Bit::color;
   std::uint32_t wire_absent = 0;
@@ -2495,7 +2530,7 @@ inline bool Get(const json_wire::Value& x, JoinLobby& out, std::size_t from = 0)
     return false;
   out = JoinLobby{};
   out.wire_absent = JoinLobby::kAbsentAtStart;
-  static constexpr std::string_view kNames[] = {"lobbyId", "password", "machine", "color", "setting", "stockColor", "custom", "trail"};
+  static constexpr std::string_view kNames[] = {"lobbyId", "password", "machine", "color", "setting", "stockColor", "custom", "trail", "emblem"};
   for (std::size_t i = from; i < x.members.size(); ++i)
   {
     const json_wire::Value& v = x.members[i].second;
@@ -2531,6 +2566,10 @@ inline bool Get(const json_wire::Value& x, JoinLobby& out, std::size_t from = 0)
       break;
     case 7:
       if (!Get(v, out.trail))
+        return false;
+      break;
+    case 8:
+      if (!Get(v, out.emblem))
         return false;
       break;
     default:
@@ -2585,6 +2624,11 @@ inline void Put(json_wire::Out& o, const JoinLobby& v, std::string_view type = {
   {
     json_wire::Key(o, first, "trail");
     Put(o, *v.trail);
+  }
+  if (v.emblem)
+  {
+    json_wire::Key(o, first, "emblem");
+    Put(o, *v.emblem);
   }
   o.text += '}';
 }
@@ -3533,6 +3577,7 @@ struct SeatSetup
   std::optional<CustomMachine> custom;
   std::optional<std::int32_t> pack;
   std::optional<BoostTrail> trail;
+  std::optional<std::string> emblem;
   // "cpu": written only (!v.playerId)
 
   // one bit a member, of wire_absent (a member that is no "?" read as null or left out: C# holds null; it
@@ -3549,7 +3594,8 @@ struct SeatSetup
     static constexpr std::uint32_t custom = 1u << 7;
     static constexpr std::uint32_t pack = 1u << 8;
     static constexpr std::uint32_t trail = 1u << 9;
-    static constexpr std::uint32_t cpu = 1u << 10;
+    static constexpr std::uint32_t emblem = 1u << 10;
+    static constexpr std::uint32_t cpu = 1u << 11;
   };
   static constexpr std::uint32_t kAbsentAtStart = Bit::name;
   std::uint32_t wire_absent = 0;
@@ -3562,7 +3608,7 @@ inline bool Get(const json_wire::Value& x, SeatSetup& out, std::size_t from = 0)
     return false;
   out = SeatSetup{};
   out.wire_absent = SeatSetup::kAbsentAtStart;
-  static constexpr std::string_view kNames[] = {"seat", "playerId", "name", "machine", "color", "setting", "stockColor", "custom", "pack", "trail"};
+  static constexpr std::string_view kNames[] = {"seat", "playerId", "name", "machine", "color", "setting", "stockColor", "custom", "pack", "trail", "emblem"};
   for (std::size_t i = from; i < x.members.size(); ++i)
   {
     const json_wire::Value& v = x.members[i].second;
@@ -3606,6 +3652,10 @@ inline bool Get(const json_wire::Value& x, SeatSetup& out, std::size_t from = 0)
       break;
     case 9:
       if (!Get(v, out.trail))
+        return false;
+      break;
+    case 10:
+      if (!Get(v, out.emblem))
         return false;
       break;
     default:
@@ -3664,6 +3714,11 @@ inline void Put(json_wire::Out& o, const SeatSetup& v, std::string_view type = {
   {
     json_wire::Key(o, first, "trail");
     Put(o, *v.trail);
+  }
+  if (v.emblem)
+  {
+    json_wire::Key(o, first, "emblem");
+    Put(o, *v.emblem);
   }
   {
     const bool w = !v.playerId;

@@ -83,6 +83,7 @@ members = [
     { name = "stockColor", type = "int?", default = 'null' },
     { name = "custom", type = "CustomMachine?", default = 'null' },
     { name = "trail", type = "BoostTrail?", default = 'null' },
+    { name = "emblem", type = "string?", default = 'null' },
 ]
 
 [[record]]
@@ -147,6 +148,7 @@ members = [
     { name = "custom", type = "CustomMachine?", default = 'null' },
     { name = "pack", type = "string?", default = 'null' },
     { name = "trail", type = "BoostTrail?", default = 'null' },
+    { name = "emblem", type = "string?", default = 'null' },
 ]
 
 [[record]]
@@ -213,6 +215,7 @@ members = [
     { name = "stockColor", type = "int?", default = 'null' },
     { name = "custom", type = "CustomMachine?", default = 'null' },
     { name = "trail", type = "BoostTrail?", default = 'null' },
+    { name = "emblem", type = "string?", default = 'null' },
 ]
 
 [[record]]
@@ -228,6 +231,7 @@ members = [
     { name = "stockColor", type = "int?", default = 'null' },
     { name = "custom", type = "CustomMachine?", default = 'null' },
     { name = "trail", type = "BoostTrail?", default = 'null' },
+    { name = "emblem", type = "string?", default = 'null' },
 ]
 
 [[record]]
@@ -931,6 +935,7 @@ members = [
     { name = "custom", type = "CustomMachine?", default = 'null' },
     { name = "pack", type = "int?", default = 'null' },
     { name = "trail", type = "BoostTrail?", default = 'null' },
+    { name = "emblem", type = "string?", default = 'null' },
     { name = "cpu", type = "bool", written = "!v.playerId" },
 ]
 
