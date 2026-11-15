@@ -1,4 +1,4 @@
-# Formats: the replay file, the launch file, the bundle, the controller helper's lines, the save's options, a race's summary line, the log's stop and freeze lines, the status board
+# Formats: the replay file, the launch file, the bundle, the controller helper's lines, the save's options, a race's summary line, the log's stop and freeze lines, the status board, the mode package, the lobby link
 
 Three kinds of file pass between the launcher and the game. This page is written from the code that reads and
 writes them; where the page and the code differ, the code is right and the page is corrected in the same commit.
@@ -1096,3 +1096,14 @@ z >> 16) × 0x85EBCA6B; z = (z ^ z >> 13) × 0xC2B2AE35; z ^ z >> 16, in 32 bits
 first word 1. A draw is the generator's next(): `random(n)` gives (next() × n) >> 32 in 64 bits for n above 0 and 0,
 with no draw, for any other n; `random_real()` (next() >> 8) × 2^-24. `tests/vectors/modes/random.json` holds first
 states and draws from an independent reference.
+
+## 10. The lobby link
+
+The WebSocket between a launcher (or the native program) and the coordinator (`wss://play.piconet.live/ws`, a LAN
+server's `ws://HOST:47810/ws`): one JSON object a text frame, the client's and the server's messages, each with its
+`type` first. Their members, types, defaults and omissions are `messages.toml`'s (Online.Protocol's records, which
+System.Text.Json writes and reads with `ControlProtocol.Json`): camelCase names, read without regard to case; a null
+member left out; numbers also read from strings. What a member that a reader does not know is: passed over. The
+handbook's `service-protocol.md` says what each message does. The C++ codec (`generated/lobby_messages.g.h`, on
+`cxx/json_wire.h`) writes and reads them byte for byte as C# does (`tests/vectors/messages`). The same JSON is the LAN
+announcement (UDP 47800) and the server's public status (GET `/api/status`).
