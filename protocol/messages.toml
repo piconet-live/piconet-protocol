@@ -295,6 +295,15 @@ members = [
 ]
 
 [[record]]
+name = "EmblemReport"
+root = "client"
+type = "emblemReport"
+members = [
+    { name = "playerId", type = "string" },
+    { name = "pictures", type = "list<string>?", default = 'null' },
+]
+
+[[record]]
 name = "Welcome"
 root = "server"
 type = "welcome"
@@ -306,6 +315,7 @@ members = [
     { name = "renames", type = "bool", default = 'false' },
     { name = "tag", type = "string?", default = 'null' },
     { name = "spectators", type = "bool", default = 'false', omit = "default" },
+    { name = "emblemReports", type = "bool", default = 'false', omit = "default" },
 ]
 
 [[record]]
@@ -583,6 +593,15 @@ type = "emblemPicture"
 members = [
     { name = "hash", type = "string" },
     { name = "picture", type = "string" },
+]
+
+[[record]]
+name = "EmblemReported"
+root = "server"
+type = "emblemReported"
+members = [
+    { name = "playerId", type = "string" },
+    { name = "result", type = "string" },
 ]
 
 [[record]]

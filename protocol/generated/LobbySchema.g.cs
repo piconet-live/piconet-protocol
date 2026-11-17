@@ -94,6 +94,12 @@ internal static class LobbySchema
         "record EmblemPicture root=server type=emblemPicture",
         "  hash string",
         "  picture string",
+        "record EmblemReport root=client type=emblemReport",
+        "  playerId string",
+        "  pictures list<string>? default=null",
+        "record EmblemReported root=server type=emblemReported",
+        "  playerId string",
+        "  result string",
         "record EmblemSlot",
         "  picture string",
         "  part int",
@@ -562,5 +568,6 @@ internal static class LobbySchema
         "  renames bool default=false",
         "  tag string? default=null",
         "  spectators bool default=false ignore=default",
+        "  emblemReports bool default=false ignore=default",
     ];
 }

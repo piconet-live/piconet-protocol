@@ -1310,3 +1310,7 @@ client	emblemAsk	{"type":"emblemAsk","pictures":["0123456789abcdef0123456789abcd
 server	emblemsWanted	{"type":"emblemsWanted","pictures":["0123456789abcdef0123456789abcdef01234567"]}	=
 server	emblemPicture	{"type":"emblemPicture","hash":"0123456789abcdef0123456789abcdef01234567","picture":"AAAA"}	=
 server	fixed	{"type":"emblemPicture","hash":"0123456789abcdef0123456789abcdef01234567","picture":"AAAA","more":1}	{"type":"emblemPicture","hash":"0123456789abcdef0123456789abcdef01234567","picture":"AAAA"}
+client	emblemReport	{"type":"emblemReport","playerId":"p2","pictures":["0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"]}	=
+client	emblemReport	{"type":"emblemReport","playerId":"p2"}	=
+server	emblemReported	{"type":"emblemReported","playerId":"p2","result":"taken"}	=
+server	welcome	{"type":"welcome","playerId":"p","serverName":"s","version":3,"renames":false,"emblemReports":true}	=
