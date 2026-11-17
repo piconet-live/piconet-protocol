@@ -58,6 +58,11 @@ CXX
 g++ -std=c++20 -Wall -Wextra -Werror -I"$here/generated" "$temp/race_rules.cpp" -o "$temp/race_rules"
 "$temp/race_rules"
 
+echo "check: protocol host rules' whole list, C++17, on its own"
+printf '#include "host_rules.g.h"\nstatic_assert(fzgx::host_rules::Named("mine-regen")->Kept(220) == 200 && fzgx::host_rules::RACERS.most == 30);\nint main() { return fzgx::host_rules::ALL.size() == 23 && !fzgx::host_rules::Named("x") ? 0 : 1; }\n' |
+    g++ -std=c++17 -Wall -Wextra -Werror -I"$here/generated" -x c++ - -o "$temp/host_rules"
+"$temp/host_rules"
+
 echo "check: protocol course names' C++ header, on its own"
 printf '#include "course_names.g.h"\nstatic_assert(fzgx::courses::StoryName(39) != nullptr && fzgx::courses::StoryName(37) == nullptr);\nint main() { return fzgx::courses::COURSES.size() == 26 ? 0 : 1; }\n' |
     g++ -std=c++17 -Wall -Wextra -Werror -I"$here/generated" -x c++ - -o "$temp/course_names"
