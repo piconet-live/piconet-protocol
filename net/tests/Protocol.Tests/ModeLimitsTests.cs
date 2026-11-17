@@ -318,7 +318,7 @@ public sealed class ModeLimitsTests
     [InlineData("competitive", "9d4302d0677cac792451536f22eb3959ba3f92b394a6b22a58acb44d5ee7fecc", 1807)]
     [InlineData("crown", "dd0ba7fe9c0860d0f6de50ae50ee888dc7634bbbdd7728231d6f8007e79cab22", 51805)]
     [InlineData("death_race", "b8ccdec60db5f37d24212bf8893a6dc7aefa77e0cc59df070dcac0258d368927", 21791)]
-    [InlineData("ghost_race", "a654c6fe97f6a6a68f3e338cf63e619dd2c7640f6d41f0ea0dbc333046398119", 2204)]
+    [InlineData("ghost_race", "0439958aefa5a5ee465ed95ee2699da65a86aec7a6c37c10c5004ee093b0d6da", 4011)]   // three lives (the owner, 8 November), live's
     [InlineData("knockout", "112b924da81ed5d3bb1fb0309baf63fb387bf83c3db175333f0c8f14c536325f", 45835)]
     [InlineData("overdrive", "82f11a9d4d60c524605dd8c4d4a6b9eed677acd63f19a71847a9244ff2cf93df", 22068)]   // the last racer's 30 s (the owner, 13 November), live's
     [InlineData("practice", "78f3aa18d83f9554daaa8ba1aba30c6a9b907ba3ee28becf817d7261222049a3", 339)]
