@@ -160,6 +160,7 @@ struct Hello
   bool players = false;
   std::optional<std::string> line;
   std::int32_t modes = 0;
+  bool rejoins = false;
 
   // one bit a member, of wire_absent (a member that is no "?" read as null or left out: C# holds null; it
   // is then not written) and of wire_holes (a list that held null items, dropped)
@@ -177,6 +178,7 @@ struct Hello
     static constexpr std::uint32_t players = 1u << 9;
     static constexpr std::uint32_t line = 1u << 10;
     static constexpr std::uint32_t modes = 1u << 11;
+    static constexpr std::uint32_t rejoins = 1u << 12;
   };
   static constexpr std::uint32_t kAbsentAtStart = Bit::name;
   std::uint32_t wire_absent = 0;
@@ -189,7 +191,7 @@ inline bool Get(const json_wire::Value& x, Hello& out, std::size_t from = 0)
     return false;
   out = Hello{};
   out.wire_absent = Hello::kAbsentAtStart;
-  static constexpr std::string_view kNames[] = {"name", "version", "build", "voteCounts", "debug", "statPacks", "pings", "notices", "key", "players", "line", "modes"};
+  static constexpr std::string_view kNames[] = {"name", "version", "build", "voteCounts", "debug", "statPacks", "pings", "notices", "key", "players", "line", "modes", "rejoins"};
   for (std::size_t i = from; i < x.members.size(); ++i)
   {
     const json_wire::Value& v = x.members[i].second;
@@ -241,6 +243,10 @@ inline bool Get(const json_wire::Value& x, Hello& out, std::size_t from = 0)
       break;
     case 11:
       if (!Get(v, out.modes))
+        return false;
+      break;
+    case 12:
+      if (!Get(v, out.rejoins))
         return false;
       break;
     default:
@@ -312,6 +318,11 @@ inline void Put(json_wire::Out& o, const Hello& v, std::string_view type = {})
   {
     json_wire::Key(o, first, "modes");
     Put(o, v.modes);
+  }
+  if (v.rejoins)
+  {
+    json_wire::Key(o, first, "rejoins");
+    Put(o, v.rejoins);
   }
   o.text += '}';
 }
@@ -5440,6 +5451,7 @@ struct MatchStart
   RaceSetup setup;
   bool reportLive = false;
   bool noRejoin = false;
+  bool rejoin = false;
 
   // one bit a member, of wire_absent (a member that is no "?" read as null or left out: C# holds null; it
   // is then not written) and of wire_holes (a list that held null items, dropped)
@@ -5452,6 +5464,7 @@ struct MatchStart
     static constexpr std::uint32_t setup = 1u << 4;
     static constexpr std::uint32_t reportLive = 1u << 5;
     static constexpr std::uint32_t noRejoin = 1u << 6;
+    static constexpr std::uint32_t rejoin = 1u << 7;
   };
   static constexpr std::uint32_t kAbsentAtStart = Bit::matchId | Bit::relay | Bit::token | Bit::setup;
   std::uint32_t wire_absent = 0;
@@ -5464,7 +5477,7 @@ inline bool Get(const json_wire::Value& x, MatchStart& out, std::size_t from = 0
     return false;
   out = MatchStart{};
   out.wire_absent = MatchStart::kAbsentAtStart;
-  static constexpr std::string_view kNames[] = {"matchId", "relay", "token", "seat", "setup", "reportLive", "noRejoin"};
+  static constexpr std::string_view kNames[] = {"matchId", "relay", "token", "seat", "setup", "reportLive", "noRejoin", "rejoin"};
   for (std::size_t i = from; i < x.members.size(); ++i)
   {
     const json_wire::Value& v = x.members[i].second;
@@ -5496,6 +5509,10 @@ inline bool Get(const json_wire::Value& x, MatchStart& out, std::size_t from = 0
       break;
     case 6:
       if (!Get(v, out.noRejoin))
+        return false;
+      break;
+    case 7:
+      if (!Get(v, out.rejoin))
         return false;
       break;
     default:
@@ -5542,6 +5559,11 @@ inline void Put(json_wire::Out& o, const MatchStart& v, std::string_view type = 
   {
     json_wire::Key(o, first, "noRejoin");
     Put(o, v.noRejoin);
+  }
+  if (v.rejoin)
+  {
+    json_wire::Key(o, first, "rejoin");
+    Put(o, v.rejoin);
   }
   o.text += '}';
 }
