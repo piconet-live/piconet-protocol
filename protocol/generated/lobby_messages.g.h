@@ -551,6 +551,121 @@ inline void Put(json_wire::Out& o, const BoostTrail& v, std::string_view type = 
   o.text += '}';
 }
 
+// a part of a message (Online.Protocol EmblemSlot)
+struct EmblemSlot
+{
+  std::string picture;
+  std::int32_t part = {};
+  std::int32_t tilt = {};
+  std::int32_t turn = {};
+  float x = {};
+  float y = {};
+  float size = {};
+  bool flip = false;
+
+  // one bit a member, of wire_absent (a member that is no "?" read as null or left out: C# holds null; it
+  // is then not written) and of wire_holes (a list that held null items, dropped)
+  struct Bit
+  {
+    static constexpr std::uint32_t picture = 1u << 0;
+    static constexpr std::uint32_t part = 1u << 1;
+    static constexpr std::uint32_t tilt = 1u << 2;
+    static constexpr std::uint32_t turn = 1u << 3;
+    static constexpr std::uint32_t x = 1u << 4;
+    static constexpr std::uint32_t y = 1u << 5;
+    static constexpr std::uint32_t size = 1u << 6;
+    static constexpr std::uint32_t flip = 1u << 7;
+  };
+  static constexpr std::uint32_t kAbsentAtStart = Bit::picture;
+  std::uint32_t wire_absent = 0;
+  std::uint32_t wire_holes = 0;
+};
+
+inline bool Get(const json_wire::Value& x, EmblemSlot& out, std::size_t from = 0)
+{
+  if (x.kind != json_wire::Value::Kind::Object)
+    return false;
+  out = EmblemSlot{};
+  out.wire_absent = EmblemSlot::kAbsentAtStart;
+  static constexpr std::string_view kNames[] = {"picture", "part", "tilt", "turn", "x", "y", "size", "flip"};
+  for (std::size_t i = from; i < x.members.size(); ++i)
+  {
+    const json_wire::Value& v = x.members[i].second;
+    switch (json_wire::Find(x.members[i].first, kNames))
+    {
+    case 0:
+      if (!json_wire::Held(v, out.picture, out.wire_absent, EmblemSlot::Bit::picture, [&](const json_wire::Value& y, std::string&) { return Get(y, out.picture); }))
+        return false;
+      break;
+    case 1:
+      if (!Get(v, out.part))
+        return false;
+      break;
+    case 2:
+      if (!Get(v, out.tilt))
+        return false;
+      break;
+    case 3:
+      if (!Get(v, out.turn))
+        return false;
+      break;
+    case 4:
+      if (!Get(v, out.x))
+        return false;
+      break;
+    case 5:
+      if (!Get(v, out.y))
+        return false;
+      break;
+    case 6:
+      if (!Get(v, out.size))
+        return false;
+      break;
+    case 7:
+      if (!Get(v, out.flip))
+        return false;
+      break;
+    default:
+      break;   // a member it does not know, or one written only
+    }
+  }
+  return true;
+}
+
+inline void Put(json_wire::Out& o, const EmblemSlot& v, std::string_view type = {})
+{
+  o.text += '{';
+  bool first = true;
+  if (!type.empty())
+  {
+    json_wire::Key(o, first, "type");
+    json_wire::PutString(o, type);
+  }
+  if (!(v.wire_absent & EmblemSlot::Bit::picture))
+  {
+    json_wire::Key(o, first, "picture");
+    Put(o, v.picture);
+  }
+  json_wire::Key(o, first, "part");
+  Put(o, v.part);
+  json_wire::Key(o, first, "tilt");
+  Put(o, v.tilt);
+  json_wire::Key(o, first, "turn");
+  Put(o, v.turn);
+  json_wire::Key(o, first, "x");
+  Put(o, v.x);
+  json_wire::Key(o, first, "y");
+  Put(o, v.y);
+  json_wire::Key(o, first, "size");
+  Put(o, v.size);
+  if (v.flip)
+  {
+    json_wire::Key(o, first, "flip");
+    Put(o, v.flip);
+  }
+  o.text += '}';
+}
+
 // the client's message "queue" (Online.Protocol EnterQuickPlay)
 struct EnterQuickPlay
 {
@@ -561,6 +676,7 @@ struct EnterQuickPlay
   std::optional<CustomMachine> custom;
   std::optional<BoostTrail> trail;
   std::optional<std::string> emblem;
+  std::optional<std::vector<EmblemSlot>> emblems;
 
   // one bit a member, of wire_absent (a member that is no "?" read as null or left out: C# holds null; it
   // is then not written) and of wire_holes (a list that held null items, dropped)
@@ -573,6 +689,7 @@ struct EnterQuickPlay
     static constexpr std::uint32_t custom = 1u << 4;
     static constexpr std::uint32_t trail = 1u << 5;
     static constexpr std::uint32_t emblem = 1u << 6;
+    static constexpr std::uint32_t emblems = 1u << 7;
   };
   static constexpr std::uint32_t kAbsentAtStart = Bit::color;
   std::uint32_t wire_absent = 0;
@@ -585,7 +702,7 @@ inline bool Get(const json_wire::Value& x, EnterQuickPlay& out, std::size_t from
     return false;
   out = EnterQuickPlay{};
   out.wire_absent = EnterQuickPlay::kAbsentAtStart;
-  static constexpr std::string_view kNames[] = {"machine", "color", "setting", "stockColor", "custom", "trail", "emblem"};
+  static constexpr std::string_view kNames[] = {"machine", "color", "setting", "stockColor", "custom", "trail", "emblem", "emblems"};
   for (std::size_t i = from; i < x.members.size(); ++i)
   {
     const json_wire::Value& v = x.members[i].second;
@@ -617,6 +734,10 @@ inline bool Get(const json_wire::Value& x, EnterQuickPlay& out, std::size_t from
       break;
     case 6:
       if (!Get(v, out.emblem))
+        return false;
+      break;
+    case 7:
+      if (!(v.kind == json_wire::Value::Kind::Null ? (out.emblems.reset(), true) : (out.emblems.emplace(), [&] { bool holes = false; out.wire_holes &= ~EnterQuickPlay::Bit::emblems; const bool ok = Get(v, *out.emblems, &holes); if (holes) out.wire_holes |= EnterQuickPlay::Bit::emblems; return ok; }())))
         return false;
       break;
     default:
@@ -666,6 +787,11 @@ inline void Put(json_wire::Out& o, const EnterQuickPlay& v, std::string_view typ
   {
     json_wire::Key(o, first, "emblem");
     Put(o, *v.emblem);
+  }
+  if (v.emblems)
+  {
+    json_wire::Key(o, first, "emblems");
+    Put(o, *v.emblems);
   }
   o.text += '}';
 }
@@ -1090,6 +1216,7 @@ struct MachineChoice
   std::optional<std::string> pack;
   std::optional<BoostTrail> trail;
   std::optional<std::string> emblem;
+  std::optional<std::vector<EmblemSlot>> emblems;
 
   // one bit a member, of wire_absent (a member that is no "?" read as null or left out: C# holds null; it
   // is then not written) and of wire_holes (a list that held null items, dropped)
@@ -1104,6 +1231,7 @@ struct MachineChoice
     static constexpr std::uint32_t pack = 1u << 6;
     static constexpr std::uint32_t trail = 1u << 7;
     static constexpr std::uint32_t emblem = 1u << 8;
+    static constexpr std::uint32_t emblems = 1u << 9;
   };
   static constexpr std::uint32_t kAbsentAtStart = Bit::matchId | Bit::color;
   std::uint32_t wire_absent = 0;
@@ -1116,7 +1244,7 @@ inline bool Get(const json_wire::Value& x, MachineChoice& out, std::size_t from 
     return false;
   out = MachineChoice{};
   out.wire_absent = MachineChoice::kAbsentAtStart;
-  static constexpr std::string_view kNames[] = {"matchId", "machine", "color", "setting", "stockColor", "custom", "pack", "trail", "emblem"};
+  static constexpr std::string_view kNames[] = {"matchId", "machine", "color", "setting", "stockColor", "custom", "pack", "trail", "emblem", "emblems"};
   for (std::size_t i = from; i < x.members.size(); ++i)
   {
     const json_wire::Value& v = x.members[i].second;
@@ -1156,6 +1284,10 @@ inline bool Get(const json_wire::Value& x, MachineChoice& out, std::size_t from 
       break;
     case 8:
       if (!Get(v, out.emblem))
+        return false;
+      break;
+    case 9:
+      if (!(v.kind == json_wire::Value::Kind::Null ? (out.emblems.reset(), true) : (out.emblems.emplace(), [&] { bool holes = false; out.wire_holes &= ~MachineChoice::Bit::emblems; const bool ok = Get(v, *out.emblems, &holes); if (holes) out.wire_holes |= MachineChoice::Bit::emblems; return ok; }())))
         return false;
       break;
     default:
@@ -1215,6 +1347,11 @@ inline void Put(json_wire::Out& o, const MachineChoice& v, std::string_view type
   {
     json_wire::Key(o, first, "emblem");
     Put(o, *v.emblem);
+  }
+  if (v.emblems)
+  {
+    json_wire::Key(o, first, "emblems");
+    Put(o, *v.emblems);
   }
   o.text += '}';
 }
@@ -2353,6 +2490,7 @@ struct CreateLobby
   std::optional<CustomMachine> custom;
   std::optional<BoostTrail> trail;
   std::optional<std::string> emblem;
+  std::optional<std::vector<EmblemSlot>> emblems;
 
   // one bit a member, of wire_absent (a member that is no "?" read as null or left out: C# holds null; it
   // is then not written) and of wire_holes (a list that held null items, dropped)
@@ -2368,6 +2506,7 @@ struct CreateLobby
     static constexpr std::uint32_t custom = 1u << 7;
     static constexpr std::uint32_t trail = 1u << 8;
     static constexpr std::uint32_t emblem = 1u << 9;
+    static constexpr std::uint32_t emblems = 1u << 10;
   };
   static constexpr std::uint32_t kAbsentAtStart = Bit::name | Bit::rules | Bit::color;
   std::uint32_t wire_absent = 0;
@@ -2380,7 +2519,7 @@ inline bool Get(const json_wire::Value& x, CreateLobby& out, std::size_t from = 
     return false;
   out = CreateLobby{};
   out.wire_absent = CreateLobby::kAbsentAtStart;
-  static constexpr std::string_view kNames[] = {"name", "rules", "password", "machine", "color", "setting", "stockColor", "custom", "trail", "emblem"};
+  static constexpr std::string_view kNames[] = {"name", "rules", "password", "machine", "color", "setting", "stockColor", "custom", "trail", "emblem", "emblems"};
   for (std::size_t i = from; i < x.members.size(); ++i)
   {
     const json_wire::Value& v = x.members[i].second;
@@ -2424,6 +2563,10 @@ inline bool Get(const json_wire::Value& x, CreateLobby& out, std::size_t from = 
       break;
     case 9:
       if (!Get(v, out.emblem))
+        return false;
+      break;
+    case 10:
+      if (!(v.kind == json_wire::Value::Kind::Null ? (out.emblems.reset(), true) : (out.emblems.emplace(), [&] { bool holes = false; out.wire_holes &= ~CreateLobby::Bit::emblems; const bool ok = Get(v, *out.emblems, &holes); if (holes) out.wire_holes |= CreateLobby::Bit::emblems; return ok; }())))
         return false;
       break;
     default:
@@ -2489,6 +2632,11 @@ inline void Put(json_wire::Out& o, const CreateLobby& v, std::string_view type =
     json_wire::Key(o, first, "emblem");
     Put(o, *v.emblem);
   }
+  if (v.emblems)
+  {
+    json_wire::Key(o, first, "emblems");
+    Put(o, *v.emblems);
+  }
   o.text += '}';
 }
 
@@ -2504,6 +2652,7 @@ struct JoinLobby
   std::optional<CustomMachine> custom;
   std::optional<BoostTrail> trail;
   std::optional<std::string> emblem;
+  std::optional<std::vector<EmblemSlot>> emblems;
 
   // one bit a member, of wire_absent (a member that is no "?" read as null or left out: C# holds null; it
   // is then not written) and of wire_holes (a list that held null items, dropped)
@@ -2518,6 +2667,7 @@ struct JoinLobby
     static constexpr std::uint32_t custom = 1u << 6;
     static constexpr std::uint32_t trail = 1u << 7;
     static constexpr std::uint32_t emblem = 1u << 8;
+    static constexpr std::uint32_t emblems = 1u << 9;
   };
   static constexpr std::uint32_t kAbsentAtStart = Bit::lobbyId | Bit::color;
   std::uint32_t wire_absent = 0;
@@ -2530,7 +2680,7 @@ inline bool Get(const json_wire::Value& x, JoinLobby& out, std::size_t from = 0)
     return false;
   out = JoinLobby{};
   out.wire_absent = JoinLobby::kAbsentAtStart;
-  static constexpr std::string_view kNames[] = {"lobbyId", "password", "machine", "color", "setting", "stockColor", "custom", "trail", "emblem"};
+  static constexpr std::string_view kNames[] = {"lobbyId", "password", "machine", "color", "setting", "stockColor", "custom", "trail", "emblem", "emblems"};
   for (std::size_t i = from; i < x.members.size(); ++i)
   {
     const json_wire::Value& v = x.members[i].second;
@@ -2570,6 +2720,10 @@ inline bool Get(const json_wire::Value& x, JoinLobby& out, std::size_t from = 0)
       break;
     case 8:
       if (!Get(v, out.emblem))
+        return false;
+      break;
+    case 9:
+      if (!(v.kind == json_wire::Value::Kind::Null ? (out.emblems.reset(), true) : (out.emblems.emplace(), [&] { bool holes = false; out.wire_holes &= ~JoinLobby::Bit::emblems; const bool ok = Get(v, *out.emblems, &holes); if (holes) out.wire_holes |= JoinLobby::Bit::emblems; return ok; }())))
         return false;
       break;
     default:
@@ -2629,6 +2783,11 @@ inline void Put(json_wire::Out& o, const JoinLobby& v, std::string_view type = {
   {
     json_wire::Key(o, first, "emblem");
     Put(o, *v.emblem);
+  }
+  if (v.emblems)
+  {
+    json_wire::Key(o, first, "emblems");
+    Put(o, *v.emblems);
   }
   o.text += '}';
 }
@@ -2913,6 +3072,118 @@ inline void Put(json_wire::Out& o, const LeaveLobby& v, std::string_view type = 
     json_wire::PutString(o, type);
   }
   (void)v;
+  o.text += '}';
+}
+
+// the client's message "emblemPicture" (Online.Protocol EmblemUpload)
+struct EmblemUpload
+{
+  std::string picture;
+
+  // one bit a member, of wire_absent (a member that is no "?" read as null or left out: C# holds null; it
+  // is then not written) and of wire_holes (a list that held null items, dropped)
+  struct Bit
+  {
+    static constexpr std::uint32_t picture = 1u << 0;
+  };
+  static constexpr std::uint32_t kAbsentAtStart = Bit::picture;
+  std::uint32_t wire_absent = 0;
+  std::uint32_t wire_holes = 0;
+};
+
+inline bool Get(const json_wire::Value& x, EmblemUpload& out, std::size_t from = 0)
+{
+  if (x.kind != json_wire::Value::Kind::Object)
+    return false;
+  out = EmblemUpload{};
+  out.wire_absent = EmblemUpload::kAbsentAtStart;
+  static constexpr std::string_view kNames[] = {"picture"};
+  for (std::size_t i = from; i < x.members.size(); ++i)
+  {
+    const json_wire::Value& v = x.members[i].second;
+    switch (json_wire::Find(x.members[i].first, kNames))
+    {
+    case 0:
+      if (!json_wire::Held(v, out.picture, out.wire_absent, EmblemUpload::Bit::picture, [&](const json_wire::Value& y, std::string&) { return Get(y, out.picture); }))
+        return false;
+      break;
+    default:
+      break;   // a member it does not know, or one written only
+    }
+  }
+  return true;
+}
+
+inline void Put(json_wire::Out& o, const EmblemUpload& v, std::string_view type = {})
+{
+  o.text += '{';
+  bool first = true;
+  if (!type.empty())
+  {
+    json_wire::Key(o, first, "type");
+    json_wire::PutString(o, type);
+  }
+  if (!(v.wire_absent & EmblemUpload::Bit::picture))
+  {
+    json_wire::Key(o, first, "picture");
+    Put(o, v.picture);
+  }
+  o.text += '}';
+}
+
+// the client's message "emblemAsk" (Online.Protocol AskEmblems)
+struct AskEmblems
+{
+  std::vector<std::string> pictures;
+
+  // one bit a member, of wire_absent (a member that is no "?" read as null or left out: C# holds null; it
+  // is then not written) and of wire_holes (a list that held null items, dropped)
+  struct Bit
+  {
+    static constexpr std::uint32_t pictures = 1u << 0;
+  };
+  static constexpr std::uint32_t kAbsentAtStart = Bit::pictures;
+  std::uint32_t wire_absent = 0;
+  std::uint32_t wire_holes = 0;
+};
+
+inline bool Get(const json_wire::Value& x, AskEmblems& out, std::size_t from = 0)
+{
+  if (x.kind != json_wire::Value::Kind::Object)
+    return false;
+  out = AskEmblems{};
+  out.wire_absent = AskEmblems::kAbsentAtStart;
+  static constexpr std::string_view kNames[] = {"pictures"};
+  for (std::size_t i = from; i < x.members.size(); ++i)
+  {
+    const json_wire::Value& v = x.members[i].second;
+    switch (json_wire::Find(x.members[i].first, kNames))
+    {
+    case 0:
+      if (!json_wire::Held(v, out.pictures, out.wire_absent, AskEmblems::Bit::pictures, [&](const json_wire::Value& y, std::vector<std::string>&) { return [&] { bool holes = false; out.wire_holes &= ~AskEmblems::Bit::pictures; const bool ok = Get(y, out.pictures, &holes); if (holes) out.wire_holes |= AskEmblems::Bit::pictures; return ok; }(); }))
+        return false;
+      break;
+    default:
+      break;   // a member it does not know, or one written only
+    }
+  }
+  return true;
+}
+
+inline void Put(json_wire::Out& o, const AskEmblems& v, std::string_view type = {})
+{
+  o.text += '{';
+  bool first = true;
+  if (!type.empty())
+  {
+    json_wire::Key(o, first, "type");
+    json_wire::PutString(o, type);
+  }
+  if (!(v.wire_absent & AskEmblems::Bit::pictures))
+  {
+    json_wire::Key(o, first, "pictures");
+    Put(o, v.pictures);
+  }
   o.text += '}';
 }
 
@@ -3401,6 +3672,7 @@ struct PlayerInfo
   std::optional<CustomMachine> custom;
   std::optional<std::int32_t> team;
   bool nextRace = false;
+  std::optional<std::vector<EmblemSlot>> emblems;
 
   // one bit a member, of wire_absent (a member that is no "?" read as null or left out: C# holds null; it
   // is then not written) and of wire_holes (a list that held null items, dropped)
@@ -3419,6 +3691,7 @@ struct PlayerInfo
     static constexpr std::uint32_t custom = 1u << 10;
     static constexpr std::uint32_t team = 1u << 11;
     static constexpr std::uint32_t nextRace = 1u << 12;
+    static constexpr std::uint32_t emblems = 1u << 13;
   };
   static constexpr std::uint32_t kAbsentAtStart = Bit::id | Bit::name | Bit::color;
   std::uint32_t wire_absent = 0;
@@ -3431,7 +3704,7 @@ inline bool Get(const json_wire::Value& x, PlayerInfo& out, std::size_t from = 0
     return false;
   out = PlayerInfo{};
   out.wire_absent = PlayerInfo::kAbsentAtStart;
-  static constexpr std::string_view kNames[] = {"id", "name", "machine", "color", "stockColor", "racing", "chosen", "tag", "watching", "pack", "custom", "team", "nextRace"};
+  static constexpr std::string_view kNames[] = {"id", "name", "machine", "color", "stockColor", "racing", "chosen", "tag", "watching", "pack", "custom", "team", "nextRace", "emblems"};
   for (std::size_t i = from; i < x.members.size(); ++i)
   {
     const json_wire::Value& v = x.members[i].second;
@@ -3487,6 +3760,10 @@ inline bool Get(const json_wire::Value& x, PlayerInfo& out, std::size_t from = 0
       break;
     case 12:
       if (!Get(v, out.nextRace))
+        return false;
+      break;
+    case 13:
+      if (!(v.kind == json_wire::Value::Kind::Null ? (out.emblems.reset(), true) : (out.emblems.emplace(), [&] { bool holes = false; out.wire_holes &= ~PlayerInfo::Bit::emblems; const bool ok = Get(v, *out.emblems, &holes); if (holes) out.wire_holes |= PlayerInfo::Bit::emblems; return ok; }())))
         return false;
       break;
     default:
@@ -3561,6 +3838,11 @@ inline void Put(json_wire::Out& o, const PlayerInfo& v, std::string_view type = 
     json_wire::Key(o, first, "nextRace");
     Put(o, v.nextRace);
   }
+  if (v.emblems)
+  {
+    json_wire::Key(o, first, "emblems");
+    Put(o, *v.emblems);
+  }
   o.text += '}';
 }
 
@@ -3578,6 +3860,7 @@ struct SeatSetup
   std::optional<std::int32_t> pack;
   std::optional<BoostTrail> trail;
   std::optional<std::string> emblem;
+  std::optional<std::vector<EmblemSlot>> emblems;
   // "cpu": written only (!v.playerId)
 
   // one bit a member, of wire_absent (a member that is no "?" read as null or left out: C# holds null; it
@@ -3595,7 +3878,8 @@ struct SeatSetup
     static constexpr std::uint32_t pack = 1u << 8;
     static constexpr std::uint32_t trail = 1u << 9;
     static constexpr std::uint32_t emblem = 1u << 10;
-    static constexpr std::uint32_t cpu = 1u << 11;
+    static constexpr std::uint32_t emblems = 1u << 11;
+    static constexpr std::uint32_t cpu = 1u << 12;
   };
   static constexpr std::uint32_t kAbsentAtStart = Bit::name;
   std::uint32_t wire_absent = 0;
@@ -3608,7 +3892,7 @@ inline bool Get(const json_wire::Value& x, SeatSetup& out, std::size_t from = 0)
     return false;
   out = SeatSetup{};
   out.wire_absent = SeatSetup::kAbsentAtStart;
-  static constexpr std::string_view kNames[] = {"seat", "playerId", "name", "machine", "color", "setting", "stockColor", "custom", "pack", "trail", "emblem"};
+  static constexpr std::string_view kNames[] = {"seat", "playerId", "name", "machine", "color", "setting", "stockColor", "custom", "pack", "trail", "emblem", "emblems"};
   for (std::size_t i = from; i < x.members.size(); ++i)
   {
     const json_wire::Value& v = x.members[i].second;
@@ -3656,6 +3940,10 @@ inline bool Get(const json_wire::Value& x, SeatSetup& out, std::size_t from = 0)
       break;
     case 10:
       if (!Get(v, out.emblem))
+        return false;
+      break;
+    case 11:
+      if (!(v.kind == json_wire::Value::Kind::Null ? (out.emblems.reset(), true) : (out.emblems.emplace(), [&] { bool holes = false; out.wire_holes &= ~SeatSetup::Bit::emblems; const bool ok = Get(v, *out.emblems, &holes); if (holes) out.wire_holes |= SeatSetup::Bit::emblems; return ok; }())))
         return false;
       break;
     default:
@@ -3719,6 +4007,11 @@ inline void Put(json_wire::Out& o, const SeatSetup& v, std::string_view type = {
   {
     json_wire::Key(o, first, "emblem");
     Put(o, *v.emblem);
+  }
+  if (v.emblems)
+  {
+    json_wire::Key(o, first, "emblems");
+    Put(o, *v.emblems);
   }
   {
     const bool w = !v.playerId;
@@ -6829,6 +7122,129 @@ inline void Put(json_wire::Out& o, const LobbyList& v, std::string_view type = {
   o.text += '}';
 }
 
+// the server's message "emblemsWanted" (Online.Protocol EmblemsWanted)
+struct EmblemsWanted
+{
+  std::vector<std::string> pictures;
+
+  // one bit a member, of wire_absent (a member that is no "?" read as null or left out: C# holds null; it
+  // is then not written) and of wire_holes (a list that held null items, dropped)
+  struct Bit
+  {
+    static constexpr std::uint32_t pictures = 1u << 0;
+  };
+  static constexpr std::uint32_t kAbsentAtStart = Bit::pictures;
+  std::uint32_t wire_absent = 0;
+  std::uint32_t wire_holes = 0;
+};
+
+inline bool Get(const json_wire::Value& x, EmblemsWanted& out, std::size_t from = 0)
+{
+  if (x.kind != json_wire::Value::Kind::Object)
+    return false;
+  out = EmblemsWanted{};
+  out.wire_absent = EmblemsWanted::kAbsentAtStart;
+  static constexpr std::string_view kNames[] = {"pictures"};
+  for (std::size_t i = from; i < x.members.size(); ++i)
+  {
+    const json_wire::Value& v = x.members[i].second;
+    switch (json_wire::Find(x.members[i].first, kNames))
+    {
+    case 0:
+      if (!json_wire::Held(v, out.pictures, out.wire_absent, EmblemsWanted::Bit::pictures, [&](const json_wire::Value& y, std::vector<std::string>&) { return [&] { bool holes = false; out.wire_holes &= ~EmblemsWanted::Bit::pictures; const bool ok = Get(y, out.pictures, &holes); if (holes) out.wire_holes |= EmblemsWanted::Bit::pictures; return ok; }(); }))
+        return false;
+      break;
+    default:
+      break;   // a member it does not know, or one written only
+    }
+  }
+  return true;
+}
+
+inline void Put(json_wire::Out& o, const EmblemsWanted& v, std::string_view type = {})
+{
+  o.text += '{';
+  bool first = true;
+  if (!type.empty())
+  {
+    json_wire::Key(o, first, "type");
+    json_wire::PutString(o, type);
+  }
+  if (!(v.wire_absent & EmblemsWanted::Bit::pictures))
+  {
+    json_wire::Key(o, first, "pictures");
+    Put(o, v.pictures);
+  }
+  o.text += '}';
+}
+
+// the server's message "emblemPicture" (Online.Protocol EmblemPicture)
+struct EmblemPicture
+{
+  std::string hash;
+  std::string picture;
+
+  // one bit a member, of wire_absent (a member that is no "?" read as null or left out: C# holds null; it
+  // is then not written) and of wire_holes (a list that held null items, dropped)
+  struct Bit
+  {
+    static constexpr std::uint32_t hash = 1u << 0;
+    static constexpr std::uint32_t picture = 1u << 1;
+  };
+  static constexpr std::uint32_t kAbsentAtStart = Bit::hash | Bit::picture;
+  std::uint32_t wire_absent = 0;
+  std::uint32_t wire_holes = 0;
+};
+
+inline bool Get(const json_wire::Value& x, EmblemPicture& out, std::size_t from = 0)
+{
+  if (x.kind != json_wire::Value::Kind::Object)
+    return false;
+  out = EmblemPicture{};
+  out.wire_absent = EmblemPicture::kAbsentAtStart;
+  static constexpr std::string_view kNames[] = {"hash", "picture"};
+  for (std::size_t i = from; i < x.members.size(); ++i)
+  {
+    const json_wire::Value& v = x.members[i].second;
+    switch (json_wire::Find(x.members[i].first, kNames))
+    {
+    case 0:
+      if (!json_wire::Held(v, out.hash, out.wire_absent, EmblemPicture::Bit::hash, [&](const json_wire::Value& y, std::string&) { return Get(y, out.hash); }))
+        return false;
+      break;
+    case 1:
+      if (!json_wire::Held(v, out.picture, out.wire_absent, EmblemPicture::Bit::picture, [&](const json_wire::Value& y, std::string&) { return Get(y, out.picture); }))
+        return false;
+      break;
+    default:
+      break;   // a member it does not know, or one written only
+    }
+  }
+  return true;
+}
+
+inline void Put(json_wire::Out& o, const EmblemPicture& v, std::string_view type = {})
+{
+  o.text += '{';
+  bool first = true;
+  if (!type.empty())
+  {
+    json_wire::Key(o, first, "type");
+    json_wire::PutString(o, type);
+  }
+  if (!(v.wire_absent & EmblemPicture::Bit::hash))
+  {
+    json_wire::Key(o, first, "hash");
+    Put(o, v.hash);
+  }
+  if (!(v.wire_absent & EmblemPicture::Bit::picture))
+  {
+    json_wire::Key(o, first, "picture");
+    Put(o, v.picture);
+  }
+  o.text += '}';
+}
+
 // the LAN announcement (UDP 47800) (Online.Protocol LanAnnouncement)
 struct LanAnnouncement
 {
@@ -8336,8 +8752,10 @@ using ClientMessage = std::variant<
     KickPlayer,
     ChooseTeam,
     StartLobbyRace,
-    LeaveLobby>;
-inline constexpr std::string_view kClientMessageTypes[] = {"hello", "queue", "leaveQueue", "chat", "voteStart", "voteCpuFill", "relayLatency", "voteCourse", "machineChoice", "raceOver", "raceReport", "name", "pong", "watch", "browseLobbies", "createLobby", "joinLobby", "setLobbyRules", "kick", "chooseTeam", "startLobbyRace", "leaveLobby"};
+    LeaveLobby,
+    EmblemUpload,
+    AskEmblems>;
+inline constexpr std::string_view kClientMessageTypes[] = {"hello", "queue", "leaveQueue", "chat", "voteStart", "voteCpuFill", "relayLatency", "voteCourse", "machineChoice", "raceOver", "raceReport", "name", "pong", "watch", "browseLobbies", "createLobby", "joinLobby", "setLobbyRules", "kick", "chooseTeam", "startLobbyRace", "leaveLobby", "emblemPicture", "emblemAsk"};
 
 // A client message's JSON, as C# writes it; "" when it cannot be written (a float that is not finite).
 inline std::string Encode(const ClientMessage& m)
@@ -8498,6 +8916,20 @@ inline std::string Encode(const LeaveLobby& m)
 {
   json_wire::Out o;
   Put(o, m, "leaveLobby");
+  return o.ok ? std::move(o.text) : std::string{};
+}
+
+inline std::string Encode(const EmblemUpload& m)
+{
+  json_wire::Out o;
+  Put(o, m, "emblemPicture");
+  return o.ok ? std::move(o.text) : std::string{};
+}
+
+inline std::string Encode(const AskEmblems& m)
+{
+  json_wire::Out o;
+  Put(o, m, "emblemAsk");
   return o.ok ? std::move(o.text) : std::string{};
 }
 
@@ -8662,6 +9094,20 @@ inline std::optional<ClientMessage> DecodeClient(std::string_view text)
       return std::nullopt;
     return ClientMessage{std::move(m)};
   }
+  if (type == "emblemPicture")
+  {
+    EmblemUpload m;
+    if (!Get(x, m, 1))
+      return std::nullopt;
+    return ClientMessage{std::move(m)};
+  }
+  if (type == "emblemAsk")
+  {
+    AskEmblems m;
+    if (!Get(x, m, 1))
+      return std::nullopt;
+    return ClientMessage{std::move(m)};
+  }
   return std::nullopt;
 }
 
@@ -8691,8 +9137,10 @@ using ServerMessage = std::variant<
     TagChanged,
     WatchStart,
     RulesChanged,
-    LobbyList>;
-inline constexpr std::string_view kServerMessageTypes[] = {"welcome", "error", "lobby", "leftLobby", "chat", "recentNotices", "measureRelays", "matchStart", "requeued", "quickPlayEnded", "courseVote", "courseVotes", "courseChosen", "chooseMachine", "liveRace", "raceDesynced", "ping", "pings", "statPack", "players", "playersChanged", "tag", "watchStart", "rules", "lobbyList"};
+    LobbyList,
+    EmblemsWanted,
+    EmblemPicture>;
+inline constexpr std::string_view kServerMessageTypes[] = {"welcome", "error", "lobby", "leftLobby", "chat", "recentNotices", "measureRelays", "matchStart", "requeued", "quickPlayEnded", "courseVote", "courseVotes", "courseChosen", "chooseMachine", "liveRace", "raceDesynced", "ping", "pings", "statPack", "players", "playersChanged", "tag", "watchStart", "rules", "lobbyList", "emblemsWanted", "emblemPicture"};
 
 // A server message's JSON, as C# writes it; "" when it cannot be written (a float that is not finite).
 inline std::string Encode(const ServerMessage& m)
@@ -8877,6 +9325,20 @@ inline std::string Encode(const LobbyList& m)
   return o.ok ? std::move(o.text) : std::string{};
 }
 
+inline std::string Encode(const EmblemsWanted& m)
+{
+  json_wire::Out o;
+  Put(o, m, "emblemsWanted");
+  return o.ok ? std::move(o.text) : std::string{};
+}
+
+inline std::string Encode(const EmblemPicture& m)
+{
+  json_wire::Out o;
+  Put(o, m, "emblemPicture");
+  return o.ok ? std::move(o.text) : std::string{};
+}
+
 // The server message of a JSON text, as C# reads it; nothing when it reads none.
 inline std::optional<ServerMessage> DecodeServer(std::string_view text)
 {
@@ -9055,6 +9517,20 @@ inline std::optional<ServerMessage> DecodeServer(std::string_view text)
   if (type == "lobbyList")
   {
     LobbyList m;
+    if (!Get(x, m, 1))
+      return std::nullopt;
+    return ServerMessage{std::move(m)};
+  }
+  if (type == "emblemsWanted")
+  {
+    EmblemsWanted m;
+    if (!Get(x, m, 1))
+      return std::nullopt;
+    return ServerMessage{std::move(m)};
+  }
+  if (type == "emblemPicture")
+  {
+    EmblemPicture m;
     if (!Get(x, m, 1))
       return std::nullopt;
     return ServerMessage{std::move(m)};

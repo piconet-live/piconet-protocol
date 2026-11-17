@@ -84,6 +84,7 @@ members = [
     { name = "custom", type = "CustomMachine?", default = 'null' },
     { name = "trail", type = "BoostTrail?", default = 'null' },
     { name = "emblem", type = "string?", default = 'null' },
+    { name = "emblems", type = "list<EmblemSlot>?", default = 'null' },
 ]
 
 [[record]]
@@ -149,6 +150,7 @@ members = [
     { name = "pack", type = "string?", default = 'null' },
     { name = "trail", type = "BoostTrail?", default = 'null' },
     { name = "emblem", type = "string?", default = 'null' },
+    { name = "emblems", type = "list<EmblemSlot>?", default = 'null' },
 ]
 
 [[record]]
@@ -216,6 +218,7 @@ members = [
     { name = "custom", type = "CustomMachine?", default = 'null' },
     { name = "trail", type = "BoostTrail?", default = 'null' },
     { name = "emblem", type = "string?", default = 'null' },
+    { name = "emblems", type = "list<EmblemSlot>?", default = 'null' },
 ]
 
 [[record]]
@@ -232,6 +235,7 @@ members = [
     { name = "custom", type = "CustomMachine?", default = 'null' },
     { name = "trail", type = "BoostTrail?", default = 'null' },
     { name = "emblem", type = "string?", default = 'null' },
+    { name = "emblems", type = "list<EmblemSlot>?", default = 'null' },
 ]
 
 [[record]]
@@ -273,6 +277,22 @@ name = "LeaveLobby"
 root = "client"
 type = "leaveLobby"
 members = []
+
+[[record]]
+name = "EmblemUpload"
+root = "client"
+type = "emblemPicture"
+members = [
+    { name = "picture", type = "string" },
+]
+
+[[record]]
+name = "AskEmblems"
+root = "client"
+type = "emblemAsk"
+members = [
+    { name = "pictures", type = "list<string>" },
+]
 
 [[record]]
 name = "Welcome"
@@ -549,6 +569,23 @@ members = [
 ]
 
 [[record]]
+name = "EmblemsWanted"
+root = "server"
+type = "emblemsWanted"
+members = [
+    { name = "pictures", type = "list<string>" },
+]
+
+[[record]]
+name = "EmblemPicture"
+root = "server"
+type = "emblemPicture"
+members = [
+    { name = "hash", type = "string" },
+    { name = "picture", type = "string" },
+]
+
+[[record]]
 name = "LanAnnouncement"
 root = "lan"
 members = [
@@ -609,6 +646,19 @@ members = [
 ]
 
 [[record]]
+name = "EmblemSlot"
+members = [
+    { name = "picture", type = "string" },
+    { name = "part", type = "int" },
+    { name = "tilt", type = "int" },
+    { name = "turn", type = "int" },
+    { name = "x", type = "float" },
+    { name = "y", type = "float" },
+    { name = "size", type = "float" },
+    { name = "flip", type = "bool", default = 'false', omit = "default" },
+]
+
+[[record]]
 name = "RelayRtt"
 members = [
     { name = "relayId", type = "string" },
@@ -666,6 +716,7 @@ members = [
     { name = "custom", type = "CustomMachine?", default = 'null' },
     { name = "team", type = "int?", default = 'null' },
     { name = "nextRace", type = "bool", default = 'false', omit = "default" },
+    { name = "emblems", type = "list<EmblemSlot>?", default = 'null' },
 ]
 
 [[record]]
@@ -936,6 +987,7 @@ members = [
     { name = "pack", type = "int?", default = 'null' },
     { name = "trail", type = "BoostTrail?", default = 'null' },
     { name = "emblem", type = "string?", default = 'null' },
+    { name = "emblems", type = "list<EmblemSlot>?", default = 'null' },
     { name = "cpu", type = "bool", written = "!v.playerId" },
 ]
 
