@@ -128,3 +128,22 @@ public sealed record EmblemsWanted(IReadOnlyList<string> Pictures) : ServerMessa
 /// <summary>A picture a game asked for (<see cref="AskEmblems"/>): its name and its base64. From another player: a
 /// game takes it only when it is one picture (<see cref="Emblems.Valid(string?)"/>) of that name.</summary>
 public sealed record EmblemPicture(string Hash, string Picture) : ServerMessage;
+
+/// <summary>A player reports another player's emblems (the native program's Social card, REPORT): PlayerId the
+/// reported player's connection (<see cref="PlayerInfo.Id"/>), Pictures the names the reporter's game holds for them
+/// (at most <see cref="Emblems.Slots"/>). The server names the reported pictures itself, from the emblems that player's
+/// racer names now, and keeps them for an operator to look at; it punishes nobody. Sent only to a server whose welcome
+/// says it takes reports (<see cref="Welcome.EmblemReports"/>). Answered by <see cref="EmblemReported"/>.</summary>
+public sealed record EmblemReport(string PlayerId, IReadOnlyList<string>? Pictures = null) : ClientMessage;
+
+/// <summary>The answer to an <see cref="EmblemReport"/>: PlayerId as the report named it; Result
+/// <see cref="Taken"/> (kept for an operator), <see cref="TooMany"/> (this player's reports are past the limit for
+/// now), <see cref="NoPlayer"/> (no connected player of that id, or the reporter themself).</summary>
+public sealed record EmblemReported(string PlayerId, string Result) : ServerMessage
+{
+    public const string Taken = "taken";
+
+    public const string TooMany = "too_many";
+
+    public const string NoPlayer = "no_player";
+}

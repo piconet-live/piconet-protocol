@@ -200,6 +200,7 @@ public sealed record ServerRules(
 [JsonDerivedType(typeof(LeaveLobby), "leaveLobby")]
 [JsonDerivedType(typeof(EmblemUpload), "emblemPicture")]
 [JsonDerivedType(typeof(AskEmblems), "emblemAsk")]
+[JsonDerivedType(typeof(EmblemReport), "emblemReport")]
 public abstract record ClientMessage;
 
 /// <summary>The first message: the player's display name and protocol version. A server has no password (a custom
@@ -354,6 +355,7 @@ public sealed record RaceReport(string MatchId, RaceSnapshot Snapshot) : ClientM
 [JsonDerivedType(typeof(LobbyList), "lobbyList")]
 [JsonDerivedType(typeof(EmblemsWanted), "emblemsWanted")]
 [JsonDerivedType(typeof(EmblemPicture), "emblemPicture")]
+[JsonDerivedType(typeof(EmblemReported), "emblemReported")]
 public abstract record ServerMessage;
 
 /// <summary>The server's stat pack, whole, once after the welcome, to a launcher whose hello said it knows stat
@@ -369,10 +371,12 @@ public sealed record StatPackValues(StatPackWire Pack) : ServerMessage
 /// <summary>The hello taken. Tag: the player's tag on this connection (<see cref="PlayerTags"/>): worked out from the
 /// hello's <see cref="Hello.Key"/> (the player's own, or for this connection when that name and tag are another
 /// connected player's), or random when the hello sent no key. The launcher saves nothing of it. A launcher from
-/// before tags passes over it.</summary>
+/// before tags passes over it. EmblemReports: the server takes <see cref="EmblemReport"/> (a game sends none to one that
+/// does not say so: a server from before answers a type it does not know with an error).</summary>
 public sealed record Welcome(string PlayerId, string ServerName, int Version, ServerRules? Rules = null, bool Renames = false,
     string? Tag = null,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool Spectators = false) : ServerMessage;
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool Spectators = false,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool EmblemReports = false) : ServerMessage;
 
 /// <summary>The server's rules changed while this player is connected (the operator's live rules): the whole rules,
 /// as a welcome carries them, to every welcomed launcher, in a lobby or not. They are what the launcher shows and
