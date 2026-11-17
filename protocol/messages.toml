@@ -70,6 +70,7 @@ members = [
     { name = "players", type = "bool", default = 'false', omit = "default" },
     { name = "line", type = "string?", default = 'null' },
     { name = "modes", type = "int", default = '0', omit = "default" },
+    { name = "rejoins", type = "bool", default = 'false', omit = "default" },
 ]
 
 [[record]]
@@ -410,6 +411,7 @@ members = [
     { name = "setup", type = "RaceSetup" },
     { name = "reportLive", type = "bool", default = 'false' },
     { name = "noRejoin", type = "bool", default = 'false', omit = "default" },
+    { name = "rejoin", type = "bool", default = 'false', omit = "default" },
 ]
 
 [[record]]

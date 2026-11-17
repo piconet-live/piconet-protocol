@@ -1314,3 +1314,5 @@ client	emblemReport	{"type":"emblemReport","playerId":"p2","pictures":["01234567
 client	emblemReport	{"type":"emblemReport","playerId":"p2"}	=
 server	emblemReported	{"type":"emblemReported","playerId":"p2","result":"taken"}	=
 server	welcome	{"type":"welcome","playerId":"p","serverName":"s","version":3,"renames":false,"emblemReports":true}	=
+client	hello	{"type":"hello","name":"RACER","version":1,"build":"a/b/c","voteCounts":true,"statPacks":true,"pings":true,"notices":true,"key":"k","line":"0.7","modes":3,"rejoins":true}	=
+server	matchStart	{"type":"matchStart","matchId":"m10","relay":{"id":"lan","host":"","port":47961},"token":"0123456789abcdef","seat":1,"setup":{"course":1,"laps":1,"seats":[{"seat":0,"playerId":"p1","name":"A","machine":5,"color":{"r":1,"g":2,"b":3},"setting":100,"cpu":false},{"seat":1,"playerId":"p2","name":"B","machine":7,"color":{"r":4,"g":5,"b":6},"setting":100,"cpu":false}],"shuffleSeed":1,"cpuSeed":2},"reportLive":true,"rejoin":true}	=

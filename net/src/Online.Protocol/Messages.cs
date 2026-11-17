@@ -241,7 +241,13 @@ public abstract record ClientMessage;
 /// alone, 1 for 0.6.0, 2 for 0.6.5; 0: none). A server matches a player into a race of a mode only when their
 /// launcher said that mode's rule set or a newer one, and tells one that said less to update (the mode's own
 /// version, <see cref="ModeLevels.Version"/>) before any match file is sent: a launcher from before modes says
-/// nothing, reads as 0, and is never sent a mode it would drop. Written only when set.</summary>
+/// nothing, reads as 0, and is never sent a mode it would drop. Written only when set.
+/// Rejoins: this game takes a race of its player's back after its program ended (closed or crashed) during it: a
+/// server sends such a hello, when its <see cref="Key"/> is the one a seat of a race still running was raced with, the
+/// match start of that race again marked <see cref="MatchStart.Rejoin"/>, as an offer, and puts the player back in
+/// that race's lobby when they enter Quick Play. A launcher or game from before it says nothing and is sent no such
+/// match start (it would start the race as a new one); a server from before it passes over the field. Written only
+/// when true.</summary>
 public sealed record Hello(string Name, int Version, string? Build = null, bool VoteCounts = false,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool Debug = false,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool StatPacks = false,
@@ -250,7 +256,8 @@ public sealed record Hello(string Name, int Version, string? Build = null, bool 
     string? Key = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool Players = false,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Line = null,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] int Modes = 0) : ClientMessage
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] int Modes = 0,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool Rejoins = false) : ClientMessage
 {
     /// <summary>The longest build name a server takes.</summary>
     public const int MaxBuildLength = 128;
@@ -480,10 +487,15 @@ public sealed record MeasureRelays(string MatchId, IReadOnlyList<RelayEndpoint> 
 /// <summary>The race: join the relay with the token, as this seat. The relay's host is an address when the
 /// coordinator started the relay itself (it changes from one start to the next); a name otherwise. ReportLive: send the race as the game sees it
 /// (<see cref="RaceReport"/>) for the lobby's waiting players. NoRejoin: a game that leaves this race does not come
-/// back and no Rejoin is offered: its mode does not say <c>cpus on</c>, and a CPU drives a seat meanwhile.</summary>
+/// back and no Rejoin is offered: its mode does not say <c>cpus on</c>, and a CPU drives a seat meanwhile.
+/// Rejoin: not a race to start: the race this player's seat is in still runs, and their program that raced it ended
+/// (<see cref="Hello.Rejoins"/>); the game offers Rejoin (the same match start, the same seat and token: the relay
+/// gives the seat back after its catch-up) and starts nothing until the player takes it. Sent only to a hello that
+/// said Rejoins; written only when true.</summary>
 public sealed record MatchStart(string MatchId, RelayEndpoint Relay, string Token, int Seat, RaceSetup Setup,
     bool ReportLive = false,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool NoRejoin = false) : ServerMessage;
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool NoRejoin = false,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool Rejoin = false) : ServerMessage;
 
 /// <summary>Taken out of a forming match; the player stays in the lobby for the next one. Reasons: latency (too slow
 /// to the chosen relay), no_relay (none connected), relay_failed (the race server could not be started, in any region).</summary>
