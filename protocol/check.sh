@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # The protocol folder's checks: the generated files are current, the generator's rules hold, the generated relay
 # codecs give the vectors' packets and bytes in both directions (relay version 3 as 0.4.0 speaks it), and the status
-# board's two views agree and hold under stress (README.md). No game, no game build. Needs python3 (3.11+), g++
+# board's two views agree and hold under stress, and the lobby link's messages are Online.Protocol's and the C++
+# codec writes and reads them as C# does (README.md). No game, no game build. Needs python3 (3.11+), g++
 # (C++20) and the .NET 10 SDK. Every path is this folder's own.
 #   check.sh          everything
 #   check.sh board    the generated files and the status board's part only
@@ -77,3 +78,12 @@ echo "check: protocol replay readers over the shared samples (C#; the C++ reader
 dotnet build -v q -nologo "$here/tests/dotnet-replay/ReplayVectors.csproj" -o "$temp/replay-cs" > "$temp/replay-build.txt" ||
     { tail -20 "$temp/replay-build.txt" >&2; exit 1; }
 timeout 120 dotnet "$temp/replay-cs/ReplayVectors.dll" "$here/tests/vectors/replays"
+
+echo "check: protocol lobby messages (C#: the records equal messages.toml and write the vectors; C++: the vectors both ways)"
+dotnet build -v q -nologo "$here/tests/dotnet-messages/MessageVectors.csproj" -o "$temp/messages-cs" > "$temp/messages-build.txt" ||
+    { tail -20 "$temp/messages-build.txt" >&2; exit 1; }
+timeout 60 dotnet "$temp/messages-cs/MessageVectors.dll" schema
+timeout 120 dotnet "$temp/messages-cs/MessageVectors.dll" check "$here/tests/vectors/messages/messages.tsv"
+g++ -std=c++17 -O1 -Wall -Wextra -Werror -I"$here/generated" "$here/tests/cxx/test_lobby_messages.cpp" -o "$temp/test_lobby_messages"
+timeout 120 "$temp/test_lobby_messages" "$here/tests/vectors/messages/messages.tsv" --write "$temp/cxx-messages.tsv"
+timeout 120 dotnet "$temp/messages-cs/MessageVectors.dll" check "$temp/cxx-messages.tsv"

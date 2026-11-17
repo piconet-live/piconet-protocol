@@ -1,0 +1,1003 @@
+# The lobby link (formats.md section 10): the JSON messages of the WebSocket between a launcher (or the native program)
+# and the coordinator, and the two documents read with the same options (the LAN announcement, the server's public
+# status, GET /api/status), once. Online.Protocol's records (net/src/Online.Protocol: Messages.cs, CustomLobbies.cs,
+# LiveRace.cs, PlayersList.cs, Pings.cs, ...) are what System.Text.Json writes and reads, with ControlProtocol.Json
+# (the web defaults: camelCase names, read without regard to case, numbers read from strings too; a null member left
+# out); their summaries say what each member means. `messages.py` loads this file and checks it; `messages_cxx.py`
+# writes `generated/lobby_messages.g.h` (the C++ codec, on `cxx/json_wire.h`), `messages_cs.py`
+# `generated/LobbySchema.g.cs` (these lines, which `tests/dotnet-messages` holds the records to by reflection: a
+# member added, moved, renamed or retyped in C# and not here, or here and not in C#, fails protocol/check.sh).
+#
+# [[enum]]: name; as "name" (a string converter: the value's name, read without regard to case, or a number) or
+#   "number"; underlying "byte" or "int" (left out: int), the C# enum's type (a number outside it is no value); values
+#   in order from 0.
+# [[record]]: name; root: "client" or "server" (a message of that side, with its `type`, the message's name on the
+#   wire, written first) or "lan" / "status" (a document of its own); members in the order they are written:
+#   name   the JSON name (the C# property's, camelCase);
+#   type   string, int (32 bits), uint, long, byte, bool, float, double, time (a DateTimeOffset: "2026-11-14T10:00:00+00:00"),
+#          list<T>, map<T> (an object of string keys, in order), a record's or an enum's name; a "?" after it: may be
+#          null (left out when null). A member that is no "?" and no value (a text, a list, a record) is null when
+#          the JSON leaves it out or says null, as the C# record's: the C++ struct keeps it as `wire_absent`;
+#   default  the constructor parameter's default as JSON text: what a reader takes when the JSON leaves it out;
+#   omit   "default": also left out when it is its type's default (false, 0);
+#   written  a member the C# record writes but does not read (a property of its own, no parameter): the C++
+#          expression over the struct `v` that writes it.
+
+# ControlProtocol's numbers: the version a hello names (Hello.Version, the server refuses another), the WebSocket's path,
+# how often each side pings (well inside a proxy's idle limit), the chat's two channels.
+[link]
+version = 3
+path = "/ws"
+keep_alive_seconds = 20
+global_channel = "global"
+lobby_channel = "lobby"
+
+[[enum]]
+name = "CpuFillMode"
+as = "name"
+values = ["Vote", "Always", "Never"]
+
+[[enum]]
+name = "CourseSelectMode"
+as = "name"
+values = ["Vote", "Random", "Fixed"]
+
+[[enum]]
+name = "ModeParamKind"
+as = "number"
+underlying = "byte"
+values = ["Number", "Delay", "Switch", "Choice"]
+
+[[enum]]
+name = "ModeType"
+as = "number"
+values = ["Int", "Real", "Bool", "Seat", "Seats", "Vec"]
+
+[[record]]
+name = "Hello"
+root = "client"
+type = "hello"
+members = [
+    { name = "name", type = "string" },
+    { name = "version", type = "int" },
+    { name = "build", type = "string?", default = 'null' },
+    { name = "voteCounts", type = "bool", default = 'false' },
+    { name = "debug", type = "bool", default = 'false', omit = "default" },
+    { name = "statPacks", type = "bool", default = 'false', omit = "default" },
+    { name = "pings", type = "bool", default = 'false', omit = "default" },
+    { name = "notices", type = "bool", default = 'false', omit = "default" },
+    { name = "key", type = "string?", default = 'null' },
+    { name = "players", type = "bool", default = 'false', omit = "default" },
+    { name = "line", type = "string?", default = 'null' },
+    { name = "modes", type = "int", default = '0', omit = "default" },
+]
+
+[[record]]
+name = "EnterQuickPlay"
+root = "client"
+type = "queue"
+members = [
+    { name = "machine", type = "int" },
+    { name = "color", type = "Rgb" },
+    { name = "setting", type = "int?", default = 'null' },
+    { name = "stockColor", type = "int?", default = 'null' },
+    { name = "custom", type = "CustomMachine?", default = 'null' },
+    { name = "trail", type = "BoostTrail?", default = 'null' },
+    { name = "emblem", type = "string?", default = 'null' },
+]
+
+[[record]]
+name = "LeaveQuickPlay"
+root = "client"
+type = "leaveQueue"
+members = []
+
+[[record]]
+name = "SendChat"
+root = "client"
+type = "chat"
+members = [
+    { name = "channel", type = "string" },
+    { name = "text", type = "string" },
+]
+
+[[record]]
+name = "VoteStart"
+root = "client"
+type = "voteStart"
+members = [
+    { name = "yes", type = "bool" },
+]
+
+[[record]]
+name = "VoteCpuFill"
+root = "client"
+type = "voteCpuFill"
+members = [
+    { name = "yes", type = "bool" },
+]
+
+[[record]]
+name = "RelayLatency"
+root = "client"
+type = "relayLatency"
+members = [
+    { name = "matchId", type = "string" },
+    { name = "results", type = "list<RelayRtt>" },
+]
+
+[[record]]
+name = "VoteCourse"
+root = "client"
+type = "voteCourse"
+members = [
+    { name = "matchId", type = "string" },
+    { name = "option", type = "int" },
+]
+
+[[record]]
+name = "MachineChoice"
+root = "client"
+type = "machineChoice"
+members = [
+    { name = "matchId", type = "string" },
+    { name = "machine", type = "int" },
+    { name = "color", type = "Rgb" },
+    { name = "setting", type = "int?", default = 'null' },
+    { name = "stockColor", type = "int?", default = 'null' },
+    { name = "custom", type = "CustomMachine?", default = 'null' },
+    { name = "pack", type = "string?", default = 'null' },
+    { name = "trail", type = "BoostTrail?", default = 'null' },
+    { name = "emblem", type = "string?", default = 'null' },
+]
+
+[[record]]
+name = "RaceOver"
+root = "client"
+type = "raceOver"
+members = [
+    { name = "matchId", type = "string" },
+    { name = "final", type = "RaceSnapshot?", default = 'null' },
+]
+
+[[record]]
+name = "RaceReport"
+root = "client"
+type = "raceReport"
+members = [
+    { name = "matchId", type = "string" },
+    { name = "snapshot", type = "RaceSnapshot" },
+]
+
+[[record]]
+name = "SetName"
+root = "client"
+type = "name"
+members = [
+    { name = "name", type = "string" },
+]
+
+[[record]]
+name = "LinkPong"
+root = "client"
+type = "pong"
+members = [
+    { name = "id", type = "uint" },
+]
+
+[[record]]
+name = "WatchRace"
+root = "client"
+type = "watch"
+members = [
+    { name = "yes", type = "bool" },
+]
+
+[[record]]
+name = "BrowseLobbies"
+root = "client"
+type = "browseLobbies"
+members = [
+    { name = "on", type = "bool" },
+]
+
+[[record]]
+name = "CreateLobby"
+root = "client"
+type = "createLobby"
+members = [
+    { name = "name", type = "string" },
+    { name = "rules", type = "LobbyRules" },
+    { name = "password", type = "string?" },
+    { name = "machine", type = "int" },
+    { name = "color", type = "Rgb" },
+    { name = "setting", type = "int?", default = 'null' },
+    { name = "stockColor", type = "int?", default = 'null' },
+    { name = "custom", type = "CustomMachine?", default = 'null' },
+    { name = "trail", type = "BoostTrail?", default = 'null' },
+    { name = "emblem", type = "string?", default = 'null' },
+]
+
+[[record]]
+name = "JoinLobby"
+root = "client"
+type = "joinLobby"
+members = [
+    { name = "lobbyId", type = "string" },
+    { name = "password", type = "string?" },
+    { name = "machine", type = "int" },
+    { name = "color", type = "Rgb" },
+    { name = "setting", type = "int?", default = 'null' },
+    { name = "stockColor", type = "int?", default = 'null' },
+    { name = "custom", type = "CustomMachine?", default = 'null' },
+    { name = "trail", type = "BoostTrail?", default = 'null' },
+    { name = "emblem", type = "string?", default = 'null' },
+]
+
+[[record]]
+name = "SetLobbyRules"
+root = "client"
+type = "setLobbyRules"
+members = [
+    { name = "name", type = "string?" },
+    { name = "rules", type = "LobbyRules" },
+    { name = "password", type = "string?", default = 'null' },
+    { name = "clearPassword", type = "bool", default = 'false' },
+]
+
+[[record]]
+name = "KickPlayer"
+root = "client"
+type = "kick"
+members = [
+    { name = "playerId", type = "string" },
+]
+
+[[record]]
+name = "ChooseTeam"
+root = "client"
+type = "chooseTeam"
+members = [
+    { name = "team", type = "int?" },
+    { name = "playerId", type = "string?", default = 'null' },
+]
+
+[[record]]
+name = "StartLobbyRace"
+root = "client"
+type = "startLobbyRace"
+members = []
+
+[[record]]
+name = "LeaveLobby"
+root = "client"
+type = "leaveLobby"
+members = []
+
+[[record]]
+name = "Welcome"
+root = "server"
+type = "welcome"
+members = [
+    { name = "playerId", type = "string" },
+    { name = "serverName", type = "string" },
+    { name = "version", type = "int" },
+    { name = "rules", type = "ServerRules?", default = 'null' },
+    { name = "renames", type = "bool", default = 'false' },
+    { name = "tag", type = "string?", default = 'null' },
+    { name = "spectators", type = "bool", default = 'false', omit = "default" },
+]
+
+[[record]]
+name = "ErrorMessage"
+root = "server"
+type = "error"
+members = [
+    { name = "code", type = "string" },
+    { name = "message", type = "string" },
+    { name = "seconds", type = "int?", default = 'null' },
+]
+
+[[record]]
+name = "LobbyState"
+root = "server"
+type = "lobby"
+members = [
+    { name = "lobbyId", type = "string" },
+    { name = "players", type = "list<PlayerInfo>" },
+    { name = "capacity", type = "int" },
+    { name = "votingMinimum", type = "int" },
+    { name = "votingOpen", type = "bool" },
+    { name = "startVotes", type = "int" },
+    { name = "cpuFillVotes", type = "int" },
+    { name = "stage", type = "string", default = '"forming"' },
+    { name = "race", type = "LobbyRace?", default = 'null' },
+    { name = "waiting", type = "string?", default = 'null' },
+    { name = "otherBuilds", type = "list<OtherBuild>?", default = 'null' },
+    { name = "statPack", type = "StatPackName?", default = 'null' },
+    { name = "seatPacks", type = "list<StatPackName>?", default = 'null' },
+    { name = "custom", type = "bool", default = 'false', omit = "default" },
+    { name = "hostId", type = "string?", default = 'null' },
+    { name = "rules", type = "LobbyRules?", default = 'null' },
+    { name = "name", type = "string?", default = 'null' },
+    { name = "locked", type = "bool", default = 'false', omit = "default" },
+    { name = "startsInMs", type = "int?", default = 'null' },
+    { name = "noCpuVote", type = "bool", default = 'false', omit = "default" },
+    { name = "cannotRace", type = "list<string>?", default = 'null' },
+]
+
+[[record]]
+name = "LeftLobby"
+root = "server"
+type = "leftLobby"
+members = [
+    { name = "lobbyId", type = "string" },
+    { name = "reason", type = "string?", default = 'null' },
+]
+
+[[record]]
+name = "ChatMessage"
+root = "server"
+type = "chat"
+members = [
+    { name = "channel", type = "string" },
+    { name = "fromId", type = "string" },
+    { name = "fromName", type = "string" },
+    { name = "text", type = "string" },
+    { name = "time", type = "time" },
+    { name = "level", type = "string?", default = 'null' },
+    { name = "noticeId", type = "string?", default = 'null' },
+    { name = "fromTag", type = "string?", default = 'null' },
+]
+
+[[record]]
+name = "RecentNotices"
+root = "server"
+type = "recentNotices"
+members = [
+    { name = "notices", type = "list<RecentNotice>" },
+]
+
+[[record]]
+name = "MeasureRelays"
+root = "server"
+type = "measureRelays"
+members = [
+    { name = "matchId", type = "string" },
+    { name = "relays", type = "list<RelayEndpoint>" },
+    { name = "timeoutMs", type = "int" },
+]
+
+[[record]]
+name = "MatchStart"
+root = "server"
+type = "matchStart"
+members = [
+    { name = "matchId", type = "string" },
+    { name = "relay", type = "RelayEndpoint" },
+    { name = "token", type = "string" },
+    { name = "seat", type = "int" },
+    { name = "setup", type = "RaceSetup" },
+    { name = "reportLive", type = "bool", default = 'false' },
+    { name = "noRejoin", type = "bool", default = 'false', omit = "default" },
+]
+
+[[record]]
+name = "Requeued"
+root = "server"
+type = "requeued"
+members = [
+    { name = "matchId", type = "string" },
+    { name = "reason", type = "string" },
+]
+
+[[record]]
+name = "QuickPlayEnded"
+root = "server"
+type = "quickPlayEnded"
+members = [
+    { name = "matchId", type = "string" },
+    { name = "reason", type = "string" },
+    { name = "message", type = "string?", default = 'null' },
+]
+
+[[record]]
+name = "CourseVote"
+root = "server"
+type = "courseVote"
+members = [
+    { name = "matchId", type = "string" },
+    { name = "options", type = "list<int>" },
+    { name = "durationMs", type = "int" },
+    { name = "cards", type = "list<VoteCard>?", default = 'null' },
+]
+
+[[record]]
+name = "CourseVotes"
+root = "server"
+type = "courseVotes"
+members = [
+    { name = "matchId", type = "string" },
+    { name = "votes", type = "list<int>" },
+    { name = "voted", type = "list<string>" },
+]
+
+[[record]]
+name = "CourseChosen"
+root = "server"
+type = "courseChosen"
+members = [
+    { name = "matchId", type = "string" },
+    { name = "options", type = "list<int>" },
+    { name = "votes", type = "list<int>" },
+    { name = "winner", type = "int" },
+    { name = "course", type = "int" },
+    { name = "card", type = "VoteCard?", default = 'null' },
+]
+
+[[record]]
+name = "ChooseMachine"
+root = "server"
+type = "chooseMachine"
+members = [
+    { name = "matchId", type = "string" },
+    { name = "course", type = "int" },
+    { name = "machines", type = "list<int>" },
+    { name = "durationMs", type = "int" },
+    { name = "customsOff", type = "bool", default = 'false', omit = "default" },
+    { name = "modeSets", type = "bool", default = 'false', omit = "default" },
+]
+
+[[record]]
+name = "LiveRace"
+root = "server"
+type = "liveRace"
+members = [
+    { name = "matchId", type = "string" },
+    { name = "snapshot", type = "RaceSnapshot" },
+]
+
+[[record]]
+name = "RaceDesynced"
+root = "server"
+type = "raceDesynced"
+members = [
+    { name = "matchId", type = "string" },
+]
+
+[[record]]
+name = "LinkPing"
+root = "server"
+type = "ping"
+members = [
+    { name = "id", type = "uint" },
+]
+
+[[record]]
+name = "LobbyPings"
+root = "server"
+type = "pings"
+members = [
+    { name = "lobbyId", type = "string" },
+    { name = "pings", type = "list<PlayerPing>" },
+]
+
+[[record]]
+name = "StatPackValues"
+root = "server"
+type = "statPack"
+members = [
+    { name = "pack", type = "StatPackWire" },
+]
+
+[[record]]
+name = "PlayersList"
+root = "server"
+type = "players"
+members = [
+    { name = "players", type = "list<ListedPlayer>" },
+    { name = "part", type = "int", default = '0' },
+    { name = "parts", type = "int", default = '1' },
+]
+
+[[record]]
+name = "PlayersChanged"
+root = "server"
+type = "playersChanged"
+members = [
+    { name = "joined", type = "list<ListedPlayer>" },
+    { name = "changed", type = "list<ListedPlayer>" },
+    { name = "left", type = "list<string>" },
+]
+
+[[record]]
+name = "TagChanged"
+root = "server"
+type = "tag"
+members = [
+    { name = "tag", type = "string" },
+]
+
+[[record]]
+name = "WatchStart"
+root = "server"
+type = "watchStart"
+members = [
+    { name = "matchId", type = "string" },
+    { name = "relay", type = "RelayEndpoint" },
+    { name = "token", type = "string" },
+    { name = "seat", type = "int" },
+    { name = "setup", type = "RaceSetup" },
+]
+
+[[record]]
+name = "RulesChanged"
+root = "server"
+type = "rules"
+members = [
+    { name = "rules", type = "ServerRules" },
+]
+
+[[record]]
+name = "LobbyList"
+root = "server"
+type = "lobbyList"
+members = [
+    { name = "lobbies", type = "list<LobbySummary>" },
+    { name = "quickPlay", type = "LobbyRules?", default = 'null' },
+    { name = "modes", type = "list<LobbyMode>?", default = 'null' },
+]
+
+[[record]]
+name = "LanAnnouncement"
+root = "lan"
+members = [
+    { name = "service", type = "string" },
+    { name = "name", type = "string" },
+    { name = "controlPort", type = "int" },
+    { name = "version", type = "int" },
+]
+
+[[record]]
+name = "ServiceStatus"
+root = "status"
+members = [
+    { name = "name", type = "string" },
+    { name = "time", type = "time" },
+    { name = "playersOnline", type = "int" },
+    { name = "lobbies", type = "list<LobbyView>" },
+    { name = "starting", type = "list<FormingMatchView>" },
+    { name = "races", type = "list<RaceView>" },
+    { name = "relays", type = "list<RelayView>" },
+    { name = "statPack", type = "StatPackName?", default = 'null' },
+    { name = "packSetting", type = "string?", default = 'null' },
+    { name = "together", type = "TogetherView?", default = 'null' },
+    { name = "togetherSetting", type = "string?", default = 'null' },
+    { name = "togetherFault", type = "string?", default = 'null' },
+    { name = "togetherFiles", type = "list<TogetherFileView>?", default = 'null' },
+    { name = "lineBuilds", type = "list<LineBuildView>?", default = 'null' },
+    { name = "lineBuildsFault", type = "string?", default = 'null' },
+    { name = "motd", type = "RecentNotice?", default = 'null' },
+    { name = "packNone", type = "bool", default = 'false' },
+    { name = "modeStore", type = "ModeStoreView?", default = 'null' },
+]
+
+[[record]]
+name = "Rgb"
+members = [
+    { name = "r", type = "byte" },
+    { name = "g", type = "byte" },
+    { name = "b", type = "byte" },
+]
+
+[[record]]
+name = "CustomMachine"
+members = [
+    { name = "body", type = "int" },
+    { name = "cockpit", type = "int" },
+    { name = "booster", type = "int" },
+    { name = "pilot", type = "int" },
+    { name = "colors", type = "list<uint>?", default = 'null' },
+]
+
+[[record]]
+name = "BoostTrail"
+members = [
+    { name = "normal", type = "Rgb?", default = 'null' },
+    { name = "boost", type = "Rgb?", default = 'null' },
+    { name = "sparks", type = "Rgb?", default = 'null' },
+]
+
+[[record]]
+name = "RelayRtt"
+members = [
+    { name = "relayId", type = "string" },
+    { name = "rttMs", type = "double?" },
+]
+
+[[record]]
+name = "RaceSnapshot"
+members = [
+    { name = "frame", type = "int" },
+    { name = "localSeat", type = "int" },
+    { name = "racers", type = "list<RacerLive>" },
+    { name = "scoreKind", type = "string?", default = 'null' },
+    { name = "scoreLabel", type = "string?", default = 'null' },
+]
+
+[[record]]
+name = "LobbyRules"
+members = [
+    { name = "values", type = "map<int>" },
+    { name = "statPack", type = "string?", default = 'null' },
+    { name = "packFile", type = "string?", default = 'null' },
+    { name = "mode", type = "LobbyMode?", default = 'null' },
+    { name = "modeFile", type = "string?", default = 'null' },
+    { name = "modeValues", type = "list<int>?", default = 'null' },
+]
+
+[[record]]
+name = "ServerRules"
+members = [
+    { name = "laps", type = "int" },
+    { name = "racers", type = "int" },
+    { name = "cpuFill", type = "CpuFillMode" },
+    { name = "courseSelect", type = "CourseSelectMode" },
+    { name = "fixedCourse", type = "int?" },
+    { name = "allowedMachines", type = "list<int>" },
+    { name = "machineSetting", type = "SettingRange" },
+    { name = "race", type = "RaceRules" },
+    { name = "latencyLimitMs", type = "int", default = '250' },
+]
+
+[[record]]
+name = "PlayerInfo"
+members = [
+    { name = "id", type = "string" },
+    { name = "name", type = "string" },
+    { name = "machine", type = "int" },
+    { name = "color", type = "Rgb" },
+    { name = "stockColor", type = "int?", default = 'null' },
+    { name = "racing", type = "bool", default = 'false' },
+    { name = "chosen", type = "bool", default = 'false' },
+    { name = "tag", type = "string?", default = 'null' },
+    { name = "watching", type = "bool", default = 'false', omit = "default" },
+    { name = "pack", type = "string?", default = 'null' },
+    { name = "custom", type = "CustomMachine?", default = 'null' },
+    { name = "team", type = "int?", default = 'null' },
+    { name = "nextRace", type = "bool", default = 'false', omit = "default" },
+]
+
+[[record]]
+name = "LobbyRace"
+members = [
+    { name = "matchId", type = "string" },
+    { name = "course", type = "int" },
+    { name = "laps", type = "int" },
+    { name = "seats", type = "list<SeatSetup>" },
+    { name = "started", type = "time" },
+    { name = "over", type = "bool", default = 'false' },
+    { name = "teams", type = "list<int>?", default = 'null' },
+]
+
+[[record]]
+name = "OtherBuild"
+members = [
+    { name = "build", type = "string?" },
+    { name = "players", type = "int" },
+    { name = "line", type = "string?", default = 'null' },
+]
+
+[[record]]
+name = "StatPackName"
+members = [
+    { name = "name", type = "string" },
+    { name = "fingerprint", type = "string" },
+    { name = "author", type = "string?", default = 'null' },
+]
+
+[[record]]
+name = "RecentNotice"
+members = [
+    { name = "id", type = "string" },
+    { name = "level", type = "string" },
+    { name = "text", type = "string" },
+    { name = "time", type = "time" },
+]
+
+[[record]]
+name = "RelayEndpoint"
+members = [
+    { name = "id", type = "string" },
+    { name = "host", type = "string" },
+    { name = "port", type = "int" },
+]
+
+[[record]]
+name = "RaceSetup"
+members = [
+    { name = "course", type = "int" },
+    { name = "laps", type = "int" },
+    { name = "seats", type = "list<SeatSetup>" },
+    { name = "shuffleSeed", type = "uint" },
+    { name = "cpuSeed", type = "uint" },
+    { name = "rules", type = "RaceRules?", default = 'null' },
+    { name = "stats", type = "StatPackWire?", default = 'null' },
+    { name = "packs", type = "list<StatPackWire>?", default = 'null' },
+    { name = "grid", type = "list<int>?", default = 'null' },
+    { name = "mode", type = "ModeStart?", default = 'null' },
+]
+
+[[record]]
+name = "VoteCard"
+members = [
+    { name = "mode", type = "string" },
+    { name = "laps", type = "int?" },
+    { name = "badge", type = "string?", default = 'null' },
+    { name = "about", type = "string?", default = 'null' },
+    { name = "rules", type = "list<string>?", default = 'null' },
+]
+
+[[record]]
+name = "PlayerPing"
+members = [
+    { name = "id", type = "string" },
+    { name = "ms", type = "int" },
+]
+
+[[record]]
+name = "StatPackWire"
+members = [
+    { name = "name", type = "string" },
+    { name = "fingerprint", type = "string" },
+    { name = "values", type = "string" },
+]
+
+[[record]]
+name = "ListedPlayer"
+members = [
+    { name = "id", type = "string" },
+    { name = "name", type = "string" },
+    { name = "tag", type = "string" },
+    { name = "color", type = "Rgb?" },
+    { name = "status", type = "string" },
+    { name = "lobby", type = "string?", default = 'null' },
+]
+
+[[record]]
+name = "LobbySummary"
+members = [
+    { name = "id", type = "string" },
+    { name = "name", type = "string" },
+    { name = "hostName", type = "string" },
+    { name = "players", type = "int" },
+    { name = "capacity", type = "int" },
+    { name = "locked", type = "bool" },
+    { name = "rules", type = "LobbyRules" },
+    { name = "stage", type = "string" },
+]
+
+[[record]]
+name = "LobbyMode"
+members = [
+    { name = "hash", type = "string" },
+    { name = "shareCode", type = "string" },
+    { name = "name", type = "string" },
+    { name = "api", type = "int" },
+    { name = "badge", type = "string", default = '""' },
+    { name = "about", type = "string", default = '""' },
+    { name = "terms", type = "map<int>?", default = 'null' },
+    { name = "pack", type = "string?", default = 'null' },
+    { name = "params", type = "list<ModeParam>?", default = 'null' },
+    { name = "values", type = "list<int>?", default = 'null' },
+    { name = "machines", type = "list<int>?", default = 'null' },
+    { name = "customsOff", type = "bool", default = 'false', omit = "default" },
+    { name = "courses", type = "list<int>?", default = 'null' },
+    { name = "packParam", type = "int?", default = 'null' },
+]
+
+[[record]]
+name = "LobbyView"
+members = [
+    { name = "id", type = "string" },
+    { name = "players", type = "list<RacerView>" },
+    { name = "capacity", type = "int" },
+    { name = "votingOpen", type = "bool" },
+    { name = "startVotes", type = "int" },
+    { name = "stage", type = "string", default = '"forming"' },
+    { name = "raceId", type = "string?", default = 'null' },
+    { name = "racing", type = "int", default = '0' },
+    { name = "build", type = "string?", default = 'null' },
+    { name = "builds", type = "list<LobbyBuildView>?", default = 'null' },
+    { name = "line", type = "string?", default = 'null' },
+]
+
+[[record]]
+name = "FormingMatchView"
+members = [
+    { name = "id", type = "string" },
+    { name = "players", type = "int" },
+    { name = "stage", type = "string" },
+]
+
+[[record]]
+name = "RaceView"
+members = [
+    { name = "id", type = "string" },
+    { name = "relay", type = "string" },
+    { name = "region", type = "string" },
+    { name = "course", type = "int" },
+    { name = "courseName", type = "string" },
+    { name = "laps", type = "int" },
+    { name = "players", type = "list<RacerView>" },
+    { name = "cpuRacers", type = "int" },
+    { name = "started", type = "time" },
+    { name = "live", type = "RaceSnapshot?", default = 'null' },
+]
+
+[[record]]
+name = "RelayView"
+members = [
+    { name = "id", type = "string" },
+    { name = "region", type = "string" },
+    { name = "races", type = "int?" },
+    { name = "players", type = "int?" },
+    { name = "maxRaces", type = "int?", default = 'null' },
+    { name = "state", type = "string?", default = 'null' },
+    { name = "address", type = "string?", default = 'null' },
+    { name = "size", type = "string?", default = 'null' },
+    { name = "idleUntil", type = "time?", default = 'null' },
+    { name = "addressUntil", type = "time?", default = 'null' },
+    { name = "error", type = "string?", default = 'null' },
+]
+
+[[record]]
+name = "TogetherView"
+members = [
+    { name = "name", type = "string" },
+    { name = "builds", type = "list<TogetherBuildView>" },
+    { name = "fingerprint", type = "string" },
+]
+
+[[record]]
+name = "TogetherFileView"
+members = [
+    { name = "name", type = "string" },
+    { name = "fingerprint", type = "string?", default = 'null' },
+]
+
+[[record]]
+name = "LineBuildView"
+members = [
+    { name = "build", type = "string" },
+    { name = "line", type = "string" },
+    { name = "label", type = "string?", default = 'null' },
+]
+
+[[record]]
+name = "ModeStoreView"
+members = [
+    { name = "source", type = "string" },
+    { name = "fault", type = "string?" },
+    { name = "modes", type = "list<ModeView>" },
+]
+
+[[record]]
+name = "RacerLive"
+members = [
+    { name = "seat", type = "int" },
+    { name = "rank", type = "int" },
+    { name = "lap", type = "int" },
+    { name = "lapMs", type = "int" },
+    { name = "totalMs", type = "int" },
+    { name = "bestLapMs", type = "int?" },
+    { name = "speed", type = "float" },
+    { name = "energy", type = "float" },
+    { name = "maxEnergy", type = "float" },
+    { name = "kos", type = "int" },
+    { name = "topSpeed", type = "float" },
+    { name = "state", type = "string" },
+    { name = "x", type = "float" },
+    { name = "y", type = "float" },
+    { name = "z", type = "float" },
+    { name = "distance", type = "float", default = '0' },
+    { name = "place", type = "int", default = '0' },
+    { name = "score", type = "float?", default = 'null' },
+]
+
+[[record]]
+name = "SettingRange"
+members = [
+    { name = "low", type = "int" },
+    { name = "high", type = "int" },
+]
+
+[[record]]
+name = "RaceRules"
+members = [
+    { name = "cpuLevel", type = "int", default = '3' },
+    { name = "boostFromStart", type = "bool", default = 'false' },
+    { name = "restore", type = "bool", default = 'false' },
+    { name = "finishLimitSeconds", type = "int", default = '0' },
+    { name = "mineRegenMs", type = "int", default = '0' },
+]
+
+[[record]]
+name = "SeatSetup"
+members = [
+    { name = "seat", type = "int" },
+    { name = "playerId", type = "string?" },
+    { name = "name", type = "string" },
+    { name = "machine", type = "int" },
+    { name = "color", type = "Rgb?" },
+    { name = "setting", type = "int", default = '50' },
+    { name = "stockColor", type = "int?", default = 'null' },
+    { name = "custom", type = "CustomMachine?", default = 'null' },
+    { name = "pack", type = "int?", default = 'null' },
+    { name = "trail", type = "BoostTrail?", default = 'null' },
+    { name = "emblem", type = "string?", default = 'null' },
+    { name = "cpu", type = "bool", written = "!v.playerId" },
+]
+
+[[record]]
+name = "ModeStart"
+members = [
+    { name = "package", type = "string" },
+    { name = "hash", type = "string" },
+    { name = "api", type = "int" },
+    { name = "params", type = "list<int>" },
+    { name = "teams", type = "list<int>?", default = 'null' },
+]
+
+[[record]]
+name = "ModeParam"
+members = [
+    { name = "name", type = "string" },
+    { name = "label", type = "string" },
+    { name = "kind", type = "ModeParamKind" },
+    { name = "type", type = "ModeType" },
+    { name = "least", type = "int" },
+    { name = "most", type = "int" },
+    { name = "step", type = "int" },
+    { name = "default", type = "int" },
+    { name = "choices", type = "list<string>" },
+    { name = "or", type = "string?", default = 'null' },
+    { name = "unit", type = "string", default = '""' },
+    { name = "rule", type = "string", default = '""' },
+    { name = "unset", type = "int?", written = "v.or_ ? std::optional<std::int32_t>(v.most) : std::nullopt" },
+    { name = "top", type = "int", written = "!v.or_ ? v.most : v.kind == ModeParamKind::Choice ? Wrap(std::int64_t{v.most} - 1) : Wrap(std::int64_t{v.most} - std::max(v.step, 1))" },
+]
+
+[[record]]
+name = "RacerView"
+members = [
+    { name = "name", type = "string" },
+    { name = "machine", type = "int" },
+    { name = "color", type = "string?" },
+    { name = "tag", type = "string?", default = 'null' },
+    { name = "custom", type = "CustomMachine?", default = 'null' },
+]
+
+[[record]]
+name = "LobbyBuildView"
+members = [
+    { name = "build", type = "string" },
+    { name = "players", type = "int" },
+]
+
+[[record]]
+name = "TogetherBuildView"
+members = [
+    { name = "build", type = "string" },
+    { name = "label", type = "string?", default = 'null' },
+]
+
+[[record]]
+name = "ModeView"
+members = [
+    { name = "file", type = "string" },
+    { name = "name", type = "string" },
+    { name = "hash", type = "string" },
+    { name = "role", type = "string" },
+    { name = "weight", type = "int?", default = 'null' },
+]

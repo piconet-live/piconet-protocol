@@ -19,6 +19,8 @@ public static class LaunchFormat
     public const int AuroraTexturesLow = 1, AuroraTexturesHigh = 16;
     /// <summary>The range of "auroraHighRefresh" the game's reader takes.</summary>
     public const int AuroraHighRefreshLow = 120, AuroraHighRefreshHigh = 480;
+    /// <summary>The range of "volume" the game's reader takes.</summary>
+    public const int VolumeLow = 0, VolumeHigh = 100;
     /// <summary>The range of "camera" the game's reader takes.</summary>
     public const int MatchCameraLow = 1, MatchCameraHigh = 4;
     /// <summary>The range of "width" the game's reader takes.</summary>
@@ -36,7 +38,7 @@ public static class LaunchFormat
 }
 
 /// <summary>The launch file's part File: the launch file: every setting of one start of the game.
-/// The launcher writes "about", "bundle", "widescreen", "trueWidescreen", "lanes", "controllerSetup", "match", "replay", "windowName", "windowNamePicture", "showFrameRate", "renderer", "auroraSize", "auroraEdges", "auroraTextures", "auroraColourblind", "auroraHighRefresh", "auroraRayTracing", "rumble", "present", "verticalSync", "fullScreen", "taskbar", "board", "overlay", "debug".</summary>
+/// The launcher writes "about", "bundle", "widescreen", "trueWidescreen", "lanes", "controllerSetup", "match", "replay", "windowName", "windowNamePicture", "showFrameRate", "renderer", "auroraSize", "auroraEdges", "auroraTextures", "auroraColourblind", "auroraHighRefresh", "auroraRayTracing", "rumble", "muteCityGroundFix", "volume", "present", "verticalSync", "fullScreen", "taskbar", "board", "overlay", "debug".</summary>
 public sealed record LaunchFile(
     string About,
     string? Bundle = null,
@@ -56,6 +58,8 @@ public sealed record LaunchFile(
     int AuroraHighRefresh = 0,
     bool AuroraRayTracing = false,
     bool Rumble = true,
+    bool MuteCityGroundFix = true,
+    int? Volume = null,
     string? Present = null,
     bool VerticalSync = false,
     string? FullScreen = null,
@@ -137,6 +141,14 @@ public sealed record LaunchFile(
         if (!Rumble)
         {
             o["rumble"] = false;
+        }
+        if (!MuteCityGroundFix)
+        {
+            o["muteCityGroundFix"] = false;
+        }
+        if (Volume is { } volume)
+        {
+            o["volume"] = volume;
         }
         if (Present is { } present)
         {

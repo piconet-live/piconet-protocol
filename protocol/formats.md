@@ -1,4 +1,4 @@
-# Formats: the replay file, the launch file, the bundle, the controller helper's lines, the save's options, a race's summary line, the log's stop and freeze lines, the status board
+# Formats: the replay file, the launch file, the bundle, the controller helper's lines, the save's options, a race's summary line, the log's stop and freeze lines, the status board, the mode package, the lobby link
 
 Three kinds of file pass between the launcher and the game. This page is written from the code that reads and
 writes them; where the page and the code differ, the code is right and the page is corrected in the same commit.
@@ -198,6 +198,7 @@ turns it into UTF-8 (a letter the code page does not have is lost before the run
 | `auroraHighRefresh` | With `renderer` `"aurora"`: pictures a second asked for, 120 to 480 (the launcher offers 120 and 240): pictures between the game's own steps, drawn by the game's own code on a step run ahead and undone, never delaying a step or its input; one with no time for it is left out. Picture only. Left out: none. |
 | `auroraRayTracing` | With `renderer` `"aurora"`: `true` turns on ray tracing, the runner's tested set of Aurora's ray switches (the launcher's Settings, Game, "Ray tracing", offered on a graphics card with DirectX 12 ray tracing, DXR 1.1). A switch the start's environment already sets keeps its own value, so a test's `AURORA_RT_*` stay. A card without it shows the game's own picture (Aurora's log: `[rt] live pass off`). Picture only. Left out: off. |
 | `rumble` | `true` or `false`: the player's controllers may rumble (the launcher's Settings, Game, "Rumble"; it writes the key only as `false`, so a runner from before the key takes its files while the switch is on). `false`: no command that runs a motor reaches a pad in this start. `true`: only while the player drives ("Rumble", below). A player's key: no test setting | `true` |
+| `muteCityGroundFix` | `true` or `false`: a drawing fix (the runner's `port/core/src/course_fix.cpp`). `true`: the Mute City ground's lights (`MUT_GROUND_A`) are drawn without depth writes on Twist Road, Serial Gaps and story course 43, as the game itself draws the same model on Sonic Oval (its course placement's flag 0x800), so the lights no longer cut each other off. `false`: the game's own drawing. The launcher writes it only as `false`. Drawing only: no step reads the flag. A player's key: no test setting | `true` |
 | `present` | when a picture goes to the screen: `console` (at the time a console puts its first line out), or one of the two ways kept for comparison, which the log calls test settings: `field` (as up to 0.2.0) or `copy` (when the game copies it out). "The picture's moment and the delay", below. Outside `debug`: a launcher writes it from its settings file | `console` |
 | `verticalSync` | `true` or `false`: pictures wait for the display's refresh (the player's setting in the launcher). The runner sets the video backend's own setting by it, whatever the user folder's `GFX.ini` says | `false` |
 | `refreshRate` | No longer written by the launcher since 0.6.0 (Aurora draws every start, and its High refresh is `auroraHighRefresh`); kept for old launch files and tests. Pictures a second in a race or a replay: `60` (the game's own picture a step), `120`, `240`, or `display` (the display's own rate): pictures between two steps, made by the emulator's GPU thread drawing the step's recorded frame again with corrected matrices (`fzgx/hfr.h`, `VideoCommon/FrameRedraw.h`): the world by the chase camera's blend, each machine and what is drawn at its place by its own; the HUD, flat draws and offscreen passes as the step drew them. Nothing of the game runs again. The simulation keeps the console's 59.94 steps a second; the pictures between a step and the next are made at the next one's draw-done, so every true picture is held a field (and 1.5 ms) past its console moment and the ones between at their fractions of a field after it. Pictures are left out, never steps, when the GPU thread's budget is spent. Needs `present` `console` for its timing (other ways show the pictures at once). A test setting since 0.6.0 | `60` |
@@ -1096,3 +1097,14 @@ z >> 16) × 0x85EBCA6B; z = (z ^ z >> 13) × 0xC2B2AE35; z ^ z >> 16, in 32 bits
 first word 1. A draw is the generator's next(): `random(n)` gives (next() × n) >> 32 in 64 bits for n above 0 and 0,
 with no draw, for any other n; `random_real()` (next() >> 8) × 2^-24. `tests/vectors/modes/random.json` holds first
 states and draws from an independent reference.
+
+## 10. The lobby link
+
+The WebSocket between a launcher (or the native program) and the coordinator (`wss://play.piconet.live/ws`, a LAN
+server's `ws://HOST:47810/ws`): one JSON object a text frame, the client's and the server's messages, each with its
+`type` first. Their members, types, defaults and omissions are `messages.toml`'s (Online.Protocol's records, which
+System.Text.Json writes and reads with `ControlProtocol.Json`): camelCase names, read without regard to case; a null
+member left out; numbers also read from strings. What a member that a reader does not know is: passed over. The
+handbook's `service-protocol.md` says what each message does. The C++ codec (`generated/lobby_messages.g.h`, on
+`cxx/json_wire.h`) writes and reads them byte for byte as C# does (`tests/vectors/messages`). The same JSON is the LAN
+announcement (UDP 47800) and the server's public status (GET `/api/status`).
