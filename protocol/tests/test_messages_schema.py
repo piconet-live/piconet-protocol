@@ -33,8 +33,8 @@ class TheMessages(unittest.TestCase):
     def test_the_file_loads(self):
         table = messages.load()
         roots = [r["root"] for r in table["records"]]
-        self.assertEqual(roots.count("client"), 22)
-        self.assertEqual(roots.count("server"), 25)
+        self.assertEqual(roots.count("client"), 24)
+        self.assertEqual(roots.count("server"), 27)
         self.assertEqual(table["link"]["version"], 3)
 
     def test_a_type_must_be_known(self):

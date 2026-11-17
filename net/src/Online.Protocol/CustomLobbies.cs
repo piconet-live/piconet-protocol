@@ -199,7 +199,8 @@ public sealed record BrowseLobbies(bool On) : ClientMessage;
 public sealed record CreateLobby(string Name, LobbyRules Rules, string? Password, int Machine, Rgb Color, int? Setting = null,
     int? StockColor = null, CustomMachine? Custom = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] BoostTrail? Trail = null,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Emblem = null) : ClientMessage;
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Emblem = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<EmblemSlot>? Emblems = null) : ClientMessage;
 
 /// <summary>Join a custom lobby of the browser, or a Quick Play lobby by its id as the server's status lists it
 /// (<see cref="LobbyView.Id"/>; <see cref="EnterQuickPlay"/> lets the server pick one), leaving the lobby one is in,
@@ -212,7 +213,8 @@ public sealed record CreateLobby(string Name, LobbyRules Rules, string? Password
 public sealed record JoinLobby(string LobbyId, string? Password, int Machine, Rgb Color, int? Setting = null,
     int? StockColor = null, CustomMachine? Custom = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] BoostTrail? Trail = null,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Emblem = null) : ClientMessage;
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Emblem = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<EmblemSlot>? Emblems = null) : ClientMessage;
 
 /// <summary>The host's change to their lobby while it is forming: a new name (null: the same), the rules whole
 /// (a missing key: Quick Play's), a new password (null: the same), or none (<paramref name="ClearPassword"/>).

@@ -81,7 +81,8 @@ public sealed record PlayerInfo(string Id, string Name, int Machine, Rgb Color, 
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Pack = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] CustomMachine? Custom = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] int? Team = null,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool NextRace = false);
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool NextRace = false,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<EmblemSlot>? Emblems = null);
 
 /// <summary>A relay the players measure. An empty host means the coordinator's own host.</summary>
 public sealed record RelayEndpoint(string Id, string Host, int Port);
@@ -102,7 +103,8 @@ public sealed record SeatSetup(int Seat, string? PlayerId, string Name, int Mach
     int? StockColor = null, CustomMachine? Custom = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] int? Pack = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] BoostTrail? Trail = null,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Emblem = null)
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Emblem = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<EmblemSlot>? Emblems = null)
 {
     public bool Cpu => PlayerId is null;
 }
@@ -196,6 +198,8 @@ public sealed record ServerRules(
 [JsonDerivedType(typeof(ChooseTeam), "chooseTeam")]
 [JsonDerivedType(typeof(StartLobbyRace), "startLobbyRace")]
 [JsonDerivedType(typeof(LeaveLobby), "leaveLobby")]
+[JsonDerivedType(typeof(EmblemUpload), "emblemPicture")]
+[JsonDerivedType(typeof(AskEmblems), "emblemAsk")]
 public abstract record ClientMessage;
 
 /// <summary>The first message: the player's display name and protocol version. A server has no password (a custom
@@ -272,7 +276,8 @@ public sealed record Hello(string Name, int Version, string? Build = null, bool 
 public sealed record EnterQuickPlay(int Machine, Rgb Color, int? Setting = null, int? StockColor = null,
     CustomMachine? Custom = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] BoostTrail? Trail = null,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Emblem = null) : ClientMessage;
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Emblem = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<EmblemSlot>? Emblems = null) : ClientMessage;
 
 /// <summary>Leave Quick Play: the lobby one is in, as <see cref="LeaveLobby"/>.</summary>
 public sealed record LeaveQuickPlay : ClientMessage;
@@ -306,7 +311,8 @@ public sealed record MachineChoice(string MatchId, int Machine, Rgb Color, int? 
     CustomMachine? Custom = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Pack = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] BoostTrail? Trail = null,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Emblem = null)
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Emblem = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<EmblemSlot>? Emblems = null)
     : ClientMessage;
 
 /// <summary>The player's game is done with the race (it quit after the results, or the player closed it): the player
@@ -346,6 +352,8 @@ public sealed record RaceReport(string MatchId, RaceSnapshot Snapshot) : ClientM
 [JsonDerivedType(typeof(WatchStart), "watchStart")]
 [JsonDerivedType(typeof(RulesChanged), "rules")]
 [JsonDerivedType(typeof(LobbyList), "lobbyList")]
+[JsonDerivedType(typeof(EmblemsWanted), "emblemsWanted")]
+[JsonDerivedType(typeof(EmblemPicture), "emblemPicture")]
 public abstract record ServerMessage;
 
 /// <summary>The server's stat pack, whole, once after the welcome, to a launcher whose hello said it knows stat

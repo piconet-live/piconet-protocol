@@ -71,6 +71,7 @@ OUTPUTS = {"csharp": "generated/RelayPackets.g.cs", "cxx": "generated/relay_pack
            "stats_csharp": "generated/StatTables.g.cs", "stats_ranges_cxx": "generated/stat_ranges.g.h",
            "stats_constants_cxx": "generated/const_ranges.g.h",
            "rules_csharp": "generated/HostRules.g.cs", "rules_cxx": "generated/race_rules.g.h",
+           "host_rules_cxx": "generated/host_rules.g.h",
            "theme_axaml": "generated/Theme.g.axaml", "theme_cxx": "generated/theme_palette.g.h",
            "theme_css": "generated/theme.g.css",
            "courses_csharp": "generated/CourseTable.g.cs", "courses_cxx": "generated/course_names.g.h",
@@ -262,6 +263,11 @@ def generated(path=SCHEMA, board_path=board.SCHEMA, replay_path=replay.SCHEMA, l
     named = courses.load(courses_path)
     words = modes.load(modes_path)
     link = messages.load(messages_path)
+    # (the C# constants rules.toml names, for its C++ list of the host's rules: rules_cxx.constants)
+    with open(os.path.join(here, "generated", "GameFacts.g.cs"), encoding="utf-8") as f:
+        facts = f.read()
+    rules_named = rules_cxx.constants(facts, int(next(m["default"] for r in link["records"] if r["name"] == "ServerRules"
+                                                  for m in r["members"] if m["name"] == "latencyLimitMs")))
     return {OUTPUTS["csharp"]: codec_cs.emit(protocol, packets), OUTPUTS["cxx"]: codec_cxx.emit(protocol, packets),
             OUTPUTS["cxx_describe"]: codec_cxx.emit_describe(protocol, packets),
             OUTPUTS["board_csharp"]: board_cs.emit(*laid), OUTPUTS["board_cxx"]: board_cxx.emit(*laid),
@@ -272,6 +278,7 @@ def generated(path=SCHEMA, board_path=board.SCHEMA, replay_path=replay.SCHEMA, l
             OUTPUTS["stats_csharp"]: stats_cs.emit(tables), OUTPUTS["stats_ranges_cxx"]: stats_cxx.emit_ranges(tables),
             OUTPUTS["stats_constants_cxx"]: stats_cxx.emit_constants(tables),
             OUTPUTS["rules_csharp"]: rules_cs.emit(host), OUTPUTS["rules_cxx"]: rules_cxx.emit(host),
+            OUTPUTS["host_rules_cxx"]: rules_cxx.emit_host(host, rules_named),
             OUTPUTS["theme_axaml"]: theme_axaml.emit(tokens), OUTPUTS["theme_cxx"]: theme_cxx.emit(tokens),
             OUTPUTS["theme_css"]: theme_css.emit(tokens),
             OUTPUTS["courses_csharp"]: courses_cs.emit(named), OUTPUTS["courses_cxx"]: courses_cxx.emit(named),
