@@ -402,9 +402,10 @@ public sealed class QuickPlayRotationTests : IDisposable
     public void TheOfficialRotationLoads()
     {
         var rotation = Official();
-        Assert.Equal((5, 2, 0.15, true), (rotation.Cards, rotation.SpicyCards, rotation.RandomSpicyChance, rotation.ShowLaps));
+        // live's: six course cards, one of them spicy, Overdrive three times as often as each other spicy option
+        Assert.Equal((6, 1, 0.15, true), (rotation.Cards, rotation.SpicyCards, rotation.RandomSpicyChance, rotation.ShowLaps));
         Assert.Equal("Quick Play", rotation.Normal.Package.Name);
-        Assert.Equal([("Knockout", "KNOCKOUT", 1), ("Ghost race", "GHOST RACE", 1), ("Overdrive", "OVERDRIVE", 1), ("Death Race", "DEATH RACE", 1), ("Crown", "CROWN", 1)],
+        Assert.Equal([("Knockout", "KNOCKOUT", 1), ("Ghost race", "GHOST RACE", 1), ("Overdrive", "OVERDRIVE", 3), ("Death Race", "DEATH RACE", 1), ("Crown", "CROWN", 1)],
             rotation.Spicy.Select(s => (s.Mode.Package.Name, s.Mode.Package.Badge, s.Weight)));
         Assert.True(rotation.CpusAllowed);
     }
@@ -417,7 +418,7 @@ public sealed class QuickPlayRotationTests : IDisposable
         var rotation = Official();
         var random = new Random(9);
         var seen = new HashSet<(int, string)>();
-        for (var round = 0; round < 300; round++)
+        for (var round = 0; round < 3000; round++)   // one spicy card a vote: enough votes for each option on every course
         {
             foreach (var option in rotation.Vote(CoursePool.Default, random.Next))
             {
@@ -485,60 +486,57 @@ public sealed class QuickPlayRotationTests : IDisposable
         Assert.All(CourseTable.Courses, c => Assert.Equal(5, hosted.Laps(c.Course)));
     }
 
-    /// <summary>Two spicy cards a vote, two different options of the five (Knockout, Ghost race, Overdrive, Death Race,
-    /// Crown), each on a course of the pool (Death Race on one of its eleven): over 600 votes every pair comes, every
-    /// option on every course it races, at every place.</summary>
+    /// <summary>One spicy card a vote (live's rotation: six course cards and Random), one option of the five (Knockout,
+    /// Ghost race, Overdrive, Death Race, Crown) on a course of the pool (Death Race on one of its eleven), Overdrive at
+    /// weight 3 and the others at 1: over 3000 votes every option comes on every course it races, at every place, and
+    /// Overdrive is about three in seven of the spicy cards.</summary>
     [Fact]
-    public void TheOfficialVoteHasTwoDifferentSpicyCardsOnCoursesOfThePool()
+    public void TheOfficialVoteHasOneSpicyCardOnACourseOfThePool()
     {
         var rotation = Official();
         var random = new Random(13);
         var places = new HashSet<int>();
-        var pairs = new HashSet<string>();
         var courses = new Dictionary<string, HashSet<int>>();
-        for (var round = 0; round < 600; round++)
+        var times = new Dictionary<string, int>();
+        const int votes = 3000;
+        for (var round = 0; round < votes; round++)
         {
             var vote = rotation.Vote(CoursePool.Default, random.Next);
-            Assert.Equal(6, vote.Count);
+            Assert.Equal(7, vote.Count);
             Assert.Equal(CourseVote.RandomCourse, vote[^1].Course);
-            var spicy = vote.Where(o => o.Spicy).ToList();
-            Assert.Equal(2, spicy.Count);
-            Assert.NotEqual(spicy[0].Mode.File, spicy[1].Mode.File);
-            pairs.Add(string.Join("+", spicy.Select(o => o.Mode.File).Order(StringComparer.Ordinal)));
-            foreach (var card in spicy)
+            var card = Assert.Single(vote, o => o.Spicy);
+            places.Add(vote.ToList().IndexOf(card));
+            var laps = card.Mode.File == "ghost_race.fzmode" ? rotation.Normal.Laps(card.Course) : 0;   // the others: no finish line
+            var expected = card.Mode.File switch
             {
-                places.Add(vote.ToList().IndexOf(card));
-                var laps = card.Mode.File == "ghost_race.fzmode" ? rotation.Normal.Laps(card.Course) : 0;   // the others: no finish line
-                var expected = card.Mode.File switch
-                {
-                    "knockout.fzmode" => ("Knockout", "KNOCKOUT"),
-                    "ghost_race.fzmode" => ("Ghost race", "GHOST RACE"),
-                    "overdrive.fzmode" => ("Overdrive", "OVERDRIVE"),
-                    "death_race.fzmode" => ("Death Race", "DEATH RACE"),
-                    "crown.fzmode" => ("Crown", "CROWN"),
-                    _ => throw new InvalidDataException(card.Mode.File),
-                };
-                Assert.Equal((expected.Item1, expected.Item2, laps), (card.Mode.Package.Name, card.Card.Badge, card.Card.Laps!.Value));
-                Assert.Contains(card.Course, CoursePool.Default);
-                Assert.NotNull(card.Card.About);
-                if (!courses.TryGetValue(card.Mode.File, out var seen))
-                {
-                    courses[card.Mode.File] = seen = [];
-                }
-                seen.Add(card.Course);
+                "knockout.fzmode" => ("Knockout", "KNOCKOUT"),
+                "ghost_race.fzmode" => ("Ghost race", "GHOST RACE"),
+                "overdrive.fzmode" => ("Overdrive", "OVERDRIVE"),
+                "death_race.fzmode" => ("Death Race", "DEATH RACE"),
+                "crown.fzmode" => ("Crown", "CROWN"),
+                _ => throw new InvalidDataException(card.Mode.File),
+            };
+            Assert.Equal((expected.Item1, expected.Item2, laps), (card.Mode.Package.Name, card.Card.Badge, card.Card.Laps!.Value));
+            Assert.Contains(card.Course, CoursePool.Default);
+            Assert.NotNull(card.Card.About);
+            if (!courses.TryGetValue(card.Mode.File, out var seen))
+            {
+                courses[card.Mode.File] = seen = [];
             }
-            Assert.Equal(5, vote.Take(5).Select(o => o.Course).Distinct().Count());   // no course twice in a vote
+            seen.Add(card.Course);
+            times[card.Mode.File] = times.GetValueOrDefault(card.Mode.File) + 1;
+            Assert.Equal(6, vote.Take(6).Select(o => o.Course).Distinct().Count());   // no course twice in a vote
             Assert.All(vote.Where(o => !o.Spicy), o => Assert.Equal(("Quick Play", (string?)null), (o.Mode.Package.Name, o.Card.Badge)));
-            Assert.All(vote.Take(5).Where(o => !o.Spicy), o => Assert.Equal(rotation.Normal.Laps(o.Course), o.Card.Laps));
+            Assert.All(vote.Take(6).Where(o => !o.Spicy), o => Assert.Equal(rotation.Normal.Laps(o.Course), o.Card.Laps));
         }
-        Assert.Equal([0, 1, 2, 3, 4], places.Order());
+        Assert.Equal([0, 1, 2, 3, 4, 5], places.Order());
         string[] files = ["crown.fzmode", "death_race.fzmode", "ghost_race.fzmode", "knockout.fzmode", "overdrive.fzmode"];
-        Assert.Equal(files.SelectMany((a, i) => files.Skip(i + 1).Select(b => a + "+" + b)), pairs.Order(StringComparer.Ordinal));   // all ten pairs
         Assert.Equal(files, courses.Keys.Order(StringComparer.Ordinal));
         foreach (var (file, seen) in courses)
         {
             // every course of the pool; Death Race: every one of its eleven
             Assert.Equal(file == "death_race.fzmode" ? DeathRaceCourses : CoursePool.Default.Order(), seen.Order());
+            Assert.InRange(times[file] / (double)votes, file == "overdrive.fzmode" ? 0.39 : 0.11, file == "overdrive.fzmode" ? 0.47 : 0.18);   // 3/7, 1/7
         }
     }
 
@@ -552,7 +550,7 @@ public sealed class QuickPlayRotationTests : IDisposable
         foreach (var name in new[] { "Knockout", "Ghost race", "Overdrive", "Death Race", "Crown" })
         {
             var share = draws.Count(d => d.Spicy && d.Mode.Package.Name == name) / (double)draws.Count(d => d.Spicy);
-            Assert.InRange(share, 0.16, 0.24);   // the five at weight 1
+            Assert.InRange(share, name == "Overdrive" ? 0.39 : 0.11, name == "Overdrive" ? 0.47 : 0.18);   // Overdrive at weight 3 (3/7), the others at 1 (1/7)
         }
         Assert.All(draws.Where(d => d.Spicy), d => Assert.True(d.Mode.Package.Name is "Knockout" or "Ghost race" or "Overdrive" or "Death Race" or "Crown"));
         Assert.All(draws.Where(d => d.Spicy), d => Assert.Contains(d.Course, CoursePool.Default));
