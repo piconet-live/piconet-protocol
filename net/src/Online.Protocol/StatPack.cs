@@ -20,10 +20,11 @@ public readonly record struct StatEntry(int Block, int At, uint Bits)
 public sealed record StatPackWire(string Name, string Fingerprint, string Values);
 
 /// <summary>What names a server's stat pack where it is only shown: in a lobby's state (<see cref="LobbyState.StatPack"/>)
-/// and in a server's status. Author: who made the pack, where its file says (<see cref="StatPack.Author"/>); a pack
-/// without one is written as it always was. The values travel with the race (<see cref="RaceSetup.Stats"/>), and
+/// and in a server's status. Author: who made the pack, where its file says (<see cref="StatPack.Author"/>); Version:
+/// the pack's version, where its file says (<see cref="StatPack.Version"/>); a pack without them is written as it
+/// always was. The values travel with the race (<see cref="RaceSetup.Stats"/>), and
 /// once to a launcher for its Garage (<see cref="StatPackValues"/>), not here.</summary>
-public sealed record StatPackName(string Name, string Fingerprint, string? Author = null);
+public sealed record StatPackName(string Name, string Fingerprint, string? Author = null, string? Version = null);
 
 /// <summary>
 /// A stat pack (handbook/stat-packs.md): a named table of changed words of the game's car data, which a
