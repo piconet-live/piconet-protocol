@@ -37,12 +37,16 @@ public sealed class StatPack
     /// <summary>The longest name.</summary>
     public const int MostName = 40;
 
-    private StatPack(string name, StatEntry[] entries, StatEntry[] constants, string? author)
+    /// <summary>The most parts of a version (<see cref="IsVersion"/>).</summary>
+    public const int MostVersionParts = 4;
+
+    private StatPack(string name, StatEntry[] entries, StatEntry[] constants, string? author, string? version)
     {
         Name = name;
         Entries = entries;
         Constants = constants;
         Author = author;
+        Version = version;
         Fingerprint = FingerprintOf(Bytes());
     }
 
@@ -52,6 +56,11 @@ public sealed class StatPack
     /// beside the name. Like the name it is no part of the fingerprint and does not travel to the game: a match
     /// start's pack has none.</summary>
     public string? Author { get; }
+
+    /// <summary>The pack's version, where its file says (a pack file's <c>version</c> line: "5", "5.0.4"); null: it
+    /// does not. Shown after the name as "v5". Like the author it is no part of the fingerprint and does not travel to
+    /// the game: two files of one pack with other versions are the same pack to a race.</summary>
+    public string? Version { get; }
 
     /// <summary>The car data's values, by block and offset, each word once.</summary>
     public IReadOnlyList<StatEntry> Entries { get; }
@@ -77,7 +86,24 @@ public sealed class StatPack
     /// name, no value at all, a block or a word a pack cannot change, a word named twice, a value outside the game's
     /// range (<see cref="StatPackRules.Problem"/>: the game's own rows, and nothing narrower). Every pack this
     /// program holds went through here: one from a pack file, one from the import, one a match start carries.</summary>
-    public static (StatPack? Pack, string? Refusal) Of(string name, IEnumerable<StatEntry> entries, string? author = null)
+    /// <summary>Whether a text can be a pack's version: 1 to 4 whole numbers from 0 to 9999 with a dot between
+    /// ("5", "5.0.4"), each written without a leading 0, so that one version has one text.</summary>
+    public static bool IsVersion(string? version)
+    {
+        if (version is null)
+        {
+            return false;
+        }
+        var parts = version.Split('.');
+        return parts.Length <= MostVersionParts && parts.All(part =>
+            part.Length is >= 1 and <= 4 && part.All(char.IsAsciiDigit) && (part.Length == 1 || part[0] != '0'));
+    }
+
+    /// <summary>The sentence a version that is none is refused with.</summary>
+    public const string VersionRule = "1 to 4 whole numbers from 0 to 9999 with a dot between, without a leading 0 (5, or 5.0.4)";
+
+    public static (StatPack? Pack, string? Refusal) Of(string name, IEnumerable<StatEntry> entries, string? author = null,
+        string? version = null)
     {
         ArgumentNullException.ThrowIfNull(entries);
         if (!IsName(name))
@@ -87,6 +113,10 @@ public sealed class StatPack
         if (author is not null && !IsName(author))
         {
             return (null, $"A pack's author is 1 to {MostName} characters of plain ASCII, without a space at either end.");
+        }
+        if (version is not null && !IsVersion(version))
+        {
+            return (null, $"A pack's version is {VersionRule}.");
         }
         var all = entries.OrderBy(e => e.Block).ThenBy(e => e.At).ToArray();
         if (all.Length == 0)
@@ -132,7 +162,7 @@ public sealed class StatPack
                 return (null, $"{where} {word} {problem}.");
             }
         }
-        return (new StatPack(name, sorted, constants, author), null);
+        return (new StatPack(name, sorted, constants, author, version), null);
     }
 
     /// <summary>The values outside what has been tried (<see cref="StatPackRules.Caution"/>), a sentence each
