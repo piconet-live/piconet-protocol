@@ -213,7 +213,7 @@ public sealed class StatPackRulesTests
         Assert.Equal(said, StatPackRules.Caution(6, 0x10, beyond.Bits));
         // made, read from a file, and arriving in a match start: a pack each time, and the same one
         var made = Assert.IsType<StatPack>(StatPack.Of("p", [beyond]).Pack);
-        var read = Assert.IsType<StatPack>(StatPackText.Read("fzstats 1\nname p\nmachine 6 Grip1 9.5\n").Pack);
+        var read = Assert.IsType<StatPack>(StatPackText.Read("fzstats 1\nname p\nversion 1\nmachine 6 Grip1 9.5\n").Pack);
         var arrived = Assert.IsType<StatPack>(StatPack.FromWire(made.ToWire()).Pack);
         Assert.Equal((made.Fingerprint, made.Fingerprint), (read.Fingerprint, arrived.Fingerprint));
         Assert.Equal(["machine 6 Grip1 " + said + "."], arrived.Untried);

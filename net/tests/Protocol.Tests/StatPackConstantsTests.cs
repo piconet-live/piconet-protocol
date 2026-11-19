@@ -70,7 +70,7 @@ public sealed class StatPackConstantsTests
     [Fact]
     public void APackWithConstantsTravelsAsTheGamesTestsReadIt()
     {
-        var (pack, refusal) = StatPack.Of("GX Unleashed", Unleashed().Reverse());
+        var (pack, refusal) = StatPack.Of("GX Unleashed", Unleashed().Reverse(), "AKC12", "5");
         Assert.Null(refusal);
         Assert.NotNull(pack);
         Assert.Single(pack.Entries);
@@ -101,7 +101,7 @@ public sealed class StatPackConstantsTests
         Assert.DoesNotContain("constant", StatPackText.Write(pack), StringComparison.Ordinal);
         // and a pack of constants alone is a pack
         Assert.NotNull(StatPack.Of("Energy", [Constant(0, BitConverter.SingleToUInt32Bits(0.15f))]).Pack);
-        Assert.NotNull(StatPackText.Read("fzstats 1\nname Energy\nconstant BoostEnergyUse 0.15\n").Pack);
+        Assert.NotNull(StatPackText.Read("fzstats 1\nname Energy\nversion 1\nconstant BoostEnergyUse 0.15\n").Pack);
     }
 
     [Fact]
@@ -123,7 +123,7 @@ public sealed class StatPackConstantsTests
     public void TheCurvesSlotsTravelAndReadBack()
     {
         var gain = BitConverter.DoubleToUInt64Bits(0.75);
-        var (pack, refusal) = StatPack.Of("Curve", [Constant(11, BitConverter.SingleToUInt32Bits(1)), Constant(40, (uint)(gain >> 32)), Constant(41, (uint)gain)]);
+        var (pack, refusal) = StatPack.Of("Curve", [Constant(11, BitConverter.SingleToUInt32Bits(1)), Constant(40, (uint)(gain >> 32)), Constant(41, (uint)gain)], null, "1");
         Assert.Null(refusal);
         var text = StatPackText.Write(pack!);
         Assert.Contains("constant DriftFastLoss 1\nconstant AccelGain 0.75\n", text, StringComparison.Ordinal);
@@ -136,7 +136,7 @@ public sealed class StatPackConstantsTests
     public void APackNamingOneCurveSlotHoldsThatSlotAlone()
     {
         // every slot is optional: a file naming one holds one constant, and the others are the game's own
-        var (pack, refusal) = StatPackText.Read("fzstats 1\nname One\nconstant DriftCap 2.5\n");
+        var (pack, refusal) = StatPackText.Read("fzstats 1\nname One\nversion 1\nconstant DriftCap 2.5\n");
         Assert.Null(refusal);
         var only = Assert.Single(pack!.Constants);
         Assert.Equal((StatPackConstants.Named("DriftCap")!.Slot, BitConverter.SingleToUInt32Bits(2.5f)), (only.At, only.Bits));
@@ -182,9 +182,9 @@ public sealed class StatPackConstantsTests
             Assert.Contains("no number a pack may hold", Refused(Constant(1, high), Constant(2, low)), StringComparison.Ordinal);
         }
         // as a file
-        Assert.Contains("Line 3: \"Gravity\" is no constant of a pack", StatPackText.Read("fzstats 1\nname p\nconstant Gravity 1\n").Refusal, StringComparison.Ordinal);
-        Assert.Contains("Line 4: the constant BoostEnergyUse is there twice", StatPackText.Read("fzstats 1\nname p\nconstant BoostEnergyUse 0.1\nconstant BoostEnergyUse 0.1\n").Refusal, StringComparison.Ordinal);
-        Assert.Contains("Line 3: the constant SpeedCap is the bits 7FF0000000000000", StatPackText.Read("fzstats 1\nname p\nconstant SpeedCap 1e309\n").Refusal, StringComparison.Ordinal);
-        Assert.Contains("Line 3: DashPlateBase's value is one decimal number", StatPackText.Read("fzstats 1\nname p\nconstant DashPlateBase 3 0\n").Refusal, StringComparison.Ordinal);
+        Assert.Contains("Line 4: \"Gravity\" is no constant of a pack", StatPackText.Read("fzstats 1\nname p\nversion 1\nconstant Gravity 1\n").Refusal, StringComparison.Ordinal);
+        Assert.Contains("Line 5: the constant BoostEnergyUse is there twice", StatPackText.Read("fzstats 1\nname p\nversion 1\nconstant BoostEnergyUse 0.1\nconstant BoostEnergyUse 0.1\n").Refusal, StringComparison.Ordinal);
+        Assert.Contains("Line 4: the constant SpeedCap is the bits 7FF0000000000000", StatPackText.Read("fzstats 1\nname p\nversion 1\nconstant SpeedCap 1e309\n").Refusal, StringComparison.Ordinal);
+        Assert.Contains("Line 4: DashPlateBase's value is one decimal number", StatPackText.Read("fzstats 1\nname p\nversion 1\nconstant DashPlateBase 3 0\n").Refusal, StringComparison.Ordinal);
     }
 }

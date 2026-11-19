@@ -7,8 +7,9 @@ namespace Online.Protocol;
 /// <summary>
 /// The stat pack file (<c>NAME.fzstats</c>; handbook/stat-packs.md): a pack as text a person can read and
 /// compare, and the one form a pack is kept in. The first line is <c>fzstats 1</c>, the second <c>name TEXT</c>, the
-/// next may be <c>author TEXT</c> (who made the pack: shown beside its name, no part of its fingerprint) and
-/// <c>version V</c> (the pack's version, "5" or "5.0.4": shown after its name as "v5", no part of its fingerprint); then
+/// next may be <c>author TEXT</c> (who made the pack: shown beside its name, no part of its fingerprint), and must be
+/// <c>version V</c> (the pack's version, "5" or "5.0.4": shown after its name as "v5", no part of its fingerprint; a
+/// file without it is refused); then
 /// a value a line: <c>machine ID</c> (0 to 40) or <c>body</c>, <c>cockpit</c>, <c>booster</c> and its number (0 to 24),
 /// the stat's name (<see cref="StatPackRules.WordName"/>) and the value, a decimal number; for <c>Bytes48</c>, the
 /// two bytes. A line <c>constant NAME VALUE</c> is one of the game's code constants (<see cref="StatPackConstants"/>):
@@ -25,6 +26,10 @@ public static partial class StatPackText
 
     /// <summary>The file name's ending.</summary>
     public const string Extension = ".fzstats";
+
+    /// <summary>The refusal of a file without its <c>version</c> line: every pack file says its version (the owner,
+    /// 2026-11-19).</summary>
+    public const string NoVersion = "This stat pack has no version line (version 1, for example).";
 
     /// <summary>The longest text read: a whole car data's values are a tenth of it.</summary>
     public const int MostCharacters = 1 << 20;
@@ -158,10 +163,15 @@ public static partial class StatPackText
                 entries.Add(e);
             }
         }
-        return name is null
-            ? (null, $"The file has no \"{Header}\" line and \"name\" line at its top.")
-            : StatPack.Of(name, entries, author, version);
+        return Whole(name, author, version, entries);
     }
+
+    /// <summary>The pack of a file read to its end: its head's lines all there (the name, the version), then the values'
+    /// own checks (<see cref="StatPack.Of"/>).</summary>
+    private static (StatPack? Pack, string? Refusal) Whole(string? name, string? author, string? version, List<StatEntry> entries) =>
+        name is null ? (null, $"The file has no \"{Header}\" line and \"name\" line at its top.")
+        : version is null ? (null, NoVersion)
+        : StatPack.Of(name, entries, author, version);
 
     private static readonly string[] HeadWords = ["author", "version"];
 
