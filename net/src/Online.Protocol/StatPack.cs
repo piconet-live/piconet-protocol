@@ -58,8 +58,8 @@ public sealed class StatPack
     /// start's pack has none.</summary>
     public string? Author { get; }
 
-    /// <summary>The pack's version, where its file says (a pack file's <c>version</c> line: "5", "5.0.4"); null: it
-    /// does not. Shown after the name as "v5". Like the author it is no part of the fingerprint and does not travel to
+    /// <summary>The pack's version, as its file says (a pack file's <c>version</c> line, which every file has: "5",
+    /// "5.0.4"); null for a pack that came another way (a match start, a server's message). Shown after the name as "v5". Like the author it is no part of the fingerprint and does not travel to
     /// the game: two files of one pack with other versions are the same pack to a race.</summary>
     public string? Version { get; }
 

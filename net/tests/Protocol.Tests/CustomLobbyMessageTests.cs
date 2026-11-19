@@ -73,7 +73,7 @@ public sealed class CustomLobbyMessageTests
     [Fact]
     public void AHostsPackFileTravelsWithTheRulesAndAnOlderEndPassesOverIt()
     {
-        const string File = "fzstats 1\nname My Pack\n# a comment\nmachine 6 Weight 2520\n";
+        const string File = "fzstats 1\nname My Pack\nversion 1\n# a comment\nmachine 6 Weight 2520\n";
         var rules = new LobbyRules(new Dictionary<string, int>(), "My Pack", File);
         var text = ControlProtocol.Encode(new SetLobbyRules(null, rules));
         var back = Assert.IsType<SetLobbyRules>(ControlProtocol.DecodeClient(text));
@@ -105,7 +105,7 @@ public sealed class CustomLobbyMessageTests
                 }
             }
         }
-        var (pack, refusal) = StatPack.Of("Every Value", entries);
+        var (pack, refusal) = StatPack.Of("Every Value", entries, null, "1");
         Assert.True(pack is not null, refusal);
         var file = StatPackText.Write(pack);
         Assert.True(file.Length <= LobbyRules.MostPackFile / 2, $"{file.Length} characters");

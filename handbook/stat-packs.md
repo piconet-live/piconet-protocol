@@ -37,20 +37,24 @@ choice; the game's letters for a pack (the main module's table).
   server's start line, the launcher's label. It is **not** in the fingerprint and **not** in the match start: the
   game's reader knows nothing of it, so a pack with and without the line is the same pack to a game. A file
   without the line reads and writes as before.
-- **The version** (the owner, 2026-11-19). A pack file may also have, after the name and before the values, the
-  line `version V`: 1 to 4 whole numbers from 0 to 9999 with a dot between, each without a leading 0 (`5`,
-  `5.0.4`), so one version has one text. It is metadata exactly as the author: **not** in the fingerprint, **not** in
-  the match start, never seen by a game, so a pack with and without the line is the same pack to a race. It is
-  shown after the name as "v5" wherever the pack is named, before the author: "GX Unleashed v5 · AKC12" (the
-  lobby's state `statPack.version` and `seatPacks[].version`, optional and left out when there is none; the
-  server's start line and status page; the native program's labels). The writer puts it after the author. GX
-  Unleashed is `version 5` (the mod's release is 5.0.4), F-Zero GX+ `version 1`. A file without the line reads
-  and writes as before, with no version shown. Readers from before refuse a file with the line ("version" is not
-  machine, body, cockpit or booster), so a player's pack with a version needs a program from 2026-11-19 on; a
-  lobby state with `version` is read by older programs, which pass over a member they do not know. **Identity is
-  unchanged**: a pack is still one name in the native list, and a player's file with a built-in's name is left
-  out whatever its version. The version may later become part of a pack's identity, so that two versions of one
-  pack can stand side by side; that is not built.
+- **The version** (the owner, 2026-11-19: "Version for stat pack should have to exist in the stat pack itself"). Every
+  pack file has, after the name and before the values, the line `version V`: 1 to 4 whole numbers from 0 to 9999
+  with a dot between, each without a leading 0 (`5`, `5.0.4`), so one version has one text. **A file without it is
+  refused**: "This stat pack has no version line (version 1, for example)." (`StatPackText.NoVersion`; the native
+  core's reader says the same, and `gen_modes.py` refuses a built-in without it). It is metadata exactly as the
+  author: **not** in the fingerprint, **not** in the match start, never seen by a game, so two files of one pack's
+  values with other versions are the same pack to a race. A pack from a match start or a server's message has no
+  version (`StatPack.Version` null). It is shown after the name as "v5" wherever the pack is named, before the
+  author: "GX Unleashed v5 · AKC12" (the lobby's state `statPack.version`, optional on the wire and left out when
+  there is none, so a lobby state from an older server reads as before and older programs pass over the member; the
+  server's start line and status page; the native program's main page, Balance, Practice, the pause menu and the
+  online card's back). The writer puts it after the author. GX Unleashed is `version 5` (the mod's release is
+  5.0.4), F-Zero GX+ `version 1`. Readers from before refuse a file with the line ("version" is not machine, body,
+  cockpit or booster), and the readers now refuse one without it: a pack file is read only by a program of its own
+  time (the launcher's import, from before, writes none: add the line by hand; the native Balance folder's files
+  were never released). **Identity is unchanged**: a pack is still one name in the native list, and a player's file
+  with a built-in's name is left out whatever its version. The version may later become part of a pack's identity,
+  so that two versions of one pack can stand side by side; that is not built.
 - **The pack's values for the launcher.** After the welcome the server sends its pack whole, once, to a launcher
   whose hello said `statPacks` (`statPack`: the match start's three texts). It is for what the launcher shows
   before a race; the race's own pack is still the match start's. A launcher from before stat packs is sent nothing.
@@ -87,6 +91,7 @@ choice; the game's letters for a pack (the main module's table).
   ```
   fzstats 1
   name GX Made Up 1.0
+  version 1
   # Blue Falcon
   machine 6 Weight 2520
   machine 6 Bytes48 3 1
@@ -101,7 +106,7 @@ choice; the game's letters for a pack (the main module's table).
   two bytes. Empty lines and lines that begin with `#` are skipped. The writer puts the values in the order of
   block and offset, so two files of one pack are the same text.
 - **What the reader refuses**, with the line's number and which rule: no `fzstats 1` or no `name` at the top; a name
-  that is not 1 to 40 characters of plain ASCII; an `author` or `version` line that breaks its rule, or one that stands twice or after a value; a kind, a number or a stat it does not know; `Name` (a pack changes
+  that is not 1 to 40 characters of plain ASCII; no `version` line; an `author` or `version` line that breaks its rule, or one that stands twice or after a value; a kind, a number or a stat it does not know; `Name` (a pack changes
   no name); a value that is no decimal number; a word named twice; a value outside its range; a file with no value,
   or of more than 1 MiB.
 - **The fingerprint** names a pack: SHA-1 of the byte 1 and the values in order as they travel (6 bytes each: block,

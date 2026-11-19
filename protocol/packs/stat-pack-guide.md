@@ -19,7 +19,8 @@ number. Two kinds of lines are allowed:
   build has a fixed list of these, below. A pack can't change any other code.
 
 A pack is named by its **fingerprint**, a hash of its values. Two files with the same values are the same pack, and
-any changed value makes another pack. The `name`, `author` and `version` lines and the comments aren't part of it.
+any changed value makes another pack. The `name`, `author` and `version` lines and the comments aren't part of it:
+another version of the same values is the same pack to a race.
 
 ## The file
 
@@ -35,9 +36,10 @@ constant DriftFastLoss 1
 ```
 
 - Line 1 is `fzstats 1`. Line 2 is `name` and 1 to 40 plain characters. Then, before the values, may come
-  `author` and 1 to 40 characters, and `version` and the pack's version: 1 to 4 whole numbers from 0 to 9999 with a
-  dot between, without a leading 0 (`5`, `5.0.4`). The version is shown after the name ("My Pack v1.2"). A
-  program from before 2026-11-19 refuses a file with a `version` line.
+  `author` and 1 to 40 characters, and must come `version` and the pack's version: 1 to 4 whole numbers from 0 to
+  9999 with a dot between, without a leading 0 (`5`, `5.0.4`). A file without the `version` line is refused ("This
+  stat pack has no version line (version 1, for example)."). The version is shown after the name ("My Pack v1.2").
+  A program from before 2026-11-19 refuses a file with a `version` line.
 - A car data line is `KIND NUMBER STAT VALUE`. KIND is `machine` (0 to 40, by the game's machine id), `body`,
   `cockpit` or `booster` (0 to 24 each). The values are decimal numbers, written as the game stores them
   (32-bit floats). `Bytes48` takes two whole numbers.
@@ -272,6 +274,8 @@ Launcher.App --import-stat-pack cardata.lz [--main-module line__.bin] --disc "F-
   it would change that code as well), a setting load turned into another instruction, a change to one of the
   setting's side tests, and every other changed word of the main module, counted by where it is (code, constants,
   data, header). A code word is named by its place (`.text+0x...`). A race on the pack runs the disc's code there.
+- It writes no `version` line (the launcher's import is from before the line): add one after the `author` line,
+  e.g. `version 1`, before the file is used.
 - It writes the file, reads it back, prints the fingerprint, and warns about values outside "Tried". It refuses a
   pack that breaks a rule (a range, the boost length's 255 frames).
 
@@ -295,6 +299,7 @@ boosts a little longer:
 fzstats 1
 name Long Drift
 author Me
+version 1
 # no car data lines: every machine is the disc's
 constant BoostLengthBase 10
 constant DriftCap 19
