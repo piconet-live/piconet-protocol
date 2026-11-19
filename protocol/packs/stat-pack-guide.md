@@ -19,7 +19,7 @@ number. Two kinds of lines are allowed:
   build has a fixed list of these, below. A pack can't change any other code.
 
 A pack is named by its **fingerprint**, a hash of its values. Two files with the same values are the same pack, and
-any changed value makes another pack. The `name` and `author` lines and the comments aren't part of it.
+any changed value makes another pack. The `name`, `author` and `version` lines and the comments aren't part of it.
 
 ## The file
 
@@ -27,14 +27,17 @@ any changed value makes another pack. The `name` and `author` lines and the comm
 fzstats 1
 name My Pack
 author Someone
+version 1.2
 # comments start with #
 machine 6 Weight 2520
 body 0 Grip2 -0.5
 constant DriftFastLoss 1
 ```
 
-- Line 1 is `fzstats 1`. Line 2 is `name` and 1 to 40 plain characters. Line 3 may be `author` and 1 to 40
-  characters.
+- Line 1 is `fzstats 1`. Line 2 is `name` and 1 to 40 plain characters. Then, before the values, may come
+  `author` and 1 to 40 characters, and `version` and the pack's version: 1 to 4 whole numbers from 0 to 9999 with a
+  dot between, without a leading 0 (`5`, `5.0.4`). The version is shown after the name ("My Pack v1.2"). A
+  program from before 2026-11-19 refuses a file with a `version` line.
 - A car data line is `KIND NUMBER STAT VALUE`. KIND is `machine` (0 to 40, by the game's machine id), `body`,
   `cockpit` or `booster` (0 to 24 each). The values are decimal numbers, written as the game stores them
   (32-bit floats). `Bytes48` takes two whole numbers.

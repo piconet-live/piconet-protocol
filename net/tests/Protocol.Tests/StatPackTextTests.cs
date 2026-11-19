@@ -66,6 +66,47 @@ public sealed class StatPackTextTests
         Assert.StartsWith("A pack's author is 1 to 40 characters", StatPack.Of("p", StatPackTests.Made, " x").Refusal, StringComparison.Ordinal);
     }
 
+    /// <summary>A pack file may say the pack's version: a <c>version</c> line after the name (and the author). It is
+    /// shown after the name ("v5") and, as the author, is no part of the pack's values: the fingerprint, and what
+    /// travels to the game, are the same with and without it, and a file without the line reads as it always did.</summary>
+    [Fact]
+    public void AVersionLineNamesThePacksVersionAndChangesNothingOfItsValues()
+    {
+        var with = Text.ReplaceLineEndings("\n").Replace("name GX Made Up 1.0\n", "name GX Made Up 1.0\nauthor A Maker\nversion 5.0.4\n", StringComparison.Ordinal);
+
+        var (pack, refusal) = StatPackText.Read(with);
+
+        Assert.Null(refusal);
+        Assert.Equal(("GX Made Up 1.0", "A Maker", "5.0.4", StatPackTests.Fingerprint), (pack!.Name, pack.Author, pack.Version, pack.Fingerprint));
+        Assert.Equal(with, StatPackText.Write(pack));
+        var plain = StatPackText.Read(Text).Pack!;
+        Assert.Null(plain.Version);
+        Assert.Equal(plain.ToWire(), pack.ToWire());                                   // the game is handed the same text
+        Assert.Null(StatPack.FromWire(pack.ToWire()).Pack!.Version);                   // which names no version
+        Assert.DoesNotContain("version", StatPackText.Write(plain), StringComparison.Ordinal);
+        // without the author, and before it
+        Assert.Equal("5", StatPackText.Read(Text.ReplaceLineEndings("\n")
+            .Replace("name GX Made Up 1.0\n", "name GX Made Up 1.0\nversion 5\n", StringComparison.Ordinal)).Pack!.Version);
+        var before = StatPackText.Read(with.Replace("author A Maker\nversion 5.0.4\n", "version 1\nauthor A Maker\n", StringComparison.Ordinal)).Pack!;
+        Assert.Equal(("1", "A Maker", StatPackTests.Fingerprint), (before.Version, before.Author, before.Fingerprint));
+        foreach (var good in new[] { "0", "9999", "1.2", "5.0.4", "1.0.0.10" })
+        {
+            Assert.Equal(good, StatPackText.Read(with.Replace("version 5.0.4", "version " + good, StringComparison.Ordinal)).Pack!.Version);
+        }
+        foreach (var line in new[] { "version", "version ", "version v5", "version 5.", "version .5", "version 5..0", "version 05",
+                     "version 10000", "version 1.2.3.4.5", "version -1", "version 5 beta", "version 5,0", "version 5.0.4a" })
+        {
+            Assert.Equal("Line 4: \"version\" is followed by the pack's version, 1 to 4 whole numbers from 0 to 9999 with a dot "
+                + "between, without a leading 0 (5, or 5.0.4).",
+                Refusal(with.Replace("version 5.0.4", line, StringComparison.Ordinal)));
+        }
+        // once, and before the values
+        Assert.Equal("Line 5: \"version\" is not machine, body, cockpit or booster.",
+            Refusal(with.Replace("version 5.0.4\n", "version 5.0.4\nversion 6\n", StringComparison.Ordinal)));
+        Assert.StartsWith("A pack's version is 1 to 4 whole numbers", StatPack.Of("p", StatPackTests.Made, null, "v5").Refusal, StringComparison.Ordinal);
+        Assert.Equal("5", StatPack.Of("p", StatPackTests.Made, null, "5").Pack!.Version);
+    }
+
     [Fact]
     public void TheReaderTakesAnyOrderOtherLineEndsCommentsAndSpaces()
     {

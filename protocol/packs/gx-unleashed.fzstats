@@ -15,9 +15,12 @@
 # Its fingerprint: 573d7fde9be73e4027139716338f39bbb3f3f5cf (without its constant lines it is the pack of 0.2.x,
 # c24e75a89b536ee679c312f1474082da6418b55c). Not to be changed by hand: another value is another pack, which every
 # game of a race must hold alike (handbook/stat-packs.md).
+# Its version line (version 5, the owner, 2026-11-19) is the pack's version, shown after its name ("v5"),
+# and no part of the fingerprint.
 fzstats 1
 name GX Unleashed
 author AKC12
+version 5
 # Red Gazelle
 machine 0 Weight 1701
 machine 0 Acceleration 0.499

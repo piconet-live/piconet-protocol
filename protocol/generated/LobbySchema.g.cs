@@ -523,6 +523,7 @@ internal static class LobbySchema
         "  name string",
         "  fingerprint string",
         "  author string? default=null",
+        "  version string? default=null",
         "record StatPackValues root=server type=statPack",
         "  pack StatPackWire",
         "record StatPackWire",

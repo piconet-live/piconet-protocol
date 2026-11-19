@@ -21,9 +21,12 @@
 #   Launcher.App --import-stat-pack cardata.lz --main-module line__.bin --disc "F-Zero GX (USA).iso" --pack-name "F-Zero GX+" --pack-author Emarcee --out fzero-gx-plus.fzstats
 # Its fingerprint: 783e8adf67b256e92500a095ceea1c6ce9c76b55. Not to be changed by hand: another value is another
 # pack, which every game of a race must hold alike (handbook/stat-packs.md).
+# Its version line (version 1, the owner, 2026-11-19) is the pack's version, shown after its name ("v1"),
+# and no part of the fingerprint.
 fzstats 1
 name F-Zero GX+
 author Emarcee
+version 1
 # Red Gazelle
 machine 0 Acceleration 0.528
 machine 0 MaxSpeed 0.276

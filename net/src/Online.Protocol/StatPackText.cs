@@ -7,7 +7,8 @@ namespace Online.Protocol;
 /// <summary>
 /// The stat pack file (<c>NAME.fzstats</c>; handbook/stat-packs.md): a pack as text a person can read and
 /// compare, and the one form a pack is kept in. The first line is <c>fzstats 1</c>, the second <c>name TEXT</c>, the
-/// third may be <c>author TEXT</c> (who made the pack: shown beside its name, no part of its fingerprint); then
+/// next may be <c>author TEXT</c> (who made the pack: shown beside its name, no part of its fingerprint) and
+/// <c>version V</c> (the pack's version, "5" or "5.0.4": shown after its name as "v5", no part of its fingerprint); then
 /// a value a line: <c>machine ID</c> (0 to 40) or <c>body</c>, <c>cockpit</c>, <c>booster</c> and its number (0 to 24),
 /// the stat's name (<see cref="StatPackRules.WordName"/>) and the value, a decimal number; for <c>Bytes48</c>, the
 /// two bytes. A line <c>constant NAME VALUE</c> is one of the game's code constants (<see cref="StatPackConstants"/>):
@@ -41,6 +42,10 @@ public static partial class StatPackText
         if (pack.Author is { } by)
         {
             text.Append("author ").Append(by).Append('\n');
+        }
+        if (pack.Version is { } version)
+        {
+            text.Append("version ").Append(version).Append('\n');
         }
         var last = -1;
         foreach (var entry in pack.Entries)
@@ -82,7 +87,7 @@ public static partial class StatPackText
         {
             return (null, "The file is longer than any stat pack.");
         }
-        string? name = null, author = null;
+        string? name = null, author = null, version = null;
         var (headed, values) = (false, false);
         var entries = new List<StatEntry>();
         var seen = new HashSet<(int, int)>();
@@ -110,13 +115,14 @@ public static partial class StatPackText
                 }
                 name = line[5..];
             }
-            else if (!values && author is null && (line == "author" || line.StartsWith("author ", StringComparison.Ordinal)))
+            else if (!values && HeadWord(line) is { } head && (head == "author" ? author : version) is null)
             {
-                if (line.Length < 8 || !StatPack.IsName(line[7..]))
+                var said = line.Length > head.Length + 1 ? line[(head.Length + 1)..] : null;
+                if (HeadProblem(head, said) is { } problem)
                 {
-                    return (null, $"Line {n}: \"author\" is followed by 1 to {StatPack.MostName} characters of plain ASCII.");
+                    return (null, $"Line {n}: {problem}");
                 }
-                author = line[7..];
+                (author, version) = head == "author" ? (said, version) : (author, said);
             }
             else if (line.StartsWith("constant ", StringComparison.Ordinal) || line == "constant")
             {
@@ -154,8 +160,20 @@ public static partial class StatPackText
         }
         return name is null
             ? (null, $"The file has no \"{Header}\" line and \"name\" line at its top.")
-            : StatPack.Of(name, entries, author);
+            : StatPack.Of(name, entries, author, version);
     }
+
+    private static readonly string[] HeadWords = ["author", "version"];
+
+    /// <summary>The word of a head line after the name that says something of the pack beside its values
+    /// (<c>author</c>, <c>version</c>), or null for any other line.</summary>
+    private static string? HeadWord(string line) =>
+        HeadWords.FirstOrDefault(word => line == word || line.StartsWith(word + " ", StringComparison.Ordinal));
+
+    /// <summary>What is wrong with the text after a head line's word, or null.</summary>
+    private static string? HeadProblem(string word, string? said) => word == "author"
+        ? StatPack.IsName(said) ? null : $"\"author\" is followed by 1 to {StatPack.MostName} characters of plain ASCII."
+        : StatPack.IsVersion(said) ? null : $"\"version\" is followed by the pack's version, {StatPack.VersionRule}.";
 
     /// <summary>A value line's words as an entry, or what is wrong with them. The value's range is the pack's to
     /// check (<see cref="StatPack.Of"/>).</summary>

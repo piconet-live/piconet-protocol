@@ -4301,6 +4301,7 @@ struct StatPackName
   std::string name;
   std::string fingerprint;
   std::optional<std::string> author;
+  std::optional<std::string> version;
 
   // one bit a member, of wire_absent (a member that is no "?" read as null or left out: C# holds null; it
   // is then not written) and of wire_holes (a list that held null items, dropped)
@@ -4309,6 +4310,7 @@ struct StatPackName
     static constexpr std::uint32_t name = 1u << 0;
     static constexpr std::uint32_t fingerprint = 1u << 1;
     static constexpr std::uint32_t author = 1u << 2;
+    static constexpr std::uint32_t version = 1u << 3;
   };
   static constexpr std::uint32_t kAbsentAtStart = Bit::name | Bit::fingerprint;
   std::uint32_t wire_absent = 0;
@@ -4321,7 +4323,7 @@ inline bool Get(const json_wire::Value& x, StatPackName& out, std::size_t from =
     return false;
   out = StatPackName{};
   out.wire_absent = StatPackName::kAbsentAtStart;
-  static constexpr std::string_view kNames[] = {"name", "fingerprint", "author"};
+  static constexpr std::string_view kNames[] = {"name", "fingerprint", "author", "version"};
   for (std::size_t i = from; i < x.members.size(); ++i)
   {
     const json_wire::Value& v = x.members[i].second;
@@ -4337,6 +4339,10 @@ inline bool Get(const json_wire::Value& x, StatPackName& out, std::size_t from =
       break;
     case 2:
       if (!Get(v, out.author))
+        return false;
+      break;
+    case 3:
+      if (!Get(v, out.version))
         return false;
       break;
     default:
@@ -4369,6 +4375,11 @@ inline void Put(json_wire::Out& o, const StatPackName& v, std::string_view type 
   {
     json_wire::Key(o, first, "author");
     Put(o, *v.author);
+  }
+  if (v.version)
+  {
+    json_wire::Key(o, first, "version");
+    Put(o, *v.version);
   }
   o.text += '}';
 }
