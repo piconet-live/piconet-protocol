@@ -8,10 +8,10 @@ A seat is a racer's place in a race, 0 to 29. A match is a lobby's next race fro
 
 | Message | Who to whom | When | What the receiver does |
 |---|---|---|---|
-| `hello` | L to C | first message | Checks version, key, name, build, line; refuses with `error` (`bad_version`, `bad_message`, `bad_name`, `bad_build`, `bad_line`, `tags_taken`); a `password` field (launchers before custom lobbies) is passed over or answers `welcome` (player id, server name, rules, `tag`). The rules (`ServerRules`) are the lobby's as the launcher shows them, among them (0.5.0) `latencyLimitMs`, the lobby's latency limit (`HostRules.LatencyLimit`: 30 to 300 ms, Quick Play 250); a launcher from before passes over it, and a rules message without it reads as 250. Optional `key`, `players` (players list), `line` (the release line, below) and `modes` (the newest game-mode api the launcher runs: a player is put in a mode's race only with that api or newer) One a connection: a second is `already_welcomed`. Test settings, the key, limits: below the table |
+| `hello` | L to C | first message | Checks version, key, name, build, line; refuses with `error` (`bad_version`, `bad_message`, `bad_name`, `bad_build`, `bad_line`, `tags_taken`); a `password` field (launchers before custom lobbies) is passed over or answers `welcome` (player id, server name, rules, `tag`). The rules (`ServerRules`) are the lobby's as the launcher shows them, among them (0.5.0) `latencyLimitMs`, the lobby's latency limit (`HostRules.LatencyLimit`: 30 to 300 ms, Quick Play 250); a launcher from before passes over it, and a rules message without it reads as 250. Optional `key`, `players` (players list), `line` (the release line, below) and `modes` (the newest game-mode api the launcher runs: a player is put in a mode's race only with that api or newer), `avatar` (the picture the player chose to stand for them, by name: below the table) One a connection: a second is `already_welcomed`. Test settings, the key, limits: below the table |
 | `queue` | L to C | RACE pressed (machine, colour, setting) | Puts the player in a lobby; `error` `machine_not_allowed`, or `not_ready` when already in one |
 | `leaveQueue` | L to C | the player leaves Quick Play | Takes them out of the lobby and any match; answers `leftLobby` |
-| `browseLobbies`, `lobbyList` | L to C, C to L | the lobby browser opens (`on` true) or closes | The custom lobbies of the player's build (`LobbySummary`: id, name, host's name, players, capacity, `locked`, rules whole, stage), on subscribe and then on changes, at most about twice a second; `quickPlay`: the server's own rules in the same form, to compare with; `modes`: the server's official modes a host may give a lobby (`LobbyMode`, its catalog's lobby modes in order, settings on their defaults), the create screen's list |
+| `browseLobbies`, `lobbyList` | L to C, C to L | the lobby browser opens (`on` true) or closes | The custom lobbies of the player's build (`LobbySummary`: id, name, host's name, players, capacity, `locked`, rules whole, stage), on subscribe and then on changes, at most about twice a second; `quickPlay`: the server's own rules in the same form, to compare with; `modes`: the server's official modes a host may give a lobby (`LobbyMode`, its catalog's lobby modes in order, settings on their defaults), the create screen's list. Also sent once after `welcome` to a hello that says `modes`, and again when Quick Play's rules change, with `modes` left out: Quick Play's rules outside the browser (below the table) |
 | `createLobby`, `joinLobby` | L to C | the player makes or joins a custom lobby | Name, rules (`LobbyRules`: the mode, one of `lobbyList.modes` by its hash in `mode` or the host's own `.fzmode` file in `modeFile`, with its settings in `modeValues`; beside it only the lobby's own settings, `LobbyRules.LobbyKeys` (seats, ping limit, vote and choice times, voting minimum, how the course is found among the mode's), and, when the mode's stats choice is the host's file, the host's own `.fzstats` file whole in `packFile`, at most 256K characters, with its name in `statPack`. How the race plays is the mode's: a rule of the race in `values` (the CPUs and teams too) or a server pack by name alone is `bad_rules` with one line, `OutsideTheMode`; a lobby with no mode races Quick Play's normal mode; the server sends a lobby's rules whole, with the pack by name), optional password, and the racer as `queue` names one; the creator is host. Leaves the lobby the player was in; `error` `no_such_lobby`, `bad_lobby_password`, `lobby_full`, `lobby_closed` (starting or choosing, or the player was kicked from it), `bad_lobby_name`, `bad_rules` |
 | `setLobbyRules`, `kick`, `startLobbyRace` | L to C | the host's controls | While the lobby is forming: name, rules whole, password (or `clearPassword`); a member out (`leftLobby` reason `kicked`, no rejoin); the race now. `error` `not_host`, `rules_locked`, `bad_rules`. Numbers outside a rule's range are brought into it (`HostRules`) |
 | `leaveLobby` | L to C | the player leaves any lobby | As `leaveQueue` |
@@ -26,7 +26,7 @@ A seat is a racer's place in a race, 0 to 29. A match is a lobby's next race fro
 | `playersChanged` | C to L | at most every 500 ms, when something changed | `joined`, `changed` (whole entries), `left` (ids), 50 entries at most a message; the rest go in the next |
 | `measureRelays` | C to L | a match forms; again for a relay started for it | The launcher pings each relay over UDP and answers `relayLatency` within 3 s |
 | `relayLatency` | L to C | the answer | Stored per player and relay for the choice of region (section 5) |
-| `courseVote`, `voteCourse` | C to L, L to C | with `measureRelays`, when the server's course mode is "vote" | Options and duration out (with Quick Play's rotation, a card an option: its mode, laps, and a spicy mode's badge and line); an option index back (it may be changed until the vote ends) |
+| `courseVote`, `voteCourse` | C to L, L to C | with `measureRelays`, when the server's course mode is "vote" | Options and duration out (with Quick Play's rotation, a card an option: its mode, laps, its mode's line, a spicy mode's badge and rule lines, and the card's rules for the vote panel: below the table); an option index back (it may be changed until the vote ends) |
 | `courseChosen` | C to L | the vote ended | Votes per option, the option drawn, the course: the launcher's draw animation |
 | `chooseMachine`, `machineChoice` | C to L, L to C | after the course is decided | Course, allowed machines, duration out; the racer's machine back, kept from then on |
 | `statPack` | C to L | after `welcome`, to a launcher whose hello said `statPacks`, on a server with a stat pack | The pack whole, for the launcher's Garage (`handbook/stat-packs.md`); a race's pack is its `matchStart`'s |
@@ -117,7 +117,50 @@ draw shown, the machine choice, which can end early; null for a stage with no cl
 `pack` (its stat pack's name; null: none). All optional: a reader from before passes over them, and a server from
 before sends none, so a screen shows the shorter line, never a number (tests: Online.Tests `StatusTimingTests`).
 
-**The official modes in the status** (`ServiceStatus.ModeStore`, `ModeStoreView`): where the coordinator loaded Quick
+**The lobby screens' last facts** (2026-11-20; `lobby-screens-data.md` proposal items 3, 4, 6 and 7, and the
+avatars). All optional: a reader from before passes over them (the generated C++ reader and System.Text.Json both skip
+a member they do not know), and a server from before sends none, so a screen shows the shorter line, never a number
+(tests: Online.Tests `LobbyFactsTests`, Protocol.Tests `QuickPlayRotationTests.ACardSaysItsRulesAndWhichAreNotQuickPlays`).
+
+- *A lobby's relay, for the ping.* Each status lobby's `relay`: the relay id of its race while it races, or of its match
+  once that match's relay is chosen (after its players' measures, at the vote's end); absent while it has none. Each
+  status relay's `host` and `port`, while it is connected: where a game sends the relay protocol's keyless Ping 1 to
+  time its own round trip, the same endpoint a match's `measureRelays` names (an empty host: the coordinator's own, as
+  there). Already given to every player who queues; the status now shows it to anyone who reads it.
+- *Quick Play's rules outside the browser* (the Quick Play page, a Quick Play lobby's RULES line): `lobbyList` once
+  after `welcome` (a hello that says `modes`) and again to every such game when the operator's rules or the mode
+  store's set change what Quick Play's rules say (a browser has it with its next list). Its `quickPlay` names Quick
+  Play's normal mode on its defaults in `mode` (`terms`, `pack`, `params`, `values`: what a Quick Play race's rules
+  are); its `values` stay the server's options, as a custom lobby is compared with them.
+- *A running race's end.* Each status race's `endsInMs`: about how long until the race is over as the game ends it,
+  from the status's `time`, an estimate from its latest live report (at most 10 s old) and the server's clock. Each
+  racer still racing finishes after its laps left at its own mean lap so far (the current lap's time counted off); the
+  race ends at the last of those, and with a finish limit no later than the limit after the first finish; once a racer
+  has finished the limit is counted from that finish's race time (the race's clock is the racers' still racing), the
+  one exact part. 0: no racer still racing. Absent: no live report (or one too old), a racer still racing with no whole
+  lap and no finish yet, laps unlimited, or a mode that ends its race otherwise (`end_race` in its code, `clock_limit`,
+  `race_waits everyone`: Knockout, Overdrive, Death Race and Crown; Quick Play's normal mode and Ghost race end by
+  their laps). The results screens and the lobby's own waits (`timers`) come after it.
+- *A vote card's rules* (`VoteCard`): `about` on every card whose mode has a line (a launcher from before shows it
+  only beside a badge); `terms`, the race's rules on the card by the custom rules' keys (`laps` on its course, or on
+  Random the mode's one number or -1 for laps by course; `racers`, the race's seats; `cpu-fill` 0 vote, 1 always, 2
+  never; `cpu-level`; `boost-start`; `mine-regen` in ms, 0 none; `finish-limit` in s, 0 none; `machine-setting` and
+  `machine-setting-high`; `mixed-packs`; `course-select` with `course-select-course` only for a mode that pins its
+  course); `pack`, the stat pack by name ("" the disc's own); `moved`, the keys (and `stat-pack` for the pack) whose
+  value is not Quick Play's own (its normal mode on its defaults on the same course, with Quick Play's seats): empty, the
+  card races Quick Play's rules; absent, the server has no rotation to compare with. A rotation that shows no laps
+  leaves `laps` out of both. The owner's display rule (2026-11-20): the essentials are always shown, the stat pack, the
+  mode, `laps`, `racers` and `cpu-fill`; every other rule line only when its key is in `moved`.
+- *Avatars.* The hello's `avatar`: a picture's name (64 lower-case hex digits, the SHA-256 of the game's 64 x 64
+  picture, as an emblem slot names one), the player's own choice. The server checks it as an emblem's name (anything
+  else is dropped, as no avatar; the hello stands), keeps it for the connection, asks for its picture once when it
+  lacks it (`emblemsWanted`, answered by `emblemPicture`), hands the picture to any game that asks by name
+  (`emblemAsk`), and names it in an emblem report of that player. It is carried by name in a lobby's `players`
+  (`PlayerInfo.avatar`) and in the status's racers (`RacerView.avatar`, the lobbies' and the races'); absent: none
+  chosen. The hide list applies by the racer's tag and name, a report by the player's id (a lobby's roster, or the
+  players list for a status row).
+
+**The official modes in the status****The official modes in the status** (`ServiceStatus.ModeStore`, `ModeStoreView`): where the coordinator loaded Quick
 Play's rotation from (`source`: `bucket`, the stack's mode store; `local copy`, its last good copy while the bucket
 cannot be reached; `image seed`, the image's quickplay folder while neither is there; `image`, a server with no store),
 a `fault` line while it is not the bucket's, and the rotation's modes (`modes`: `file`, `name`,

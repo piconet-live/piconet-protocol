@@ -73,9 +73,13 @@ public sealed record LobbyBuildView(string Build, int Players);
 
 /// <summary>A racer as shown: the name the game shows, the machine (the game's id) and colour ("#RRGGBB", null for a
 /// CPU's stock colour); a lobby's player also their tag (<see cref="PlayerTags"/>; a reader from before passes over it)
-/// and their garage-built machine (<see cref="PlayerInfo.Custom"/>; null: Machine; a reader from before passes over it).</summary>
+/// and their garage-built machine (<see cref="PlayerInfo.Custom"/>; null: Machine; a reader from before passes over it).
+/// Avatar: the picture the player chose to stand for them (<see cref="Hello.Avatar"/>), by name (64 hex digits): a game
+/// connected to the lobby link fetches it as an emblem's picture (<see cref="AskEmblems"/>); null: none chosen (a race's
+/// CPU never has one), or a server from before it.</summary>
 public sealed record RacerView(string Name, int Machine, string? Color, string? Tag = null,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] CustomMachine? Custom = null);
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] CustomMachine? Custom = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Avatar = null);
 
 /// <summary>A lobby: its players, racing or waiting. Stage: forming, starting, choosing or racing (RaceId: its race).
 /// Build: the game build its players share (<see cref="Hello.Build"/>), each hash cut to eight characters; null: none
@@ -86,10 +90,15 @@ public sealed record RacerView(string Name, int Machine, string? Color, string? 
 /// StartsInMs: while the lobby's start countdown runs, the milliseconds until it runs out and the match begins (a
 /// joiner can only bring it nearer, a start vote of more than half sooner); null: none runs (or a server from before).
 /// VotingMinimum: the players the lobby needs before its start vote opens and its countdown runs; null: a server from
-/// before.</summary>
+/// before.
+/// Relay: the relay (<see cref="RelayView.Id"/>) of the lobby's race while it races, or of its match once that match's
+/// relay is chosen (by its players' measures, during its vote); a game measures its own round trip to it through
+/// <see cref="RelayView.Host"/> and <see cref="RelayView.Port"/>. Null: the lobby has none now (forming, its match still
+/// measuring), or a server from before. The next race's relay is chosen again, by who is in it.</summary>
 public sealed record LobbyView(string Id, IReadOnlyList<RacerView> Players, int Capacity, bool VotingOpen, int StartVotes,
     string Stage = "forming", string? RaceId = null, int Racing = 0, string? Build = null,
-    IReadOnlyList<LobbyBuildView>? Builds = null, string? Line = null, int? StartsInMs = null, int? VotingMinimum = null);
+    IReadOnlyList<LobbyBuildView>? Builds = null, string? Line = null, int? StartsInMs = null, int? VotingMinimum = null,
+    string? Relay = null);
 
 /// <summary>A match between its lobby and its race. Stage: "picking a relay" (the players measure the relays),
 /// "vote" (the lobby's step named Vote), "vote's end" (its draw shown), "choosing machines". LobbyId: the lobby it is
@@ -100,17 +109,31 @@ public sealed record FormingMatchView(string Id, int Players, string Stage, stri
 
 /// <summary>A race running. Mode: the mode it races (its name, "Knockout"); Badge: the mode's badge where it has one
 /// (a spicy mode's, "KNOCKOUT"); Pack: the stat pack it races on, by name ("GX Unleashed"). Each null: none (the race
-/// of before modes, no badge, no pack), or a server from before.</summary>
+/// of before modes, no badge, no pack), or a server from before.
+/// EndsInMs: about how long, in ms from the status's <see cref="ServiceStatus.Time"/>, until the race is over as the
+/// game ends it (its last racer finished or out, or its finish limit run out after the first finish); the results
+/// screens and the lobby's own waits come after it (<see cref="ServiceStatus.Timers"/>). An estimate from the race's
+/// latest live report (<see cref="Live"/>, at most 10 s old) and the server's clock: each racer still racing finishes
+/// after its laps left at its own mean lap so far (the current lap's time counted off), and the race ends at the last
+/// of those, or, with a finish limit, no later than the limit after the first finish (once a racer has finished, the
+/// limit counts from that finish's race time: the one exact part). 0: every racer is finished or out. Null when it
+/// cannot be worked out honestly: no live report, a racer still racing without a whole lap and no finish yet to count
+/// the limit from, laps unlimited, or a mode that ends its race otherwise (<c>end_race</c> in its code, a clock limit,
+/// <c>race_waits everyone</c>: Knockout, Overdrive, Death Race and Crown today; Quick Play's normal mode and Ghost race
+/// end by their laps); and from a server from before.</summary>
 public sealed record RaceView(
     string Id, string Relay, string Region, int Course, string CourseName, int Laps, IReadOnlyList<RacerView> Players,
     int CpuRacers, DateTimeOffset Started, RaceSnapshot? Live = null, string? Mode = null, string? Badge = null,
-    string? Pack = null);
+    string? Pack = null, int? EndsInMs = null);
 
 /// <summary>A relay: its id, region, its load (null when it does not report one, or is not running) and the races it
 /// takes at once (null: no limit). For a relay the coordinator starts and stops itself also: State
 /// (stopped, starting, running, stopping; null for any other relay, which is listed while it is connected), its
 /// public address (null: none allocated), its Machine size, IdleUntil (when it is stopped if nothing uses it),
-/// AddressUntil (when its address is released if it stays stopped) and Error (set while its last start failed).</summary>
+/// AddressUntil (when its address is released if it stays stopped) and Error (set while its last start failed).
+/// Host and Port: where a game measures its round trip to the relay (the relay protocol's keyless Ping, as for
+/// <see cref="MeasureRelays"/>: the same host and port a match's measure names), while the relay is connected to the
+/// coordinator; null while it is not (a managed relay stopped or not yet connected), or from a server from before.</summary>
 public sealed record RelayView(string Id, string Region, int? Races, int? Players, int? MaxRaces = null, string? State = null,
     string? Address = null, string? Size = null, DateTimeOffset? IdleUntil = null, DateTimeOffset? AddressUntil = null,
-    string? Error = null);
+    string? Error = null, string? Host = null, int? Port = null);

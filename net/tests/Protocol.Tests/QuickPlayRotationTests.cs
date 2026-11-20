@@ -459,7 +459,7 @@ public sealed class QuickPlayRotationTests : IDisposable
         {
             var laps = table.GetValueOrDefault(course.Track, 3);
             Assert.Equal(laps, normal.Laps(course.Course));
-            Assert.Equal((laps, (string?)null, (string?)null), (normal.Card(course.Course, spicy: false).Laps!.Value,
+            Assert.Equal((laps, (string?)null, normal.Package.About), (normal.Card(course.Course, spicy: false).Laps!.Value,
                 normal.Card(course.Course, spicy: false).Badge, normal.Card(course.Course, spicy: false).About));
         }
         Assert.Null(normal.Card(CourseVote.RandomCourse, spicy: false).Laps);
@@ -578,6 +578,55 @@ public sealed class QuickPlayRotationTests : IDisposable
         Assert.True(terms.CpusAllowed);
         Assert.Equal(CpuFillMode.Vote, terms.CpuFill);
         Assert.Equal(8, terms.Laps(CourseTable.Courses.First(c => c.Track == "Sonic Oval").Course));
+    }
+
+    /// <summary>The vote panel's rules on a card (<see cref="VoteCard.Terms"/>, <see cref="VoteCard.Pack"/>,
+    /// <see cref="VoteCard.Moved"/>): a normal card races Quick Play's own rules, so nothing moved, with its laps on
+    /// its course and the race's seats; Knockout's card names what it changes against them (its laps unlimited, no
+    /// finish limit), its CPUs, mines and stats being Quick Play's; every card has its mode's line; a reader from
+    /// before passes over the members, and an older card reads as none.</summary>
+    [Fact]
+    public void ACardSaysItsRulesAndWhichAreNotQuickPlays()
+    {
+        var rotation = Official();
+        var normal = rotation.Normal;
+        var sonic = CourseTable.Courses.First(c => c.Track == "Sonic Oval").Course;
+        var card = normal.Card(sonic, spicy: false, 3, 30, normal, 30);
+        Assert.Equal(normal.Package.About, card.About);
+        Assert.Null(card.Badge);
+        Assert.Equal("GX Unleashed", card.Pack);
+        Assert.Empty(card.Moved!);
+        var terms = card.Terms!;
+        Assert.Equal((8, 30, (int)CpuFillMode.Vote, 200, 90, 3, 0), (terms["laps"], terms["racers"], terms["cpu-fill"],
+            terms["mine-regen"], terms["finish-limit"], terms["cpu-level"], terms["boost-start"]));
+        Assert.Equal((100, 100, 0), (terms["machine-setting"], terms[LobbyRules.SettingHighKey], terms["mixed-packs"]));
+        Assert.False(terms.ContainsKey("course-select"));
+
+        var random = normal.Card(CourseVote.RandomCourse, spicy: false, 3, 30, normal, 30);
+        Assert.Equal((ModeTerms.LapsByCourse, 0), (random.Terms!["laps"], random.Moved!.Count));
+
+        var knockout = rotation.Spicy.Single(s => s.Mode.File == "knockout.fzmode").Mode;
+        var spicy = knockout.Card(sonic, spicy: true, 3, 30, normal, 30);
+        Assert.Equal(("KNOCKOUT", knockout.Package.About, "GX Unleashed"), (spicy.Badge, spicy.About, spicy.Pack));
+        Assert.Equal((0, 0), (spicy.Terms!["laps"], spicy.Terms["finish-limit"]));
+        Assert.Equal(["finish-limit", "laps"], spicy.Moved!.Order(StringComparer.Ordinal));
+        Assert.Equal(["finish-limit", "laps", "racers"], knockout.Card(sonic, spicy: true, 3, 12, normal, 30).Moved!.Order(StringComparer.Ordinal));
+
+        var stock = new RotationMode(normal.File, normal.Package, normal.Hash,
+            [.. normal.Package.Params.Select(p => p.Name == "pack" ? p.Choices.ToList().IndexOf("stock") : p.Name == "mines_back" ? p.Most : p.Default)]);
+        var other = stock.Card(sonic, spicy: false, 3, 30, normal, 30);
+        Assert.Equal(("", 0), (other.Pack, other.Terms!["mine-regen"]));
+        Assert.Equal(["mine-regen", VoteCard.PackKey], other.Moved!.Order(StringComparer.Ordinal));
+        Assert.Null(normal.Card(sonic, spicy: false, 3, 30, null, 30).Moved);
+
+        var text = ControlProtocol.Encode(new CourseVote("m1", [sonic], 10_000, [spicy]));
+        Assert.Contains("\"terms\":{", text, StringComparison.Ordinal);
+        Assert.Contains("\"moved\":[", text, StringComparison.Ordinal);
+        var back = Assert.IsType<CourseVote>(ControlProtocol.DecodeServer(text)).Cards![0];
+        Assert.Equal((spicy.Pack, spicy.Terms!.Count, spicy.Moved!.Count), (back.Pack, back.Terms!.Count, back.Moved!.Count));
+        var older = Assert.IsType<CourseVote>(ControlProtocol.DecodeServer(
+            "{\"type\":\"courseVote\",\"matchId\":\"m1\",\"options\":[8],\"durationMs\":1,\"cards\":[{\"mode\":\"Quick Play\",\"laps\":3}]}")).Cards![0];
+        Assert.Equal(((IReadOnlyDictionary<string, int>?)null, (string?)null, (IReadOnlyList<string>?)null), (older.Terms, older.Pack, older.Moved));
     }
 
     [Fact]

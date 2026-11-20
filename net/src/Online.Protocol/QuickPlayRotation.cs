@@ -34,16 +34,59 @@ public sealed record RotationMode(string File, ModePackage Package, string Hash,
     /// <summary>The match start's <c>setup.mode</c>: the package on its parameters' values.</summary>
     public ModeStart Start() => Package.Start(Values);
 
-    /// <summary>The vote card of this mode on a course (<see cref="CourseVote.RandomCourse"/>: laps not known); a spicy
-    /// mode's carries its badge, its line and the rules it changes.</summary>
+    /// <summary>The vote card of this mode on a course (<see cref="CourseVote.RandomCourse"/>: laps not known): its
+    /// line of what it is on every card; a spicy mode's carries its badge and the rules it changes too.</summary>
     /// <param name="course">The card's course.</param>
-    /// <param name="spicy">A spicy option's: its badge, its line and its rules.</param>
+    /// <param name="spicy">A spicy option's: its badge and its rules.</param>
     /// <param name="lobbyLaps">The lobby's laps, for a mode that states none.</param>
     public VoteCard Card(int course, bool spicy, int lobbyLaps = 3) => new(Package.Name,
         course == CourseVote.RandomCourse ? null : Laps(course) ?? lobbyLaps,
         spicy && Package.Badge.Length > 0 ? Package.Badge : null,
-        spicy && Package.About.Length > 0 ? Package.About : null,
+        Package.About.Length > 0 ? Package.About : null,
         spicy && ModeRuleLines.Of(Package) is { Count: > 0 } rules ? rules : null);
+
+    /// <summary>The vote card with the race's rules for the vote panel (<see cref="VoteCard.Terms"/>,
+    /// <see cref="VoteCard.Pack"/>, <see cref="VoteCard.Moved"/>): this mode's terms on the card's course with the race's
+    /// seats, and the keys whose value is not <paramref name="quickPlay"/>'s on the same course with its seats (null:
+    /// nothing to compare with, Moved null).</summary>
+    /// <param name="course">The card's course.</param>
+    /// <param name="spicy">A spicy option's.</param>
+    /// <param name="lobbyLaps">The lobby's laps, for a mode that states none.</param>
+    /// <param name="seats">The race's seats under this mode (the lobby's, within the mode's racers).</param>
+    /// <param name="quickPlay">Quick Play's normal mode, on its defaults.</param>
+    /// <param name="quickPlaySeats">Quick Play's seats under it.</param>
+    public VoteCard Card(int course, bool spicy, int lobbyLaps, int seats, RotationMode? quickPlay, int quickPlaySeats)
+    {
+        var card = Card(course, spicy, lobbyLaps);
+        var terms = TermsOn(course, lobbyLaps, seats);
+        var pack = Terms.Pack ?? "";
+        if (quickPlay is null)
+        {
+            return card with { Terms = terms, Pack = pack };
+        }
+        var own = quickPlay.TermsOn(course, lobbyLaps, quickPlaySeats);
+        var moved = terms.Where(t => !own.TryGetValue(t.Key, out var v) || v != t.Value).Select(t => t.Key)
+            .Concat(own.Keys.Where(k => !terms.ContainsKey(k)))
+            .ToList();
+        if (pack != (quickPlay.Terms.Pack ?? ""))
+        {
+            moved.Add(VoteCard.PackKey);
+        }
+        return card with { Terms = terms, Pack = pack, Moved = moved };
+    }
+
+    /// <summary>The race's rules by key on a course (<see cref="VoteCard.Terms"/>): the mode's, its laps on the course
+    /// (on Random: its one number, or by course) and the race's seats.</summary>
+    private Dictionary<string, int> TermsOn(int course, int lobbyLaps, int seats)
+    {
+        var terms = new Dictionary<string, int>(Terms.Rules(), StringComparer.Ordinal);
+        if (course != CourseVote.RandomCourse)
+        {
+            terms[HostRules.Laps.Name] = Laps(course) ?? lobbyLaps;
+        }
+        terms[HostRules.Racers.Name] = seats;
+        return terms;
+    }
 }
 
 /// <summary>A spicy option of the rotation: its mode (whose file says the courses it is raced on) and its weight in the

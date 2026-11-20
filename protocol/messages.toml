@@ -71,6 +71,7 @@ members = [
     { name = "line", type = "string?", default = 'null' },
     { name = "modes", type = "int", default = '0', omit = "default" },
     { name = "rejoins", type = "bool", default = 'false', omit = "default" },
+    { name = "avatar", type = "string?", default = 'null' },
 ]
 
 [[record]]
@@ -772,6 +773,7 @@ members = [
     { name = "team", type = "int?", default = 'null' },
     { name = "nextRace", type = "bool", default = 'false', omit = "default" },
     { name = "emblems", type = "list<EmblemSlot>?", default = 'null' },
+    { name = "avatar", type = "string?", default = 'null' },
 ]
 
 [[record]]
@@ -843,6 +845,9 @@ members = [
     { name = "badge", type = "string?", default = 'null' },
     { name = "about", type = "string?", default = 'null' },
     { name = "rules", type = "list<string>?", default = 'null' },
+    { name = "terms", type = "map<int>?", default = 'null' },
+    { name = "pack", type = "string?", default = 'null' },
+    { name = "moved", type = "list<string>?", default = 'null' },
 ]
 
 [[record]]
@@ -919,6 +924,7 @@ members = [
     { name = "line", type = "string?", default = 'null' },
     { name = "startsInMs", type = "int?", default = 'null' },
     { name = "votingMinimum", type = "int?", default = 'null' },
+    { name = "relay", type = "string?", default = 'null' },
 ]
 
 [[record]]
@@ -947,6 +953,7 @@ members = [
     { name = "mode", type = "string?", default = 'null' },
     { name = "badge", type = "string?", default = 'null' },
     { name = "pack", type = "string?", default = 'null' },
+    { name = "endsInMs", type = "int?", default = 'null' },
 ]
 
 [[record]]
@@ -963,6 +970,8 @@ members = [
     { name = "idleUntil", type = "time?", default = 'null' },
     { name = "addressUntil", type = "time?", default = 'null' },
     { name = "error", type = "string?", default = 'null' },
+    { name = "host", type = "string?", default = 'null' },
+    { name = "port", type = "int?", default = 'null' },
 ]
 
 [[record]]
@@ -1091,6 +1100,7 @@ members = [
     { name = "color", type = "string?" },
     { name = "tag", type = "string?", default = 'null' },
     { name = "custom", type = "CustomMachine?", default = 'null' },
+    { name = "avatar", type = "string?", default = 'null' },
 ]
 
 [[record]]

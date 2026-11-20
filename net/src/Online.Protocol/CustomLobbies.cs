@@ -240,7 +240,15 @@ public sealed record LeaveLobby : ClientMessage;
 /// Modes: the server's official modes a host may give a lobby (its catalog's lobby modes, in order: Quick Play's
 /// normal mode first, then the others), each named as a lobby's mode is, with its
 /// settings on their defaults; the host chooses one by naming it in <see cref="LobbyRules.Mode"/> (its hash), or sends
-/// a file of their own (<see cref="LobbyRules.ModeFile"/>). Null: a server from before them.</summary>
+/// a file of their own (<see cref="LobbyRules.ModeFile"/>). Null: a server from before them.
+/// Quick Play's rules outside the browser (2026-11-20, for the Quick Play page and a Quick Play lobby's RULES line): the
+/// list is sent too once after the welcome, to a hello that says <see cref="Hello.Modes"/>, and again to every such
+/// player when Quick Play's rules change (the operator's rules, the mode store's new set), with Modes null (a game keeps
+/// the modes it was last named); a game that does not browse takes QuickPlay from it and leaves the list. QuickPlay's
+/// <see cref="LobbyRules.Mode"/> is Quick Play's normal mode on its defaults (null: a server with no rotation, or from
+/// before): its <see cref="LobbyMode.Terms"/> and <see cref="LobbyMode.Pack"/> are a Quick Play race's rules (a vote's
+/// spicy card races another mode: <see cref="VoteCard.Terms"/>), its Values the server's options under them as
+/// before, so a custom lobby is compared with them as it was.</summary>
 public sealed record LobbyList(IReadOnlyList<LobbySummary> Lobbies,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] LobbyRules? QuickPlay = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<LobbyMode>? Modes = null) : ServerMessage;

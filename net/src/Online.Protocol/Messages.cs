@@ -74,7 +74,9 @@ public sealed record Rgb(byte R, byte G, byte B)
 /// none yet, or a lobby without teams (<see cref="LobbyRules.TeamsKey"/>): the race gives them one. NextRace: while
 /// the lobby's match is starting or choosing machines, this member is not of it (they joined meanwhile, measured too
 /// slow for its relay, or their launcher does not run its rules): they have no vote and no machine to choose and race
-/// the lobby's next race. A launcher from before it passes over it.</summary>
+/// the lobby's next race. A launcher from before it passes over it. Avatar: the picture the player stands for
+/// themselves with (<see cref="Hello.Avatar"/>), by name; the game fetches it as an emblem's picture
+/// (<see cref="AskEmblems"/>). Null: none chosen, or a server from before it; a launcher from before it passes over it.</summary>
 public sealed record PlayerInfo(string Id, string Name, int Machine, Rgb Color, int? StockColor = null, bool Racing = false,
     bool Chosen = false, string? Tag = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool Watching = false,
@@ -82,7 +84,8 @@ public sealed record PlayerInfo(string Id, string Name, int Machine, Rgb Color, 
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] CustomMachine? Custom = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] int? Team = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool NextRace = false,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<EmblemSlot>? Emblems = null);
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<EmblemSlot>? Emblems = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Avatar = null);
 
 /// <summary>A relay the players measure. An empty host means the coordinator's own host.</summary>
 public sealed record RelayEndpoint(string Id, string Host, int Port);
@@ -248,7 +251,15 @@ public abstract record ClientMessage;
 /// match start of that race again marked <see cref="MatchStart.Rejoin"/>, as an offer, and puts the player back in
 /// that race's lobby when they enter Quick Play. A launcher or game from before it says nothing and is sent no such
 /// match start (it would start the race as a new one); a server from before it passes over the field. Written only
-/// when true.</summary>
+/// when true.
+/// Avatar: the picture the player chose to stand for them in the lobbies and the status (the Quick Play page's faces),
+/// by its name, as an emblem slot names one (<see cref="EmblemSlot.Picture"/>: the SHA-256 of the game's 64 x 64
+/// picture, 64 lower-case hex digits, <see cref="Emblems.ValidHash"/>). The picture travels as an emblem's does: the
+/// server asks for it once when it lacks it (<see cref="EmblemsWanted"/>, answered by <see cref="EmblemUpload"/>) and
+/// hands it to any game that asks by name (<see cref="AskEmblems"/>); an emblem report of the player names it too.
+/// The server keeps the name for the connection and passes it on (<see cref="PlayerInfo.Avatar"/>,
+/// <see cref="RacerView.Avatar"/>); a text that is no picture's name is dropped, as no avatar (the hello is not refused).
+/// Null: none chosen (a launcher or game from before it says nothing); a server from before it passes over it.</summary>
 public sealed record Hello(string Name, int Version, string? Build = null, bool VoteCounts = false,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool Debug = false,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool StatPacks = false,
@@ -258,7 +269,8 @@ public sealed record Hello(string Name, int Version, string? Build = null, bool 
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool Players = false,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Line = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] int Modes = 0,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool Rejoins = false) : ClientMessage
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool Rejoins = false,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Avatar = null) : ClientMessage
 {
     /// <summary>The longest build name a server takes.</summary>
     public const int MaxBuildLength = 128;
@@ -523,13 +535,37 @@ public sealed record CourseVote(string MatchId, IReadOnlyList<int> Options, int 
 }
 
 /// <summary>What a vote's option races (<see cref="CourseVote.Cards"/>): its mode's name and its laps (0: unlimited;
-/// null: not known before the draw, "Random course"), and for a mode that changes the race (a spicy card) the mode's
-/// one-word badge, its line of what it changes (the header's <c>badge</c> and <c>about</c>) and the rules its setup
-/// words change (<see cref="ModeRuleLines"/>); a normal card has none of them.</summary>
+/// null: not known before the draw, "Random course"); for a mode that changes the race (a spicy card) the mode's
+/// one-word badge and the rules its setup words change, in plain lines (<see cref="ModeRuleLines"/>); a normal card has
+/// neither. About: the mode's line of what it is (the header's <c>about</c>), on every card whose mode has one (a
+/// launcher from before 2026-11-20 shows it only beside a badge, so a normal card looks as it did).
+/// The card's rules for the vote panel (2026-11-20; each null from a server from before them, and a launcher from
+/// before them passes over them):
+/// Terms: the race's rules on this card, by the rule keys a lobby's rules use (<see cref="HostRules"/>' names, as
+/// <see cref="LobbyRules.Values"/> and <see cref="LobbyMode.Terms"/> hold them): every rule the mode owns
+/// (<see cref="ModeTerms.Rules"/>; a word the mode leaves out is the game's own way), with <c>laps</c> the card's laps on
+/// its course (on "Random course": the mode's one number, or <see cref="ModeTerms.LapsByCourse"/> for a table) and
+/// <c>racers</c> the race's seats (the lobby's, within the mode's <c>racers</c>). Keys: <c>laps</c>, <c>racers</c>,
+/// <c>cpu-fill</c> (<see cref="CpuFillMode"/> as a number), <c>cpu-level</c>, <c>boost-start</c>, <c>mine-regen</c> (ms,
+/// 0 none), <c>finish-limit</c> (s, 0 none), <c>machine-setting</c> and <see cref="LobbyRules.SettingHighKey"/>,
+/// <c>mixed-packs</c>, and <c>course-select</c> with <see cref="LobbyRules.FixedCourseKey"/> only for a mode that pins
+/// its course.
+/// Pack: the stat pack the card races, by name; "" the disc's own stats.
+/// Moved: the keys of Terms, and <c>stat-pack</c> for Pack, whose value is not Quick Play's own: its normal mode on its
+/// defaults on the same course, with Quick Play's seats (the rules <see cref="LobbyList.QuickPlay"/> names). A key not
+/// in it races as Quick Play does; empty: the card races Quick Play's own rules. Null: the server has no Quick Play
+/// rotation to compare with.</summary>
 public sealed record VoteCard(string Mode, int? Laps,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Badge = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? About = null,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<string>? Rules = null);
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<string>? Rules = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyDictionary<string, int>? Terms = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Pack = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<string>? Moved = null)
+{
+    /// <summary>The key of <see cref="Moved"/> that names the card's stat pack (<see cref="Pack"/>), which is no number of Terms.</summary>
+    public const string PackKey = "stat-pack";
+}
 
 /// <summary>The course vote as it stands (the counts are visible to everyone during the vote):
 /// the votes per option, in the options' order, and who has voted (player ids), sent to everyone in the lobby who

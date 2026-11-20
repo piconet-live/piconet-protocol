@@ -161,6 +161,7 @@ struct Hello
   std::optional<std::string> line;
   std::int32_t modes = 0;
   bool rejoins = false;
+  std::optional<std::string> avatar;
 
   // one bit a member, of wire_absent (a member that is no "?" read as null or left out: C# holds null; it
   // is then not written) and of wire_holes (a list that held null items, dropped)
@@ -179,6 +180,7 @@ struct Hello
     static constexpr std::uint32_t line = 1u << 10;
     static constexpr std::uint32_t modes = 1u << 11;
     static constexpr std::uint32_t rejoins = 1u << 12;
+    static constexpr std::uint32_t avatar = 1u << 13;
   };
   static constexpr std::uint32_t kAbsentAtStart = Bit::name;
   std::uint32_t wire_absent = 0;
@@ -191,7 +193,7 @@ inline bool Get(const json_wire::Value& x, Hello& out, std::size_t from = 0)
     return false;
   out = Hello{};
   out.wire_absent = Hello::kAbsentAtStart;
-  static constexpr std::string_view kNames[] = {"name", "version", "build", "voteCounts", "debug", "statPacks", "pings", "notices", "key", "players", "line", "modes", "rejoins"};
+  static constexpr std::string_view kNames[] = {"name", "version", "build", "voteCounts", "debug", "statPacks", "pings", "notices", "key", "players", "line", "modes", "rejoins", "avatar"};
   for (std::size_t i = from; i < x.members.size(); ++i)
   {
     const json_wire::Value& v = x.members[i].second;
@@ -247,6 +249,10 @@ inline bool Get(const json_wire::Value& x, Hello& out, std::size_t from = 0)
       break;
     case 12:
       if (!Get(v, out.rejoins))
+        return false;
+      break;
+    case 13:
+      if (!Get(v, out.avatar))
         return false;
       break;
     default:
@@ -323,6 +329,11 @@ inline void Put(json_wire::Out& o, const Hello& v, std::string_view type = {})
   {
     json_wire::Key(o, first, "rejoins");
     Put(o, v.rejoins);
+  }
+  if (v.avatar)
+  {
+    json_wire::Key(o, first, "avatar");
+    Put(o, *v.avatar);
   }
   o.text += '}';
 }
@@ -3837,6 +3848,7 @@ struct PlayerInfo
   std::optional<std::int32_t> team;
   bool nextRace = false;
   std::optional<std::vector<EmblemSlot>> emblems;
+  std::optional<std::string> avatar;
 
   // one bit a member, of wire_absent (a member that is no "?" read as null or left out: C# holds null; it
   // is then not written) and of wire_holes (a list that held null items, dropped)
@@ -3856,6 +3868,7 @@ struct PlayerInfo
     static constexpr std::uint32_t team = 1u << 11;
     static constexpr std::uint32_t nextRace = 1u << 12;
     static constexpr std::uint32_t emblems = 1u << 13;
+    static constexpr std::uint32_t avatar = 1u << 14;
   };
   static constexpr std::uint32_t kAbsentAtStart = Bit::id | Bit::name | Bit::color;
   std::uint32_t wire_absent = 0;
@@ -3868,7 +3881,7 @@ inline bool Get(const json_wire::Value& x, PlayerInfo& out, std::size_t from = 0
     return false;
   out = PlayerInfo{};
   out.wire_absent = PlayerInfo::kAbsentAtStart;
-  static constexpr std::string_view kNames[] = {"id", "name", "machine", "color", "stockColor", "racing", "chosen", "tag", "watching", "pack", "custom", "team", "nextRace", "emblems"};
+  static constexpr std::string_view kNames[] = {"id", "name", "machine", "color", "stockColor", "racing", "chosen", "tag", "watching", "pack", "custom", "team", "nextRace", "emblems", "avatar"};
   for (std::size_t i = from; i < x.members.size(); ++i)
   {
     const json_wire::Value& v = x.members[i].second;
@@ -3928,6 +3941,10 @@ inline bool Get(const json_wire::Value& x, PlayerInfo& out, std::size_t from = 0
       break;
     case 13:
       if (!(v.kind == json_wire::Value::Kind::Null ? (out.emblems.reset(), true) : (out.emblems.emplace(), [&] { bool holes = false; out.wire_holes &= ~PlayerInfo::Bit::emblems; const bool ok = Get(v, *out.emblems, &holes); if (holes) out.wire_holes |= PlayerInfo::Bit::emblems; return ok; }())))
+        return false;
+      break;
+    case 14:
+      if (!Get(v, out.avatar))
         return false;
       break;
     default:
@@ -4006,6 +4023,11 @@ inline void Put(json_wire::Out& o, const PlayerInfo& v, std::string_view type = 
   {
     json_wire::Key(o, first, "emblems");
     Put(o, *v.emblems);
+  }
+  if (v.avatar)
+  {
+    json_wire::Key(o, first, "avatar");
+    Put(o, *v.avatar);
   }
   o.text += '}';
 }
@@ -5807,6 +5829,9 @@ struct VoteCard
   std::optional<std::string> badge;
   std::optional<std::string> about;
   std::optional<std::vector<std::string>> rules;
+  std::optional<Map> terms;
+  std::optional<std::string> pack;
+  std::optional<std::vector<std::string>> moved;
 
   // one bit a member, of wire_absent (a member that is no "?" read as null or left out: C# holds null; it
   // is then not written) and of wire_holes (a list that held null items, dropped)
@@ -5817,6 +5842,9 @@ struct VoteCard
     static constexpr std::uint32_t badge = 1u << 2;
     static constexpr std::uint32_t about = 1u << 3;
     static constexpr std::uint32_t rules = 1u << 4;
+    static constexpr std::uint32_t terms = 1u << 5;
+    static constexpr std::uint32_t pack = 1u << 6;
+    static constexpr std::uint32_t moved = 1u << 7;
   };
   static constexpr std::uint32_t kAbsentAtStart = Bit::mode;
   std::uint32_t wire_absent = 0;
@@ -5829,7 +5857,7 @@ inline bool Get(const json_wire::Value& x, VoteCard& out, std::size_t from = 0)
     return false;
   out = VoteCard{};
   out.wire_absent = VoteCard::kAbsentAtStart;
-  static constexpr std::string_view kNames[] = {"mode", "laps", "badge", "about", "rules"};
+  static constexpr std::string_view kNames[] = {"mode", "laps", "badge", "about", "rules", "terms", "pack", "moved"};
   for (std::size_t i = from; i < x.members.size(); ++i)
   {
     const json_wire::Value& v = x.members[i].second;
@@ -5853,6 +5881,18 @@ inline bool Get(const json_wire::Value& x, VoteCard& out, std::size_t from = 0)
       break;
     case 4:
       if (!(v.kind == json_wire::Value::Kind::Null ? (out.rules.reset(), true) : (out.rules.emplace(), [&] { bool holes = false; out.wire_holes &= ~VoteCard::Bit::rules; const bool ok = Get(v, *out.rules, &holes); if (holes) out.wire_holes |= VoteCard::Bit::rules; return ok; }())))
+        return false;
+      break;
+    case 5:
+      if (!json_wire::GetMap(v, out.terms))
+        return false;
+      break;
+    case 6:
+      if (!Get(v, out.pack))
+        return false;
+      break;
+    case 7:
+      if (!(v.kind == json_wire::Value::Kind::Null ? (out.moved.reset(), true) : (out.moved.emplace(), [&] { bool holes = false; out.wire_holes &= ~VoteCard::Bit::moved; const bool ok = Get(v, *out.moved, &holes); if (holes) out.wire_holes |= VoteCard::Bit::moved; return ok; }())))
         return false;
       break;
     default:
@@ -5895,6 +5935,21 @@ inline void Put(json_wire::Out& o, const VoteCard& v, std::string_view type = {}
   {
     json_wire::Key(o, first, "rules");
     Put(o, *v.rules);
+  }
+  if (v.terms)
+  {
+    json_wire::Key(o, first, "terms");
+    json_wire::PutMap(o, *v.terms);
+  }
+  if (v.pack)
+  {
+    json_wire::Key(o, first, "pack");
+    Put(o, *v.pack);
+  }
+  if (v.moved)
+  {
+    json_wire::Key(o, first, "moved");
+    Put(o, *v.moved);
   }
   o.text += '}';
 }
@@ -7697,6 +7752,7 @@ struct RacerView
   std::optional<std::string> color;
   std::optional<std::string> tag;
   std::optional<CustomMachine> custom;
+  std::optional<std::string> avatar;
 
   // one bit a member, of wire_absent (a member that is no "?" read as null or left out: C# holds null; it
   // is then not written) and of wire_holes (a list that held null items, dropped)
@@ -7707,6 +7763,7 @@ struct RacerView
     static constexpr std::uint32_t color = 1u << 2;
     static constexpr std::uint32_t tag = 1u << 3;
     static constexpr std::uint32_t custom = 1u << 4;
+    static constexpr std::uint32_t avatar = 1u << 5;
   };
   static constexpr std::uint32_t kAbsentAtStart = Bit::name;
   std::uint32_t wire_absent = 0;
@@ -7719,7 +7776,7 @@ inline bool Get(const json_wire::Value& x, RacerView& out, std::size_t from = 0)
     return false;
   out = RacerView{};
   out.wire_absent = RacerView::kAbsentAtStart;
-  static constexpr std::string_view kNames[] = {"name", "machine", "color", "tag", "custom"};
+  static constexpr std::string_view kNames[] = {"name", "machine", "color", "tag", "custom", "avatar"};
   for (std::size_t i = from; i < x.members.size(); ++i)
   {
     const json_wire::Value& v = x.members[i].second;
@@ -7743,6 +7800,10 @@ inline bool Get(const json_wire::Value& x, RacerView& out, std::size_t from = 0)
       break;
     case 4:
       if (!Get(v, out.custom))
+        return false;
+      break;
+    case 5:
+      if (!Get(v, out.avatar))
         return false;
       break;
     default:
@@ -7782,6 +7843,11 @@ inline void Put(json_wire::Out& o, const RacerView& v, std::string_view type = {
   {
     json_wire::Key(o, first, "custom");
     Put(o, *v.custom);
+  }
+  if (v.avatar)
+  {
+    json_wire::Key(o, first, "avatar");
+    Put(o, *v.avatar);
   }
   o.text += '}';
 }
@@ -7866,6 +7932,7 @@ struct LobbyView
   std::optional<std::string> line;
   std::optional<std::int32_t> startsInMs;
   std::optional<std::int32_t> votingMinimum;
+  std::optional<std::string> relay;
 
   // one bit a member, of wire_absent (a member that is no "?" read as null or left out: C# holds null; it
   // is then not written) and of wire_holes (a list that held null items, dropped)
@@ -7884,6 +7951,7 @@ struct LobbyView
     static constexpr std::uint32_t line = 1u << 10;
     static constexpr std::uint32_t startsInMs = 1u << 11;
     static constexpr std::uint32_t votingMinimum = 1u << 12;
+    static constexpr std::uint32_t relay = 1u << 13;
   };
   static constexpr std::uint32_t kAbsentAtStart = Bit::id | Bit::players;
   std::uint32_t wire_absent = 0;
@@ -7896,7 +7964,7 @@ inline bool Get(const json_wire::Value& x, LobbyView& out, std::size_t from = 0)
     return false;
   out = LobbyView{};
   out.wire_absent = LobbyView::kAbsentAtStart;
-  static constexpr std::string_view kNames[] = {"id", "players", "capacity", "votingOpen", "startVotes", "stage", "raceId", "racing", "build", "builds", "line", "startsInMs", "votingMinimum"};
+  static constexpr std::string_view kNames[] = {"id", "players", "capacity", "votingOpen", "startVotes", "stage", "raceId", "racing", "build", "builds", "line", "startsInMs", "votingMinimum", "relay"};
   for (std::size_t i = from; i < x.members.size(); ++i)
   {
     const json_wire::Value& v = x.members[i].second;
@@ -7952,6 +8020,10 @@ inline bool Get(const json_wire::Value& x, LobbyView& out, std::size_t from = 0)
       break;
     case 12:
       if (!Get(v, out.votingMinimum))
+        return false;
+      break;
+    case 13:
+      if (!Get(v, out.relay))
         return false;
       break;
     default:
@@ -8022,6 +8094,11 @@ inline void Put(json_wire::Out& o, const LobbyView& v, std::string_view type = {
   {
     json_wire::Key(o, first, "votingMinimum");
     Put(o, *v.votingMinimum);
+  }
+  if (v.relay)
+  {
+    json_wire::Key(o, first, "relay");
+    Put(o, *v.relay);
   }
   o.text += '}';
 }
@@ -8139,6 +8216,7 @@ struct RaceView
   std::optional<std::string> mode;
   std::optional<std::string> badge;
   std::optional<std::string> pack;
+  std::optional<std::int32_t> endsInMs;
 
   // one bit a member, of wire_absent (a member that is no "?" read as null or left out: C# holds null; it
   // is then not written) and of wire_holes (a list that held null items, dropped)
@@ -8157,6 +8235,7 @@ struct RaceView
     static constexpr std::uint32_t mode = 1u << 10;
     static constexpr std::uint32_t badge = 1u << 11;
     static constexpr std::uint32_t pack = 1u << 12;
+    static constexpr std::uint32_t endsInMs = 1u << 13;
   };
   static constexpr std::uint32_t kAbsentAtStart = Bit::id | Bit::relay | Bit::region | Bit::courseName | Bit::players;
   std::uint32_t wire_absent = 0;
@@ -8169,7 +8248,7 @@ inline bool Get(const json_wire::Value& x, RaceView& out, std::size_t from = 0)
     return false;
   out = RaceView{};
   out.wire_absent = RaceView::kAbsentAtStart;
-  static constexpr std::string_view kNames[] = {"id", "relay", "region", "course", "courseName", "laps", "players", "cpuRacers", "started", "live", "mode", "badge", "pack"};
+  static constexpr std::string_view kNames[] = {"id", "relay", "region", "course", "courseName", "laps", "players", "cpuRacers", "started", "live", "mode", "badge", "pack", "endsInMs"};
   for (std::size_t i = from; i < x.members.size(); ++i)
   {
     const json_wire::Value& v = x.members[i].second;
@@ -8225,6 +8304,10 @@ inline bool Get(const json_wire::Value& x, RaceView& out, std::size_t from = 0)
       break;
     case 12:
       if (!Get(v, out.pack))
+        return false;
+      break;
+    case 13:
+      if (!Get(v, out.endsInMs))
         return false;
       break;
     default:
@@ -8296,6 +8379,11 @@ inline void Put(json_wire::Out& o, const RaceView& v, std::string_view type = {}
     json_wire::Key(o, first, "pack");
     Put(o, *v.pack);
   }
+  if (v.endsInMs)
+  {
+    json_wire::Key(o, first, "endsInMs");
+    Put(o, *v.endsInMs);
+  }
   o.text += '}';
 }
 
@@ -8313,6 +8401,8 @@ struct RelayView
   std::optional<Time> idleUntil;
   std::optional<Time> addressUntil;
   std::optional<std::string> error;
+  std::optional<std::string> host;
+  std::optional<std::int32_t> port;
 
   // one bit a member, of wire_absent (a member that is no "?" read as null or left out: C# holds null; it
   // is then not written) and of wire_holes (a list that held null items, dropped)
@@ -8329,6 +8419,8 @@ struct RelayView
     static constexpr std::uint32_t idleUntil = 1u << 8;
     static constexpr std::uint32_t addressUntil = 1u << 9;
     static constexpr std::uint32_t error = 1u << 10;
+    static constexpr std::uint32_t host = 1u << 11;
+    static constexpr std::uint32_t port = 1u << 12;
   };
   static constexpr std::uint32_t kAbsentAtStart = Bit::id | Bit::region;
   std::uint32_t wire_absent = 0;
@@ -8341,7 +8433,7 @@ inline bool Get(const json_wire::Value& x, RelayView& out, std::size_t from = 0)
     return false;
   out = RelayView{};
   out.wire_absent = RelayView::kAbsentAtStart;
-  static constexpr std::string_view kNames[] = {"id", "region", "races", "players", "maxRaces", "state", "address", "size", "idleUntil", "addressUntil", "error"};
+  static constexpr std::string_view kNames[] = {"id", "region", "races", "players", "maxRaces", "state", "address", "size", "idleUntil", "addressUntil", "error", "host", "port"};
   for (std::size_t i = from; i < x.members.size(); ++i)
   {
     const json_wire::Value& v = x.members[i].second;
@@ -8389,6 +8481,14 @@ inline bool Get(const json_wire::Value& x, RelayView& out, std::size_t from = 0)
       break;
     case 10:
       if (!Get(v, out.error))
+        return false;
+      break;
+    case 11:
+      if (!Get(v, out.host))
+        return false;
+      break;
+    case 12:
+      if (!Get(v, out.port))
         return false;
       break;
     default:
@@ -8461,6 +8561,16 @@ inline void Put(json_wire::Out& o, const RelayView& v, std::string_view type = {
   {
     json_wire::Key(o, first, "error");
     Put(o, *v.error);
+  }
+  if (v.host)
+  {
+    json_wire::Key(o, first, "host");
+    Put(o, *v.host);
+  }
+  if (v.port)
+  {
+    json_wire::Key(o, first, "port");
+    Put(o, *v.port);
   }
   o.text += '}';
 }
