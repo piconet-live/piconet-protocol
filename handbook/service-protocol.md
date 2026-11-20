@@ -16,6 +16,7 @@ A seat is a racer's place in a race, 0 to 29. A match is a lobby's next race fro
 | `setLobbyRules`, `kick`, `startLobbyRace` | L to C | the host's controls | While the lobby is forming: name, rules whole, password (or `clearPassword`); a member out (`leftLobby` reason `kicked`, no rejoin); the race now. `error` `not_host`, `rules_locked`, `bad_rules`. Numbers outside a rule's range are brought into it (`HostRules`) |
 | `leaveLobby` | L to C | the player leaves any lobby | As `leaveQueue` |
 | `voteStart`, `voteCpuFill` | L to C | lobby buttons | Counts the vote; `error` `voting_closed` or `not_in_lobby`; a start vote of more than half begins the match, before a Quick Play lobby's start countdown runs out |
+| `avatar` | L to C | the player's avatar changed while connected (`welcome` says `avatars`) | Checked as the hello's `avatar`; none for null, empty or no picture's name; the picture asked for once if lacking, the lobby sent again (below the table, "Avatars") |
 | `name` | L to C | a name change while connected (`welcome` says `renames`) | Checked as a hello's name, logged (`id: old -> new`), the lobby sent again; `error` `bad_name`, or `rename_too_soon` within a second of the last (the launcher sends its saved name again) |
 | `chat` | L to C, C to L | any time after hello | Sends it to everyone (`global`) or the lobby (`lobby`); `error` `bad_text`, `bad_channel`, or the filter's `chat_*` (the service's chat filter). A player's line has `fromTag`; a notice is a `chat` from id `server`, name `SYSTEM`, with `level`, `noticeId` and no tag |
 | `recentNotices` | C to L | after `welcome`; joining a lobby | The last hour's notices to all, or that lobby, if hello said `notices`; listed once by id, never as chat |
@@ -158,7 +159,12 @@ a member they do not know), and a server from before sends none, so a screen sho
   (`emblemAsk`), and names it in an emblem report of that player. It is carried by name in a lobby's `players`
   (`PlayerInfo.avatar`) and in the status's racers (`RacerView.avatar`, the lobbies' and the races'); absent: none
   chosen. The hide list applies by the racer's tag and name, a report by the player's id (a lobby's roster, or the
-  players list for a status row).
+  players list for a status row). Changed while connected, in a lobby or not: the client message `avatar` (`SetAvatar`),
+  `avatar` the new name, checked as the hello's; null, empty or no picture's name: none from now on. The server asks
+  for a picture it lacks once (`emblemsWanted`), sends the player's lobby again and shows it in the status from then
+  on (a race running keeps the racers it started with); the same name again changes nothing. Sent only to a server
+  whose `welcome` says `avatars: true`: a server from before answers the unknown type with `error` `bad_message`
+  ("unreadable message") and keeps the connection, and passes over a hello's `avatar` silently.
 
 **The official modes in the status****The official modes in the status** (`ServiceStatus.ModeStore`, `ModeStoreView`): where the coordinator loaded Quick
 Play's rotation from (`source`: `bucket`, the stack's mode store; `local copy`, its last good copy while the bucket

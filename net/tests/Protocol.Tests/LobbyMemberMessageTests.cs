@@ -39,4 +39,25 @@ public sealed class LobbyMemberMessageTests
         Assert.DoesNotContain("custom",
             System.Text.Json.JsonSerializer.Serialize(new RacerView("ANA", 6, "#010203"), ControlProtocol.Json), StringComparison.Ordinal);
     }
+
+    /// <summary>A member's avatar on the wire (<see cref="Hello.Avatar"/>, <see cref="SetAvatar"/>,
+    /// <see cref="PlayerInfo.Avatar"/>): the client's change while connected, by name, and a welcome that says the server
+    /// takes it; a welcome from before reads as a server that does not.</summary>
+    [Fact]
+    public void AnAvatarChangeIsItsOwnMessageAndTheWelcomeSaysWhoTakesIt()
+    {
+        const string hash = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+        var text = ControlProtocol.Encode(new SetAvatar(hash));
+        Assert.Equal($$"""{"type":"avatar","avatar":"{{hash}}"}""", text);
+        Assert.Equal(hash, Assert.IsType<SetAvatar>(ControlProtocol.DecodeClient(text)).Avatar);
+        Assert.Equal("""{"type":"avatar"}""", ControlProtocol.Encode(new SetAvatar()));   // (none from now on)
+        Assert.Null(Assert.IsType<SetAvatar>(ControlProtocol.DecodeClient("""{"type":"avatar"}""")).Avatar);
+
+        var welcome = ControlProtocol.Encode(new Welcome("p1", "Online", 3, Avatars: true));
+        Assert.Contains("\"avatars\":true", welcome, StringComparison.Ordinal);
+        Assert.True(Assert.IsType<Welcome>(ControlProtocol.DecodeServer(welcome)).Avatars);
+        Assert.DoesNotContain("avatars", ControlProtocol.Encode(new Welcome("p1", "Online", 3)), StringComparison.Ordinal);
+        Assert.False(Assert.IsType<Welcome>(ControlProtocol.DecodeServer(
+            """{"type":"welcome","playerId":"p1","serverName":"Online","version":3,"renames":true}""")).Avatars);
+    }
 }

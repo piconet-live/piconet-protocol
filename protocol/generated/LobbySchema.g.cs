@@ -533,6 +533,8 @@ internal static class LobbySchema
         "  packNone bool default=false",
         "  modeStore ModeStoreView? default=null",
         "  timers StatusTimers? default=null",
+        "record SetAvatar root=client type=avatar",
+        "  avatar string? default=null",
         "record SetLobbyRules root=client type=setLobbyRules",
         "  name string?",
         "  rules LobbyRules",
@@ -607,5 +609,6 @@ internal static class LobbySchema
         "  spectators bool default=false ignore=default",
         "  emblemReports bool default=false ignore=default",
         "  previews bool default=false ignore=default",
+        "  avatars bool default=false ignore=default",
     ];
 }

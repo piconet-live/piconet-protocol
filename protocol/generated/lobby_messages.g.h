@@ -3340,6 +3340,62 @@ inline void Put(json_wire::Out& o, const EmblemReport& v, std::string_view type 
   o.text += '}';
 }
 
+// the client's message "avatar" (Online.Protocol SetAvatar)
+struct SetAvatar
+{
+  std::optional<std::string> avatar;
+
+  // one bit a member, of wire_absent (a member that is no "?" read as null or left out: C# holds null; it
+  // is then not written) and of wire_holes (a list that held null items, dropped)
+  struct Bit
+  {
+    static constexpr std::uint32_t avatar = 1u << 0;
+  };
+  static constexpr std::uint32_t kAbsentAtStart = 0;
+  std::uint32_t wire_absent = 0;
+  std::uint32_t wire_holes = 0;
+};
+
+inline bool Get(const json_wire::Value& x, SetAvatar& out, std::size_t from = 0)
+{
+  if (x.kind != json_wire::Value::Kind::Object)
+    return false;
+  out = SetAvatar{};
+  out.wire_absent = SetAvatar::kAbsentAtStart;
+  static constexpr std::string_view kNames[] = {"avatar"};
+  for (std::size_t i = from; i < x.members.size(); ++i)
+  {
+    const json_wire::Value& v = x.members[i].second;
+    switch (json_wire::Find(x.members[i].first, kNames))
+    {
+    case 0:
+      if (!Get(v, out.avatar))
+        return false;
+      break;
+    default:
+      break;   // a member it does not know, or one written only
+    }
+  }
+  return true;
+}
+
+inline void Put(json_wire::Out& o, const SetAvatar& v, std::string_view type = {})
+{
+  o.text += '{';
+  bool first = true;
+  if (!type.empty())
+  {
+    json_wire::Key(o, first, "type");
+    json_wire::PutString(o, type);
+  }
+  if (v.avatar)
+  {
+    json_wire::Key(o, first, "avatar");
+    Put(o, *v.avatar);
+  }
+  o.text += '}';
+}
+
 // a part of a message (Online.Protocol SettingRange)
 struct SettingRange
 {
@@ -3627,6 +3683,7 @@ struct Welcome
   bool spectators = false;
   bool emblemReports = false;
   bool previews = false;
+  bool avatars = false;
 
   // one bit a member, of wire_absent (a member that is no "?" read as null or left out: C# holds null; it
   // is then not written) and of wire_holes (a list that held null items, dropped)
@@ -3641,6 +3698,7 @@ struct Welcome
     static constexpr std::uint32_t spectators = 1u << 6;
     static constexpr std::uint32_t emblemReports = 1u << 7;
     static constexpr std::uint32_t previews = 1u << 8;
+    static constexpr std::uint32_t avatars = 1u << 9;
   };
   static constexpr std::uint32_t kAbsentAtStart = Bit::playerId | Bit::serverName;
   std::uint32_t wire_absent = 0;
@@ -3653,7 +3711,7 @@ inline bool Get(const json_wire::Value& x, Welcome& out, std::size_t from = 0)
     return false;
   out = Welcome{};
   out.wire_absent = Welcome::kAbsentAtStart;
-  static constexpr std::string_view kNames[] = {"playerId", "serverName", "version", "rules", "renames", "tag", "spectators", "emblemReports", "previews"};
+  static constexpr std::string_view kNames[] = {"playerId", "serverName", "version", "rules", "renames", "tag", "spectators", "emblemReports", "previews", "avatars"};
   for (std::size_t i = from; i < x.members.size(); ++i)
   {
     const json_wire::Value& v = x.members[i].second;
@@ -3693,6 +3751,10 @@ inline bool Get(const json_wire::Value& x, Welcome& out, std::size_t from = 0)
       break;
     case 8:
       if (!Get(v, out.previews))
+        return false;
+      break;
+    case 9:
+      if (!Get(v, out.avatars))
         return false;
       break;
     default:
@@ -3749,6 +3811,11 @@ inline void Put(json_wire::Out& o, const Welcome& v, std::string_view type = {})
   {
     json_wire::Key(o, first, "previews");
     Put(o, v.previews);
+  }
+  if (v.avatars)
+  {
+    json_wire::Key(o, first, "avatars");
+    Put(o, v.avatars);
   }
   o.text += '}';
 }
@@ -9400,8 +9467,9 @@ using ClientMessage = std::variant<
     LeaveLobby,
     EmblemUpload,
     AskEmblems,
-    EmblemReport>;
-inline constexpr std::string_view kClientMessageTypes[] = {"hello", "queue", "leaveQueue", "chat", "voteStart", "voteCpuFill", "relayLatency", "voteCourse", "machineChoice", "raceOver", "raceReport", "name", "pong", "watch", "preview", "browseLobbies", "createLobby", "joinLobby", "setLobbyRules", "kick", "chooseTeam", "startLobbyRace", "leaveLobby", "emblemPicture", "emblemAsk", "emblemReport"};
+    EmblemReport,
+    SetAvatar>;
+inline constexpr std::string_view kClientMessageTypes[] = {"hello", "queue", "leaveQueue", "chat", "voteStart", "voteCpuFill", "relayLatency", "voteCourse", "machineChoice", "raceOver", "raceReport", "name", "pong", "watch", "preview", "browseLobbies", "createLobby", "joinLobby", "setLobbyRules", "kick", "chooseTeam", "startLobbyRace", "leaveLobby", "emblemPicture", "emblemAsk", "emblemReport", "avatar"};
 
 // A client message's JSON, as C# writes it; "" when it cannot be written (a float that is not finite).
 inline std::string Encode(const ClientMessage& m)
@@ -9593,6 +9661,13 @@ inline std::string Encode(const EmblemReport& m)
   return o.ok ? std::move(o.text) : std::string{};
 }
 
+inline std::string Encode(const SetAvatar& m)
+{
+  json_wire::Out o;
+  Put(o, m, "avatar");
+  return o.ok ? std::move(o.text) : std::string{};
+}
+
 // The client message of a JSON text, as C# reads it; nothing when it reads none.
 inline std::optional<ClientMessage> DecodeClient(std::string_view text)
 {
@@ -9778,6 +9853,13 @@ inline std::optional<ClientMessage> DecodeClient(std::string_view text)
   if (type == "emblemReport")
   {
     EmblemReport m;
+    if (!Get(x, m, 1))
+      return std::nullopt;
+    return ClientMessage{std::move(m)};
+  }
+  if (type == "avatar")
+  {
+    SetAvatar m;
     if (!Get(x, m, 1))
       return std::nullopt;
     return ClientMessage{std::move(m)};

@@ -315,6 +315,14 @@ members = [
 ]
 
 [[record]]
+name = "SetAvatar"
+root = "client"
+type = "avatar"
+members = [
+    { name = "avatar", type = "string?", default = 'null' },
+]
+
+[[record]]
 name = "Welcome"
 root = "server"
 type = "welcome"
@@ -328,6 +336,7 @@ members = [
     { name = "spectators", type = "bool", default = 'false', omit = "default" },
     { name = "emblemReports", type = "bool", default = 'false', omit = "default" },
     { name = "previews", type = "bool", default = 'false', omit = "default" },
+    { name = "avatars", type = "bool", default = 'false', omit = "default" },
 ]
 
 [[record]]

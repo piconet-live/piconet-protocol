@@ -205,6 +205,7 @@ public sealed record ServerRules(
 [JsonDerivedType(typeof(EmblemUpload), "emblemPicture")]
 [JsonDerivedType(typeof(AskEmblems), "emblemAsk")]
 [JsonDerivedType(typeof(EmblemReport), "emblemReport")]
+[JsonDerivedType(typeof(SetAvatar), "avatar")]
 public abstract record ClientMessage;
 
 /// <summary>The first message: the player's display name and protocol version. A server has no password (a custom
@@ -311,6 +312,15 @@ public sealed record SendChat(string Channel, string Text) : ClientMessage;
 /// (<see cref="Welcome.Renames"/>): an older server knows no such message.</summary>
 public sealed record SetName(string Name) : ClientMessage;
 
+/// <summary>The player's avatar, changed while connected (in the hello it goes first: <see cref="Hello.Avatar"/>), in a
+/// lobby or not: a picture's name, checked as the hello's (a text that is no picture's name is none). Null or empty:
+/// none from now on. The server asks for its picture once when it lacks it (<see cref="EmblemsWanted"/>), sends the
+/// player's lobby again with it (<see cref="PlayerInfo.Avatar"/>) and shows it in the status from then on
+/// (<see cref="RacerView.Avatar"/>; a race running keeps the racers it started with); the same name again changes
+/// nothing. Sent only to a server whose welcome says it takes it (<see cref="Welcome.Avatars"/>): a server from before
+/// answers a type it does not know with an error (bad_message) and keeps the connection.</summary>
+public sealed record SetAvatar([property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Avatar = null) : ClientMessage;
+
 /// <summary>In a lobby of at least the voting minimum: start now with whoever is there.</summary>
 public sealed record VoteStart(bool Yes) : ClientMessage;
 
@@ -394,12 +404,14 @@ public sealed record StatPackValues(StatPackWire Pack) : ServerMessage
 /// connected player's), or random when the hello sent no key. The launcher saves nothing of it. A launcher from
 /// before tags passes over it. EmblemReports: the server takes <see cref="EmblemReport"/> (a game sends none to one that
 /// does not say so: a server from before answers a type it does not know with an error). Previews: the server takes
-/// <see cref="PreviewRace"/> (the same rule).</summary>
+/// <see cref="PreviewRace"/> (the same rule). Avatars: the server takes <see cref="SetAvatar"/> (the same rule) and
+/// <see cref="Hello.Avatar"/> (which a server from before passes over, silently).</summary>
 public sealed record Welcome(string PlayerId, string ServerName, int Version, ServerRules? Rules = null, bool Renames = false,
     string? Tag = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool Spectators = false,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool EmblemReports = false,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool Previews = false) : ServerMessage;
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool Previews = false,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool Avatars = false) : ServerMessage;
 
 /// <summary>The server's rules changed while this player is connected (the operator's live rules): the whole rules,
 /// as a welcome carries them, to every welcomed launcher, in a lobby or not. They are what the launcher shows and
