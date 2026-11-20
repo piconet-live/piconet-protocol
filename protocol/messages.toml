@@ -966,6 +966,7 @@ members = [
     { name = "endsInMs", type = "int?", default = 'null' },
     { name = "progress", type = "RaceProgress?", default = 'null' },
     { name = "cpuMachines", type = "list<int>?", default = 'null' },
+    { name = "leader", type = "string?", default = 'null' },
 ]
 
 [[record]]

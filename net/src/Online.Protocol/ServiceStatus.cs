@@ -128,11 +128,16 @@ public sealed record FormingMatchView(string Id, int Players, string Stage, stri
 /// still racing to read the clock from, no leader placed and scored), or a server from before: a page then shows the
 /// laps, the leader's lap of <see cref="Laps"/>.
 /// CpuMachines: the machines of the race's CPU seats (the game's ids), in seat order, the seats after
-/// <see cref="Players"/>' (a CPU racer's name is its machine's pilot's); null: none, or a server from before.</summary>
+/// <see cref="Players"/>' (a CPU racer's name is its machine's pilot's); null: none, or a server from before.
+/// Leader: the display name of the player who leads the race by the live report's places (the racer not out placed
+/// least, <see cref="RacerLive.Place"/> above 0), so a page names them where the public status lists no race's
+/// <see cref="Players"/>; null: a CPU leads (named by its machine, <see cref="CpuMachines"/>), no live report or nobody
+/// placed, or a server from before.</summary>
 public sealed record RaceView(
     string Id, string Relay, string Region, int Course, string CourseName, int Laps, IReadOnlyList<RacerView> Players,
     int CpuRacers, DateTimeOffset Started, RaceSnapshot? Live = null, string? Mode = null, string? Badge = null,
-    string? Pack = null, int? EndsInMs = null, RaceProgress? Progress = null, IReadOnlyList<int>? CpuMachines = null);
+    string? Pack = null, int? EndsInMs = null, RaceProgress? Progress = null, IReadOnlyList<int>? CpuMachines = null,
+    string? Leader = null);
 
 /// <summary>A race's progress as its mode says it (<see cref="RaceView.Progress"/>), each value from the race's latest
 /// live report; a kind's values are all there, the others null. Kind <see cref="TimeLeft"/>: LeftMs, the time left at

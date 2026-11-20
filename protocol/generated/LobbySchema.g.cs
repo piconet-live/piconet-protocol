@@ -434,6 +434,7 @@ internal static class LobbySchema
         "  endsInMs int? default=null",
         "  progress RaceProgress? default=null",
         "  cpuMachines list<int>? default=null",
+        "  leader string? default=null",
         "record RacerLive",
         "  seat int",
         "  rank int",

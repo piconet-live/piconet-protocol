@@ -197,8 +197,13 @@ ways), and a server from before sends none, so a page shows the laps, as before 
   normal mode and Ghost race say nothing.
 - *The CPUs.* Each status race's `cpuMachines`: the machines (the game's ids) of its CPU seats, in seat order, the
   seats after its `players`; a page names a CPU racer by its machine's pilot. Absent: no CPUs.
+- *The leader's name.* Each status race's `leader` (2026-11-20, later the same day): the display name of the player who
+  leads the race by its live report's places (the racer not out placed least, `place` above 0), for a page's "Leader
+  NAME": the public status lists no race's `players` (their names are the dashboard's), so without it a page cannot
+  name a player's seat. Absent: a CPU leads (the page names it by `cpuMachines`), no live report or nobody placed, or a
+  server from before (tests: Online.Tests `RaceProgressTests.TheLeaderIsNamedWhenAPlayerLeads`).
 
-**The official modes in the status****The official modes in the status** (`ServiceStatus.ModeStore`, `ModeStoreView`): where the coordinator loaded Quick
+**The official modes in the status** (`ServiceStatus.ModeStore`, `ModeStoreView`): where the coordinator loaded Quick
 Play's rotation from (`source`: `bucket`, the stack's mode store; `local copy`, its last good copy while the bucket
 cannot be reached; `image seed`, the image's quickplay folder while neither is there; `image`, a server with no store),
 a `fault` line while it is not the bucket's, and the rotation's modes (`modes`: `file`, `name`,

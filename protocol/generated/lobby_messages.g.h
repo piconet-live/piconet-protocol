@@ -8452,6 +8452,7 @@ struct RaceView
   std::optional<std::int32_t> endsInMs;
   std::optional<RaceProgress> progress;
   std::optional<std::vector<std::int32_t>> cpuMachines;
+  std::optional<std::string> leader;
 
   // one bit a member, of wire_absent (a member that is no "?" read as null or left out: C# holds null; it
   // is then not written) and of wire_holes (a list that held null items, dropped)
@@ -8473,6 +8474,7 @@ struct RaceView
     static constexpr std::uint32_t endsInMs = 1u << 13;
     static constexpr std::uint32_t progress = 1u << 14;
     static constexpr std::uint32_t cpuMachines = 1u << 15;
+    static constexpr std::uint32_t leader = 1u << 16;
   };
   static constexpr std::uint32_t kAbsentAtStart = Bit::id | Bit::relay | Bit::region | Bit::courseName | Bit::players;
   std::uint32_t wire_absent = 0;
@@ -8485,7 +8487,7 @@ inline bool Get(const json_wire::Value& x, RaceView& out, std::size_t from = 0)
     return false;
   out = RaceView{};
   out.wire_absent = RaceView::kAbsentAtStart;
-  static constexpr std::string_view kNames[] = {"id", "relay", "region", "course", "courseName", "laps", "players", "cpuRacers", "started", "live", "mode", "badge", "pack", "endsInMs", "progress", "cpuMachines"};
+  static constexpr std::string_view kNames[] = {"id", "relay", "region", "course", "courseName", "laps", "players", "cpuRacers", "started", "live", "mode", "badge", "pack", "endsInMs", "progress", "cpuMachines", "leader"};
   for (std::size_t i = from; i < x.members.size(); ++i)
   {
     const json_wire::Value& v = x.members[i].second;
@@ -8553,6 +8555,10 @@ inline bool Get(const json_wire::Value& x, RaceView& out, std::size_t from = 0)
       break;
     case 15:
       if (!(v.kind == json_wire::Value::Kind::Null ? (out.cpuMachines.reset(), true) : (out.cpuMachines.emplace(), Get(v, *out.cpuMachines))))
+        return false;
+      break;
+    case 16:
+      if (!Get(v, out.leader))
         return false;
       break;
     default:
@@ -8638,6 +8644,11 @@ inline void Put(json_wire::Out& o, const RaceView& v, std::string_view type = {}
   {
     json_wire::Key(o, first, "cpuMachines");
     Put(o, *v.cpuMachines);
+  }
+  if (v.leader)
+  {
+    json_wire::Key(o, first, "leader");
+    Put(o, *v.leader);
   }
   o.text += '}';
 }
