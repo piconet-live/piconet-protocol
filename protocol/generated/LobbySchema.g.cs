@@ -353,6 +353,16 @@ internal static class LobbySchema
         "  players list<ListedPlayer>",
         "  part int default=0",
         "  parts int default=1",
+        "record PreviewRace root=client type=preview",
+        "  lobbyId string",
+        "  yes bool",
+        "record PreviewStart root=server type=previewStart",
+        "  lobbyId string",
+        "  matchId string",
+        "  relay RelayEndpoint",
+        "  token string",
+        "  seat int",
+        "  setup RaceSetup",
         "record QuickPlayEnded root=server type=quickPlayEnded",
         "  matchId string",
         "  reason string",
@@ -572,5 +582,6 @@ internal static class LobbySchema
         "  tag string? default=null",
         "  spectators bool default=false ignore=default",
         "  emblemReports bool default=false ignore=default",
+        "  previews bool default=false ignore=default",
     ];
 }

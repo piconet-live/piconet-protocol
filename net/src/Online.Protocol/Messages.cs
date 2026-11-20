@@ -190,6 +190,7 @@ public sealed record ServerRules(
 [JsonDerivedType(typeof(SetName), "name")]
 [JsonDerivedType(typeof(LinkPong), "pong")]
 [JsonDerivedType(typeof(WatchRace), "watch")]
+[JsonDerivedType(typeof(PreviewRace), "preview")]
 [JsonDerivedType(typeof(BrowseLobbies), "browseLobbies")]
 [JsonDerivedType(typeof(CreateLobby), "createLobby")]
 [JsonDerivedType(typeof(JoinLobby), "joinLobby")]
@@ -358,6 +359,7 @@ public sealed record RaceReport(string MatchId, RaceSnapshot Snapshot) : ClientM
 [JsonDerivedType(typeof(PlayersChanged), "playersChanged")]
 [JsonDerivedType(typeof(TagChanged), "tag")]
 [JsonDerivedType(typeof(WatchStart), "watchStart")]
+[JsonDerivedType(typeof(PreviewStart), "previewStart")]
 [JsonDerivedType(typeof(RulesChanged), "rules")]
 [JsonDerivedType(typeof(LobbyList), "lobbyList")]
 [JsonDerivedType(typeof(EmblemsWanted), "emblemsWanted")]
@@ -379,11 +381,13 @@ public sealed record StatPackValues(StatPackWire Pack) : ServerMessage
 /// hello's <see cref="Hello.Key"/> (the player's own, or for this connection when that name and tag are another
 /// connected player's), or random when the hello sent no key. The launcher saves nothing of it. A launcher from
 /// before tags passes over it. EmblemReports: the server takes <see cref="EmblemReport"/> (a game sends none to one that
-/// does not say so: a server from before answers a type it does not know with an error).</summary>
+/// does not say so: a server from before answers a type it does not know with an error). Previews: the server takes
+/// <see cref="PreviewRace"/> (the same rule).</summary>
 public sealed record Welcome(string PlayerId, string ServerName, int Version, ServerRules? Rules = null, bool Renames = false,
     string? Tag = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool Spectators = false,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool EmblemReports = false) : ServerMessage;
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool EmblemReports = false,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool Previews = false) : ServerMessage;
 
 /// <summary>The server's rules changed while this player is connected (the operator's live rules): the whole rules,
 /// as a welcome carries them, to every welcomed launcher, in a lobby or not. They are what the launcher shows and
@@ -569,3 +573,17 @@ public sealed record WatchRace(bool Yes) : ClientMessage;
 /// no input), watching the machine of <paramref name="Seat"/> at first, as <see cref="MatchStart"/> with no seat of
 /// one's own. A race already running is caught up behind LOADING.</summary>
 public sealed record WatchStart(string MatchId, RelayEndpoint Relay, string Token, int Seat, RaceSetup Setup) : ServerMessage;
+
+/// <summary>A player in no lobby previews a lobby's race (Yes), or stops (the Quick Play page's live card): while the
+/// lobby races, and at each of its race starts until stopped, they are sent <see cref="PreviewStart"/>. A previewer is
+/// no member: not in the lobby's roster, counts, votes, grid or chat; the relay sees one more spectator. Refused with
+/// no_such_lobby (no lobby of that id listed to the player: Quick Play's of their line or build, or a custom lobby
+/// without a password), in_lobby (the player is in a lobby or Quick Play), rate_limited (more than one ask a
+/// second; the connection stays), no_spectators (the race has its most previewers, or the player's game cannot run
+/// its mode). The preview ends with Yes false, the player entering any lobby or Quick Play, or leaving. Sent only to a
+/// server whose welcome says it takes it (<see cref="Welcome"/>'s Previews).</summary>
+public sealed record PreviewRace(string LobbyId, bool Yes) : ClientMessage;
+
+/// <summary>The previewed lobby's race: as <see cref="WatchStart"/>, with the lobby it is of. One token per player and
+/// race, given again on a repeat ask.</summary>
+public sealed record PreviewStart(string LobbyId, string MatchId, RelayEndpoint Relay, string Token, int Seat, RaceSetup Setup) : ServerMessage;

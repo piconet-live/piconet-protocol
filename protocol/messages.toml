@@ -197,6 +197,15 @@ members = [
 ]
 
 [[record]]
+name = "PreviewRace"
+root = "client"
+type = "preview"
+members = [
+    { name = "lobbyId", type = "string" },
+    { name = "yes", type = "bool" },
+]
+
+[[record]]
 name = "BrowseLobbies"
 root = "client"
 type = "browseLobbies"
@@ -317,6 +326,7 @@ members = [
     { name = "tag", type = "string?", default = 'null' },
     { name = "spectators", type = "bool", default = 'false', omit = "default" },
     { name = "emblemReports", type = "bool", default = 'false', omit = "default" },
+    { name = "previews", type = "bool", default = 'false', omit = "default" },
 ]
 
 [[record]]
@@ -555,6 +565,19 @@ name = "WatchStart"
 root = "server"
 type = "watchStart"
 members = [
+    { name = "matchId", type = "string" },
+    { name = "relay", type = "RelayEndpoint" },
+    { name = "token", type = "string" },
+    { name = "seat", type = "int" },
+    { name = "setup", type = "RaceSetup" },
+]
+
+[[record]]
+name = "PreviewStart"
+root = "server"
+type = "previewStart"
+members = [
+    { name = "lobbyId", type = "string" },
     { name = "matchId", type = "string" },
     { name = "relay", type = "RelayEndpoint" },
     { name = "token", type = "string" },
