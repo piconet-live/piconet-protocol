@@ -108,6 +108,15 @@ coordinator sends as a chat line at each welcome. A launcher on its home screen 
 every few seconds is how it sees the message there, and it goes when the field does. Written only when set: a reader
 from before passes over it.
 
+**The Quick Play page's timing and mode in the status** (2026-11-19; the native program's Quick Play page,
+`lobby-screens-data.md` proposal items 1 and 2): `ServiceStatus.Timers` (`StatusTimers`: the course vote, the draw
+shown, the machine choice, the straggler wait and the start countdown at its longest, in ms); each lobby's
+`startsInMs` (while its start countdown runs: an upper bound, a joiner or a start vote brings it nearer) and
+`votingMinimum`; each match on its way's `lobbyId` and `endsInMs` (the time left on its stage's clock: the vote, the
+draw shown, the machine choice, which can end early; null for a stage with no clock); each race's `mode`, `badge` and
+`pack` (its stat pack's name; null: none). All optional: a reader from before passes over them, and a server from
+before sends none, so a screen shows the shorter line, never a number (tests: Online.Tests `StatusTimingTests`).
+
 **The official modes in the status** (`ServiceStatus.ModeStore`, `ModeStoreView`): where the coordinator loaded Quick
 Play's rotation from (`source`: `bucket`, the stack's mode store; `local copy`, its last good copy while the bucket
 cannot be reached; `image seed`, the image's quickplay folder while neither is there; `image`, a server with no store),
