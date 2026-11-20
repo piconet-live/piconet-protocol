@@ -25,6 +25,11 @@ public static class RelayControl
     /// <summary>A relay that says this in its hello takes <see cref="AddRelaySpectator"/>.</summary>
     public const string TakesSpectators = "spectators";
 
+    /// <summary>A relay that says this in its hello counts the spectators sent with <see cref="AddRelaySpectator.Preview"/>
+    /// apart from the lobby's own watchers: a preview never takes a member's place, nor a member a preview's. The
+    /// coordinator sends previews only to such a relay.</summary>
+    public const string TakesPreviews = "previews";
+
     /// <summary>How often a relay reports its status (and so shows it is alive).</summary>
     public const int StatusIntervalMs = 5000;
 
@@ -129,8 +134,11 @@ public sealed record EndRelaySeat(string MatchId, int Seat) : RelayControlMessag
 
 /// <summary>Coordinator to relay, only to a relay whose hello said it takes it (<see cref="RelayControl.TakesSpectators"/>):
 /// a spectator's token (hex) for this race. Its game receives the
-/// race and sends no input; it is no seat and has no vote.</summary>
-public sealed record AddRelaySpectator(string MatchId, string Token) : RelayControlMessage;
+/// race and sends no input; it is no seat and has no vote. <paramref name="Preview"/> true: a player outside the lobby
+/// (the Quick Play page's live card), sent only to a relay that said <see cref="RelayControl.TakesPreviews"/>, which
+/// counts it apart from the lobby's watchers; null or false: a lobby member (a relay from before passes over the
+/// field).</summary>
+public sealed record AddRelaySpectator(string MatchId, string Token, bool? Preview = null) : RelayControlMessage;
 
 /// <summary>Relay to coordinator, as it happens: a seat of a race went out of sync at <paramref name="Frame"/> and was
 /// disconnected (the AI drives it), for the coordinator to tell its player.</summary>
