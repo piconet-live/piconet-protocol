@@ -131,9 +131,12 @@ public sealed record LobbyRules(IReadOnlyDictionary<string, int> Values,
 
 /// <summary>One custom lobby as the lobby browser lists it. Players: its members now; Capacity: its racers rule.
 /// Locked: joining asks for its password. Rules: its rules whole (<see cref="LobbyRules"/>). Stage: as
-/// <see cref="LobbyState.Stage"/> (nobody joins while it is starting or choosing).</summary>
+/// <see cref="LobbyState.Stage"/> (nobody joins while it is starting or choosing). Number: the lobby's number in the
+/// custom lobbies' series, as the server gave it at the lobby's creation (the lowest no other open custom lobby holds,
+/// 1 first; kept for its whole life, free again once it is removed: <see cref="LobbyView.Number"/>); null: a server
+/// from before.</summary>
 public sealed record LobbySummary(string Id, string Name, string HostName, int Players, int Capacity, bool Locked,
-    LobbyRules Rules, string Stage);
+    LobbyRules Rules, string Stage, int? Number = null);
 
 /// <summary>Custom lobbies' limits and the codes of their refusals (<see cref="ErrorMessage"/>).</summary>
 public static class CustomLobby

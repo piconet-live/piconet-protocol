@@ -455,7 +455,10 @@ public sealed record ErrorMessage(string Code, string Message, int? Seconds = nu
 /// the rule off, or the lobby is past forming); a launcher from before it passes over it. NoCpuVote: the lobby's
 /// modes take no CPU vote (none says <c>cpus on</c>: each has no CPUs, or has them always), so there is none; a launcher from before it
 /// passes over it. CannotRace: the members (player ids) whose launcher cannot run the lobby's mode
-/// (<see cref="Hello.Modes"/>): they stay in the lobby and watch, and are never put in its races; null: none.</summary>
+/// (<see cref="Hello.Modes"/>): they stay in the lobby and watch, and are never put in its races; null: none.
+/// Number: the lobby's number as the server gives it, the same for every player and kept for the lobby's whole life
+/// (<see cref="LobbyView.Number"/>, <see cref="LobbySummary.Number"/>); null: a server from before, and a launcher
+/// then numbers the lobby itself. A launcher from before it passes over it.</summary>
 public sealed record LobbyState(
     string LobbyId, IReadOnlyList<PlayerInfo> Players, int Capacity, int VotingMinimum, bool VotingOpen,
     int StartVotes, int CpuFillVotes, string Stage = LobbyState.Forming, LobbyRace? Race = null, string? Waiting = null,
@@ -468,7 +471,8 @@ public sealed record LobbyState(
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool Locked = false,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] int? StartsInMs = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool NoCpuVote = false,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<string>? CannotRace = null)
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<string>? CannotRace = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] int? Number = null)
     : ServerMessage
 {
     /// <summary><see cref="Waiting"/>: the race server (relay) is being started.</summary>

@@ -95,11 +95,15 @@ public sealed record RacerView(string Name, int Machine, string? Color, string? 
 /// relay is chosen (by its players' measures, at its vote's end); a game measures its own round trip to it at the
 /// endpoint of that id in <see cref="LobbyList.Relays"/>, which only a welcomed game gets, over the lobby link. Null:
 /// the lobby has none now (forming, its match still measuring), or a server from before. The next race's relay is
-/// chosen again, by who is in it.</summary>
+/// chosen again, by who is in it.
+/// Number: the lobby's number, which the server gives it when it is made and it keeps for its whole life, the same
+/// for every player (players say "lobby 3"): the lowest number no other open lobby of its kind holds, 1 first (Quick
+/// Play's lobbies one series, custom lobbies another, <see cref="LobbySummary.Number"/>); free again only once the lobby
+/// is removed. Null: a server from before, and a reader then numbers lobbies itself.</summary>
 public sealed record LobbyView(string Id, IReadOnlyList<RacerView> Players, int Capacity, bool VotingOpen, int StartVotes,
     string Stage = "forming", string? RaceId = null, int Racing = 0, string? Build = null,
     IReadOnlyList<LobbyBuildView>? Builds = null, string? Line = null, int? StartsInMs = null, int? VotingMinimum = null,
-    string? Relay = null);
+    string? Relay = null, int? Number = null);
 
 /// <summary>A match between its lobby and its race. Stage: "picking a relay" (the players measure the relays),
 /// "vote" (the lobby's step named Vote), "vote's end" (its draw shown), "choosing machines". LobbyId: the lobby it is

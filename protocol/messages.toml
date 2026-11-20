@@ -375,6 +375,7 @@ members = [
     { name = "startsInMs", type = "int?", default = 'null' },
     { name = "noCpuVote", type = "bool", default = 'false', omit = "default" },
     { name = "cannotRace", type = "list<string>?", default = 'null' },
+    { name = "number", type = "int?", default = 'null' },
 ]
 
 [[record]]
@@ -897,6 +898,7 @@ members = [
     { name = "locked", type = "bool" },
     { name = "rules", type = "LobbyRules" },
     { name = "stage", type = "string" },
+    { name = "number", type = "int?", default = 'null' },
 ]
 
 [[record]]
@@ -935,6 +937,7 @@ members = [
     { name = "startsInMs", type = "int?", default = 'null' },
     { name = "votingMinimum", type = "int?", default = 'null' },
     { name = "relay", type = "string?", default = 'null' },
+    { name = "number", type = "int?", default = 'null' },
 ]
 
 [[record]]
