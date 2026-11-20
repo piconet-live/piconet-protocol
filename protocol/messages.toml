@@ -661,6 +661,17 @@ members = [
     { name = "motd", type = "RecentNotice?", default = 'null' },
     { name = "packNone", type = "bool", default = 'false' },
     { name = "modeStore", type = "ModeStoreView?", default = 'null' },
+    { name = "timers", type = "StatusTimers?", default = 'null' },
+]
+
+[[record]]
+name = "StatusTimers"
+members = [
+    { name = "voteMs", type = "int" },
+    { name = "revealMs", type = "int" },
+    { name = "chooseMs", type = "int" },
+    { name = "stragglerWaitMs", type = "int" },
+    { name = "startCountdownMs", type = "int" },
 ]
 
 [[record]]
@@ -906,6 +917,8 @@ members = [
     { name = "build", type = "string?", default = 'null' },
     { name = "builds", type = "list<LobbyBuildView>?", default = 'null' },
     { name = "line", type = "string?", default = 'null' },
+    { name = "startsInMs", type = "int?", default = 'null' },
+    { name = "votingMinimum", type = "int?", default = 'null' },
 ]
 
 [[record]]
@@ -914,6 +927,8 @@ members = [
     { name = "id", type = "string" },
     { name = "players", type = "int" },
     { name = "stage", type = "string" },
+    { name = "lobbyId", type = "string?", default = 'null' },
+    { name = "endsInMs", type = "int?", default = 'null' },
 ]
 
 [[record]]
@@ -929,6 +944,9 @@ members = [
     { name = "cpuRacers", type = "int" },
     { name = "started", type = "time" },
     { name = "live", type = "RaceSnapshot?", default = 'null' },
+    { name = "mode", type = "string?", default = 'null' },
+    { name = "badge", type = "string?", default = 'null' },
+    { name = "pack", type = "string?", default = 'null' },
 ]
 
 [[record]]

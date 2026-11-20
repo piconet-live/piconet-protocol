@@ -25,6 +25,8 @@ namespace Online.Protocol;
 /// configuration names one; false: a server from before that word, which would refuse to start on it (the deploy tooling asks).
 /// ModeStore: the server's official modes and where it loaded them from (<see cref="ModeStoreView"/>); null: a server
 /// from before the mode store, or one with no rotation.
+/// Timers: the server's Quick Play clocks (<see cref="StatusTimers"/>), so a screen can say how long a lobby's way to
+/// its race takes; null: a server from before them.
 /// </summary>
 public sealed record ServiceStatus(
     string Name, DateTimeOffset Time, int PlayersOnline, IReadOnlyList<LobbyView> Lobbies,
@@ -32,7 +34,12 @@ public sealed record ServiceStatus(
     StatPackName? StatPack = null, string? PackSetting = null, TogetherView? Together = null, string? TogetherSetting = null,
     string? TogetherFault = null, IReadOnlyList<TogetherFileView>? TogetherFiles = null,
     IReadOnlyList<LineBuildView>? LineBuilds = null, string? LineBuildsFault = null, RecentNotice? Motd = null, bool PackNone = false,
-    ModeStoreView? ModeStore = null);
+    ModeStoreView? ModeStore = null, StatusTimers? Timers = null);
+
+/// <summary>The server's Quick Play clocks in milliseconds (<see cref="ServiceStatus.Timers"/>): the course vote, the
+/// vote's draw shown (the reveal), the machine choice, the wait for a race's stragglers once half are back (-1: until
+/// all are back) and the start countdown at its longest (0: none; the vote alone starts a lobby).</summary>
+public sealed record StatusTimers(int VoteMs, int RevealMs, int ChooseMs, int StragglerWaitMs, int StartCountdownMs);
 
 /// <summary>Where a coordinator's official modes (Quick Play's rotation and the files it names) were loaded from, and
 /// which it races (<see cref="ServiceStatus.ModeStore"/>). Source: "bucket" (the stack's mode store), "local copy" (the
@@ -75,18 +82,29 @@ public sealed record RacerView(string Name, int Machine, string? Color, string? 
 /// named. In a lobby of the builds that race together it is the group's first build, whoever is in the lobby, and
 /// Builds says how many of its players have which build while they have more than one; null: they all have one.
 /// Line: the release line the lobby is kept under (<see cref="Hello.Line"/>), whatever its players' builds; Build is
-/// then null and Builds says the builds. Null: a lobby of one build (or group), as before lines.</summary>
+/// then null and Builds says the builds. Null: a lobby of one build (or group), as before lines.
+/// StartsInMs: while the lobby's start countdown runs, the milliseconds until it runs out and the match begins (a
+/// joiner can only bring it nearer, a start vote of more than half sooner); null: none runs (or a server from before).
+/// VotingMinimum: the players the lobby needs before its start vote opens and its countdown runs; null: a server from
+/// before.</summary>
 public sealed record LobbyView(string Id, IReadOnlyList<RacerView> Players, int Capacity, bool VotingOpen, int StartVotes,
     string Stage = "forming", string? RaceId = null, int Racing = 0, string? Build = null,
-    IReadOnlyList<LobbyBuildView>? Builds = null, string? Line = null);
+    IReadOnlyList<LobbyBuildView>? Builds = null, string? Line = null, int? StartsInMs = null, int? VotingMinimum = null);
 
 /// <summary>A match between its lobby and its race. Stage: "picking a relay" (the players measure the relays),
-/// "vote" (the lobby's step named Vote), "vote's end" (its draw shown), "choosing machines".</summary>
-public sealed record FormingMatchView(string Id, int Players, string Stage);
+/// "vote" (the lobby's step named Vote), "vote's end" (its draw shown), "choosing machines". LobbyId: the lobby it is
+/// of (<see cref="LobbyView.Id"/>); EndsInMs: the milliseconds until its stage's clock runs out (the vote, the draw
+/// shown, the machine choice: an upper bound, a choice ends early once everyone has chosen); null: its stage has no
+/// clock (picking a relay, starting the race server), or a server from before.</summary>
+public sealed record FormingMatchView(string Id, int Players, string Stage, string? LobbyId = null, int? EndsInMs = null);
 
+/// <summary>A race running. Mode: the mode it races (its name, "Knockout"); Badge: the mode's badge where it has one
+/// (a spicy mode's, "KNOCKOUT"); Pack: the stat pack it races on, by name ("GX Unleashed"). Each null: none (the race
+/// of before modes, no badge, no pack), or a server from before.</summary>
 public sealed record RaceView(
     string Id, string Relay, string Region, int Course, string CourseName, int Laps, IReadOnlyList<RacerView> Players,
-    int CpuRacers, DateTimeOffset Started, RaceSnapshot? Live = null);
+    int CpuRacers, DateTimeOffset Started, RaceSnapshot? Live = null, string? Mode = null, string? Badge = null,
+    string? Pack = null);
 
 /// <summary>A relay: its id, region, its load (null when it does not report one, or is not running) and the races it
 /// takes at once (null: no limit). For a relay the coordinator starts and stops itself also: State
