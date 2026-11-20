@@ -580,6 +580,49 @@ public sealed class QuickPlayRotationTests : IDisposable
         Assert.Equal(8, terms.Laps(CourseTable.Courses.First(c => c.Track == "Sonic Oval").Course));
     }
 
+    /// <summary>Each official mode's progress (<see cref="ModeTerms.Progress"/>, the Quick Play page's NOW): Knockout
+    /// and Overdrive by the racers still in, Death Race and Crown by their clock (its length the one their code ends the
+    /// race at, the parameter's default here, a host's value in a custom lobby), Quick Play's normal mode and Ghost race
+    /// by their laps (no word).</summary>
+    [Theory]
+    [InlineData("competitive", null, 0)]
+    [InlineData("ghost_race", null, 0)]
+    [InlineData("knockout", RaceProgress.PlayersLeft, 0)]
+    [InlineData("overdrive", RaceProgress.PlayersLeft, 0)]
+    [InlineData("death_race", RaceProgress.TimeLeft, 6 * 60 * 60)]
+    [InlineData("crown", RaceProgress.TimeLeft, 4 * 60 * 60)]
+    public void AnOfficialModeSaysItsProgress(string file, string? kind, int length)
+    {
+        var compiled = ModeCompiler.Compile(File.ReadAllText(RepositoryFolder.Protocol("protocol", "quickplay", file + ".fzmode")));
+        Assert.True(compiled.Succeeded, string.Join("; ", compiled.Errors));
+        var progress = ModeTerms.Of(compiled.Mode!).Progress;
+        Assert.Equal(kind, progress?.Kind);
+        Assert.Equal(length, progress?.LengthSteps ?? 0);
+    }
+
+    /// <summary>The progress words: a time or a parameter's value for the clock (a host's value read through), one of
+    /// them a file, <c>progress laps</c> as no word, a word of api 0.6.5, and a mode's package holds none of them (the
+    /// coordinator's alone).</summary>
+    [Fact]
+    public void TheProgressWordsAreTheCoordinators()
+    {
+        static ModePackage Mode(string words) => ModeCompiler.Compile(
+            "mode \"P\" { api 0.6.5; }\nparam length \"Race length\" delay 2min..8min step 30s default 4min;\nlaps unlimited;\n" + words) is
+            { Succeeded: true } r ? r.Mode! : throw new InvalidOperationException(words);
+        Assert.Equal(new ModeProgress(RaceProgress.TimeLeft, 5 * 60 * 60), ModeTerms.Of(Mode("progress time_left 5min;\n")).Progress);
+        var byParam = Mode("progress time_left length;\n");
+        Assert.Equal(4 * 60 * 60, ModeTerms.Of(byParam).Progress!.LengthSteps);
+        Assert.Equal(6 * 60 * 60, ModeTerms.Of(byParam, [6 * 60 * 60]).Progress!.LengthSteps);
+        Assert.Equal(new ModeProgress(RaceProgress.ScoreLeader), ModeTerms.Of(Mode("progress score_leader;\n")).Progress);
+        Assert.Equal(new ModeProgress(RaceProgress.PlayersLeft), ModeTerms.Of(Mode("progress players_left;\n")).Progress);
+        Assert.Null(ModeTerms.Of(Mode("progress laps;\n")).Progress);
+        Assert.Null(ModeTerms.Of(Mode("")).Progress);
+        Assert.Contains("one of them", string.Join(" ", ModeCompiler.Compile(
+            "mode \"P\" { api 0.6.5; }\nprogress players_left;\nprogress score_leader;\n").Errors), StringComparison.Ordinal);
+        Assert.Equal(Mode("").Setups.Select(w => w.Id), Mode("progress players_left;\n").Setups.Select(w => w.Id));
+        Assert.False(ModeCompiler.Compile("mode \"P\" { api 1; }\nprogress players_left;\n").Succeeded);   // (a word of 0.6.5)
+    }
+
     /// <summary>The vote panel's rules on a card (<see cref="VoteCard.Terms"/>, <see cref="VoteCard.Pack"/>,
     /// <see cref="VoteCard.Moved"/>): a normal card races Quick Play's own rules, so nothing moved, with its laps on
     /// its course and the race's seats; Knockout's card names what it changes against them (its laps unlimited, no

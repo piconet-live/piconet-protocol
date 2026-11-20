@@ -46,6 +46,7 @@ results points;
 results_times off;            // no page of race times, the results open on the points (not scored by time)
 live_places;                  // the place at the top and the faces follow the mode's places during the race (0.6.5)
 distance_label off;           // the metres shown are the metres made, not the metres left: no REST over them (0.6.5)
+progress players_left;        // the Quick Play page: the racers still in and those out, not laps (there are none)
 
 global int outs;
 global int placed;             // 1: the final places are given (the results go by the metres alone)

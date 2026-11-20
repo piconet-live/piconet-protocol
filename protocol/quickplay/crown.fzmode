@@ -54,6 +54,7 @@ race_waits everyone;           // the race goes on until the clock ends it
 results_title "CROWN";         // the points page: a point for every second with the crown
 hud_layout ax;                 // AX's HUD: the position bottom left, the faces on AX's rows, the clock at AX's timer place
 live_places;                   // the position and the faces show the places the rule "Places" gives, every step
+progress time_left length;     // the Quick Play page: the clock's time left (the rule "Time" ends the race at length)
 
 global int given;              // 1: the first crown has gone out
 global int to_last;            // 1: the next crown goes to last place (a holder lost it)

@@ -316,11 +316,11 @@ public sealed class ModeLimitsTests
     /// own change writes its new hash here (<c>ModeCompilerTests</c> holds the vectors' bytes).</summary>
     [Theory]
     [InlineData("competitive", "9d4302d0677cac792451536f22eb3959ba3f92b394a6b22a58acb44d5ee7fecc", 1807)]
-    [InlineData("crown", "dd0ba7fe9c0860d0f6de50ae50ee888dc7634bbbdd7728231d6f8007e79cab22", 51805)]
-    [InlineData("death_race", "b8ccdec60db5f37d24212bf8893a6dc7aefa77e0cc59df070dcac0258d368927", 21791)]
+    [InlineData("crown", "d172f7dff22669166795982aab325002154693a57ebf80142093cc0221f49e53", 51805)]   // progress time_left (the Quick Play page, 20 November)
+    [InlineData("death_race", "0f801b13e80e3790eaff74138b9b83ee0c1c8eb47863f4134fe9cfcb79fbb6bf", 21791)]   // progress time_left (the Quick Play page, 20 November)
     [InlineData("ghost_race", "0439958aefa5a5ee465ed95ee2699da65a86aec7a6c37c10c5004ee093b0d6da", 4011)]   // three lives (the owner, 8 November), live's
-    [InlineData("knockout", "112b924da81ed5d3bb1fb0309baf63fb387bf83c3db175333f0c8f14c536325f", 45835)]
-    [InlineData("overdrive", "82f11a9d4d60c524605dd8c4d4a6b9eed677acd63f19a71847a9244ff2cf93df", 22068)]   // the last racer's 30 s (the owner, 13 November), live's
+    [InlineData("knockout", "5ee6b04f19aac600486c14f0fd1c2307af9a388ad0a3d72989abb72da8e3a484", 45835)]   // progress players_left (the Quick Play page, 20 November)
+    [InlineData("overdrive", "443281e39722f8f396df4d611a2f5bc81c9610f5a56b2e71e336e41321b4a49f", 22068)]   // progress players_left (the Quick Play page, 20 November)
     [InlineData("practice", "78f3aa18d83f9554daaa8ba1aba30c6a9b907ba3ee28becf817d7261222049a3", 339)]
     [InlineData("time_trial", "501ee749f21e46dd3e72fb871dfcb07c3812ae13020e046b3bb3de7b4582ef92", 0)]
     public void AShippedModeKeepsItsHash(string name, string hash, long budget)

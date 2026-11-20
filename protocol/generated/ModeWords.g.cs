@@ -307,6 +307,14 @@ public enum ModeSetup : byte
     WreckSlide = 72,
     /// <summary><c>tag_looks</c></summary>
     TagLooks = 73,
+    /// <summary><c>progress laps</c></summary>
+    ProgressLaps = 74,
+    /// <summary><c>progress time_left</c></summary>
+    ProgressTimeLeft = 75,
+    /// <summary><c>progress players_left</c></summary>
+    ProgressPlayersLeft = 76,
+    /// <summary><c>progress score_leader</c></summary>
+    ProgressScoreLeader = 77,
 }
 
 /// <summary>A read of a seat (protocol/modes.toml).</summary>
@@ -964,6 +972,10 @@ public static partial class ModeWords
         ("pauses", ModeSetup.Pauses, [], false, ""),
         ("wreck_slide", ModeSetup.WreckSlide, [new ModeArgument("", ModeType.Bool, 0, 1, null)], false, ""),
         ("tag_looks", ModeSetup.TagLooks, [], false, "text"),
+        ("progress laps", ModeSetup.ProgressLaps, [], true, ""),
+        ("progress time_left", ModeSetup.ProgressTimeLeft, [new ModeArgument("", ModeType.Int, 60, 360000, null)], true, ""),
+        ("progress players_left", ModeSetup.ProgressPlayersLeft, [], true, ""),
+        ("progress score_leader", ModeSetup.ProgressScoreLeader, [], true, ""),
     ];
 
     /// <summary>The reads of a seat (<c>seat.NAME</c>): name, id, type.</summary>
@@ -1268,6 +1280,10 @@ public static partial class ModeWords
             [ModeSetup.Pauses] = 2,
             [ModeSetup.WreckSlide] = 2,
             [ModeSetup.TagLooks] = 2,
+            [ModeSetup.ProgressLaps] = 2,
+            [ModeSetup.ProgressTimeLeft] = 2,
+            [ModeSetup.ProgressPlayersLeft] = 2,
+            [ModeSetup.ProgressScoreLeader] = 2,
         };
 
     /// <summary>The reads of a seat that arrived after rule set 1, and the rule set each arrived in.</summary>

@@ -28,6 +28,7 @@ race_waits everyone;           // the race goes on until the mode ends it, not u
 results_title "KNOCKOUT";       // the points page: a point for every cut survived, ties in the order below
 hud_layout ax;                 // AX's HUD: the position bottom left, the faces on AX's rows, the clock at AX's timer place
 live_places;                   // the position and the faces show the places the rule "Places" gives, every step
+progress players_left;         // the Quick Play page: the racers still in and those cut, not laps (there are none)
 
 global int interval;           // steps between cuts, worked out once at the race start
 global int next_cut;

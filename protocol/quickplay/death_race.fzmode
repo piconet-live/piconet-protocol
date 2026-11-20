@@ -74,6 +74,7 @@ damage_cap off;
 results_title "DEATH RACE";    // the points page, ties in the order below
 hud_layout ax;                 // AX's HUD: the position bottom left, the faces on AX's rows, the clock at AX's timer place
 live_places;                   // the position and the faces show the places the rule "Places" gives, every step
+progress time_left length;     // the Quick Play page: the clock's time left (the rule "End" ends the race at length)
 
 global bool over;              // the race has ended: nothing scores from then on
 global int hold_until;         // a player's last moment: FINISH! and its place have their 8 s

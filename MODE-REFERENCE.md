@@ -237,6 +237,19 @@ A race ends by laps and `finish_limit`, at `clock_limit`, at `end_race`, or when
 (unless `race_waits everyone`). The results are the times list, then the points page when the mode awards points or
 has a title or a points table.
 
+### Progress
+
+What the Quick Play page shows of a race running: its NOW column and its live picture's foot (the server's status,
+from the race's live report). One word; left out, the laps. The page shows only what the server can tell from the live
+report: a value it cannot know is left out, and the page shows the laps.
+
+| Written | What it does | Range |
+|---|---|---|
+| `progress laps;` | The leader's lap of the laps, as leaving it out | |
+| `progress time_left 6min;` `progress time_left length;` | The time left on a clock of this length from GO: the length the mode's code ends the race at, a time or a delay parameter. The race may end sooner by the mode's code | 1 s to 100 min (60 to 360,000 steps) |
+| `progress players_left;` | The racers still in, and the racers out | |
+| `progress score_leader;` | The leader by the mode's places (`live_places`) and their score (`show_score`'s points, or `show_distance`'s metres) | |
+
 ### Raced alone
 
 | Written | What it does | Range |
@@ -761,6 +774,7 @@ race_waits everyone;           // the race goes on until the mode ends it, not u
 results_title "KNOCKOUT";       // the points page: a point for every cut survived, ties in the order below
 hud_layout ax;                 // AX's HUD: the position bottom left, the faces on AX's rows, the clock at AX's timer place
 live_places;                   // the position and the faces show the places the rule "Places" gives, every step
+progress players_left;         // the Quick Play page: the racers still in and those cut, not laps (there are none)
 
 global int interval;           // steps between cuts, worked out once at the race start
 global int next_cut;

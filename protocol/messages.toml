@@ -964,6 +964,23 @@ members = [
     { name = "badge", type = "string?", default = 'null' },
     { name = "pack", type = "string?", default = 'null' },
     { name = "endsInMs", type = "int?", default = 'null' },
+    { name = "progress", type = "RaceProgress?", default = 'null' },
+    { name = "cpuMachines", type = "list<int>?", default = 'null' },
+]
+
+[[record]]
+name = "RaceProgress"
+members = [
+    { name = "kind", type = "string" },
+    { name = "leftMs", type = "int?", default = 'null' },
+    { name = "lengthMs", type = "int?", default = 'null' },
+    { name = "left", type = "int?", default = 'null' },
+    { name = "out", type = "int?", default = 'null' },
+    { name = "leaderSeat", type = "int?", default = 'null' },
+    { name = "leader", type = "string?", default = 'null' },
+    { name = "score", type = "float?", default = 'null' },
+    { name = "scoreKind", type = "string?", default = 'null' },
+    { name = "scoreLabel", type = "string?", default = 'null' },
 ]
 
 [[record]]

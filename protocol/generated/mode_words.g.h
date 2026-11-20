@@ -287,7 +287,11 @@ enum Setup : std::uint8_t
   SETUP_PAUSES = 71,  // pauses
   SETUP_WRECKSLIDE = 72,  // wreck_slide
   SETUP_TAGLOOKS = 73,  // tag_looks
-  SETUP_COUNT = 74,
+  SETUP_PROGRESSLAPS = 74,  // progress laps
+  SETUP_PROGRESSTIMELEFT = 75,  // progress time_left
+  SETUP_PROGRESSPLAYERSLEFT = 76,  // progress players_left
+  SETUP_PROGRESSSCORELEADER = 77,  // progress score_leader
+  SETUP_COUNT = 78,
 };
 
 // a read of a seat (OP_SEATREAD)
@@ -618,6 +622,10 @@ constexpr int SetupSince(std::uint8_t setup)
     case SETUP_PAUSES: return 2;
     case SETUP_WRECKSLIDE: return 2;
     case SETUP_TAGLOOKS: return 2;
+    case SETUP_PROGRESSLAPS: return 2;
+    case SETUP_PROGRESSTIMELEFT: return 2;
+    case SETUP_PROGRESSPLAYERSLEFT: return 2;
+    case SETUP_PROGRESSSCORELEADER: return 2;
     default: return 1;
   }
 }

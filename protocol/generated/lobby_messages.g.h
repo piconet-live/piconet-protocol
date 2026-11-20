@@ -8278,6 +8278,161 @@ inline void Put(json_wire::Out& o, const FormingMatchView& v, std::string_view t
   o.text += '}';
 }
 
+// a part of a message (Online.Protocol RaceProgress)
+struct RaceProgress
+{
+  std::string kind;
+  std::optional<std::int32_t> leftMs;
+  std::optional<std::int32_t> lengthMs;
+  std::optional<std::int32_t> left;
+  std::optional<std::int32_t> out;
+  std::optional<std::int32_t> leaderSeat;
+  std::optional<std::string> leader;
+  std::optional<float> score;
+  std::optional<std::string> scoreKind;
+  std::optional<std::string> scoreLabel;
+
+  // one bit a member, of wire_absent (a member that is no "?" read as null or left out: C# holds null; it
+  // is then not written) and of wire_holes (a list that held null items, dropped)
+  struct Bit
+  {
+    static constexpr std::uint32_t kind = 1u << 0;
+    static constexpr std::uint32_t leftMs = 1u << 1;
+    static constexpr std::uint32_t lengthMs = 1u << 2;
+    static constexpr std::uint32_t left = 1u << 3;
+    static constexpr std::uint32_t out = 1u << 4;
+    static constexpr std::uint32_t leaderSeat = 1u << 5;
+    static constexpr std::uint32_t leader = 1u << 6;
+    static constexpr std::uint32_t score = 1u << 7;
+    static constexpr std::uint32_t scoreKind = 1u << 8;
+    static constexpr std::uint32_t scoreLabel = 1u << 9;
+  };
+  static constexpr std::uint32_t kAbsentAtStart = Bit::kind;
+  std::uint32_t wire_absent = 0;
+  std::uint32_t wire_holes = 0;
+};
+
+inline bool Get(const json_wire::Value& x, RaceProgress& out, std::size_t from = 0)
+{
+  if (x.kind != json_wire::Value::Kind::Object)
+    return false;
+  out = RaceProgress{};
+  out.wire_absent = RaceProgress::kAbsentAtStart;
+  static constexpr std::string_view kNames[] = {"kind", "leftMs", "lengthMs", "left", "out", "leaderSeat", "leader", "score", "scoreKind", "scoreLabel"};
+  for (std::size_t i = from; i < x.members.size(); ++i)
+  {
+    const json_wire::Value& v = x.members[i].second;
+    switch (json_wire::Find(x.members[i].first, kNames))
+    {
+    case 0:
+      if (!json_wire::Held(v, out.kind, out.wire_absent, RaceProgress::Bit::kind, [&](const json_wire::Value& y, std::string&) { return Get(y, out.kind); }))
+        return false;
+      break;
+    case 1:
+      if (!Get(v, out.leftMs))
+        return false;
+      break;
+    case 2:
+      if (!Get(v, out.lengthMs))
+        return false;
+      break;
+    case 3:
+      if (!Get(v, out.left))
+        return false;
+      break;
+    case 4:
+      if (!Get(v, out.out))
+        return false;
+      break;
+    case 5:
+      if (!Get(v, out.leaderSeat))
+        return false;
+      break;
+    case 6:
+      if (!Get(v, out.leader))
+        return false;
+      break;
+    case 7:
+      if (!Get(v, out.score))
+        return false;
+      break;
+    case 8:
+      if (!Get(v, out.scoreKind))
+        return false;
+      break;
+    case 9:
+      if (!Get(v, out.scoreLabel))
+        return false;
+      break;
+    default:
+      break;   // a member it does not know, or one written only
+    }
+  }
+  return true;
+}
+
+inline void Put(json_wire::Out& o, const RaceProgress& v, std::string_view type = {})
+{
+  o.text += '{';
+  bool first = true;
+  if (!type.empty())
+  {
+    json_wire::Key(o, first, "type");
+    json_wire::PutString(o, type);
+  }
+  if (!(v.wire_absent & RaceProgress::Bit::kind))
+  {
+    json_wire::Key(o, first, "kind");
+    Put(o, v.kind);
+  }
+  if (v.leftMs)
+  {
+    json_wire::Key(o, first, "leftMs");
+    Put(o, *v.leftMs);
+  }
+  if (v.lengthMs)
+  {
+    json_wire::Key(o, first, "lengthMs");
+    Put(o, *v.lengthMs);
+  }
+  if (v.left)
+  {
+    json_wire::Key(o, first, "left");
+    Put(o, *v.left);
+  }
+  if (v.out)
+  {
+    json_wire::Key(o, first, "out");
+    Put(o, *v.out);
+  }
+  if (v.leaderSeat)
+  {
+    json_wire::Key(o, first, "leaderSeat");
+    Put(o, *v.leaderSeat);
+  }
+  if (v.leader)
+  {
+    json_wire::Key(o, first, "leader");
+    Put(o, *v.leader);
+  }
+  if (v.score)
+  {
+    json_wire::Key(o, first, "score");
+    Put(o, *v.score);
+  }
+  if (v.scoreKind)
+  {
+    json_wire::Key(o, first, "scoreKind");
+    Put(o, *v.scoreKind);
+  }
+  if (v.scoreLabel)
+  {
+    json_wire::Key(o, first, "scoreLabel");
+    Put(o, *v.scoreLabel);
+  }
+  o.text += '}';
+}
+
 // a part of a message (Online.Protocol RaceView)
 struct RaceView
 {
@@ -8295,6 +8450,8 @@ struct RaceView
   std::optional<std::string> badge;
   std::optional<std::string> pack;
   std::optional<std::int32_t> endsInMs;
+  std::optional<RaceProgress> progress;
+  std::optional<std::vector<std::int32_t>> cpuMachines;
 
   // one bit a member, of wire_absent (a member that is no "?" read as null or left out: C# holds null; it
   // is then not written) and of wire_holes (a list that held null items, dropped)
@@ -8314,6 +8471,8 @@ struct RaceView
     static constexpr std::uint32_t badge = 1u << 11;
     static constexpr std::uint32_t pack = 1u << 12;
     static constexpr std::uint32_t endsInMs = 1u << 13;
+    static constexpr std::uint32_t progress = 1u << 14;
+    static constexpr std::uint32_t cpuMachines = 1u << 15;
   };
   static constexpr std::uint32_t kAbsentAtStart = Bit::id | Bit::relay | Bit::region | Bit::courseName | Bit::players;
   std::uint32_t wire_absent = 0;
@@ -8326,7 +8485,7 @@ inline bool Get(const json_wire::Value& x, RaceView& out, std::size_t from = 0)
     return false;
   out = RaceView{};
   out.wire_absent = RaceView::kAbsentAtStart;
-  static constexpr std::string_view kNames[] = {"id", "relay", "region", "course", "courseName", "laps", "players", "cpuRacers", "started", "live", "mode", "badge", "pack", "endsInMs"};
+  static constexpr std::string_view kNames[] = {"id", "relay", "region", "course", "courseName", "laps", "players", "cpuRacers", "started", "live", "mode", "badge", "pack", "endsInMs", "progress", "cpuMachines"};
   for (std::size_t i = from; i < x.members.size(); ++i)
   {
     const json_wire::Value& v = x.members[i].second;
@@ -8386,6 +8545,14 @@ inline bool Get(const json_wire::Value& x, RaceView& out, std::size_t from = 0)
       break;
     case 13:
       if (!Get(v, out.endsInMs))
+        return false;
+      break;
+    case 14:
+      if (!Get(v, out.progress))
+        return false;
+      break;
+    case 15:
+      if (!(v.kind == json_wire::Value::Kind::Null ? (out.cpuMachines.reset(), true) : (out.cpuMachines.emplace(), Get(v, *out.cpuMachines))))
         return false;
       break;
     default:
@@ -8461,6 +8628,16 @@ inline void Put(json_wire::Out& o, const RaceView& v, std::string_view type = {}
   {
     json_wire::Key(o, first, "endsInMs");
     Put(o, *v.endsInMs);
+  }
+  if (v.progress)
+  {
+    json_wire::Key(o, first, "progress");
+    Put(o, *v.progress);
+  }
+  if (v.cpuMachines)
+  {
+    json_wire::Key(o, first, "cpuMachines");
+    Put(o, *v.cpuMachines);
   }
   o.text += '}';
 }

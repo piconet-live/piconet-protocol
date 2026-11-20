@@ -121,11 +121,40 @@ public sealed record FormingMatchView(string Id, int Players, string Stage, stri
 /// cannot be worked out honestly: no live report, a racer still racing without a whole lap and no finish yet to count
 /// the limit from, laps unlimited, or a mode that ends its race otherwise (<c>end_race</c> in its code, a clock limit,
 /// <c>race_waits everyone</c>: Knockout, Overdrive, Death Race and Crown today; Quick Play's normal mode and Ghost race
-/// end by their laps); and from a server from before.</summary>
+/// end by their laps); and from a server from before.
+/// Progress: the race's progress as its mode says it (<see cref="ModeTerms.Progress"/>: <c>progress time_left</c>,
+/// <c>progress players_left</c>, <c>progress score_leader</c>), worked out from the latest live report; null: its laps
+/// (no mode, a mode that says laps or nothing), a value the report cannot give (no report, one too old, no racer
+/// still racing to read the clock from, no leader placed and scored), or a server from before: a page then shows the
+/// laps, the leader's lap of <see cref="Laps"/>.
+/// CpuMachines: the machines of the race's CPU seats (the game's ids), in seat order, the seats after
+/// <see cref="Players"/>' (a CPU racer's name is its machine's pilot's); null: none, or a server from before.</summary>
 public sealed record RaceView(
     string Id, string Relay, string Region, int Course, string CourseName, int Laps, IReadOnlyList<RacerView> Players,
     int CpuRacers, DateTimeOffset Started, RaceSnapshot? Live = null, string? Mode = null, string? Badge = null,
-    string? Pack = null, int? EndsInMs = null);
+    string? Pack = null, int? EndsInMs = null, RaceProgress? Progress = null, IReadOnlyList<int>? CpuMachines = null);
+
+/// <summary>A race's progress as its mode says it (<see cref="RaceView.Progress"/>), each value from the race's latest
+/// live report; a kind's values are all there, the others null. Kind <see cref="TimeLeft"/>: LeftMs, the time left at
+/// the status's <see cref="ServiceStatus.Time"/> on the mode's clock of LengthMs from GO (the race's clock: the racers
+/// still racing, their race time; the race may end sooner, by the mode's code). <see cref="PlayersLeft"/>: Left, the
+/// racers still in (racing or finished), and Out, those out (knocked out, retired or cut). <see cref="ScoreLeader"/>:
+/// LeaderSeat, the seat the mode places first (<see cref="RacerLive.Place"/> 1), Leader its player's name (null: a CPU,
+/// named by its machine, <see cref="RaceView.CpuMachines"/>), Score its score, ScoreKind and ScoreLabel the report's
+/// (<see cref="RaceSnapshot.ScoreKind"/>, <see cref="RaceSnapshot.ScoreLabel"/>). A kind a reader does not know: it
+/// shows the laps.</summary>
+public sealed record RaceProgress(string Kind, int? LeftMs = null, int? LengthMs = null, int? Left = null, int? Out = null,
+    int? LeaderSeat = null, string? Leader = null, float? Score = null, string? ScoreKind = null, string? ScoreLabel = null)
+{
+    /// <summary>The time left on the mode's clock (<c>progress time_left</c>).</summary>
+    public const string TimeLeft = "time_left";
+
+    /// <summary>The racers still in and those out (<c>progress players_left</c>).</summary>
+    public const string PlayersLeft = "players_left";
+
+    /// <summary>The leader by the mode's places and their score (<c>progress score_leader</c>).</summary>
+    public const string ScoreLeader = "score_leader";
+}
 
 /// <summary>A relay: its id, region, its load (null when it does not report one, or is not running) and the races it
 /// takes at once (null: no limit). For a relay the coordinator starts and stops itself also: State

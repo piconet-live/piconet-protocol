@@ -177,6 +177,27 @@ a member they do not know), and a server from before sends none, so a screen sho
   whose `welcome` says `avatars: true`: a server from before answers the unknown type with `error` `bad_message`
   ("unreadable message") and keeps the connection, and passes over a hello's `avatar` silently.
 
+**A race's progress and its CPUs in the status** (2026-11-20; the Quick Play page's NOW column and its live picture).
+All optional: a reader from before passes over them (System.Text.Json and the generated C++ reader, checked both
+ways), and a server from before sends none, so a page shows the laps, as before (tests: Online.Tests
+`RaceProgressTests`, Protocol.Tests `QuickPlayRotationTests.AnOfficialModeSaysItsProgress`).
+
+- *Progress.* A mode file says what its race counts down by with one of the coordinator's words (MODE-REFERENCE.md
+  "Progress"): `progress laps` (as saying nothing), `progress time_left LENGTH` (a clock of that length from GO: the
+  one its code ends the race at, a time or a delay parameter), `progress players_left`, `progress score_leader`. Each
+  status race's `progress` (`RaceProgress`) then says it, worked out from the race's latest live report: `kind`
+  (`time_left`, `players_left`, `score_leader`) and that kind's values. `time_left`: `leftMs`, the time left at the
+  status's `time` (the race's clock is the race time of the racers still racing, the report at most 10 s old) and
+  `lengthMs`; the race may end sooner, by the mode's code. `players_left`: `left`, the racers still in (racing or
+  finished), and `out`. `score_leader`: `leaderSeat`, the seat the mode places first (`live_places`), `leader` its
+  player's name (absent: a CPU), `score`, and the report's `scoreKind` and `scoreLabel`. Absent: the race's laps (no
+  mode, a mode that says laps or nothing), or a value the report cannot give (no report, one too old, nobody still
+  racing for the clock, nobody placed and scored): a page shows the laps, the leader's lap of `laps`. Of the official
+  modes Knockout and Overdrive say `players_left`, Death Race and Crown `time_left` (their Race length); Quick Play's
+  normal mode and Ghost race say nothing.
+- *The CPUs.* Each status race's `cpuMachines`: the machines (the game's ids) of its CPU seats, in seat order, the
+  seats after its `players`; a page names a CPU racer by its machine's pilot. Absent: no CPUs.
+
 **The official modes in the status****The official modes in the status** (`ServiceStatus.ModeStore`, `ModeStoreView`): where the coordinator loaded Quick
 Play's rotation from (`source`: `bucket`, the stack's mode store; `local copy`, its last good copy while the bucket
 cannot be reached; `image seed`, the image's quickplay folder while neither is there; `image`, a server with no store),

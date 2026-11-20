@@ -2510,6 +2510,43 @@ nothing at it; size the largest at the reference depth (40 m from the camera) an
 two. Without the word every text has the defaults. Player name tags unchanged. Drawing only"""
 doc = "the `tag` words' settings, three values a text of tag_texts: the range in metres, the least size and the largest; written by the compiler. A 0.6.0 game cannot race a mode with it"
 
+# ---- The race's progress as the coordinator says it (the Quick Play page's NOW and its live picture, the status's
+# RaceView.progress): what the mode's race counts down by. The coordinator's alone; one of them a file (two forms of
+# one word); none written: `progress laps`. Each is said only from the race's live report (a value it cannot know is left out,
+# and the page shows the laps).
+
+[[setup]]
+name = "progress laps"
+id = 74
+since = 2
+lobby = true
+where = "the coordinator: the race's progress is its laps, the leader's lap of the laps (the game's own way; what a mode that writes no `progress` word has)"
+
+[[setup]]
+name = "progress time_left"
+id = 75
+since = 2
+lobby = true
+args = [{ type = "int", least = 60, most = 360000 }]
+where = """the coordinator: the race's progress is a clock of `length` steps from GO (a time, 6min, or a delay parameter: the \
+length the mode's own code ends the race at, as `show_clock length - race.steps` shows it). The status says the time left \
+from the race clock of the live report (the racers still racing: their race time) and the length; the race may end sooner \
+(the mode's code)"""
+
+[[setup]]
+name = "progress players_left"
+id = 76
+since = 2
+lobby = true
+where = "the coordinator: the race's progress is its racers still in, and those out (a racer out: knocked out, retired or cut), from the live report"
+
+[[setup]]
+name = "progress score_leader"
+id = 77
+since = 2
+lobby = true
+where = "the coordinator: the race's progress is its leader by the mode's places (`live_places`: place 1) and their score (`show_score`, `show_distance`), from the live report"
+
 [[action]]
 name = "hud_move"
 id = 81

@@ -93,6 +93,11 @@ public sealed record ModeTerms
     /// <summary>The teams a race has (<c>teams</c>); null: the lobby's rule.</summary>
     public (int Least, int Most)? Teams { get; init; }
 
+    /// <summary>What the race's progress is (<c>progress time_left</c>, <c>progress players_left</c>,
+    /// <c>progress score_leader</c>): what the status says of a race running (<see cref="RaceView.Progress"/>). Null:
+    /// its laps (<c>progress laps</c>, or no <c>progress</c> word), the leader's lap of the laps.</summary>
+    public ModeProgress? Progress { get; init; }
+
     /// <summary>The laps on a course: the mode's, or the game's own 3 when it states none. 0: unlimited.</summary>
     public int? Laps(int course) => LapsAll ?? (LapsTable.TryGetValue(course, out var row) ? row : LapsElse) ?? GameLaps;
 
@@ -168,6 +173,10 @@ public sealed record ModeTerms
                 ModeSetup.MixedPacks => terms with { MixedPacks = Cell(a[0]) != 0 },
                 ModeSetup.BoostStart => terms with { BoostStart = Cell(a[0]) != 0 },
                 ModeSetup.Teams => terms with { Teams = (Cell(a[0]), Cell(a[1])) },
+                ModeSetup.ProgressLaps => terms with { Progress = null },
+                ModeSetup.ProgressTimeLeft => terms with { Progress = new(RaceProgress.TimeLeft, Cell(a[0])) },
+                ModeSetup.ProgressPlayersLeft => terms with { Progress = new(RaceProgress.PlayersLeft) },
+                ModeSetup.ProgressScoreLeader => terms with { Progress = new(RaceProgress.ScoreLeader) },
                 _ => terms,   // (the game's alone)
             };
         }
@@ -245,6 +254,11 @@ public sealed record ModeTerms
             : null;
     }
 }
+
+/// <summary>A race's progress as its mode says it (<see cref="ModeTerms.Progress"/>): its kind (a
+/// <see cref="RaceProgress"/> kind) and, for <see cref="RaceProgress.TimeLeft"/>, the clock's length in steps from GO (60
+/// a second).</summary>
+public sealed record ModeProgress(string Kind, int LengthSteps = 0);
 
 /// <summary>A race's teams (piconet-docs research/game-modes/ design 3): the launcher's or host's choice for each player,
 /// the rest given out so the teams stay even. They travel in the match start's <c>setup.mode.teams</c> and so the
