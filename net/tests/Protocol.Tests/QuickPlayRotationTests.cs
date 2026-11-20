@@ -402,8 +402,8 @@ public sealed class QuickPlayRotationTests : IDisposable
     public void TheOfficialRotationLoads()
     {
         var rotation = Official();
-        // live's: six course cards, one of them spicy, Overdrive three times as often as each other spicy option
-        Assert.Equal((6, 1, 0.15, true), (rotation.Cards, rotation.SpicyCards, rotation.RandomSpicyChance, rotation.ShowLaps));
+        // live's: eleven course cards (twelve with Random: the vote's two rows of six), one of them spicy, Overdrive three times as often as each other spicy option
+        Assert.Equal((11, 1, 0.15, true), (rotation.Cards, rotation.SpicyCards, rotation.RandomSpicyChance, rotation.ShowLaps));
         Assert.Equal("Quick Play", rotation.Normal.Package.Name);
         Assert.Equal([("Knockout", "KNOCKOUT", 1), ("Ghost race", "GHOST RACE", 1), ("Overdrive", "OVERDRIVE", 3), ("Death Race", "DEATH RACE", 1), ("Crown", "CROWN", 1)],
             rotation.Spicy.Select(s => (s.Mode.Package.Name, s.Mode.Package.Badge, s.Weight)));
@@ -502,7 +502,7 @@ public sealed class QuickPlayRotationTests : IDisposable
         for (var round = 0; round < votes; round++)
         {
             var vote = rotation.Vote(CoursePool.Default, random.Next);
-            Assert.Equal(7, vote.Count);
+            Assert.Equal(12, vote.Count);
             Assert.Equal(CourseVote.RandomCourse, vote[^1].Course);
             var card = Assert.Single(vote, o => o.Spicy);
             places.Add(vote.ToList().IndexOf(card));
@@ -525,11 +525,11 @@ public sealed class QuickPlayRotationTests : IDisposable
             }
             seen.Add(card.Course);
             times[card.Mode.File] = times.GetValueOrDefault(card.Mode.File) + 1;
-            Assert.Equal(6, vote.Take(6).Select(o => o.Course).Distinct().Count());   // no course twice in a vote
+            Assert.Equal(11, vote.Take(11).Select(o => o.Course).Distinct().Count());   // no course twice in a vote
             Assert.All(vote.Where(o => !o.Spicy), o => Assert.Equal(("Quick Play", (string?)null), (o.Mode.Package.Name, o.Card.Badge)));
-            Assert.All(vote.Take(6).Where(o => !o.Spicy), o => Assert.Equal(rotation.Normal.Laps(o.Course), o.Card.Laps));
+            Assert.All(vote.Take(11).Where(o => !o.Spicy), o => Assert.Equal(rotation.Normal.Laps(o.Course), o.Card.Laps));
         }
-        Assert.Equal([0, 1, 2, 3, 4, 5], places.Order());
+        Assert.Equal([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10], places.Order());
         string[] files = ["crown.fzmode", "death_race.fzmode", "ghost_race.fzmode", "knockout.fzmode", "overdrive.fzmode"];
         Assert.Equal(files, courses.Keys.Order(StringComparer.Ordinal));
         foreach (var (file, seen) in courses)
