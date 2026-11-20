@@ -557,7 +557,9 @@ public sealed record CourseVote(string MatchId, IReadOnlyList<int> Options, int 
 /// <see cref="LobbyRules.Values"/> and <see cref="LobbyMode.Terms"/> hold them): every rule the mode owns
 /// (<see cref="ModeTerms.Rules"/>; a word the mode leaves out is the game's own way), with <c>laps</c> the card's laps on
 /// its course (on "Random course": the mode's one number, or <see cref="ModeTerms.LapsByCourse"/> for a table) and
-/// <c>racers</c> the race's seats (the lobby's, within the mode's <c>racers</c>). Keys: <c>laps</c>, <c>racers</c>,
+/// <c>racers</c> the race's seats (the lobby's, within the mode's <c>racers</c>), and <c>cpu-fill</c> the CPUs as the
+/// race has them (<see cref="ModeTerms.CpuFillOn"/>: the mode's never or always; where its players vote, the lobby's own
+/// rule, a Quick Play server's option). Keys: <c>laps</c>, <c>racers</c>,
 /// <c>cpu-fill</c> (<see cref="CpuFillMode"/> as a number), <c>cpu-level</c>, <c>boost-start</c>, <c>mine-regen</c> (ms,
 /// 0 none), <c>finish-limit</c> (s, 0 none), <c>machine-setting</c> and <see cref="LobbyRules.SettingHighKey"/>,
 /// <c>mixed-packs</c>, and <c>course-select</c> with <see cref="LobbyRules.FixedCourseKey"/> only for a mode that pins

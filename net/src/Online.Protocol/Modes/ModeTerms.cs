@@ -31,6 +31,12 @@ public sealed record ModeTerms
     /// <summary>The CPUs as the lobby rule says them: never (off, or left out), by the vote (on), always.</summary>
     public CpuFillMode CpuFill => CpusAlways ? CpuFillMode.Always : CpusAllowed ? CpuFillMode.Vote : CpuFillMode.Never;
 
+    /// <summary>The CPUs a race under this mode has on a lobby whose own rule is <paramref name="lobby"/>: the mode's
+    /// never or always; where it lets players vote (<c>cpus on</c>), the lobby's rule, which a Quick Play server's
+    /// option sets (a server run with CPUs always fills the seats of such a race with no vote, one run with none never
+    /// does). What a race's description says (<see cref="VoteCard.Terms"/>, <see cref="LobbyList.QuickPlay"/>).</summary>
+    public CpuFillMode CpuFillOn(CpuFillMode lobby) => CpuFill == CpuFillMode.Vote ? lobby : CpuFill;
+
     /// <summary>The value of <see cref="LobbyRules.Values"/>' "laps" for a mode with a table of laps by course: no one
     /// number. No lobby's value takes it.</summary>
     public const int LapsByCourse = -1;

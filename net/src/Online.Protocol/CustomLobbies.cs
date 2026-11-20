@@ -247,8 +247,14 @@ public sealed record LeaveLobby : ClientMessage;
 /// the modes it was last named); a game that does not browse takes QuickPlay from it and leaves the list. QuickPlay's
 /// <see cref="LobbyRules.Mode"/> is Quick Play's normal mode on its defaults (null: a server with no rotation, or from
 /// before): its <see cref="LobbyMode.Terms"/> and <see cref="LobbyMode.Pack"/> are a Quick Play race's rules (a vote's
-/// spicy card races another mode: <see cref="VoteCard.Terms"/>), its Values the server's options under them as
-/// before, so a custom lobby is compared with them as it was.
+/// spicy card races another mode: <see cref="VoteCard.Terms"/>), <c>cpu-fill</c> among them as the race has them
+/// (<see cref="ModeTerms.CpuFillOn"/>: the server's own CPU rule where the mode lets players vote). Where the terms
+/// hold a key, a Quick Play race on the rotation races it, whatever the server's options say: the rules' Values stay
+/// the server's options as before (a custom lobby is compared with them as it was) and say the race only for the keys
+/// the terms do not hold (the lobby's own settings: the seats, the vote's and choice's times, the voting minimum, the
+/// ping limit, how the course is found). The mode's Params and Values are its settings on their defaults, not the
+/// race: word the race from the terms. A lobby with a member whose game runs no modes races without the rotation, on
+/// the server's options alone (no released game does that; a test's bots do).
 /// Relays (2026-11-20): every relay connected to the coordinator, by id (<see cref="RelayView.Id"/>,
 /// <see cref="LobbyView.Relay"/>), with where a game measures its own round trip to it: the relay protocol's keyless
 /// Ping at Host and Port, the endpoint a match's <see cref="MeasureRelays"/> names (an empty host: the coordinator's

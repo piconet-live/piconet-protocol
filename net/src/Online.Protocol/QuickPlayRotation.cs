@@ -31,6 +31,16 @@ public sealed record RotationMode(string File, ModePackage Package, string Hash,
         Terms.Machines is { Count: > 0 } machines ? machines : null, Terms.CustomsOff,
         Terms.Courses is { Count: > 0 } courses ? courses : null, Terms.PackParam);
 
+    /// <summary>The mode as <see cref="Named"/> names it, its terms' CPUs as a race has them on a lobby whose own rule is
+    /// <paramref name="lobbyCpuFill"/> (<see cref="ModeTerms.CpuFillOn"/>): Quick Play's rules as a server says them.</summary>
+    public LobbyMode NamedOn(CpuFillMode lobbyCpuFill)
+    {
+        var named = Named();
+        return named.Terms is { } terms
+            ? named with { Terms = new Dictionary<string, int>(terms, StringComparer.Ordinal) { [HostRules.CpuFill.Name] = (int)Terms.CpuFillOn(lobbyCpuFill) } }
+            : named;
+    }
+
     /// <summary>The match start's <c>setup.mode</c>: the package on its parameters' values.</summary>
     public ModeStart Start() => Package.Start(Values);
 
@@ -55,16 +65,19 @@ public sealed record RotationMode(string File, ModePackage Package, string Hash,
     /// <param name="seats">The race's seats under this mode (the lobby's, within the mode's racers).</param>
     /// <param name="quickPlay">Quick Play's normal mode, on its defaults.</param>
     /// <param name="quickPlaySeats">Quick Play's seats under it.</param>
-    public VoteCard Card(int course, bool spicy, int lobbyLaps, int seats, RotationMode? quickPlay, int quickPlaySeats)
+    /// <param name="lobbyCpuFill">The lobby's own CPU rule (<see cref="ModeTerms.CpuFillOn"/>).</param>
+    /// <param name="quickPlayCpuFill">Quick Play's own CPU rule, the server's.</param>
+    public VoteCard Card(int course, bool spicy, int lobbyLaps, int seats, RotationMode? quickPlay, int quickPlaySeats,
+        CpuFillMode lobbyCpuFill = CpuFillMode.Vote, CpuFillMode quickPlayCpuFill = CpuFillMode.Vote)
     {
         var card = Card(course, spicy, lobbyLaps);
-        var terms = TermsOn(course, lobbyLaps, seats);
+        var terms = TermsOn(course, lobbyLaps, seats, lobbyCpuFill);
         var pack = Terms.Pack ?? "";
         if (quickPlay is null)
         {
             return card with { Terms = terms, Pack = pack };
         }
-        var own = quickPlay.TermsOn(course, lobbyLaps, quickPlaySeats);
+        var own = quickPlay.TermsOn(course, lobbyLaps, quickPlaySeats, quickPlayCpuFill);
         var moved = terms.Where(t => !own.TryGetValue(t.Key, out var v) || v != t.Value).Select(t => t.Key)
             .Concat(own.Keys.Where(k => !terms.ContainsKey(k)))
             .ToList();
@@ -76,10 +89,13 @@ public sealed record RotationMode(string File, ModePackage Package, string Hash,
     }
 
     /// <summary>The race's rules by key on a course (<see cref="VoteCard.Terms"/>): the mode's, its laps on the course
-    /// (on Random: its one number, or by course) and the race's seats.</summary>
-    private Dictionary<string, int> TermsOn(int course, int lobbyLaps, int seats)
+    /// (on Random: its one number, or by course), the race's seats and its CPUs on the lobby's rule.</summary>
+    private Dictionary<string, int> TermsOn(int course, int lobbyLaps, int seats, CpuFillMode lobbyCpuFill)
     {
-        var terms = new Dictionary<string, int>(Terms.Rules(), StringComparer.Ordinal);
+        var terms = new Dictionary<string, int>(Terms.Rules(), StringComparer.Ordinal)
+        {
+            [HostRules.CpuFill.Name] = (int)Terms.CpuFillOn(lobbyCpuFill),
+        };
         if (course != CourseVote.RandomCourse)
         {
             terms[HostRules.Laps.Name] = Laps(course) ?? lobbyLaps;

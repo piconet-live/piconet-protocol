@@ -135,8 +135,15 @@ a member they do not know), and a server from before sends none, so a screen sho
 - *Quick Play's rules outside the browser* (the Quick Play page, a Quick Play lobby's RULES line): `lobbyList` once
   after `welcome` (a hello that says `modes`) and again to every such game when the operator's rules or the mode
   store's set change what Quick Play's rules say (a browser has it with its next list). Its `quickPlay` names Quick
-  Play's normal mode on its defaults in `mode` (`terms`, `pack`, `params`, `values`: what a Quick Play race's rules
-  are); its `values` stay the server's options, as a custom lobby is compared with them.
+  Play's normal mode on its defaults in `mode`: its `terms` and `pack` are what a Quick Play race on the rotation
+  runs, whatever the server's options say for those keys (the race lays the mode's words over the options), with
+  `cpu-fill` as the race has it (`ModeTerms.CpuFillOn`: the mode's never or always; where its players vote, as the
+  normal mode's `cpus on` lets them, the server's own CPU rule, so a server run with `--cpu-fill always` says always).
+  Its `values` stay the server's options, as a custom lobby is compared with them, and say the race only for the keys
+  the terms do not hold (the seats, the vote's and choice's times, the voting minimum, the ping limit, how the course
+  is found). The mode's `params` and `values` are its settings on their defaults: word the race from the terms. A lobby
+  with a member whose game runs no modes (no released game; a test's bots) races without the rotation, on the
+  server's options alone.
 - *A running race's end.* Each status race's `endsInMs`: about how long until the race is over as the game ends it,
   from the status's `time`, an estimate from its latest live report (at most 10 s old) and the server's clock. Each
   racer still racing finishes after its laps left at its own mean lap so far (the current lap's time counted off); the
@@ -149,7 +156,7 @@ a member they do not know), and a server from before sends none, so a screen sho
 - *A vote card's rules* (`VoteCard`): `about` on every card whose mode has a line (a launcher from before shows it
   only beside a badge); `terms`, the race's rules on the card by the custom rules' keys (`laps` on its course, or on
   Random the mode's one number or -1 for laps by course; `racers`, the race's seats; `cpu-fill` 0 vote, 1 always, 2
-  never; `cpu-level`; `boost-start`; `mine-regen` in ms, 0 none; `finish-limit` in s, 0 none; `machine-setting` and
+  never, as the race has it (as Quick Play's above: the mode's never or always, else the lobby's own rule); `cpu-level`; `boost-start`; `mine-regen` in ms, 0 none; `finish-limit` in s, 0 none; `machine-setting` and
   `machine-setting-high`; `mixed-packs`; `course-select` with `course-select-course` only for a mode that pins its
   course); `pack`, the stat pack by name ("" the disc's own); `moved`, the keys (and `stat-pack` for the pack) whose
   value is not Quick Play's own (its normal mode on its defaults on the same course, with Quick Play's seats): empty, the

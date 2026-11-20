@@ -629,6 +629,30 @@ public sealed class QuickPlayRotationTests : IDisposable
         Assert.Equal(((IReadOnlyDictionary<string, int>?)null, (string?)null, (IReadOnlyList<string>?)null), (older.Terms, older.Pack, older.Moved));
     }
 
+    /// <summary>A race's CPUs (<see cref="ModeTerms.CpuFillOn"/>): a mode's never or always stands; where its players
+    /// vote, the lobby's own rule decides, and the card and Quick Play's named mode say so, a normal card with nothing
+    /// moved on any rule of the server's.</summary>
+    [Fact]
+    public void TheCpusAreTheModesUnlessItLetsPlayersVoteThenTheLobbys()
+    {
+        var rotation = Official();
+        var normal = rotation.Normal;
+        Assert.Equal(CpuFillMode.Vote, normal.Terms.CpuFill);
+        foreach (var lobby in Enum.GetValues<CpuFillMode>())
+        {
+            Assert.Equal(lobby, normal.Terms.CpuFillOn(lobby));
+            Assert.Equal((int)lobby, normal.NamedOn(lobby).Terms!["cpu-fill"]);
+            var card = normal.Card(8, spicy: false, 3, 30, normal, 30, lobby, lobby);
+            Assert.Equal(((int)lobby, 0), (card.Terms!["cpu-fill"], card.Moved!.Count));
+        }
+        var never = new ModeTerms { CpusAllowed = false };
+        var always = new ModeTerms { CpusAllowed = true, CpusAlways = true };
+        Assert.All(Enum.GetValues<CpuFillMode>(), lobby =>
+            Assert.Equal((CpuFillMode.Never, CpuFillMode.Always), (never.CpuFillOn(lobby), always.CpuFillOn(lobby))));
+        // a custom lobby of the normal mode (its own rule the mode's vote) against a server whose rule is always
+        Assert.Equal(["cpu-fill"], normal.Card(8, spicy: false, 3, 30, normal, 30, CpuFillMode.Vote, CpuFillMode.Always).Moved);
+    }
+
     [Fact]
     public void AModeTravelsInTheMessagesAndAnOlderEndReadsNone()
     {
