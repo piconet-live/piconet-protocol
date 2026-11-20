@@ -92,9 +92,10 @@ public sealed record RacerView(string Name, int Machine, string? Color, string? 
 /// VotingMinimum: the players the lobby needs before its start vote opens and its countdown runs; null: a server from
 /// before.
 /// Relay: the relay (<see cref="RelayView.Id"/>) of the lobby's race while it races, or of its match once that match's
-/// relay is chosen (by its players' measures, during its vote); a game measures its own round trip to it through
-/// <see cref="RelayView.Host"/> and <see cref="RelayView.Port"/>. Null: the lobby has none now (forming, its match still
-/// measuring), or a server from before. The next race's relay is chosen again, by who is in it.</summary>
+/// relay is chosen (by its players' measures, at its vote's end); a game measures its own round trip to it at the
+/// endpoint of that id in <see cref="LobbyList.Relays"/>, which only a welcomed game gets, over the lobby link. Null:
+/// the lobby has none now (forming, its match still measuring), or a server from before. The next race's relay is
+/// chosen again, by who is in it.</summary>
 public sealed record LobbyView(string Id, IReadOnlyList<RacerView> Players, int Capacity, bool VotingOpen, int StartVotes,
     string Stage = "forming", string? RaceId = null, int Racing = 0, string? Build = null,
     IReadOnlyList<LobbyBuildView>? Builds = null, string? Line = null, int? StartsInMs = null, int? VotingMinimum = null,
@@ -131,9 +132,8 @@ public sealed record RaceView(
 /// (stopped, starting, running, stopping; null for any other relay, which is listed while it is connected), its
 /// public address (null: none allocated), its Machine size, IdleUntil (when it is stopped if nothing uses it),
 /// AddressUntil (when its address is released if it stays stopped) and Error (set while its last start failed).
-/// Host and Port: where a game measures its round trip to the relay (the relay protocol's keyless Ping, as for
-/// <see cref="MeasureRelays"/>: the same host and port a match's measure names), while the relay is connected to the
-/// coordinator; null while it is not (a managed relay stopped or not yet connected), or from a server from before.</summary>
+/// No relay's endpoint for a game's measure is here (an unmanaged relay may be someone's home connection): a welcomed
+/// game has them over the lobby link, <see cref="LobbyList.Relays"/>.</summary>
 public sealed record RelayView(string Id, string Region, int? Races, int? Players, int? MaxRaces = null, string? State = null,
     string? Address = null, string? Size = null, DateTimeOffset? IdleUntil = null, DateTimeOffset? AddressUntil = null,
-    string? Error = null, string? Host = null, int? Port = null);
+    string? Error = null);

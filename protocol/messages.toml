@@ -611,6 +611,7 @@ members = [
     { name = "lobbies", type = "list<LobbySummary>" },
     { name = "quickPlay", type = "LobbyRules?", default = 'null' },
     { name = "modes", type = "list<LobbyMode>?", default = 'null' },
+    { name = "relays", type = "list<RelayEndpoint>?", default = 'null' },
 ]
 
 [[record]]
@@ -979,8 +980,6 @@ members = [
     { name = "idleUntil", type = "time?", default = 'null' },
     { name = "addressUntil", type = "time?", default = 'null' },
     { name = "error", type = "string?", default = 'null' },
-    { name = "host", type = "string?", default = 'null' },
-    { name = "port", type = "int?", default = 'null' },
 ]
 
 [[record]]

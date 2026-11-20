@@ -144,4 +144,18 @@ public sealed class CustomLobbyMessageTests
         Assert.Equal("Ghost race", Assert.Single(back.Modes!).Name);
         Assert.DoesNotContain("modes", ControlProtocol.Encode(new LobbyList([])), StringComparison.Ordinal);
     }
+
+    /// <summary>The relays' endpoints for a game's per-lobby ping travel in the lobby list only (<see cref="LobbyList.Relays"/>):
+    /// a reader from before passes over them, a list from before reads as none, and the status has none at all.</summary>
+    [Fact]
+    public void TheRelaysEndpointsAreInTheLobbyListAndNeverInTheStatus()
+    {
+        var text = ControlProtocol.Encode(new LobbyList([], Relays: [new RelayEndpoint("iad", "203.0.113.7", 47811)]));
+        Assert.Contains("\"relays\":[{\"id\":\"iad\",\"host\":\"203.0.113.7\",\"port\":47811}]", text, StringComparison.Ordinal);
+        var back = Assert.IsType<LobbyList>(ControlProtocol.DecodeServer(text));
+        Assert.Equal(("iad", "203.0.113.7", 47811), (back.Relays![0].Id, back.Relays[0].Host, back.Relays[0].Port));
+        Assert.Null(Assert.IsType<LobbyList>(ControlProtocol.DecodeServer("""{"type":"lobbyList","lobbies":[]}""")).Relays);
+        Assert.DoesNotContain("relays", ControlProtocol.Encode(new LobbyList([])), StringComparison.Ordinal);
+        Assert.DoesNotContain(typeof(RelayView).GetProperties(), p => p.Name is "Host" or "Port");
+    }
 }

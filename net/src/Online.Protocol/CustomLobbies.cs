@@ -248,10 +248,17 @@ public sealed record LeaveLobby : ClientMessage;
 /// <see cref="LobbyRules.Mode"/> is Quick Play's normal mode on its defaults (null: a server with no rotation, or from
 /// before): its <see cref="LobbyMode.Terms"/> and <see cref="LobbyMode.Pack"/> are a Quick Play race's rules (a vote's
 /// spicy card races another mode: <see cref="VoteCard.Terms"/>), its Values the server's options under them as
-/// before, so a custom lobby is compared with them as it was.</summary>
+/// before, so a custom lobby is compared with them as it was.
+/// Relays (2026-11-20): every relay connected to the coordinator, by id (<see cref="RelayView.Id"/>,
+/// <see cref="LobbyView.Relay"/>), with where a game measures its own round trip to it: the relay protocol's keyless
+/// Ping at Host and Port, the endpoint a match's <see cref="MeasureRelays"/> names (an empty host: the coordinator's
+/// own). In every list the server sends (after the welcome, a browser's), and sent again, as when Quick Play's rules
+/// change, to every game outside the browser whose hello says modes when a relay comes or goes. Only over the lobby
+/// link, to a welcomed game: never in the public status. Null: a server from before (no ping to show).</summary>
 public sealed record LobbyList(IReadOnlyList<LobbySummary> Lobbies,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] LobbyRules? QuickPlay = null,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<LobbyMode>? Modes = null) : ServerMessage;
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<LobbyMode>? Modes = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<RelayEndpoint>? Relays = null) : ServerMessage;
 
 /// <summary>A custom lobby's game mode as the server names it (<see cref="LobbyRules.Mode"/>): the package's content
 /// hash (<see cref="ModePackage.Hash"/>) and share code, the mode's name, its badge and its line of what it changes

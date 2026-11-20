@@ -7466,6 +7466,7 @@ struct LobbyList
   std::vector<LobbySummary> lobbies;
   std::optional<LobbyRules> quickPlay;
   std::optional<std::vector<LobbyMode>> modes;
+  std::optional<std::vector<RelayEndpoint>> relays;
 
   // one bit a member, of wire_absent (a member that is no "?" read as null or left out: C# holds null; it
   // is then not written) and of wire_holes (a list that held null items, dropped)
@@ -7474,6 +7475,7 @@ struct LobbyList
     static constexpr std::uint32_t lobbies = 1u << 0;
     static constexpr std::uint32_t quickPlay = 1u << 1;
     static constexpr std::uint32_t modes = 1u << 2;
+    static constexpr std::uint32_t relays = 1u << 3;
   };
   static constexpr std::uint32_t kAbsentAtStart = Bit::lobbies;
   std::uint32_t wire_absent = 0;
@@ -7486,7 +7488,7 @@ inline bool Get(const json_wire::Value& x, LobbyList& out, std::size_t from = 0)
     return false;
   out = LobbyList{};
   out.wire_absent = LobbyList::kAbsentAtStart;
-  static constexpr std::string_view kNames[] = {"lobbies", "quickPlay", "modes"};
+  static constexpr std::string_view kNames[] = {"lobbies", "quickPlay", "modes", "relays"};
   for (std::size_t i = from; i < x.members.size(); ++i)
   {
     const json_wire::Value& v = x.members[i].second;
@@ -7502,6 +7504,10 @@ inline bool Get(const json_wire::Value& x, LobbyList& out, std::size_t from = 0)
       break;
     case 2:
       if (!(v.kind == json_wire::Value::Kind::Null ? (out.modes.reset(), true) : (out.modes.emplace(), [&] { bool holes = false; out.wire_holes &= ~LobbyList::Bit::modes; const bool ok = Get(v, *out.modes, &holes); if (holes) out.wire_holes |= LobbyList::Bit::modes; return ok; }())))
+        return false;
+      break;
+    case 3:
+      if (!(v.kind == json_wire::Value::Kind::Null ? (out.relays.reset(), true) : (out.relays.emplace(), [&] { bool holes = false; out.wire_holes &= ~LobbyList::Bit::relays; const bool ok = Get(v, *out.relays, &holes); if (holes) out.wire_holes |= LobbyList::Bit::relays; return ok; }())))
         return false;
       break;
     default:
@@ -7534,6 +7540,11 @@ inline void Put(json_wire::Out& o, const LobbyList& v, std::string_view type = {
   {
     json_wire::Key(o, first, "modes");
     Put(o, *v.modes);
+  }
+  if (v.relays)
+  {
+    json_wire::Key(o, first, "relays");
+    Put(o, *v.relays);
   }
   o.text += '}';
 }
@@ -8468,8 +8479,6 @@ struct RelayView
   std::optional<Time> idleUntil;
   std::optional<Time> addressUntil;
   std::optional<std::string> error;
-  std::optional<std::string> host;
-  std::optional<std::int32_t> port;
 
   // one bit a member, of wire_absent (a member that is no "?" read as null or left out: C# holds null; it
   // is then not written) and of wire_holes (a list that held null items, dropped)
@@ -8486,8 +8495,6 @@ struct RelayView
     static constexpr std::uint32_t idleUntil = 1u << 8;
     static constexpr std::uint32_t addressUntil = 1u << 9;
     static constexpr std::uint32_t error = 1u << 10;
-    static constexpr std::uint32_t host = 1u << 11;
-    static constexpr std::uint32_t port = 1u << 12;
   };
   static constexpr std::uint32_t kAbsentAtStart = Bit::id | Bit::region;
   std::uint32_t wire_absent = 0;
@@ -8500,7 +8507,7 @@ inline bool Get(const json_wire::Value& x, RelayView& out, std::size_t from = 0)
     return false;
   out = RelayView{};
   out.wire_absent = RelayView::kAbsentAtStart;
-  static constexpr std::string_view kNames[] = {"id", "region", "races", "players", "maxRaces", "state", "address", "size", "idleUntil", "addressUntil", "error", "host", "port"};
+  static constexpr std::string_view kNames[] = {"id", "region", "races", "players", "maxRaces", "state", "address", "size", "idleUntil", "addressUntil", "error"};
   for (std::size_t i = from; i < x.members.size(); ++i)
   {
     const json_wire::Value& v = x.members[i].second;
@@ -8548,14 +8555,6 @@ inline bool Get(const json_wire::Value& x, RelayView& out, std::size_t from = 0)
       break;
     case 10:
       if (!Get(v, out.error))
-        return false;
-      break;
-    case 11:
-      if (!Get(v, out.host))
-        return false;
-      break;
-    case 12:
-      if (!Get(v, out.port))
         return false;
       break;
     default:
@@ -8628,16 +8627,6 @@ inline void Put(json_wire::Out& o, const RelayView& v, std::string_view type = {
   {
     json_wire::Key(o, first, "error");
     Put(o, *v.error);
-  }
-  if (v.host)
-  {
-    json_wire::Key(o, first, "host");
-    Put(o, *v.host);
-  }
-  if (v.port)
-  {
-    json_wire::Key(o, first, "port");
-    Put(o, *v.port);
   }
   o.text += '}';
 }
